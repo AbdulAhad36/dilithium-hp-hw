@@ -1,0 +1,9 @@
+The code in this repository is released under the MIT license (see LICENSE).
+Copyright (c) 2025 KU Leuven - COSIC
+
+-- 
+
+Parts of the code are taken from other source, released under Apache License, Version 2.0.
+Copyright (c) 2021 by Cryptographic Engineering Research Group (CERG), ECE Department, George Mason University, Fairfax, VA, U.S.A.
+
+Relevant modified files contain both licenses: combined_top.v, decoder.v, encoder.v, expandmask_ext.v, gen_a_ext.v, gen_c.v, gen_s.v, makehint.v, rejection_a.v, rejection_s.v, rejection_y.v, sampler_a_ext.v, sampler_s.v, sampler_y_ext.v, usehint.v
