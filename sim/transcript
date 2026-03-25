@@ -1,0 +1,66 @@
+# //  Questa Sim-64
+# //  Version 2024.1 win64 Feb  1 2024
+# //
+# // Unpublished work. Copyright 2024 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# do run.do
+# ** Warning: (vlib-34) Library already exists at "work".
+# Errors: 0, Warnings: 1
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:40:36 on Mar 26,2026
+# vlog -reportprogress 300 -v ../ML-DSA-OSH/ref_combined/src/Barrett_8380417.v ../ML-DSA-OSH/ref_combined/src/address_resolver.v ../ML-DSA-OSH/ref_combined/src/address_unit.v ../ML-DSA-OSH/ref_combined/src/butterfly.v ../ML-DSA-OSH/ref_combined/src/butterfly2x2.v ../ML-DSA-OSH/ref_combined/src/coeff_decomposer.v ../ML-DSA-OSH/ref_combined/src/combined_top.v ../ML-DSA-OSH/ref_combined/src/decoder.v ../ML-DSA-OSH/ref_combined/src/decomp_map1.v ../ML-DSA-OSH/ref_combined/src/decomposer_unit.v ../ML-DSA-OSH/ref_combined/src/dual_port_ram.v ../ML-DSA-OSH/ref_combined/src/dual_port_rom.v ../ML-DSA-OSH/ref_combined/src/encoder.v ../ML-DSA-OSH/ref_combined/src/expandmask_ext.v ../ML-DSA-OSH/ref_combined/src/gen_a_ext.v ../ML-DSA-OSH/ref_combined/src/gen_c.v ../ML-DSA-OSH/ref_combined/src/gen_s.v ../ML-DSA-OSH/ref_combined/src/makehint.v ../ML-DSA-OSH/ref_combined/src/norm_check.v ../ML-DSA-OSH/ref_combined/src/ntt_fifo.v ../ML-DSA-OSH/ref_combined/src/ntt_fifo_piso.v ../ML-DSA-OSH/ref_combined/src/ntt_pipo.v ../ML-DSA-OSH/ref_combined/src/operation_module.v ../ML-DSA-OSH/ref_combined/src/rejection_a.v ../ML-DSA-OSH/ref_combined/src/rejection_s.v ../ML-DSA-OSH/ref_combined/src/rejection_y.v ../ML-DSA-OSH/ref_combined/src/sampler_a_ext.v ../ML-DSA-OSH/ref_combined/src/sampler_s.v ../ML-DSA-OSH/ref_combined/src/sampler_y_ext.v ../ML-DSA-OSH/ref_combined/src/twiddle_resolver.v ../ML-DSA-OSH/ref_combined/src/uncenter_coeff.v ../ML-DSA-OSH/ref_combined/src/usehint.v ../ML-DSA-OSH/ref_combined/src/zero_strip.v 
+# -- Compiling module address_resolver
+# -- Compiling module address_unit
+# ** Warning: ../ML-DSA-OSH/ref_combined/src/address_unit.v(86): (vlog-2182) 'addri_resolver' might be read before written in always_comb or always @* block.
+# -- Compiling module butterfly
+# -- Compiling module butterfly2x2
+# -- Compiling module coeff_decomposer
+# -- Compiling module combined_top
+# ** Error: ../ML-DSA-OSH/ref_combined/src/combined_top.v(1902): (vlog-2730) Undefined variable: 'a_generated'.
+# ** Error: ../ML-DSA-OSH/ref_combined/src/combined_top.v(1907): (vlog-2730) Undefined variable: 'a_generated_during'.
+# ** Error: ../ML-DSA-OSH/ref_combined/src/combined_top.v(1907): (vlog-2730) Undefined variable: 'op_done_ntty'.
+# ** Error (suppressible): ../ML-DSA-OSH/ref_combined/src/combined_top.v(2286): (vlog-2388) 'a_generated' already declared in this scope (combined_top) at ../ML-DSA-OSH/ref_combined/src/combined_top.v(1902).
+# ** Error: (vlog-13069) ../ML-DSA-OSH/ref_combined/src/combined_top.v(2286): near "reg": syntax error, unexpected reg, expecting ';'.
+# ** Error (suppressible): ../ML-DSA-OSH/ref_combined/src/combined_top.v(2287): (vlog-2388) 'op_done_ntty' already declared in this scope (combined_top) at ../ML-DSA-OSH/ref_combined/src/combined_top.v(1907).
+# -- Compiling module decoder
+# -- Compiling module decomp_map1
+# -- Compiling module decomposer_unit
+# -- Compiling module dual_port_ram
+# -- Compiling module dual_port_rom
+# -- Compiling module encoder
+# -- Compiling module expandmask_ext
+# -- Compiling module gen_a_ext
+# -- Compiling module gen_c
+# -- Compiling module gen_s
+# -- Compiling module makehint
+# -- Compiling module norm_check
+# -- Compiling module ntt_fifo
+# -- Compiling module ntt_fifo_piso
+# -- Compiling module NTT_PIPO
+# -- Compiling module operation_module
+# -- Compiling module rejection_a
+# -- Compiling module rejection_s
+# -- Compiling module rejection_y
+# -- Compiling module sampler_a_ext
+# -- Compiling module sampler_s
+# -- Compiling module sampler_y_ext
+# -- Compiling module twiddle_resolver
+# -- Compiling module uncenter_coeff
+# -- Compiling module usehint
+# -- Compiling module zero_strip
+# End time: 01:40:36 on Mar 26,2026, Elapsed time: 0:00:00
+# Errors: 6, Warnings: 1
+# ** Error: C:/questasim64_2024.1/win64/vlog failed.
+# Error in macro ./compile.do line 9
+# C:/questasim64_2024.1/win64/vlog failed.
+#     while executing
+# "vlog -v ../ML-DSA-OSH/ref_combined/src/*.v"

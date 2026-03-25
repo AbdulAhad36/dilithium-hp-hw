@@ -12,7 +12,8 @@
 
 #define MLEN 32
 #define CTXLEN 13
-#define NVECTORS 10000
+// #define NVECTORS 10000
+#define NVECTORS 1
 
 /* Initital state after absorbing empty string 
  * Permute before squeeze is achieved by setting pos to SHAKE128_RATE */

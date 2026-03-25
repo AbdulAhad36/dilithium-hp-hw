@@ -1,0 +1,16 @@
+{
+ "verilog.linting": true,
+ "verilog.includePath": [
+  "./rtl",
+  "./tb"
+],
+"cSpell.words": [
+    "dumpfile",
+    "dumpvars",
+    "endmodule",
+    "vcom",
+    "vlib",
+    "voptargs",
+    "vsim"
+]
+}

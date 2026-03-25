@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compile RTL",
+            "type": "shell",
+   "command": "vlog -sv src_rtl/*.sv tb_src/*.sv",
+   "group": "build"
+  },
+  {
+   "label": "Run Simulation",
+   "type": "shell",
+   "command": "vsim -c work.top_tb -do sim/run.do",
+   "group": "test"
+  }
+ ]
+}
