@@ -8,6 +8,7 @@
     "dumpfile",
     "dumpvars",
     "endmodule",
+    "mldsa",
     "vcom",
     "vlib",
     "voptargs",

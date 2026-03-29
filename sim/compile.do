@@ -1,11 +1,21 @@
+# Clean previous work
+vdel -all
 vlib work
+vmap work work
 
-# Compile
+# Set UVM path (DO NOT rely on system env)
+#set env(UVM_HOME) "C:/questasim64_2024.1/verilog_src/uvm-1.2"
 
-    #vlog -sv ../src_rtl/adder.sv
-    #vlog -sv ../tb_rtl/adder_tb.sv
+# Compile UVM (must be FIRST)
+#vlog -sv +incdir+$env(UVM_HOME)/src \
+#    $env(UVM_HOME)/src/uvm_pkg.sv 
 
+# Compile RTL
+vlog -sv ../src_rtl/adder.sv
 
-vlog -v ../ML-DSA-OSH/ref_combined/src/*.v
-vcom -2008 ./ML-DSA-OSH/ref_combined/src/*.vhd
-vlog -v ../ML-DSA-OSH/ref_combined/src_tb/*.v
+vlog -sv ../tb_uvm/interface.sv
+
+vlog -sv ../tb_uvm/interfacePackage.sv
+
+vlog -sv ../tb_uvm/tb_top.sv
+

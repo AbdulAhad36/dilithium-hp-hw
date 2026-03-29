@@ -1,16 +1,19 @@
-
+# Compile everything
 do compile.do
 
+# Start simulation
+vsim -voptargs=+acc work.tb_top
 
-# Simulate
+# Optional: open useful windows
+view wave
+view structure
+view signals
 
-vsim work.tb_keygen_top
-vsim -voptargs=+acc work.tb_keygen_top
+# Add all signals to waveform
+add wave -r *
 
-    # Add all signals to waveform
-    #add wave -r *
-    #radix -hex
+# Run simulation
+run -all
 
-    # Run simulation
-    #run -all
-    #wave zoom full
+# Exit automatically
+quit -f
