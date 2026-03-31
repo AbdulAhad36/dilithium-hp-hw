@@ -13,39 +13,61 @@
 # // and may not be used in any way not expressly authorized by SISW.
 # //
 # do run.do
-# QuestaSim-64 vmap 2024.1 Lib Mapping Utility 2024.02 Feb  1 2024
-# vmap work work 
-# Modifying modelsim.ini
+# ** Warning: (vlib-34) Library already exists at "work".
+# Errors: 0, Warnings: 1
 # QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# Start time: 03:09:36 on Mar 30,2026
-# vlog -reportprogress 300 -sv ../src_rtl/adder.sv 
-# -- Compiling module adder
+# Start time: 01:02:34 on Apr 01,2026
+# vlog -reportprogress 300 -sv ../src_rtl/det_1011.sv 
+# -- Compiling module det_1011
 # 
 # Top level modules:
-# 	adder
-# End time: 03:09:36 on Mar 30,2026, Elapsed time: 0:00:00
+# 	det_1011
+# End time: 01:02:34 on Apr 01,2026, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# Start time: 03:09:36 on Mar 30,2026
+# Start time: 01:02:34 on Apr 01,2026
 # vlog -reportprogress 300 -sv ../tb_uvm/interface.sv 
-# -- Compiling interface adder_if
+# -- Compiling interface des_if
 # 
 # Top level modules:
 # 	--none--
-# End time: 03:09:36 on Mar 30,2026, Elapsed time: 0:00:00
+# End time: 01:02:34 on Apr 01,2026, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# Start time: 03:09:36 on Mar 30,2026
-# vlog -reportprogress 300 -sv ../tb_uvm/interfacePackage.sv 
-# -- Compiling package interfacePackage
-# ** Note: (vlog-2286) ../tb_uvm/interfacePackage.sv(3): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+# Start time: 01:02:34 on Apr 01,2026
+# vlog -reportprogress 300 -sv ../tb_uvm/tb.sv 
+# ** Note: (vlog-2286) ../tb_uvm/tb.sv(1): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+# -- Compiling package tb_sv_unit
 # -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Error (suppressible): (vlog-13276) ../tb_uvm/test.svh(24:14): Could not find field/method name (agent) in 'env' of 'env.agent.sequencer'.
-# ** Warning: ../tb_uvm/sequence.svh(15): (vlog-2240) Treating stand-alone use of function 'randomize' as an implicit VOID cast.
-# End time: 03:09:37 on Mar 30,2026, Elapsed time: 0:00:01
-# Errors: 1, Warnings: 1
-# ** Error: C:/questasim64_2024.1/win64/vlog failed.
-# Error in macro ./compile.do line 18
-# C:/questasim64_2024.1/win64/vlog failed.
+# ** Warning: ../tb_uvm/test.sv(59): (vlog-2239) Treating stand-alone use of presumed external function as an implicit VOID cast.
+# ** Warning: ../tb_uvm/sequence.sv(15): (vlog-2240) Treating stand-alone use of function 'randomize' as an implicit VOID cast.
+# -- Compiling module tb
+# 
+# Top level modules:
+# 	tb
+# End time: 01:02:35 on Apr 01,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 2
+# vsim -voptargs="+acc" work.tb 
+# Start time: 01:02:35 on Apr 01,2026
+# ** Note: (vsim-8009) Loading existing optimized design _opt
+# Loading sv_std.std
+# Loading work.des_if(fast)
+# Loading mtiUvm.uvm_pkg(fast)
+# Loading work.tb_sv_unit(fast)
+# Loading mtiUvm.questa_uvm_pkg(fast)
+# Loading work.tb(fast)
+# Loading work.des_if(fast__2)
+# Loading work.det_1011(fast)
+# ** Warning: (vsim-3764) Stand-alone call to function 'write' treated as implicit void cast.
+#    Time: 0 ns  Iteration: 0  Region: /uvm_pkg::uvm_analysis_imp #(tb_sv_unit::Item, tb_sv_unit::scoreboard) File: C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/tlm1/uvm_analysis_port.svh Line: 114
+# Loading C:/questasim64_2024.1/uvm-1.1d\win64\uvm_dpi.dll
+# .main_pane.wave.interior.cs.body.pw.wf
+# .main_pane.structure.interior.cs.body.struct
+# .main_pane.objects.interior.cs.body.tree
+# ** UI-Msg (Warning): (vish-4014) No objects found matching '*'.
+# Error in macro ./run.do line 13
+# ** UI-Msg (Warning): (vish-4014) No objects found matching '*'.
 #     while executing
-# "vlog -sv ../tb_uvm/interfacePackage.sv"
+# "add wave -r *"
+# End time: 01:03:36 on Apr 01,2026, Elapsed time: 0:01:01
+# Errors: 0, Warnings: 1

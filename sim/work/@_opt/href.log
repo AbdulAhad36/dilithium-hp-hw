@@ -1,0 +1,10 @@
+BEGIN 3:des_if:fast__2:work
+    rstn :  1:tb:fast:work
+    out :  1:tb:fast:work
+    in :  1:tb:fast:work
+END 
+BEGIN 3:des_if:fast__1:work
+    rstn :  1:tb_sv_unit:fast:work
+    clk :  1:tb_sv_unit:fast:work
+    in :  1:tb_sv_unit:fast:work
+END 
