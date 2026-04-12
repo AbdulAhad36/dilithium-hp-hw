@@ -1,0 +1,18 @@
+https://www.ibm.com/docs/en/zos/2.5.0?topic=cryptography-crystals-dilithium-digital-signature-algorithm
+
+https://www.youtube.com/watch?v=K026C5YaB3A
+
+https://www.youtube.com/watch?v=RQWpF2Gb-gU&list=WL&index=2
+
+
+
+
+in todays world data is the most important asset of a person and to protect it good amount of development is being 
+in the field of cryptography, with the growth of modern computer NIST actively works for the development of stronger
+Encryption protocols, todays modern classical computers cannot breakthrough the Encryptions such as AES , RCA etc, 
+but with constant development of Quantum computers these encryptions can be bypassed. Since Quantum computers are not yet
+standardized criminals store encrypted for future when these computers will be readily available ,and this implies
+a serious threat , inorder to combat this volnerability Lattice based alogirthms were introduced which are so complex
+that even quantum computers are not able to solve for e.g. kyber and Dilithium , these algorithms are efficient 
+and require high computational power to work on software , in this thesis we are going to propose the hardware desgin 
+RTL design of Dilithium and its verfication 
