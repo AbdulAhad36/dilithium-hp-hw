@@ -13,61 +13,201 @@
 # // and may not be used in any way not expressly authorized by SISW.
 # //
 # do run.do
-# ** Warning: (vlib-34) Library already exists at "work".
-# Errors: 0, Warnings: 1
+# QuestaSim-64 vmap 2024.1 Lib Mapping Utility 2024.02 Feb  1 2024
+# vmap work work 
+# Modifying modelsim.ini
 # QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# Start time: 01:02:34 on Apr 01,2026
-# vlog -reportprogress 300 -sv ../src_rtl/det_1011.sv 
-# -- Compiling module det_1011
-# 
-# Top level modules:
-# 	det_1011
-# End time: 01:02:34 on Apr 01,2026, Elapsed time: 0:00:00
-# Errors: 0, Warnings: 0
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# Start time: 01:02:34 on Apr 01,2026
-# vlog -reportprogress 300 -sv ../tb_uvm/interface.sv 
-# -- Compiling interface des_if
+# Start time: 01:45:21 on Apr 17,2026
+# vlog -reportprogress 300 -sv ../src/keccak_engine/keccak_pkg.sv 
+# -- Compiling package keccak_pkg
 # 
 # Top level modules:
 # 	--none--
-# End time: 01:02:34 on Apr 01,2026, Elapsed time: 0:00:00
+# End time: 01:45:21 on Apr 17,2026, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# Start time: 01:02:34 on Apr 01,2026
-# vlog -reportprogress 300 -sv ../tb_uvm/tb.sv 
-# ** Note: (vlog-2286) ../tb_uvm/tb.sv(1): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Compiling package tb_sv_unit
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Warning: ../tb_uvm/test.sv(59): (vlog-2239) Treating stand-alone use of presumed external function as an implicit VOID cast.
-# ** Warning: ../tb_uvm/sequence.sv(15): (vlog-2240) Treating stand-alone use of function 'randomize' as an implicit VOID cast.
-# -- Compiling module tb
+# Start time: 01:45:21 on Apr 17,2026
+# vlog -reportprogress 300 -sv ../src/keccak_engine/chi_step.sv ../src/keccak_engine/iota_step.sv ../src/keccak_engine/keccak_absorb_unit.sv ../src/keccak_engine/keccak_core.sv ../src/keccak_engine/keccak_output_unit.sv ../src/keccak_engine/keccak_param_unit.sv ../src/keccak_engine/keccak_pkg.sv ../src/keccak_engine/keccak_step_unit.sv ../src/keccak_engine/pi_step.sv ../src/keccak_engine/rho_step.sv ../src/keccak_engine/theta_step.sv 
+# -- Compiling package chi_step_sv_unit
+# -- Importing package keccak_pkg
+# -- Compiling module chi_step
+# -- Compiling package iota_step_sv_unit
+# -- Compiling module iota_step
+# -- Compiling package keccak_absorb_unit_sv_unit
+# -- Compiling module keccak_absorb_unit
+# -- Compiling package keccak_core_sv_unit
+# -- Compiling module keccak_core
+# ** Warning: ../src/keccak_engine/keccak_output_unit.sv(22): (vlog-13314) Defaulting port 'state_array_i' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# -- Compiling package keccak_output_unit_sv_unit
+# -- Compiling module keccak_output_unit
+# ** Warning: ../src/keccak_engine/keccak_output_unit.sv(22): (vlog-13314) Defaulting port 'state_array_i' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# -- Compiling package keccak_param_unit_sv_unit
+# -- Compiling module keccak_param_unit
+# -- Compiling package keccak_pkg
+# ** Warning: ../src/keccak_engine/keccak_step_unit.sv(21): (vlog-13314) Defaulting port 'state_array_i' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# -- Compiling package keccak_step_unit_sv_unit
+# -- Compiling module keccak_step_unit
+# ** Warning: ../src/keccak_engine/keccak_step_unit.sv(21): (vlog-13314) Defaulting port 'state_array_i' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# -- Compiling package pi_step_sv_unit
+# -- Compiling module pi_step
+# -- Compiling package rho_step_sv_unit
+# -- Compiling module rho_step
+# -- Compiling package theta_step_sv_unit
+# -- Compiling module theta_step
 # 
 # Top level modules:
-# 	tb
-# End time: 01:02:35 on Apr 01,2026, Elapsed time: 0:00:01
-# Errors: 0, Warnings: 2
-# vsim -voptargs="+acc" work.tb 
-# Start time: 01:02:35 on Apr 01,2026
-# ** Note: (vsim-8009) Loading existing optimized design _opt
+# 	keccak_core
+# End time: 01:45:21 on Apr 17,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 4
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:45:22 on Apr 17,2026
+# vlog -reportprogress 300 -sv ../tb_uvm/tb_keccak_engine/keccak_core_tb.sv 
+# -- Compiling package keccak_core_tb_sv_unit
+# -- Importing package keccak_pkg
+# -- Compiling module keccak_core_tb
+# 
+# Top level modules:
+# 	keccak_core_tb
+# End time: 01:45:22 on Apr 17,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -voptargs="+acc" work.keccak_core_tb 
+# Start time: 01:45:22 on Apr 17,2026
+# ** Note: (vsim-3812) Design is being optimized...
+# ** Warning: (vopt-10587) Some optimizations are turned off because the +acc switch is in effect. This will cause your simulation to run slowly. Please use -access/-debug to maintain needed visibility.
+# Support of the MGLS_LICENSE_FILE and LM_LICENSE_FILE licensing environment variables will be discontinued starting with the 2025.1 release. Please update to using the SALT_LICENSE_SERVER variable.
+# Please contact Siemens EDA Customer Support (https://support.sw.siemens.com/) for assistance.
+# ** Note: (vopt-143) Recognized 1 FSM in module "keccak_core(fast)".
+# ** Warning: ../src/keccak_engine/keccak_output_unit.sv(22): (vopt-13314) Defaulting port 'state_array_i' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Warning: ../src/keccak_engine/keccak_step_unit.sv(21): (vopt-13314) Defaulting port 'state_array_i' kind to 'var' rather than 'wire' due to default compile option setting of -svinputport=relaxed.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
 # Loading sv_std.std
-# Loading work.des_if(fast)
-# Loading mtiUvm.uvm_pkg(fast)
-# Loading work.tb_sv_unit(fast)
-# Loading mtiUvm.questa_uvm_pkg(fast)
-# Loading work.tb(fast)
-# Loading work.des_if(fast__2)
-# Loading work.det_1011(fast)
-# ** Warning: (vsim-3764) Stand-alone call to function 'write' treated as implicit void cast.
-#    Time: 0 ns  Iteration: 0  Region: /uvm_pkg::uvm_analysis_imp #(tb_sv_unit::Item, tb_sv_unit::scoreboard) File: C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/tlm1/uvm_analysis_port.svh Line: 114
-# Loading C:/questasim64_2024.1/uvm-1.1d\win64\uvm_dpi.dll
+# Loading work.keccak_pkg(fast)
+# Loading work.keccak_core_tb_sv_unit(fast)
+# Loading work.keccak_core_tb(fast)
+# Loading work.keccak_core_sv_unit(fast)
+# Loading work.keccak_core(fast)
+# Loading work.keccak_param_unit_sv_unit(fast)
+# Loading work.keccak_param_unit(fast)
+# Loading work.keccak_step_unit_sv_unit(fast)
+# Loading work.keccak_step_unit(fast)
+# Loading work.theta_step_sv_unit(fast)
+# Loading work.theta_step(fast)
+# Loading work.rho_step_sv_unit(fast)
+# Loading work.rho_step(fast)
+# Loading work.pi_step_sv_unit(fast)
+# Loading work.pi_step(fast)
+# Loading work.chi_step_sv_unit(fast)
+# Loading work.chi_step(fast)
+# Loading work.iota_step_sv_unit(fast)
+# Loading work.iota_step(fast)
+# Loading work.keccak_absorb_unit_sv_unit(fast)
+# Loading work.keccak_absorb_unit(fast)
+# Loading work.keccak_output_unit_sv_unit(fast)
+# Loading work.keccak_output_unit(fast)
 # .main_pane.wave.interior.cs.body.pw.wf
 # .main_pane.structure.interior.cs.body.struct
 # .main_pane.objects.interior.cs.body.tree
-# ** UI-Msg (Warning): (vish-4014) No objects found matching '*'.
-# Error in macro ./run.do line 13
-# ** UI-Msg (Warning): (vish-4014) No objects found matching '*'.
-#     while executing
-# "add wave -r *"
-# End time: 01:03:36 on Apr 01,2026, Elapsed time: 0:01:01
-# Errors: 0, Warnings: 1
+# ----------------------------------------------------------
+# STARTING: SHA3-256 Empty (Continuous)
+# [SHA3-256 Empty (Continuous)] Monitor: Waiting for 32 bytes...
+#     [PASS] SHA3-256 Empty (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHA3-256 Short (Continuous)
+# [SHA3-256 Short (Continuous)] Monitor: Waiting for 32 bytes...
+#     [PASS] SHA3-256 Short (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHA3-256 Full Rate (Continuous)
+# [SHA3-256 Full Rate (Continuous)] Monitor: Waiting for 32 bytes...
+#     [PASS] SHA3-256 Full Rate (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHA3-256 Long (Continuous)
+# [SHA3-256 Long (Continuous)] Monitor: Waiting for 32 bytes...
+#     [PASS] SHA3-256 Long (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHA3-512 Empty (Continuous)
+# [SHA3-512 Empty (Continuous)] Monitor: Waiting for 64 bytes...
+#     [PASS] SHA3-512 Empty (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHA3-512 Short (Continuous)
+# [SHA3-512 Short (Continuous)] Monitor: Waiting for 64 bytes...
+#     [PASS] SHA3-512 Short (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHA3-512 Long (Continuous)
+# [SHA3-512 Long (Continuous)] Monitor: Waiting for 64 bytes...
+#     [PASS] SHA3-512 Long (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE128 Empty (Continuous)
+# [SHAKE128 Empty (Continuous)] Monitor: Waiting for 16 bytes...
+#     [PASS] SHAKE128 Empty (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE128 Empty (Bounded)
+# [SHAKE128 Empty (Bounded)] Monitor: Waiting for 16 bytes...
+#     [PASS] SHAKE128 Empty (Bounded)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE128 Short (Continuous)
+# [SHAKE128 Short (Continuous)] Monitor: Waiting for 16 bytes...
+#     [PASS] SHAKE128 Short (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE128 Short (Bounded)
+# [SHAKE128 Short (Bounded)] Monitor: Waiting for 16 bytes...
+#     [PASS] SHAKE128 Short (Bounded)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE128 Boundary Cross (Continuous)
+# [SHAKE128 Boundary Cross (Continuous)] Monitor: Waiting for 200 bytes...
+#     [PASS] SHAKE128 Boundary Cross (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE128 Boundary Cross (Bounded)
+# [SHAKE128 Boundary Cross (Bounded)] Monitor: Waiting for 200 bytes...
+#     [PASS] SHAKE128 Boundary Cross (Bounded)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE256 Empty (Continuous)
+# [SHAKE256 Empty (Continuous)] Monitor: Waiting for 32 bytes...
+#     [PASS] SHAKE256 Empty (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE256 Empty (Bounded)
+# [SHAKE256 Empty (Bounded)] Monitor: Waiting for 32 bytes...
+#     [PASS] SHAKE256 Empty (Bounded)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE256 Short (Continuous)
+# [SHAKE256 Short (Continuous)] Monitor: Waiting for 32 bytes...
+#     [PASS] SHAKE256 Short (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE256 Short (Bounded)
+# [SHAKE256 Short (Bounded)] Monitor: Waiting for 32 bytes...
+#     [PASS] SHAKE256 Short (Bounded)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE256 Long (Continuous)
+# [SHAKE256 Long (Continuous)] Monitor: Waiting for 32 bytes...
+#     [PASS] SHAKE256 Long (Continuous)
+#     [INFO] Test execution finished normally.
+# ----------------------------------------------------------
+# STARTING: SHAKE256 Long (Bounded)
+# [SHAKE256 Long (Bounded)] Monitor: Waiting for 32 bytes...
+#     [PASS] SHAKE256 Long (Bounded)
+#     [INFO] Test execution finished normally.
+# ==========================================================
+# TEST SUITE COMPLETE
+# ==========================================================
+# ** Note: $finish    : ../tb_uvm/tb_keccak_engine/keccak_core_tb.sv(513)
+#    Time: 24335 ns  Iteration: 0  Instance: /keccak_core_tb
+# 1
+# Break in Module keccak_core_tb at ../tb_uvm/tb_keccak_engine/keccak_core_tb.sv line 513
+# End time: 01:48:21 on Apr 17,2026, Elapsed time: 0:02:59
+# Errors: 0, Warnings: 3

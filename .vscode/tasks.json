@@ -4,7 +4,7 @@
         {
             "label": "Compile RTL",
             "type": "shell",
-   "command": "vlog -sv src_rtl/*.sv tb_src/*.sv",
+   "command": "vlog -sv src/*.sv tb_src/*.sv",
    "group": "build"
   },
   {
