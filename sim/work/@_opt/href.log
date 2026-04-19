@@ -1,0 +1,20 @@
+BEGIN 3:keccak_if:fast__2:work
+    m_axis_tready :  1:tb_top:fast:work
+    s_axis_tlast :  1:tb_top:fast:work
+    s_axis_tready :  1:tb_top:fast:work
+    mode :  1:tb_top:fast:work
+    m_axis_tvalid :  1:tb_top:fast:work
+    stop :  1:tb_top:fast:work
+    m_axis_tkeep :  1:tb_top:fast:work
+    s_axis_tvalid :  1:tb_top:fast:work
+    s_axis_tkeep :  1:tb_top:fast:work
+    start :  1:tb_top:fast:work
+    m_axis_tdata :  1:tb_top:fast:work
+    xof_len :  1:tb_top:fast:work
+    m_axis_tlast :  1:tb_top:fast:work
+    s_axis_tdata :  1:tb_top:fast:work
+END 
+BEGIN 3:keccak_if:fast__1:work
+    rst :  1:tb_top_sv_unit:fast:work
+    clk :  1:tb_top_sv_unit:fast:work
+END 

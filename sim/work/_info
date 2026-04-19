@@ -12,10 +12,12 @@ Z0 !s99 nomlopt
 cModel Technology
 Z1 dD:/GitHub/dilithium-hp-hw/sim
 T_opt
-!s110 1776372323
-Vk@8ZEQOkmD7^7aKcW5EUh2
-04 14 4 work keccak_core_tb fast 0
-=1-b42e9911f333-69e14a62-252-5b4c
+!s11d tb_top_sv_unit D:/GitHub/dilithium-hp-hw/sim/work 1 keccak_if 1 D:/GitHub/dilithium-hp-hw/sim/work 
+!s11d uvm_pkg C:/questasim64_2024.1/uvm-1.1d 1 keccak_if 1 D:/GitHub/dilithium-hp-hw/sim/work 
+!s110 1776634928
+VHCCN?bIcPej`zAjan8@oc3
+04 6 4 work tb_top fast 0
+=1-b42e9911f333-69e54c2f-1f2-200
 R0
 !s12f OEM100
 !s12b OEM100
@@ -27,9 +29,9 @@ OL;O;2024.1;79
 vchi_step
 Z3 2../src/keccak_engine/chi_step.sv|../src/keccak_engine/iota_step.sv|../src/keccak_engine/keccak_absorb_unit.sv|../src/keccak_engine/keccak_core.sv|../src/keccak_engine/keccak_output_unit.sv|../src/keccak_engine/keccak_param_unit.sv|../src/keccak_engine/keccak_pkg.sv|../src/keccak_engine/keccak_step_unit.sv|../src/keccak_engine/pi_step.sv|../src/keccak_engine/rho_step.sv|../src/keccak_engine/theta_step.sv
 Z4 DXx6 sv_std 3 std 0 22 9oUSJO;AeEaW`l:M@^WG92
-Z5 DXx4 work 10 keccak_pkg 0 22 :3T9S1NOUSm=md7[=YmJQ2
+Z5 DXx4 work 10 keccak_pkg 0 22 6=OFEk97c6l3NbziX^<OB2
 DXx4 work 16 chi_step_sv_unit 0 22 goE?Gd;InZ3IToiD@AhaX1
-Z6 !s110 1776372321
+Z6 !s110 1776634926
 Z7 VDg1SIo80bB@j0V0VzS_@n1
 r1
 !s85 0
@@ -39,14 +41,14 @@ IZTaXlhSPUjl67boX>iWWQ0
 !s105 chi_step_sv_unit
 S1
 R1
-Z8 w1776371757
+Z8 w1776621749
 Z9 8../src/keccak_engine/chi_step.sv
 Z10 F../src/keccak_engine/chi_step.sv
 !i122 1
 L0 18 15
 Z11 OL;L;2024.1;79
 31
-Z12 !s108 1776372321.000000
+Z12 !s108 1776634925.000000
 Z13 !s107 ../src/keccak_engine/theta_step.sv|../src/keccak_engine/rho_step.sv|../src/keccak_engine/pi_step.sv|../src/keccak_engine/keccak_step_unit.sv|../src/keccak_engine/keccak_pkg.sv|../src/keccak_engine/keccak_param_unit.sv|../src/keccak_engine/keccak_output_unit.sv|../src/keccak_engine/keccak_core.sv|../src/keccak_engine/keccak_absorb_unit.sv|../src/keccak_engine/iota_step.sv|../src/keccak_engine/chi_step.sv|
 Z14 !s90 -reportprogress|300|-sv|../src/keccak_engine/chi_step.sv|../src/keccak_engine/iota_step.sv|../src/keccak_engine/keccak_absorb_unit.sv|../src/keccak_engine/keccak_core.sv|../src/keccak_engine/keccak_output_unit.sv|../src/keccak_engine/keccak_param_unit.sv|../src/keccak_engine/keccak_pkg.sv|../src/keccak_engine/keccak_step_unit.sv|../src/keccak_engine/pi_step.sv|../src/keccak_engine/rho_step.sv|../src/keccak_engine/theta_step.sv|
 !i113 0
@@ -94,9 +96,9 @@ II:fJlhW@Td1>njGV[0?];1
 !s105 iota_step_sv_unit
 S1
 R1
-Z16 w1776371756
-Z17 8../src/keccak_engine/iota_step.sv
-Z18 F../src/keccak_engine/iota_step.sv
+R8
+Z16 8../src/keccak_engine/iota_step.sv
+Z17 F../src/keccak_engine/iota_step.sv
 !i122 1
 L0 19 64
 R11
@@ -121,9 +123,9 @@ I;noEKDkHN0eWF30HN<RET2
 !i103 1
 S1
 R1
+R8
 R16
 R17
-R18
 !i122 1
 L0 17 0
 R11
@@ -149,9 +151,9 @@ I?]M>z9]DMDX34ZLgik2mM3
 !s105 keccak_absorb_unit_sv_unit
 S1
 R1
-Z19 w1776371759
-Z20 8../src/keccak_engine/keccak_absorb_unit.sv
-Z21 F../src/keccak_engine/keccak_absorb_unit.sv
+R8
+Z18 8../src/keccak_engine/keccak_absorb_unit.sv
+Z19 F../src/keccak_engine/keccak_absorb_unit.sv
 !i122 1
 L0 21 118
 R11
@@ -176,11 +178,11 @@ InXkMhSOn6STWcKk38L1V50
 !i103 1
 S1
 R1
+R8
+R18
 R19
-R20
-R21
 !i122 1
-Z22 L0 18 0
+Z20 L0 18 0
 R11
 31
 R12
@@ -204,9 +206,9 @@ IKU>c]mzQAlSm;=0KhR:o_1
 !s105 keccak_core_sv_unit
 S1
 R1
-Z23 w1776371770
-Z24 8../src/keccak_engine/keccak_core.sv
-Z25 F../src/keccak_engine/keccak_core.sv
+R8
+Z21 8../src/keccak_engine/keccak_core.sv
+Z22 F../src/keccak_engine/keccak_core.sv
 !i122 1
 L0 35 585
 R11
@@ -231,9 +233,9 @@ IWL@GgK;]CPX:98koZEcJZ1
 !i103 1
 S1
 R1
-R23
-R24
-R25
+R8
+R21
+R22
 !i122 1
 L0 33 0
 R11
@@ -244,58 +246,58 @@ R14
 !i113 0
 R15
 R2
-vkeccak_core_tb
-Z26 2../tb_uvm/tb_keccak_engine/keccak_core_tb.sv
+Ykeccak_if
+Z23 2../tb_uvm/tb_uvm_keccak/keccak_if.sv
 R4
 R5
-DXx4 work 22 keccak_core_tb_sv_unit 0 22 Rn@ijcblZ^ccM43j`liP<2
-Z27 !s110 1776372322
+DXx4 work 17 keccak_if_sv_unit 0 22 DVc>P<H<2h[]Sj4LlGnR=3
+R6
 R7
 r1
 !s85 0
 !i10b 1
-!s100 <cZ>oCf?kFgfSbO:d8=LP3
-I[NJ;HRHLbHzkUZHjPH7X53
-!s105 keccak_core_tb_sv_unit
+!s100 aWmNOkN@oX=46Wdcl6U9<1
+IZHW0GkWT31`CeRQf^_;Hg3
+!s105 keccak_if_sv_unit
 S1
 R1
-Z28 w1776368572
-Z29 8../tb_uvm/tb_keccak_engine/keccak_core_tb.sv
-Z30 F../tb_uvm/tb_keccak_engine/keccak_core_tb.sv
+Z24 w1776631211
+Z25 8../tb_uvm/tb_uvm_keccak/keccak_if.sv
+Z26 F../tb_uvm/tb_uvm_keccak/keccak_if.sv
 !i122 2
-L0 10 507
+L0 9 0
 R11
 31
-Z31 !s108 1776372322.000000
-Z32 !s107 ../tb_uvm/tb_keccak_engine/keccak_core_tb.sv|
-Z33 !s90 -reportprogress|300|-sv|../tb_uvm/tb_keccak_engine/keccak_core_tb.sv|
+Z27 !s108 1776634926.000000
+Z28 !s107 ../tb_uvm/tb_uvm_keccak/keccak_if.sv|
+Z29 !s90 -reportprogress|300|-sv|../tb_uvm/tb_uvm_keccak/keccak_if.sv|
 !i113 0
 R15
 R2
-Xkeccak_core_tb_sv_unit
-R26
+Xkeccak_if_sv_unit
+R23
 R4
 R5
-R27
-VRn@ijcblZ^ccM43j`liP<2
+R6
+VDVc>P<H<2h[]Sj4LlGnR=3
 r1
 !s85 0
 !i10b 1
-!s100 fiKJ_F3iCRWc[2o6j_:Vh3
-IRn@ijcblZ^ccM43j`liP<2
+!s100 a=8YaCicH`bd77N1;XEDC2
+IDVc>P<H<2h[]Sj4LlGnR=3
 !i103 1
 S1
 R1
-R28
-R29
-R30
+R24
+R25
+R26
 !i122 2
-L0 8 0
+Z30 L0 7 0
 R11
 31
-R31
-R32
-R33
+R27
+R28
+R29
 !i113 0
 R15
 R2
@@ -314,9 +316,9 @@ I2<HH0WXKIDnLBUeN`o:cU1
 !s105 keccak_output_unit_sv_unit
 S1
 R1
-Z34 w1776371773
-Z35 8../src/keccak_engine/keccak_output_unit.sv
-Z36 F../src/keccak_engine/keccak_output_unit.sv
+R8
+Z31 8../src/keccak_engine/keccak_output_unit.sv
+Z32 F../src/keccak_engine/keccak_output_unit.sv
 !i122 1
 L0 21 125
 R11
@@ -341,9 +343,9 @@ IP^0HO_;m1^99fN473UV0N1
 !i103 1
 S1
 R1
-R34
-R35
-R36
+R8
+R31
+R32
 !i122 1
 L0 19 0
 R11
@@ -369,9 +371,9 @@ IbKmDgfeUOAG:IAeW><P`O0
 !s105 keccak_param_unit_sv_unit
 S1
 R1
-Z37 w1776371775
-Z38 8../src/keccak_engine/keccak_param_unit.sv
-Z39 F../src/keccak_engine/keccak_param_unit.sv
+R8
+Z33 8../src/keccak_engine/keccak_param_unit.sv
+Z34 F../src/keccak_engine/keccak_param_unit.sv
 !i122 1
 L0 22 56
 R11
@@ -396,9 +398,9 @@ I_[KSL_mg4AO:Ll3XFSEh43
 !i103 1
 S1
 R1
-R37
-R38
-R39
+R8
+R33
+R34
 !i122 1
 L0 20 0
 R11
@@ -414,16 +416,16 @@ R3
 R4
 R6
 !i10b 1
-!s100 7GJU^bkTI4We05:Yonih_1
-I:3T9S1NOUSm=md7[=YmJQ2
+!s100 <hO_^7c5Xa3hPnN>PbeV`1
+I6=OFEk97c6l3NbziX^<OB2
 S1
 R1
-w1776026658
+w1776634910
 8../src/keccak_engine/keccak_pkg.sv
 F../src/keccak_engine/keccak_pkg.sv
 !i122 1
 L0 1 0
-V:3T9S1NOUSm=md7[=YmJQ2
+V6=OFEk97c6l3NbziX^<OB2
 R11
 r1
 !s85 0
@@ -449,9 +451,9 @@ IN78n>b5anH0K3OBc5nQ<40
 !s105 keccak_step_unit_sv_unit
 S1
 R1
-Z40 w1776371779
-Z41 8../src/keccak_engine/keccak_step_unit.sv
-Z42 F../src/keccak_engine/keccak_step_unit.sv
+R8
+Z35 8../src/keccak_engine/keccak_step_unit.sv
+Z36 F../src/keccak_engine/keccak_step_unit.sv
 !i122 1
 L0 20 41
 R11
@@ -476,11 +478,11 @@ I8H[4LjEZY00<mE8lMe43?2
 !i103 1
 S1
 R1
-R40
-R41
-R42
+R8
+R35
+R36
 !i122 1
-R22
+R20
 R11
 31
 R12
@@ -504,9 +506,9 @@ I[OgIJjIDJM<JjdmQIaIHh1
 !s105 pi_step_sv_unit
 S1
 R1
-Z43 w1776371787
-Z44 8../src/keccak_engine/pi_step.sv
-Z45 F../src/keccak_engine/pi_step.sv
+R8
+Z37 8../src/keccak_engine/pi_step.sv
+Z38 F../src/keccak_engine/pi_step.sv
 !i122 1
 L0 20 21
 R11
@@ -531,11 +533,11 @@ INnazl105mPWb]^1Dlkb=[3
 !i103 1
 S1
 R1
-R43
-R44
-R45
+R8
+R37
+R38
 !i122 1
-R22
+R20
 R11
 31
 R12
@@ -559,9 +561,9 @@ Inl[ER53D4?:i60mi_6eZn0
 !s105 rho_step_sv_unit
 S1
 R1
-Z46 w1776371789
-Z47 8../src/keccak_engine/rho_step.sv
-Z48 F../src/keccak_engine/rho_step.sv
+R8
+Z39 8../src/keccak_engine/rho_step.sv
+Z40 F../src/keccak_engine/rho_step.sv
 !i122 1
 L0 20 40
 R11
@@ -586,16 +588,95 @@ IcSf2V;;m?c9nW?G5gBBM;2
 !i103 1
 S1
 R1
-R46
-R47
-R48
+R8
+R39
+R40
 !i122 1
-R22
+R20
 R11
 31
 R12
 R13
 R14
+!i113 0
+R15
+R2
+vtb_top
+Z41 2../tb_uvm/tb_uvm_keccak/tb_top.sv
+R4
+Z42 DXx6 mtiUvm 7 uvm_pkg 0 22 MiVhEBb9cnBN5^J=<XBKI2
+R5
+DXx4 work 14 tb_top_sv_unit 0 22 O5c;5kfDhYabA[TGSn^V[0
+R6
+R7
+r1
+!s85 0
+!i10b 1
+!s100 R=1Gk]0;A<:P`QIA@XM_Q3
+IP_dNK4EQAPf^IDdz?R5hF2
+!s105 tb_top_sv_unit
+S1
+R1
+w1776631620
+Z43 8../tb_uvm/tb_uvm_keccak/tb_top.sv
+Z44 F../tb_uvm/tb_uvm_keccak/tb_top.sv
+!i122 3
+L0 24 52
+R11
+31
+R27
+Z45 !s107 ../tb_uvm/tb_uvm_keccak/keccak_tests.sv|../tb_uvm/tb_uvm_keccak/keccak_env.sv|../tb_uvm/tb_uvm_keccak/keccak_agent.sv|../tb_uvm/tb_uvm_keccak/keccak_scoreboard.sv|../tb_uvm/tb_uvm_keccak/keccak_monitor.sv|../tb_uvm/tb_uvm_keccak/keccak_driver.sv|../tb_uvm/tb_uvm_keccak/keccak_sequence.sv|../tb_uvm/tb_uvm_keccak/keccak_transaction.sv|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_deprecated_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_reg_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_callback_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_sequence_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/tlm1/uvm_tlm_imps.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_tlm_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_printer_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_object_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_phase_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_message_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_version_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/uvm_macros.svh|../tb_uvm/tb_uvm_keccak/tb_top.sv|
+Z46 !s90 -reportprogress|300|-sv|../tb_uvm/tb_uvm_keccak/tb_top.sv|
+!i113 0
+R15
+R2
+Xtb_top_sv_unit
+!i114 1
+R41
+!s115 keccak_if
+R4
+R42
+R5
+R6
+VO5c;5kfDhYabA[TGSn^V[0
+r1
+!s85 0
+!i10b 1
+!s100 0oG>oA`<D?LZgKg?eBLz42
+IO5c;5kfDhYabA[TGSn^V[0
+!i103 1
+S1
+R1
+w1776634626
+R43
+R44
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/uvm_macros.svh
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_version_defines.svh
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_message_defines.svh
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_phase_defines.svh
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_object_defines.svh
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_printer_defines.svh
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_tlm_defines.svh
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/tlm1/uvm_tlm_imps.svh
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_sequence_defines.svh
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_callback_defines.svh
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_reg_defines.svh
+FC:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_deprecated_defines.svh
+F../tb_uvm/tb_uvm_keccak/keccak_transaction.sv
+F../tb_uvm/tb_uvm_keccak/keccak_sequence.sv
+F../tb_uvm/tb_uvm_keccak/keccak_driver.sv
+F../tb_uvm/tb_uvm_keccak/keccak_monitor.sv
+F../tb_uvm/tb_uvm_keccak/keccak_scoreboard.sv
+F../tb_uvm/tb_uvm_keccak/keccak_agent.sv
+F../tb_uvm/tb_uvm_keccak/keccak_env.sv
+F../tb_uvm/tb_uvm_keccak/keccak_tests.sv
+!i122 3
+R30
+R11
+31
+R27
+R45
+R46
 !i113 0
 R15
 R2
@@ -614,9 +695,9 @@ IEDYPVQJ^U8>WUH=0F@]ja3
 !s105 theta_step_sv_unit
 S1
 R1
-Z49 w1776371792
-Z50 8../src/keccak_engine/theta_step.sv
-Z51 F../src/keccak_engine/theta_step.sv
+R8
+Z47 8../src/keccak_engine/theta_step.sv
+Z48 F../src/keccak_engine/theta_step.sv
 !i122 1
 L0 20 56
 R11
@@ -641,11 +722,11 @@ Ie7zTW>VW[8BME@cedTA[51
 !i103 1
 S1
 R1
-R49
-R50
-R51
+R8
+R47
+R48
 !i122 1
-R22
+R20
 R11
 31
 R12

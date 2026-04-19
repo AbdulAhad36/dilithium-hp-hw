@@ -14,6 +14,7 @@ package keccak_pkg;
 
     // Keccak Structure
     parameter int DWIDTH = 64; // Input data is 8 bytes
+    // parameter int DWIDTH = 256; // Input data is 32 bytes
     parameter int DATA_BYTE_NUM = DWIDTH/8;
     parameter int KEEP_WIDTH = DWIDTH/8; // 1 bit for every data byte
     parameter int X_WIDTH = $clog2(ROW_SIZE);

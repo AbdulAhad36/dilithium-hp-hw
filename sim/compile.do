@@ -19,11 +19,14 @@ vmap work work
 
 vlog -sv ../src/keccak_engine/keccak_pkg.sv
 vlog -sv ../src/keccak_engine/*.sv
-vlog -sv ../tb_uvm/tb_keccak_engine/keccak_core_tb.sv
+        #vlog -sv ../tb_uvm/tb_keccak_engine/keccak_core_tb.sv
+vlog -sv ../tb_uvm/tb_uvm_keccak/keccak_if.sv
+vlog -sv ../tb_uvm/tb_uvm_keccak/tb_top.sv
 
-        #vlog -sv ../tb_uvm/interface.sv
 
-        #vlog -sv ../tb_uvm/interfacePackage.sv
+        #vlog -sv ../tb_uvm/tb_uvm_reusable/interface.sv
 
-        #vlog -sv ../tb_uvm/tb.sv
+        #vlog -sv ../tb_uvm/tb_uvm_reusable/interfacePackage.sv
+
+        #vlog -sv ../tb_uvm/tb_uvm_reusable/tb.sv
 

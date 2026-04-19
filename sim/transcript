@@ -17,16 +17,16 @@
 # vmap work work 
 # Modifying modelsim.ini
 # QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# Start time: 01:45:21 on Apr 17,2026
+# Start time: 02:42:05 on Apr 20,2026
 # vlog -reportprogress 300 -sv ../src/keccak_engine/keccak_pkg.sv 
 # -- Compiling package keccak_pkg
 # 
 # Top level modules:
 # 	--none--
-# End time: 01:45:21 on Apr 17,2026, Elapsed time: 0:00:00
+# End time: 02:42:05 on Apr 20,2026, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
 # QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# Start time: 01:45:21 on Apr 17,2026
+# Start time: 02:42:05 on Apr 20,2026
 # vlog -reportprogress 300 -sv ../src/keccak_engine/chi_step.sv ../src/keccak_engine/iota_step.sv ../src/keccak_engine/keccak_absorb_unit.sv ../src/keccak_engine/keccak_core.sv ../src/keccak_engine/keccak_output_unit.sv ../src/keccak_engine/keccak_param_unit.sv ../src/keccak_engine/keccak_pkg.sv ../src/keccak_engine/keccak_step_unit.sv ../src/keccak_engine/pi_step.sv ../src/keccak_engine/rho_step.sv ../src/keccak_engine/theta_step.sv 
 # -- Compiling package chi_step_sv_unit
 # -- Importing package keccak_pkg
@@ -57,21 +57,34 @@
 # 
 # Top level modules:
 # 	keccak_core
-# End time: 01:45:21 on Apr 17,2026, Elapsed time: 0:00:00
+# End time: 02:42:06 on Apr 20,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 4
 # QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# Start time: 01:45:22 on Apr 17,2026
-# vlog -reportprogress 300 -sv ../tb_uvm/tb_keccak_engine/keccak_core_tb.sv 
-# -- Compiling package keccak_core_tb_sv_unit
+# Start time: 02:42:06 on Apr 20,2026
+# vlog -reportprogress 300 -sv ../tb_uvm/tb_uvm_keccak/keccak_if.sv 
+# -- Compiling package keccak_if_sv_unit
 # -- Importing package keccak_pkg
-# -- Compiling module keccak_core_tb
+# -- Compiling interface keccak_if
 # 
 # Top level modules:
-# 	keccak_core_tb
-# End time: 01:45:22 on Apr 17,2026, Elapsed time: 0:00:00
+# 	--none--
+# End time: 02:42:06 on Apr 20,2026, Elapsed time: 0:00:00
 # Errors: 0, Warnings: 0
-# vsim -voptargs="+acc" work.keccak_core_tb 
-# Start time: 01:45:22 on Apr 17,2026
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:42:06 on Apr 20,2026
+# vlog -reportprogress 300 -sv ../tb_uvm/tb_uvm_keccak/tb_top.sv 
+# ** Note: (vlog-2286) ../tb_uvm/tb_uvm_keccak/tb_top.sv(6): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+# -- Compiling package tb_top_sv_unit
+# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+# -- Importing package keccak_pkg
+# -- Compiling module tb_top
+# 
+# Top level modules:
+# 	tb_top
+# End time: 02:42:06 on Apr 20,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -voptargs="+acc" work.tb_top 
+# Start time: 02:42:07 on Apr 20,2026
 # ** Note: (vsim-3812) Design is being optimized...
 # ** Warning: (vopt-10587) Some optimizations are turned off because the +acc switch is in effect. This will cause your simulation to run slowly. Please use -access/-debug to maintain needed visibility.
 # Support of the MGLS_LICENSE_FILE and LM_LICENSE_FILE licensing environment variables will be discontinued starting with the 2025.1 release. Please update to using the SALT_LICENSE_SERVER variable.
@@ -82,8 +95,13 @@
 # ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=3.
 # Loading sv_std.std
 # Loading work.keccak_pkg(fast)
-# Loading work.keccak_core_tb_sv_unit(fast)
-# Loading work.keccak_core_tb(fast)
+# Loading work.keccak_if(fast)
+# Loading mtiUvm.uvm_pkg(fast)
+# Loading work.tb_top_sv_unit(fast)
+# Loading mtiUvm.questa_uvm_pkg(fast)
+# Loading work.tb_top(fast)
+# Loading work.keccak_if_sv_unit(fast)
+# Loading work.keccak_if(fast__2)
 # Loading work.keccak_core_sv_unit(fast)
 # Loading work.keccak_core(fast)
 # Loading work.keccak_param_unit_sv_unit(fast)
@@ -104,110 +122,48 @@
 # Loading work.keccak_absorb_unit(fast)
 # Loading work.keccak_output_unit_sv_unit(fast)
 # Loading work.keccak_output_unit(fast)
+# Loading C:/questasim64_2024.1/uvm-1.1d\win64\uvm_dpi.dll
+# ** Warning: (vsim-PLI-3003) [TOFD] - System task or function '$fsdbDumpfile' is not defined.
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top File: ../tb_uvm/tb_uvm_keccak/tb_top.sv Line: 71
+# ** Warning: (vsim-PLI-3003) [TOFD] - System task or function '$fsdbDumpvars' is not defined.
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top File: ../tb_uvm/tb_uvm_keccak/tb_top.sv Line: 72
 # .main_pane.wave.interior.cs.body.pw.wf
 # .main_pane.structure.interior.cs.body.struct
 # .main_pane.objects.interior.cs.body.tree
-# ----------------------------------------------------------
-# STARTING: SHA3-256 Empty (Continuous)
-# [SHA3-256 Empty (Continuous)] Monitor: Waiting for 32 bytes...
-#     [PASS] SHA3-256 Empty (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHA3-256 Short (Continuous)
-# [SHA3-256 Short (Continuous)] Monitor: Waiting for 32 bytes...
-#     [PASS] SHA3-256 Short (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHA3-256 Full Rate (Continuous)
-# [SHA3-256 Full Rate (Continuous)] Monitor: Waiting for 32 bytes...
-#     [PASS] SHA3-256 Full Rate (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHA3-256 Long (Continuous)
-# [SHA3-256 Long (Continuous)] Monitor: Waiting for 32 bytes...
-#     [PASS] SHA3-256 Long (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHA3-512 Empty (Continuous)
-# [SHA3-512 Empty (Continuous)] Monitor: Waiting for 64 bytes...
-#     [PASS] SHA3-512 Empty (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHA3-512 Short (Continuous)
-# [SHA3-512 Short (Continuous)] Monitor: Waiting for 64 bytes...
-#     [PASS] SHA3-512 Short (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHA3-512 Long (Continuous)
-# [SHA3-512 Long (Continuous)] Monitor: Waiting for 64 bytes...
-#     [PASS] SHA3-512 Long (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE128 Empty (Continuous)
-# [SHAKE128 Empty (Continuous)] Monitor: Waiting for 16 bytes...
-#     [PASS] SHAKE128 Empty (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE128 Empty (Bounded)
-# [SHAKE128 Empty (Bounded)] Monitor: Waiting for 16 bytes...
-#     [PASS] SHAKE128 Empty (Bounded)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE128 Short (Continuous)
-# [SHAKE128 Short (Continuous)] Monitor: Waiting for 16 bytes...
-#     [PASS] SHAKE128 Short (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE128 Short (Bounded)
-# [SHAKE128 Short (Bounded)] Monitor: Waiting for 16 bytes...
-#     [PASS] SHAKE128 Short (Bounded)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE128 Boundary Cross (Continuous)
-# [SHAKE128 Boundary Cross (Continuous)] Monitor: Waiting for 200 bytes...
-#     [PASS] SHAKE128 Boundary Cross (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE128 Boundary Cross (Bounded)
-# [SHAKE128 Boundary Cross (Bounded)] Monitor: Waiting for 200 bytes...
-#     [PASS] SHAKE128 Boundary Cross (Bounded)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE256 Empty (Continuous)
-# [SHAKE256 Empty (Continuous)] Monitor: Waiting for 32 bytes...
-#     [PASS] SHAKE256 Empty (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE256 Empty (Bounded)
-# [SHAKE256 Empty (Bounded)] Monitor: Waiting for 32 bytes...
-#     [PASS] SHAKE256 Empty (Bounded)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE256 Short (Continuous)
-# [SHAKE256 Short (Continuous)] Monitor: Waiting for 32 bytes...
-#     [PASS] SHAKE256 Short (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE256 Short (Bounded)
-# [SHAKE256 Short (Bounded)] Monitor: Waiting for 32 bytes...
-#     [PASS] SHAKE256 Short (Bounded)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE256 Long (Continuous)
-# [SHAKE256 Long (Continuous)] Monitor: Waiting for 32 bytes...
-#     [PASS] SHAKE256 Long (Continuous)
-#     [INFO] Test execution finished normally.
-# ----------------------------------------------------------
-# STARTING: SHAKE256 Long (Bounded)
-# [SHAKE256 Long (Bounded)] Monitor: Waiting for 32 bytes...
-#     [PASS] SHAKE256 Long (Bounded)
-#     [INFO] Test execution finished normally.
-# ==========================================================
-# TEST SUITE COMPLETE
-# ==========================================================
-# ** Note: $finish    : ../tb_uvm/tb_keccak_engine/keccak_core_tb.sv(513)
-#    Time: 24335 ns  Iteration: 0  Instance: /keccak_core_tb
-# 1
-# Break in Module keccak_core_tb at ../tb_uvm/tb_keccak_engine/keccak_core_tb.sv line 513
-# End time: 01:48:21 on Apr 17,2026, Elapsed time: 0:02:59
-# Errors: 0, Warnings: 3
+# ----------------------------------------------------------------
+# UVM-1.1d
+# (C) 2007-2013 Mentor Graphics Corporation
+# (C) 2007-2013 Cadence Design Systems, Inc.
+# (C) 2006-2013 Synopsys, Inc.
+# (C) 2011-2013 Cypress Semiconductor Corp.
+# ----------------------------------------------------------------
+# 
+#   ***********       IMPORTANT RELEASE NOTES         ************
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_NO_DEPRECATED undefined.
+#   See http://www.eda.org/svdb/view.php?id=3313 for more details.
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_OBJECT_MUST_HAVE_CONSTRUCTOR undefined.
+#   See http://www.eda.org/svdb/view.php?id=3770 for more details.
+# 
+#       (Specify +UVM_NO_RELNOTES to turn off this notice)
+# 
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(277) @ 0: reporter [Questa UVM] QUESTA_UVM-1.2.3
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(278) @ 0: reporter [Questa UVM]  questa_uvm::init(+struct)
+# UVM_INFO @ 0: reporter [RNTST] Running test keccak_base_test...
+# ** Error (suppressible): (vsim-12023) Cannot execute undefined system task/function '$fsdbDumpfile'
+#    Time: 0 ps  Iteration: 0  Process: /tb_top/#INITIAL#70 File: ../tb_uvm/tb_uvm_keccak/tb_top.sv Line: 71
+# ** Error (suppressible): (vsim-12023) Cannot execute undefined system task/function '$fsdbDumpvars'
+#    Time: 0 ps  Iteration: 0  Process: /tb_top/#INITIAL#70 File: ../tb_uvm/tb_uvm_keccak/tb_top.sv Line: 72
+# UVM_INFO ../tb_uvm/tb_uvm_keccak/keccak_monitor.sv(49) @ 5000: uvm_test_top.env.agent.monitor [keccak_monitor] Monitoring transaction: mode=SHA3_256, xof_len=0
+# UVM_INFO ../tb_uvm/tb_uvm_keccak/keccak_driver.sv(33) @ 145000: uvm_test_top.env.agent.driver [keccak_driver] Driving: TEST: RANDOM_SHA3_256_LEN        588, Mode: SHA3_256, MsgLen: 588 bytes, OutBits: 184
+# UVM_INFO ../tb_uvm/tb_uvm_keccak/keccak_driver.sv(33) @ 360000: uvm_test_top.env.agent.driver [keccak_driver] Driving: TEST: RANDOM_SHA3_256_LEN        729, Mode: SHA3_256, MsgLen: 729 bytes, OutBits: 496
+# UVM_INFO ../tb_uvm/tb_uvm_keccak/keccak_monitor.sv(90) @ 635000: uvm_test_top.env.agent.monitor [keccak_monitor] Collected 32 bytes
+# A time value could not be extracted from the current line
+# A time value could not be extracted from the current line
+# Break key hit
+# Break in Module keccak_if at ../tb_uvm/tb_uvm_keccak/keccak_if.sv line 35
+# End time: 02:57:57 on Apr 20,2026, Elapsed time: 0:15:50
+# Errors: 2, Warnings: 5
