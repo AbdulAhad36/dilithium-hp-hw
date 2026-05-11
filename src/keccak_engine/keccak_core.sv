@@ -234,6 +234,7 @@ module keccak_core (
     // Module to get sha3 parameters during initializtion
     keccak_param_unit KPU (
         .keccak_mode_i  (KPU_MODE_I),
+        // .keccak_mode_i  (2'b11),
 
         .rate_o         (KPU_RATE_O),
         .suffix_o       (KPU_SUFFIX_O)

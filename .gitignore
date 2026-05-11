@@ -1,0 +1,19 @@
+# QuestaSim build artifacts
+sim/work/
+sim/transcript
+sim/vsim.wlf
+sim/*.wlf
+sim/wlft*
+sim/*.ucdb
+transcript
+vsim.wlf
+modelsim.ini
+
+# Claude Code local state
+.claude/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

@@ -13,8 +13,9 @@ package keccak_pkg;
     parameter int L_SIZE = 7;
 
     // Keccak Structure
-    parameter int DWIDTH = 64; // Input data is 8 bytes
+    parameter int DWIDTH = 64; // Input data is 8 bytes (MAIN WHCIH DUT SUPPORTS)
     // parameter int DWIDTH = 256; // Input data is 32 bytes
+
     parameter int DATA_BYTE_NUM = DWIDTH/8;
     parameter int KEEP_WIDTH = DWIDTH/8; // 1 bit for every data byte
     parameter int X_WIDTH = $clog2(ROW_SIZE);
@@ -22,10 +23,10 @@ package keccak_pkg;
 
     // Different Keccak Modes
     typedef enum {
-        SHA3_256,
-        SHA3_512,
         SHAKE128,
-        SHAKE256
+        SHAKE256,
+        SHA3_256,
+        SHA3_512
     } keccak_mode;
     parameter int MODE_NUM = 4;
     parameter int MODE_SEL_WIDTH = $clog2(MODE_NUM);

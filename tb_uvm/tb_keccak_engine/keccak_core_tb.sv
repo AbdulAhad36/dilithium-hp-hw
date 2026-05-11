@@ -110,6 +110,7 @@ module keccak_core_tb;
         @(posedge clk);
         rst = 0;
         @(posedge clk);
+
     endtask
 
     // =====================================================================
@@ -153,17 +154,17 @@ module keccak_core_tb;
 
         // Handle empty message case (Len=0)
         if (total_bytes == 0) begin
-            // Wait for handshake safely using negedge sampling
+            // Wait for handshake safely using negedge sampling 
             forever begin
                 @(negedge clk);
                 if (s_axis_tready) break;
             end
 
             // Drive active payload at the same NegEdge
-            s_axis_tvalid <= 1;
-            s_axis_tlast  <= 1;
-            s_axis_tkeep  <= '0;
-            s_axis_tdata  <= '0;
+            s_axis_tvalid  <=   1;
+            s_axis_tlast   <=   1;
+            s_axis_tkeep   <=  '0;
+            s_axis_tdata   <=  '0;
 
             // Wait for the RTL to sample the data exactly ONCE.
             @(posedge clk);
@@ -210,6 +211,7 @@ module keccak_core_tb;
         s_axis_tvalid <= 0;
         s_axis_tlast  <= 0;
         s_axis_tkeep  <= 0;
+    
     endtask
 
     // =====================================================================
