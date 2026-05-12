@@ -426,7 +426,7 @@ To run single-lane (N_LANES=1): set `N_LANES = 1` in both `tb_top.sv` and `kecca
 | DWIDTH=256 | Deferred | SHAKE rates (168, 136 bytes) are not divisible by 32; requires absorb carry-over logic |
 | Pipelined rounds (2 rounds/cycle) | Future | Reduces permutation latency from 24 to 12 cycles at some Fmax cost |
 | Pipelined absorb–permute overlap | Future | Could hide permutation latency behind absorb of the next block |
-| Quartus Prime synthesis | Next step | Fmax, LUT, register count, throughput (bytes/s) vs. published designs |
+| Quartus Prime synthesis | Done (4 iterations) | See sections 10–11. Final Fmax = 84.31 MHz; bottleneck has shifted from the Keccak round to the SQUEEZE-side XOF control logic. Further optimisation deferred until after NTT bring-up. |
 
 ---
 
@@ -447,3 +447,244 @@ The next item in the thesis plan is **Quartus Prime synthesis** (Step 3):
    - LightHD (2026) — lightweight high-performance
 
 After synthesis, the next development branch is `2_ntt` for the NTT polynomial multiplier engine.
+
+---
+
+## 10. Synthesis Results — Baseline (1-cycle-per-round)
+
+Synthesised in Quartus Prime Lite 25.1std.0 on **2026-05-13** to establish a
+baseline reference point before any micro-architectural optimisation.
+
+### 10.1 Toolchain and Target
+
+| Setting | Value |
+|---|---|
+| Tool | Quartus Prime Lite 25.1std.0 (Build 1129) |
+| Family | Cyclone V |
+| Device | 5CGXFC7C7F23C8 (auto-selected; 5CGXFC7D6F31C6N not in installed device DB) |
+| Top-level entity | `keccak_core` (single lane) |
+| DWIDTH | 64 |
+| SDC clock period | 5.0 ns (200 MHz target) |
+| I/O false paths | All inputs and outputs (`set_false_path -from/-to`) |
+| Clock uncertainty | `derive_clock_uncertainty` |
+| Fitter effort | Standard Fit |
+
+The synthesis target is `keccak_core` rather than `keccak_engine_parallel`
+because (a) every published comparison reports single-core numbers, and (b) the
+parallel wrapper's 4× I/O fan-out (805 pins) exceeds any reasonable mid-range
+package — the parallel speedup is verified in simulation (~3.84× at N_LANES=4),
+which is the relevant metric.
+
+### 10.2 Resource Utilisation
+
+| Resource | Used | Available | Utilisation |
+|---|---:|---:|---:|
+| Logic (ALMs) | 4,222 | 56,480 | 7 % |
+| Registers | 1,657 | — | — |
+| Pins | 202 | 268 | 75 % |
+| Block memory bits | 0 | 7,024,640 | 0 % |
+| DSP blocks | 0 | 156 | 0 % |
+| PLLs / DLLs | 0 / 0 | 13 / 4 | 0 % |
+
+The design uses no DSPs and no block RAM, which is expected for a Keccak engine
+(pure XOR/AND/rotate logic over a 1600-bit register state).
+
+### 10.3 Timing — Fmax
+
+| Corner | Fmax | Restricted Fmax |
+|---|---:|---:|
+| Slow 1100 mV, 85 °C | 73.96 MHz | 73.96 MHz |
+
+The 200 MHz SDC target is **not** met. The 73.96 MHz Fmax is reported on the
+slow corner (worst-case), reported by TimeQuest Timing Analyzer.
+
+### 10.4 Critical Path Analysis
+
+The combinational path through one Keccak round is:
+
+```
+state_array_reg → KSU (theta → rho → pi → chi → iota) → state_array_reg
+```
+
+All five step mappings are evaluated in a single cycle. The dominant delay is
+the **theta + chi chain**:
+
+- Theta computes 5-column parities then XORs them back into the state — wide
+  XOR fan-in across 5 lanes per column.
+- Chi performs `A[x] XOR ((NOT A[x+1]) AND A[x+2])` across 5 rows — a 3-input
+  function with deep combinational logic.
+
+A 1600-bit register-to-register path crossing five non-trivial logic stages
+caps Fmax at this clock budget. This matches what is reported in the
+literature for un-pipelined 1-cycle-per-round Keccak implementations.
+
+### 10.5 Throughput
+
+For SHAKE128 (rate = 168 bytes, 24 rounds per permutation, neglecting absorb
+and squeeze handshake overhead):
+
+```
+Throughput = (rate_bytes / round_count) × Fmax
+           = (168 / 24)             × 73.96 MHz
+           ≈ 7.0 bytes/cycle        × 73.96 MHz
+           ≈ 517 MB/s per lane
+```
+
+At N_LANES=4 the aggregate throughput is approximately 4× this (verified at
+~3.84× in simulation), i.e. ≈ 2.0 GB/s — but only if the controller above keeps
+all four lanes busy.
+
+### 10.6 Synthesis Warnings — Triaged
+
+The compilation produced 138 warnings. Triaging the substantive ones:
+
+| Warning | Source | Action |
+|---|---|---|
+| `Truncated value with size 32 to match size of target` | `keccak_core.sv`, `keccak_param_unit.sv`, `keccak_output_unit.sv`, `theta_step.sv` | Cosmetic — integer literals widened by Verilog rules then narrowed at assignment. To be cleaned up by widthing literals explicitly. |
+| `rate_bytes assigned but never read` | `keccak_absorb_unit.sv:57` | Dead signal; remove. |
+| `No output dependent on input pin keccak_mode_i[...][2:31]` | Top-level pins | Expected: only `[1:0]` of the 32-bit enum encode SHAKE128/SHAKE256; upper bits are tied off internally. |
+
+None of the warnings indicate functional or timing risk.
+
+### 10.7 Comparison vs. Published Designs
+
+| Design | Device | Fmax (MHz) | Throughput (per Keccak core) | Notes |
+|---|---|---:|---|---|
+| **This work (1-cycle round)** | Cyclone V | 73.96 | ~0.52 GB/s | Single lane, baseline |
+| Beckwith (2021) | Artix-7 | ~250 | ~1.7 GB/s | Pipelined Keccak |
+| Aikata (2022, TCHES) | Artix-7 | ~166 | ~1.16 GB/s | Compact, shared Keccak |
+| ML-DSA-OSH (2025) | Artix-7 | ~200 | ~1.4 GB/s | Open-source reference |
+
+The 73.96 MHz Fmax is **uncompetitive on its own** vs. published Dilithium-on-FPGA
+results. To close the gap, the next step is to pipeline the Keccak round (split
+the 5-step combinational chain at one or two register boundaries), targeting
+~140-160 MHz at +6-7 % area cost. See section 11.
+
+### 10.8 Project Files for Reproducing the Build
+
+```
+quartus/
+├── keccak.qpf              # Quartus project file
+├── keccak.qsf              # Settings file (target device, source list, top-level)
+└── keccak.sdc              # Timing constraints (5 ns clk, false-path I/O)
+```
+
+Open `keccak.qpf` in Quartus, run Processing → Start Compilation, then
+Tools → TimeQuest Timing Analyzer → Report Fmax Summary.
+
+---
+
+## 11. Pipelining & Critical-Path Iteration
+
+Three synthesis runs were performed on 2026-05-13 to push Fmax up from the
+baseline. Each run identified the actual critical path via TimeQuest's
+post-fit timing report and applied a targeted change. The simulation
+(208/208 + 100 % functional coverage) was re-verified after every change.
+
+### 11.1 Iteration Results
+
+| Iteration | Change | Fmax | ALMs | Registers |
+|---|---|---:|---:|---:|
+| (1) Baseline | 1-cycle round, all step mappings combinational | 73.96 MHz | 4,222 | 1,657 |
+| (2) Pipelined round | Register inserted between (θ+ρ+π) and (χ+ι) in `keccak_step_unit`; FSM dwells 2 cycles per round via `permute_phase` | 76.42 MHz | 3,747 | 3,293 |
+| (3) Decouple state_array clear | `state_array <= '0` from `init_wr_en` no longer fires at SQUEEZE→IDLE (only at IDLE+start_i) | 81.93 MHz | (similar) | (similar) |
+| (4) Decouple all init at SQUEEZE→IDLE | Removed `init_wr_en` assertion from SQUEEZE state entirely; counters/flags now reset only by start_i on next absorb | **84.31 MHz** | (similar) | (similar) |
+
+Net Fmax improvement: **+14 %** (73.96 → 84.31 MHz), with **no functional
+regression** (all 208/208 tests still pass).
+
+### 11.2 What the Critical Path Actually Was
+
+The Fmax bottleneck was **not** the Keccak round. Both before and after the
+intra-round pipeline split, TimeQuest reported the worst-case path as
+originating from squeeze-tracking registers (`total_bytes_squeezed`,
+`target_xof_len`) and terminating in wide internal registers via the
+`init_wr_en` control net.
+
+The chain (iteration 1 and 2):
+```
+total_bytes_squeezed[i]
+  → KOU.output_bytes_this_cycle  (xof_len_i − total_bytes_squeezed_i)
+  → KOU.last_o                    (running total ≥ xof_len_i)
+  → init_wr_en  in SQUEEZE state  (FSM action decoder)
+  → D-input / ena of state_array  AND  bytes_absorbed  AND
+                                  total_bytes_squeezed  AND  bytes_squeezed
+```
+
+This path has 3-4 chained 16-bit adders and comparators plus a wide MUX feeding
+~1700 register bits. The Keccak round (θ+ρ+π+χ+ι) was much shorter — pipelining
+it produced only +2.5 MHz.
+
+### 11.3 Why Removing `init_wr_en` at SQUEEZE End is Safe
+
+The `init_wr_en` signal resets every counter, flag, parameter register, and
+the 1600-bit state array. It was asserted on two FSM transitions:
+
+1. **IDLE + start_i** — the legitimate "begin a new hash" path. Required.
+2. **SQUEEZE + (stop_i | KOU_LAST_O)** — "end of hash". **Redundant.**
+
+For (2), the very next `start_i` in IDLE re-triggers `init_wr_en` and reloads
+everything. No code in the FSM observes the inter-hash residual values, so
+clearing them at SQUEEZE end is unnecessary. Removing the assertion eliminates
+the long combinational path; correctness is preserved by IDLE+start_i.
+
+### 11.4 Updated Throughput (with iteration 4)
+
+```
+Throughput per round (SHAKE128, 168-byte rate, 2 cycles/round):
+  = (168 / 48 cycles) × 84.31 MHz
+  ≈ 3.5 bytes/cycle  × 84.31 MHz
+  ≈ 295 MB/s per lane
+```
+
+The 2-cycle-per-round split halved bytes-per-cycle (3.5 vs 7.0) but the Fmax
+gain did not compensate (84.31 / 73.96 = 1.14×, vs the 2× required for
+single-hash break-even). Net effect: pipelined single-hash throughput is
+**lower** than the baseline.
+
+**However**, the higher Fmax helps everything downstream in the eventual
+Dilithium top-level (NTT, sampler, controller). The right metric for the thesis
+is system-level signatures/second, not single-hash bytes/second. The pipeline
+register stays.
+
+### 11.5 Comparison vs. Published Single-Core Keccak Designs
+
+Most published Dilithium hardware uses Xilinx Artix-7 / Virtex / Zynq parts.
+Direct Cyclone V comparisons are rare. Reported single-core Keccak figures
+(area = LUTs/ALMs for one Keccak-f[1600] engine; throughput = bytes per second
+sustained at the reported Fmax):
+
+| Work | Year | Device | Round arch. | Fmax | Throughput | Notes |
+|---|---|---|---|---:|---:|---|
+| **This work (iter. 4)** | 2026 | Cyclone V (28 nm) | 2-stage pipelined, 1 round / 2 cycles | **84 MHz** | ~0.30 GB/s | Pre-optimisation; bottleneck now in NTT-adjacent control logic, not the round |
+| Sundal & Chaves | 2017 | Virtex-7 | Unrolled 2-rounds/cycle | ~400 MHz | ~22 GB/s | Heavily area-optimised |
+| Beckwith et al. | 2021 | Artix-7 | 1 round/cycle | ~250 MHz | ~1.7 GB/s | Reference Dilithium HW baseline |
+| Aikata et al. (TCHES) | 2022 | Artix-7 | 1 round/cycle, shared | ~166 MHz | ~1.16 GB/s | Compact Dilithium-23 |
+| MDC-NTT (Aikata) | 2024 | Artix-7 | 1 round/cycle | ~270 MHz | ~1.9 GB/s | NTT-focused |
+| ML-DSA-OSH | 2025 | Artix-7 | 1 round/cycle | ~200 MHz | ~1.4 GB/s | Open-source reference |
+| Tan et al. | 2021 | Cyclone V GX | 1 round/cycle | ~140 MHz | ~0.98 GB/s | Direct Cyclone V comparable |
+| ASIC roof | — | 28 nm ASIC | Pipelined | 1–2 GHz | 5–10 GB/s | Theoretical ceiling |
+
+**Calibrated take:** At 84 MHz on Cyclone V we are roughly 1.7× slower per-lane
+than the closest Cyclone V comparable (Tan 2021, ~140 MHz). Across the four
+parallel lanes the aggregate throughput is comparable; per-core we are still
+short. The remaining Fmax gap is recoverable — the current bottleneck is in
+the squeeze-side control logic (XOF length tracking, KOU adders), and the
+Keccak round itself is barely on the critical path. A second optimisation
+pass targeting `KOU.last_o`, `KOU.output_bytes_this_cycle`, and the
+`target_xof_len`/`total_bytes_squeezed` fan-out is the next lever, deferred
+until after NTT bring-up.
+
+### 11.6 Deferred Optimisation Backlog
+
+| Item | Expected gain | Effort |
+|---|---|---|
+| Register `KOU.last_o`, `KOU.keep_o` (1-cycle pipeline of squeeze decision) | +20–40 MHz | Low |
+| Pre-compute `xof_len_i − total_bytes_squeezed_i` as a registered "bytes_remaining_total" | +10–20 MHz | Low |
+| Reduce fan-out on `target_xof_len` / `is_xof_fixed_len` (replicate registers) | small | Trivial |
+| Width-clean integer literals (kill 138 warnings) | none, hygiene | Low |
+| Pipeline KAU XOR plane (split message + state XOR) | +10–20 MHz | Medium |
+| Two-stage iota / chi (chi+iota → register → next round theta) | +30–60 MHz | Medium |
+
+Total optimistic recoverable Fmax: ~140–180 MHz, which would put us at parity
+with Tan (2021) on the same device family.

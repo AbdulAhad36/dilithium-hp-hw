@@ -58,7 +58,11 @@ module keccak_absorb_unit (
     assign rate_bytes = rate_i >> 3; // Convert bits to bytes
 
     logic [$clog2(KEEP_WIDTH + 1)-1:0] valid_byte_count;
-    assign valid_byte_count = $countones(keep_i);
+    always_comb begin
+        valid_byte_count = '0;
+        for (int i = 0; i < KEEP_WIDTH; i++)
+            valid_byte_count = valid_byte_count + keep_i[i];
+    end
 
     // ==========================================================
     // 3. PROCESS ABSORB (No Carry Over with 64-bit DWIDTH)
@@ -106,6 +110,7 @@ module keccak_absorb_unit (
 
     always_comb begin
         // Zero all operands
+        start_lane_idx = '0;
         for (int i = 0; i < 25; i++) begin
             xor_plane[i] = '0;
         end

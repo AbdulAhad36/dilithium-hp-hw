@@ -18,6 +18,8 @@
 import keccak_pkg::*;
 
 module keccak_step_unit (
+    input   wire                                              clk,
+    input   wire                                              rst,
     input   logic [ROW_SIZE-1:0][COL_SIZE-1:0][LANE_SIZE-1:0] state_array_i,
     // Enable for operand isolation (Power optimization)
     input   wire                                              perm_en_i,
@@ -30,6 +32,7 @@ module keccak_step_unit (
     logic [ROW_SIZE-1:0][COL_SIZE-1:0][LANE_SIZE-1:0]   theta_out,
                                                         rho_out,
                                                         pi_out,
+                                                        pi_out_reg,
                                                         chi_out,
                                                         iota_out;
 
@@ -42,15 +45,30 @@ module keccak_step_unit (
     assign state_in_gated = perm_en_i ? state_array_i : '0;
 
     // ==========================================================
-    // COMBINATIONAL CASCADE: θ → ρ → π → χ → ι
+    // PIPELINED ROUND:  θ → ρ → π  ||  [REG]  ||  χ → ι
     // ==========================================================
-    // Each step feeds directly into the next, forming a single
-    // combinational path that executes one complete Keccak round.
+    // Stage A (combinational): theta + rho + pi
+    // Stage B (combinational): chi + iota
+    // A pipeline register (pi_out_reg) splits the two stages so each
+    // half meets a tighter clock period at the cost of +1 cycle latency
+    // per round. The keccak_core FSM dwells 2 cycles per round.
 
+    // Stage A
     theta_step u_theta (.state_array_i(state_in_gated), .state_array_o(theta_out));
-    rho_step   u_rho   (.state_array_i(theta_out),     .state_array_o(rho_out));
+    rho_step   u_rho   (.state_array_i(theta_out),      .state_array_o(rho_out));
     pi_step    u_pi    (.state_array_i(rho_out),        .state_array_o(pi_out));
-    chi_step   u_chi   (.state_array_i(pi_out),         .state_array_o(chi_out));
+
+    // Pipeline register between stages
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) begin
+            pi_out_reg <= '0;
+        end else begin
+            pi_out_reg <= pi_out;
+        end
+    end
+
+    // Stage B
+    chi_step   u_chi   (.state_array_i(pi_out_reg),     .state_array_o(chi_out));
     iota_step  u_iota  (.state_array_i(chi_out),
                         .round_index_i(round_index_i),
                         .state_array_o(iota_out));

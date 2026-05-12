@@ -9,6 +9,27 @@ transcript
 vsim.wlf
 modelsim.ini
 
+# Quartus build artifacts
+quartus/output_files/
+quartus/db/
+quartus/incremental_db/
+quartus/c5_pin_model_dump.txt
+quartus/simulation/
+quartus/*.rpt
+quartus/*.smsg
+quartus/*.summary
+quartus/*.pin
+quartus/*.done
+quartus/*.jdi
+quartus/*.sof
+quartus/*.pof
+quartus/*.rbf
+quartus/*.svf
+quartus/*.ttf
+quartus/*.cdf
+quartus/*.qws
+quartus/*.bak
+
 # Claude Code local state
 .claude/
 

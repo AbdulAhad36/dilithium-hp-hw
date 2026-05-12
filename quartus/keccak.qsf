@@ -1,0 +1,50 @@
+# =============================================================================
+# keccak.qsf  -  Quartus Settings File
+# Target: Cyclone V  5CGXFC7C7F23C8
+# Top:    keccak_core (single lane — benchmark target)
+# =============================================================================
+
+# Device
+set_global_assignment -name FAMILY "Cyclone V"
+set_global_assignment -name DEVICE 5CGXFC7C7F23C8
+
+# Top-level
+set_global_assignment -name TOP_LEVEL_ENTITY keccak_core
+
+# Project settings
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
+set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
+
+# Compiler settings
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
+set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
+
+# Source files — RTL
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/keccak_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/theta_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/rho_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/pi_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/chi_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/iota_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/keccak_step_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/keccak_param_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/keccak_absorb_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/keccak_output_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/keccak_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../src/keccak_engine/keccak_engine_parallel.sv
+
+# SDC timing constraints
+set_global_assignment -name SDC_FILE keccak.sdc
+
+# Fitter effort
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

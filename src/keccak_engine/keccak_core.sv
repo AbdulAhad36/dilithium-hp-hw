@@ -125,6 +125,10 @@ module keccak_core (
 
     // KSU Permutation Registers
     reg [ROUND_INDEX_SIZE-1:0]      round_idx;
+    // 1-bit phase counter for the 2-stage pipelined KSU.
+    //   phase=0 : stage A computing (theta+rho+pi) of current round_idx
+    //   phase=1 : stage B output valid (chi+iota), state_array commits, round_idx++
+    reg                             permute_phase;
 
     // Keccak Parameter Setup Registers
     reg [RATE_WIDTH-1:0]            rate; // Rate in BITS (1344 for SHAKE128, 1088 for SHAKE256)
@@ -243,8 +247,11 @@ module keccak_core (
 
     // 2B. KECCAK STEP UNIT (KSU)
     // ----------------------------------------------------------
-    // Keccak Round Unit: Executes all 5 step mappings (θ→ρ→π→χ→ι) in 1 cycle.
+    // Keccak Round Unit: Pipelined into 2 stages (θ+ρ+π | χ+ι), so each
+    // round takes 2 cycles. See FSM section for permute_phase pacing.
     keccak_step_unit KSU (
+        .clk            (clk),
+        .rst            (rst),
         .state_array_i  (KSU_STATE_ARRAY_I),
         .perm_en_i      (KSU_PERM_EN_I),
         .round_index_i  (KSU_ROUND_INDEX_I),
@@ -358,10 +365,11 @@ module keccak_core (
                 next_state = STATE_PERMUTE;
             end
 
-            // ------------ PERMUTATION (1 Round Per Cycle) ------------
+            // ------------ PERMUTATION (2 Cycles Per Round) -----------
             STATE_PERMUTE : begin
-                // Keccak-f[1600] requires 24 rounds (Indices 0 to 23)
-                if (round_idx == 'd23) begin
+                // Round complete only at end of stage B (permute_phase=1).
+                // 24 rounds × 2 cycles = 48 cycles in this state.
+                if (round_idx == 'd23 && permute_phase == 1'b1) begin
                     if (absorb_done) begin
                         next_state = STATE_SQUEEZE;
                     end else begin
@@ -420,6 +428,7 @@ module keccak_core (
         t_keep_o    = '0;
 
         // ----- Internal Control Signals -----
+        state_array_in_sel  = KSU_SEL;
         state_array_wr_en   = 1'b0;
         init_wr_en          = 1'b0;
 
@@ -474,16 +483,19 @@ module keccak_core (
                 perm_en             = 1'b1;
             end
 
-            // ------------ PERMUTATION (1 Round Per Cycle) ------------
+            // ------------ PERMUTATION (2 Cycles Per Round) -----------
             STATE_PERMUTE : begin
-                state_array_wr_en   = 1'b1;
+                // Only commit state_array and advance round_idx at end of
+                // stage B (permute_phase==1). Stage A (phase==0) keeps the
+                // pipeline filling with no externally visible update.
                 state_array_in_sel  = KSU_SEL;
-
-                // Keccak-f[1600] requires 24 rounds (Indices 0 to 23)
-                if (round_idx == 'd23) begin
-                    rst_round_idx_en = 1'b1;
-                end else begin
-                    inc_round_idx_en = 1'b1;
+                if (permute_phase == 1'b1) begin
+                    state_array_wr_en = 1'b1;
+                    if (round_idx == 'd23) begin
+                        rst_round_idx_en = 1'b1;
+                    end else begin
+                        inc_round_idx_en = 1'b1;
+                    end
                 end
             end
             // ---------------------------------------------------------
@@ -498,17 +510,23 @@ module keccak_core (
                     update_total_squeezed_en = 1'b1;
                 end
 
-                if (stop_i) begin
-                    init_wr_en = 1'b1;
-
-                end else if (t_ready_i) begin
-                    // A. Bounded XOF target reached (last_o asserted by KOU)
+                // SQUEEZE -> IDLE: no init_wr_en here. All counters/registers
+                // (bytes_absorbed, total_bytes_squeezed, state_array, etc.)
+                // will be reloaded on the next start_i in IDLE. Asserting
+                // init_wr_en from SQUEEZE creates a long combinational path:
+                //   total_bytes_squeezed -> KOU.last_o -> init_wr_en ->
+                //   ena/D of many wide registers, which was the design's
+                //   critical path. Skipping it here is functionally
+                //   equivalent and unblocks Fmax.
+                if (!stop_i && t_ready_i) begin
+                    // A. Bounded XOF target reached (last_o asserted by KOU):
+                    //    just stay quiet — next_state goes to IDLE.
                     if (KOU_LAST_O) begin
-                        init_wr_en = 1'b1;
+                        // (no action)
 
                     // B. Check Rate Empty -> Re-Permute (SHAKE)
                     end else if (KOU_PERM_NEEDED_O) begin
-                        perm_en = 1'b1; // Reset counters
+                        perm_en = 1'b1; // Reset bytes_absorbed/squeezed counters
 
                     // C. Continue Squeezing
                     end else begin
@@ -540,6 +558,7 @@ module keccak_core (
         if (rst) begin
             state_array         <= 'b0;
             round_idx           <= 'b0;
+            permute_phase       <= 1'b0;
             msg_received        <= 'b0;
 
             // Absorb Signals
@@ -558,17 +577,18 @@ module keccak_core (
                 rate             <= KPU_RATE_O;
                 suffix           <= KPU_SUFFIX_O;
 
-                // 2. CRITICAL: Wipe the State Logic
-                state_array      <= '0;  // Must be 0 before starting new Absorb
+                // 2. Wipe the state and all counters/flags. init_wr_en
+                //    is only asserted in IDLE+start_i (SQUEEZE no longer
+                //    triggers init), so this path is not in the Fmax
+                //    critical path.
+                state_array      <= '0;
                 bytes_absorbed   <= '0;
                 bytes_squeezed   <= '0;
                 total_bytes_squeezed <= '0;
                 msg_received     <= '0;
-
-                // 3. Clear Internal Flags
                 absorb_done      <= '0;
-
                 round_idx        <= '0;
+                permute_phase    <= 1'b0;
 
             // Reset bytes absorbed after absorb permutation
             end else if (perm_en) begin
@@ -598,6 +618,13 @@ module keccak_core (
             // If source has completed full message transfer
             if (msg_received_wr_en) begin
                 msg_received <= 1'b1;
+            end
+
+            // --- Pipeline Phase Tracking (2-cycle round) ---
+            if (state == STATE_PERMUTE) begin
+                permute_phase <= ~permute_phase;
+            end else begin
+                permute_phase <= 1'b0;
             end
 
             // --- Permutation Round Control ---

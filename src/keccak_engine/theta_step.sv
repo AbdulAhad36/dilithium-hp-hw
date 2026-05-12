@@ -65,8 +65,8 @@ module theta_step (
      */
     genvar y;
     generate
-        for (x = 0; x<ROW_SIZE; x = x + 1) begin
-            for (y = 0; y<COL_SIZE; y = y + 1) begin
+        for (x = 0; x<ROW_SIZE; x = x + 1) begin : gen_theta_x
+            for (y = 0; y<COL_SIZE; y = y + 1) begin : gen_theta_y
                 assign state_array_o[x][y] = state_array_i[x][y] ^ D[x];
             end
         end
