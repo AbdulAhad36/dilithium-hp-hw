@@ -3,7 +3,7 @@
  * Author: Kiet Le
  * Description:
  * - Fully compliant FIPS 202 Keccak Permutation Core.
- * - Supports SHA3-256, SHA3-512, SHAKE128, and SHAKE256 modes via 'keccak_mode_i'.
+ * - Supports SHAKE128 and SHAKE256 modes via 'keccak_mode_i' (SHAKE-only build).
  * - Implements standard AXI4-Stream Sink/Source interfaces for data IO.
  * - Features a 1-Cycle Round Architecture: all five step mappings (θ, ρ, π, χ, ι)
  *   execute combinationally in a single clock cycle per round.
@@ -127,7 +127,7 @@ module keccak_core (
     reg [ROUND_INDEX_SIZE-1:0]      round_idx;
 
     // Keccak Parameter Setup Registers
-    reg [RATE_WIDTH-1:0]            rate; // Rate in BITS (e.g., 1088 for SHA3-256)
+    reg [RATE_WIDTH-1:0]            rate; // Rate in BITS (1344 for SHAKE128, 1088 for SHAKE256)
     reg [SUFFIX_WIDTH-1:0]          suffix;
 
     // Keccak Mode Register
@@ -380,7 +380,7 @@ module keccak_core (
 
                 // PRIORITY 2: Output Data
                 end else if (t_ready_i) begin
-                    // A. Check Fixed Hash Done (SHA3-*)
+                    // A. Bounded XOF target reached (last_o asserted by KOU)
                     if (KOU_LAST_O) begin
                         next_state = STATE_IDLE;
 
@@ -502,7 +502,7 @@ module keccak_core (
                     init_wr_en = 1'b1;
 
                 end else if (t_ready_i) begin
-                    // A. Check Fixed Hash Done (SHA3-*)
+                    // A. Bounded XOF target reached (last_o asserted by KOU)
                     if (KOU_LAST_O) begin
                         init_wr_en = 1'b1;
 

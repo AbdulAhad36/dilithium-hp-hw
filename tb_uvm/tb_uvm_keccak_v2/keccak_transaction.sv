@@ -29,9 +29,7 @@ class keccak_transaction extends uvm_sequence_item;
         case (mode)
             SHAKE128: return 168;
             SHAKE256: return 136;
-            SHA3_256: return 136;
-            SHA3_512: return 72;
-            default:  return 136;
+            default:  return 168;
         endcase
     endfunction
 

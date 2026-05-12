@@ -1,72 +1,80 @@
 # =========================================================================
-# run.do  -  Full compile + sim + coverage + waveform capture
-# Run in QuestaSim GUI:   vsim -do run.do
-# Run in headless console: vsim -c -do run.do
+# run.do  -  Single entry point: compile + simulate + coverage + waveform
+#
+# GUI:       vsim -do run.do
+# Headless:  vsim -c -do "do run.do; quit -f"
+#
+# Targets keccak_engine_parallel (N_LANES configurable in tb_top.sv).
+# Every transaction on every lane is golden-compared against the pure-SV
+# SHAKE reference model in keccak_ref_pkg.sv.
 # =========================================================================
 
-# 1. Compile everything (calls compile.do which does vdel -all first)
-do compile.do
+# 1. Clean previous work
+vdel -all
+vlib work
+vmap work work
 
-# 2. Start sim with coverage and full visibility (-voptargs=+acc)
+# 2. Compile RTL
+vlog -sv -cover bcesft ../src/keccak_engine/keccak_pkg.sv
+vlog -sv -cover bcesft ../src/keccak_engine/*.sv
+
+# 3. Compile UVM TB
+vlog -sv -cover bcesft +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/keccak_ref_pkg.sv
+vlog -sv -cover bcesft +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/keccak_if.sv
+vlog -sv -cover bcesft +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/tb_top.sv
+
+# 4. Start sim with coverage and full visibility
 vsim -coverage -voptargs=+acc work.tb_top
 
-# 3. Open the standard GUI views (no-op in -c console mode)
+# 5. Open standard GUI views (no-op in -c console mode)
 if {[batch_mode] == 0} {
     view wave
     view structure
     view signals
 }
 
-# 4. Log ALL signals recursively so waveforms are captured even before the
-#    wave window is told to display them.  This makes the entire run visible
-#    after simulation completes.
+# 6. Log ALL signals recursively so waveforms are captured before display
 log -r /*
 
-# 5. Add signal groups to the wave window (GUI only).
+# 7. GUI: add curated wave groups for lane 0 (extend per lane as needed)
 if {[batch_mode] == 0} {
-    # ---- Top-level clock + reset ----
-    add wave -divider "CLK + RST"
-    add wave -radix binary  /tb_top/clk
-    add wave -radix binary  /tb_top/vif/rst
+    add wave -divider "CLK + RST (lane 0)"
+    add wave -radix binary   /tb_top/clk
+    add wave -radix binary   /tb_top/vif[0]/rst
 
-    # ---- DUT control / status ----
-    add wave -divider "DUT Control"
-    add wave -radix binary  /tb_top/vif/start
-    add wave -radix binary  /tb_top/vif/stop
-    add wave -radix unsigned /tb_top/vif/mode
-    add wave -radix unsigned /tb_top/vif/xof_len
-    add wave -radix unsigned /tb_top/dut/state
+    add wave -divider "DUT Control (lane 0)"
+    add wave -radix binary   /tb_top/vif[0]/start
+    add wave -radix binary   /tb_top/vif[0]/stop
+    add wave -radix unsigned /tb_top/vif[0]/mode
+    add wave -radix unsigned /tb_top/vif[0]/xof_len
 
-    # ---- AXI4-Stream Sink (TB -> DUT) ----
-    add wave -divider "Sink (s_axis)"
-    add wave -radix hex      /tb_top/vif/s_axis_tdata
-    add wave -radix binary   /tb_top/vif/s_axis_tvalid
-    add wave -radix binary   /tb_top/vif/s_axis_tlast
-    add wave -radix binary   /tb_top/vif/s_axis_tkeep
-    add wave -radix binary   /tb_top/vif/s_axis_tready
+    add wave -divider "Sink (s_axis, lane 0)"
+    add wave -radix hex      /tb_top/vif[0]/s_axis_tdata
+    add wave -radix binary   /tb_top/vif[0]/s_axis_tvalid
+    add wave -radix binary   /tb_top/vif[0]/s_axis_tlast
+    add wave -radix binary   /tb_top/vif[0]/s_axis_tkeep
+    add wave -radix binary   /tb_top/vif[0]/s_axis_tready
 
-    # ---- AXI4-Stream Source (DUT -> TB) ----
-    add wave -divider "Source (m_axis)"
-    add wave -radix hex      /tb_top/vif/m_axis_tdata
-    add wave -radix binary   /tb_top/vif/m_axis_tvalid
-    add wave -radix binary   /tb_top/vif/m_axis_tlast
-    add wave -radix binary   /tb_top/vif/m_axis_tkeep
-    add wave -radix binary   /tb_top/vif/m_axis_tready
+    add wave -divider "Source (m_axis, lane 0)"
+    add wave -radix hex      /tb_top/vif[0]/m_axis_tdata
+    add wave -radix binary   /tb_top/vif[0]/m_axis_tvalid
+    add wave -radix binary   /tb_top/vif[0]/m_axis_tlast
+    add wave -radix binary   /tb_top/vif[0]/m_axis_tkeep
+    add wave -radix binary   /tb_top/vif[0]/m_axis_tready
 
-    # ---- DUT internal signals (rate, suffix, counters) ----
-    add wave -divider "DUT Internals"
-    add wave -radix unsigned /tb_top/dut/rate
-    add wave -radix hex      /tb_top/dut/suffix
-    add wave -radix unsigned /tb_top/dut/bytes_absorbed
-    add wave -radix unsigned /tb_top/dut/round_idx
-    add wave -radix unsigned /tb_top/dut/total_bytes_squeezed
+    add wave -divider "DUT Internals (lane 0)"
+    add wave -radix unsigned /tb_top/dut/g_lane[0]/u_core/state
+    add wave -radix unsigned /tb_top/dut/g_lane[0]/u_core/rate
+    add wave -radix hex      /tb_top/dut/g_lane[0]/u_core/suffix
+    add wave -radix unsigned /tb_top/dut/g_lane[0]/u_core/bytes_absorbed
+    add wave -radix unsigned /tb_top/dut/g_lane[0]/u_core/round_idx
+    add wave -radix unsigned /tb_top/dut/g_lane[0]/u_core/total_bytes_squeezed
 }
 
-# 6. Run to completion
+# 8. Run to completion
 run -all
 
-# 7. Save coverage database
+# 9. Save coverage database
 coverage save keccak_cov.ucdb
 
-# Note: NOT calling quit here so the GUI stays open for waveform inspection.
-# When running headless (-c), pipe `-do "run.do; quit -f"` to exit.
+# In headless mode invoke as: vsim -c -do "do run.do; quit -f"

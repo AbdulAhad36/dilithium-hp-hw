@@ -21,15 +21,17 @@ package keccak_pkg;
     parameter int X_WIDTH = $clog2(ROW_SIZE);
     parameter int Y_WIDTH = $clog2(COL_SIZE);
 
-    // Different Keccak Modes
+    // Different Keccak Modes (SHAKE-only for Dilithium)
+    // - SHAKE128: rate 1344 bits (168 bytes) - used by ExpandA
+    // - SHAKE256: rate 1088 bits (136 bytes) - used by ExpandS, ExpandMask, H
+    // SHA3-256/512 support was removed (Dilithium does not need fixed-length SHA3).
     typedef enum {
         SHAKE128,
-        SHAKE256,
-        SHA3_256,
-        SHA3_512
+        SHAKE256
     } keccak_mode;
-    parameter int MODE_NUM = 4;
-    parameter int MODE_SEL_WIDTH = $clog2(MODE_NUM);
+    parameter int MODE_NUM = 2;
+    // Keep at 2 bits for legacy port widths; only LSB is meaningful.
+    parameter int MODE_SEL_WIDTH = 2;
 
     // Setup Parameters
     parameter int CAPACITY_WIDTH = 11;

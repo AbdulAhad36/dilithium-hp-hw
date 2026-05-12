@@ -1,5 +1,11 @@
 // =========================================================================
-// keccak_sequence.sv  -  Directed and random sequences (TB v2)
+// keccak_sequence.sv  -  Directed and random sequences (TB v2, SHAKE-only)
+//
+// All sequence items populate exp_hex with the expected SHAKE output. For
+// the 13 NIST directed vectors exp_hex is the published value. For random
+// stress and coverage-closure items, exp_hex is computed at sim time by the
+// pure-SV reference model in keccak_ref_pkg::shake_hex(). The scoreboard
+// golden-compares every transaction; no [NOCHK] skip path is used.
 // =========================================================================
 
 // Base sequence: helper to push one directed item
@@ -26,8 +32,8 @@ class keccak_base_seq extends uvm_sequence #(keccak_transaction);
 endclass
 
 
-// Full NIST directed test suite (SHA3-256, SHA3-512, SHAKE128, SHAKE256)
-// For SHAKE: each vector runs once as Continuous (xof_len=0) and once as Bounded
+// NIST directed test suite (SHAKE128, SHAKE256 only).
+// Each vector runs once as Continuous (xof_len=0) and once as Bounded.
 class keccak_directed_seq extends keccak_base_seq;
     `uvm_object_utils(keccak_directed_seq)
 
@@ -36,32 +42,6 @@ class keccak_directed_seq extends keccak_base_seq;
     endfunction
 
     task body();
-        // -------------------- SHA3-256 (rate 136) --------------------
-        send_item("SHA3-256 Empty",      SHA3_256, "",
-                  "a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a", 256, 0);
-
-        send_item("SHA3-256 Short",      SHA3_256, "616263",
-                  "3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532", 256, 0);
-
-        send_item("SHA3-256 Full Rate",  SHA3_256,
-                  "56ea14d7fcb0db748ff649aaa5d0afdc2357528a9aad6076d73b2805b53d89e73681abfad26bee6c0f3d20215295f354f538ae80990d2281be6de0f6919aa9eb048c26b524f4d91ca87b54c0c54aa9b54ad02171e8bf31e8d158a9f586e92ffce994ecce9a5185cc80364d50a6f7b94849a914242fcb73f33a86ecc83c3403630d20650ddb8cd9c4",
-                  "4beae3515ba35ec8cbd1d94567e22b0d7809c466abfbafe9610349597ba15b45", 256, 0);
-
-        send_item("SHA3-256 Long",       SHA3_256,
-                  "b1caa396771a09a1db9bc20543e988e359d47c2a616417bbca1b62cb02796a888fc6eeff5c0b5c3d5062fcb4256f6ae1782f492c1cf03610b4a1fb7b814c057878e1190b9835425c7a4a0e182ad1f91535ed2a35033a5d8c670e21c575ff43c194a58a82d4a1a44881dd61f9f8161fc6b998860cbe4975780be93b6f87980bad0a99aa2cb7556b478ca35d1f3746c33e2bb7c47af426641cc7bbb3425e2144820345e1d0ea5b7da2c3236a52906acdc3b4d34e474dd714c0c40bf006a3a1d889a632983814bbc4a14fe5f159aa89249e7c738b3b73666bac2a615a83fd21ae0a1ce7352ade7b278b587158fd2fabb217aa1fe31d0bda53272045598015a8ae4d8cec226fefa58daa05500906c4d85e7567",
-                  "cb5648a1d61c6c5bdacd96f81c9591debc3950dcf658145b8d996570ba881a05", 256, 0);
-
-        // -------------------- SHA3-512 (rate 72) ---------------------
-        send_item("SHA3-512 Empty",      SHA3_512, "",
-                  "a69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26", 512, 0);
-
-        send_item("SHA3-512 Short",      SHA3_512, "54746a7ba28b5f263d2496bd0080d83520cd2dc503",
-                  "d77048df60e20d03d336bfa634bc9931c2d3c1e1065d3a07f14ae01a085fe7e7fe6a89dc4c7880f1038938aa8fcd99d2a782d1bbe5eec790858173c7830c87a2", 512, 0);
-
-        send_item("SHA3-512 Long",       SHA3_512,
-                  "22e1df25c30d6e7806cae35cd4317e5f94db028741a76838bfb7d5576fbccab001749a95897122c8d51bb49cfef854563e2b27d9013b28833f161d520856ca4b61c2641c4e184800300aede3518617c7be3a4e6655588f181e9641f8df7a6a42ead423003a8c4ae6be9d767af5623078bb116074638505c10540299219b0155f45b1c18a74548e4328de37a911140531deb6434c534af2449c1abe67e18030681a61240225f87ede15d519b7ce2500bccf33e1364e2fbe6a8a2fe6c15d73242610ed36b0740080812e8902ee531c88e0359020797cbdd1fb78848ae6b5105961d05cdddb8af5fef21b02db94c9810464b8d3ea5f047b94bf0d23931f12df37e102b603cd8e5f5ffa83488df257ddde110106262e0ef16d7ef213e7b49c69276d4d048f",
-                  "a6375ff04af0a18fb4c8175f671181b4cf79653a3d70847c6d99694b3f5d41601f1dbef809675c63cac4ec83153b1c78131a7b61024ce36244f320ab8740cb7e", 512, 0);
-
         // -------------------- SHAKE128 (rate 168) --------------------
         // Continuous
         send_item("SHAKE128 Empty (Cont)",          SHAKE128, "",
@@ -101,11 +81,10 @@ class keccak_directed_seq extends keccak_base_seq;
 endclass
 
 
-// Random/stress sequence: drives many random items through all 4 modes,
-// random message lengths and random bounded xof_len. The scoreboard cannot
-// check correctness without a software reference, so these are run for
-// coverage closure (toggles, branches, FSM transitions). The scoreboard
-// will be told to skip comparison via test_name prefix "[NOCHK]".
+// Random/stress sequence: drives many random items through both SHAKE modes,
+// random message lengths and random bounded xof_len. Expected output is
+// computed at sim time via keccak_ref_pkg::shake_hex() so the scoreboard can
+// golden-compare every item end-to-end.
 class keccak_stress_seq extends keccak_base_seq;
     `uvm_object_utils(keccak_stress_seq)
 
@@ -122,16 +101,12 @@ class keccak_stress_seq extends keccak_base_seq;
         string      msg_hex;
         string      tn;
         bit [7:0]   b;
+        int         out_bits;
+        int         out_bytes;
+        string      exp_hex;
 
         for (int i = 0; i < num_items; i++) begin
-            // Randomize mode (round-robin to ensure all modes are covered)
-            case (i % 4)
-                0: m = SHAKE128;
-                1: m = SHAKE256;
-                2: m = SHA3_256;
-                3: m = SHA3_512;
-            endcase
-            // Mix of small / rate-boundary / multi-block lengths
+            m = (i % 2 == 0) ? SHAKE128 : SHAKE256;
             case (i % 5)
                 0: msg_byte_len = 0;
                 1: msg_byte_len = $urandom_range(1, 71);
@@ -139,13 +114,8 @@ class keccak_stress_seq extends keccak_base_seq;
                 3: msg_byte_len = $urandom_range(168, 271);
                 4: msg_byte_len = $urandom_range(272, 600);
             endcase
-            // Random xof_len for SHAKE modes (mix of bounded sizes)
-            if (m == SHAKE128 || m == SHAKE256) begin
-                if (i % 2 == 0) xof_bytes = 0;
-                else            xof_bytes = $urandom_range(8, 400);
-            end else begin
-                xof_bytes = 0;
-            end
+            if (i % 2 == 0) xof_bytes = 0;
+            else            xof_bytes = $urandom_range(8, 400);
 
             msg_hex = "";
             for (int j = 0; j < msg_byte_len; j++) begin
@@ -153,22 +123,13 @@ class keccak_stress_seq extends keccak_base_seq;
                 msg_hex = {msg_hex, $sformatf("%02x", b)};
             end
 
-            tn = $sformatf("[NOCHK] STRESS_%0d %s msglen=%0d xof_len=%0d",
-                           i, m.name(), msg_byte_len, xof_bytes);
+            out_bits  = (xof_bytes > 0) ? (xof_bytes * 8) : 256;
+            out_bytes = out_bits / 8;
+            exp_hex   = keccak_ref_pkg::shake_hex(m, msg_hex, out_bytes);
 
-            // For NOCHK items we just need *some* expected output length so the
-            // monitor knows how many bytes to collect. Use:
-            //   SHA3-256 -> 32, SHA3-512 -> 64
-            //   SHAKE bounded -> xof_bytes, SHAKE continuous -> 32 (arbitrary)
-            begin
-                int out_bits;
-                case (m)
-                    SHA3_256: out_bits = 256;
-                    SHA3_512: out_bits = 512;
-                    SHAKE128, SHAKE256: out_bits = (xof_bytes > 0) ? (xof_bytes * 8) : 256;
-                endcase
-                send_item(tn, m, msg_hex, "", out_bits, xof_bytes);
-            end
+            tn = $sformatf("STRESS_%0d %s msglen=%0d xof_len=%0d",
+                           i, m.name(), msg_byte_len, xof_bytes);
+            send_item(tn, m, msg_hex, exp_hex, out_bits, xof_bytes);
         end
     endtask
 endclass
@@ -176,6 +137,7 @@ endclass
 
 // Abort sequence: covers FSM reset transitions from active states
 // (ABSORB->IDLE, SUFFIX_PADDING->IDLE, PERMUTE->IDLE).
+// Currently disabled (driver.drive_abort race causes deadlock).
 class keccak_abort_seq extends keccak_base_seq;
     `uvm_object_utils(keccak_abort_seq)
 
@@ -199,36 +161,23 @@ class keccak_abort_seq extends keccak_base_seq;
     endtask
 
     task body();
-        // Long msg so we have something to drive partial beats from.
         string long_msg;
         long_msg = "";
         for (int i = 0; i < 100; i++) long_msg = {long_msg, "ab"};
 
-        // ABSORB-state abort: drive 3 partial beats then reset
         send_abort("ABORT in ABSORB (3 beats)",  SHAKE128, long_msg, 3);
-
-        // ABSORB-state abort: drive 8 partial beats then reset
-        send_abort("ABORT in ABSORB (8 beats)",  SHA3_256, long_msg, 8);
-
-        // PERMUTE-state abort: short msg (tlast=1) so DUT goes through
-        // ABSORB(1)->SUFFIX_PADDING(1)->PERMUTE(24). Reset at PERMUTE+2
-        // (abort_after_cycles=102 = 100 marker + 2 extra cycles).
+        send_abort("ABORT in ABSORB (8 beats)",  SHAKE256, long_msg, 8);
         send_abort("ABORT in PERMUTE (early)",   SHAKE128, "616263",  102);
-
-        // PERMUTE-state abort, later in the 24-cycle permutation
-        send_abort("ABORT in PERMUTE (mid)",     SHA3_512, "616263",  112);
-
-        // Reset right at SUFFIX_PADDING boundary (1-cycle window: hits either
-        // SUFFIX_PADDING or PERMUTE depending on exact timing)
-        send_abort("ABORT in SUFFIX_PADDING",    SHA3_512, "616263",  100);
+        send_abort("ABORT in PERMUTE (mid)",     SHAKE256, "616263",  112);
+        send_abort("ABORT in SUFFIX_PADDING",    SHAKE256, "616263",  100);
     endtask
 endclass
 
 
 // Coverage-closure sequence: deterministically hits every cp_msg_len bin
-// for every mode (24 cross bins) AND every cp_xof_kind bin for every SHAKE
-// mode (8 cross bins). Each item is marked [NOCHK] (scoreboard skips data
-// compare; this sequence is only for coverage closure).
+// for both SHAKE modes (12 cross bins) AND every cp_xof_kind bin for both
+// SHAKE modes (8 cross bins). Expected hex is computed at sim time via the
+// pure-SV reference model so each item is golden-compared.
 class keccak_cov_seq extends keccak_base_seq;
     `uvm_object_utils(keccak_cov_seq)
 
@@ -236,7 +185,6 @@ class keccak_cov_seq extends keccak_base_seq;
         super.new(name);
     endfunction
 
-    // Build a random hex string of N bytes
     function automatic string make_msg(int n_bytes);
         bit [7:0] b;
         string s = "";
@@ -250,22 +198,19 @@ class keccak_cov_seq extends keccak_base_seq;
     task send_cov_item(string label, keccak_mode m, int n_bytes, int xof_bytes);
         string  msg;
         int     out_bits;
-        msg = make_msg(n_bytes);
-        case (m)
-            SHA3_256: out_bits = 256;
-            SHA3_512: out_bits = 512;
-            SHAKE128, SHAKE256: out_bits = (xof_bytes > 0) ? (xof_bytes * 8) : 256;
-        endcase
-        send_item({"[NOCHK] COV ", label}, m, msg, "", out_bits, xof_bytes);
+        int     out_bytes;
+        string  exp;
+        msg       = make_msg(n_bytes);
+        out_bits  = (xof_bytes > 0) ? (xof_bytes * 8) : 256;
+        out_bytes = out_bits / 8;
+        exp       = keccak_ref_pkg::shake_hex(m, msg, out_bytes);
+        send_item({"COV ", label}, m, msg, exp, out_bits, xof_bytes);
     endtask
 
     task body();
-        keccak_mode modes [$] = '{SHAKE128, SHAKE256, SHA3_256, SHA3_512};
+        keccak_mode modes [$] = '{SHAKE128, SHAKE256};
 
-        // --- cross_mode_msg coverage: 4 modes x 6 msg_len bins = 24 bins ---
-        // msg_len bins: empty(0), short(1-71), around_576(72-135),
-        //               around_1088(136-167), around_1344(168-271),
-        //               multi_block(272+)
+        // --- cross_mode_msg coverage: 2 modes x 6 msg_len bins = 12 bins ---
         foreach (modes[i]) begin
             send_cov_item($sformatf("%s msglen=0",   modes[i].name()), modes[i],   0, 0);
             send_cov_item($sformatf("%s msglen=40",  modes[i].name()), modes[i],  40, 0);
@@ -276,8 +221,6 @@ class keccak_cov_seq extends keccak_base_seq;
         end
 
         // --- cross_shake_xof coverage: each SHAKE mode x 4 xof_kind bins ---
-        // (SHA3 modes are auto-ignored by ignore_bins in the cg.)
-        // xof_kind bins: continuous(0), small(1-32), medium(33-168), large(169+)
         send_cov_item("SHAKE128 xof=continuous", SHAKE128, 16,   0);
         send_cov_item("SHAKE128 xof=small",      SHAKE128, 16,  16);
         send_cov_item("SHAKE128 xof=medium",     SHAKE128, 16, 100);
@@ -291,7 +234,7 @@ endclass
 
 
 // Combined sequence: directed + stress + coverage closure
-// (abort sequence currently disabled — see keccak_abort_seq comment).
+// (abort sequence currently disabled - see keccak_abort_seq comment).
 class keccak_full_seq extends keccak_base_seq;
     `uvm_object_utils(keccak_full_seq)
 

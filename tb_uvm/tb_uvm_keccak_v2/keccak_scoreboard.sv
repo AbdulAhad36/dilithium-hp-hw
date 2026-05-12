@@ -53,16 +53,6 @@ class keccak_scoreboard extends uvm_scoreboard;
                 obs_str = {obs_str, "XX"};
         end
 
-        // [NOCHK] items skip correctness check (coverage-only stress vectors)
-        if (exp_tx.test_name.len() >= 8 && exp_tx.test_name.substr(0, 7) == "[NOCHK] ") begin
-            passed_tests++;
-            `uvm_info(get_type_name(),
-                      $sformatf("[NOCHK] %s  (collected %0d bytes)",
-                                exp_tx.test_name, obs_tx.obs_bytes.size()),
-                      UVM_HIGH)
-            return;
-        end
-
         // Abort transactions: just record as passed (the FSM reset path is
         // verified by coverage, not by data comparison)
         if (exp_tx.abort_after_cycles > 0) begin

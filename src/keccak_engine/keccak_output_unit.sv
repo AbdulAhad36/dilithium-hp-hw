@@ -5,10 +5,9 @@
  * - Implements the "Squeeze" phase of the sponge construction.
  * - Extracts data from the State Array in chunks of 'DWIDTH' (e.g., 64 bits).
  * - Linearizes the 3D State Array (Lane[x][y]) into a bitstream for output.
- * - Manages Flow Control:
- * 1. Fixed-Length (SHA3-256/512): Asserts 'last_o' when the digest size is reached.
- * 2. Variable-Length (SHAKE128/256): Runs indefinitely until externally stopped, or
- *    automatically terminates when 'xof_len_i' bytes are reached.
+ * - Manages Flow Control (SHAKE-only):
+ * 1. Continuous XOF (xof_len_i==0): Runs indefinitely until externally stopped.
+ * 2. Bounded XOF  (xof_len_i!=0):  Auto-terminates when xof_len_i bytes are emitted.
  * 3. Rate Boundaries: Detects when the Rate block is exhausted via 'squeeze_perm_needed_o'
  * to trigger the FSM to permute the state again (for multi-block XOF output).
  */
@@ -90,8 +89,8 @@ module keccak_output_unit (
             output_bytes_this_cycle = bytes_remaining_in_rate[5:0];
         end
 
-        // Constraint 2: Bounded XOF Target Emptying
-        if (is_xof_fixed_len_i && (keccak_mode_i == SHAKE128 || keccak_mode_i == SHAKE256)) begin
+        // Constraint 2: Bounded XOF Target Emptying (SHAKE-only design)
+        if (is_xof_fixed_len_i) begin
             logic [XOF_LEN_WIDTH-1:0] diff;
             diff = xof_len_i - total_bytes_squeezed_i;
             if (diff < output_bytes_this_cycle) begin
@@ -117,29 +116,18 @@ module keccak_output_unit (
     assign squeeze_perm_needed_o = (bytes_remaining_in_rate <= (DWIDTH/8));
 
     // ==========================================================
-    // 6. LAST SIGNAL LOGIC
+    // 6. LAST SIGNAL LOGIC (SHAKE-only)
     // ==========================================================
+    // Continuous (xof_len_i==0): last is never asserted; FSM relies on stop_i.
+    // Bounded   (xof_len_i!=0): last asserts on the final transfer once the
+    //   running total + this beat's bytes reaches xof_len_i.
     always_comb begin
-        case (keccak_mode_i)
-            // Fixed Length Hashes: Done when we output the specific size.
-            // Note: We compare against bytes_squeezed_o (the NEXT value)
-            // to assert 'last' during the final transfer.
-            SHA3_256: last_o = (bytes_squeezed_o >= 32);
-            SHA3_512: last_o = (bytes_squeezed_o >= 64);
-
-            // XOF (SHAKE): Infinite. Rely on external stop signal or fixed len limit
-            default: begin
-                if (is_xof_fixed_len_i) begin
-                    if (total_bytes_squeezed_i + output_bytes_this_cycle >= xof_len_i) begin
-                        last_o = 1'b1;
-                    end else begin
-                        last_o = 1'b0;
-                    end
-                end else begin
-                    last_o = 1'b0;
-                end
-            end
-        endcase
+        if (is_xof_fixed_len_i &&
+            (total_bytes_squeezed_i + output_bytes_this_cycle >= xof_len_i)) begin
+            last_o = 1'b1;
+        end else begin
+            last_o = 1'b0;
+        end
     end
 
 endmodule
