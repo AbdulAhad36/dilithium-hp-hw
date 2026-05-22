@@ -281,6 +281,7 @@ Verification components (in `tb_uvm/tb_uvm_ntt/`):
 | `tb_ntt_ref.sv` | **Complete & passing** | Standalone self-check: 208/208 checks pass (round-trip + NTT-vs-schoolbook multiply, random + edge cases) |
 | `tb_ntt_core.sv` | **Complete & passing** | Directed self-check of `ntt_core`: 33/33 golden-compared (NTT, INTT, round-trip; edge + random). Run via `sim/ntt_core_check.do` |
 | `tb_ntt_engine.sv` | **Complete & passing** | Directed self-check of `ntt_engine` over AXI-Stream: 23/23 golden-compared. Run via `sim/ntt_engine_check.do` |
+| UVM env (`ntt_if`, `ntt_transaction`, `ntt_sequence`, `ntt_driver`, `ntt_monitor`, `ntt_agent`, `ntt_scoreboard`, `ntt_coverage`, `ntt_env`, `ntt_tests`, `tb_top.sv`) | **Complete & passing** | Full UVM environment targeting `ntt_engine`, reusing the keccak-v2 pattern. **38/38 golden-compared, 100 % functional coverage, 0 errors.** Run via `sim/ntt_run.do` |
 
 ### 5.1 Engine operations
 
@@ -298,12 +299,20 @@ multiplier block (the folding trick from Zhao et al. TCHES 2022).
 ## 6. Verification Plan
 
 The NTT testbench (`tb_uvm/tb_uvm_ntt/`) reuses the proven UVM-v2 pattern from
-the Keccak branch:
+the Keccak branch — **complete and passing 38/38 with 100 % functional
+coverage** (`vsim -c -do "do ntt_run.do; quit -f"`):
 
-- **No clocking blocks** — direct `@(posedge clk)` + `vif.<sig>` sampling.
+- **No clocking blocks** — direct `@(edge clk)` + `vif.<sig>` sampling.
 - **Per-transaction async reset** — DUT starts every test from a clean state.
-- **Driver↔Monitor coordination via `uvm_event`.**
-- **Golden model compares every transaction** — no skip path.
+- **Driver↔Monitor coordination via `uvm_event`** (`collection_done`): the
+  driver publishes the expected tx on `drv_ap` before driving, then waits for
+  the monitor to finish collecting before issuing the next reset.
+- **Golden model compares every transaction** — no skip path. Each item's
+  `exp_poly` is computed at sequence time by `ntt_ref_pkg` (`ntt_fwd`/`ntt_inv`).
+- Single agent (the engine is one engine, not a replicated parallel wrapper) +
+  scoreboard + coverage. Sequences: `ntt_directed_seq` (6 edge cases),
+  `ntt_stress_seq` (8 random × NTT/INTT/round-trip), `ntt_cov_seq` (8 cross
+  bins). `ntt_full_test` runs all three.
 
 **Golden reference — DONE (`ntt_ref_pkg.sv`).** A pure-SystemVerilog
 NTT / INTT / PWM model, a direct port of the CRYSTALS-Dilithium reference
@@ -389,3 +398,4 @@ US+) head-to-head. The honest thesis claim is competitive **cycle count** and
 | 2026-05-23 | **Verification increment 2 — `ntt_core` functionally complete & verified.** Implemented the single-butterfly memory-based core (control FSM mirroring the reference NTT/INTT schedule + SCALE pass) and `tb_ntt_core.sv` (directed golden-compare) + `sim/ntt_core_check.do`. **33/33 checks pass** (NTT, INTT, round-trip; edge + random). The incremental-verify process **caught a latent bug in `mod_mul.sv`**: the Barrett stage-2 multiply `prod_s1·BARRETT_M` was being truncated to the 46-bit context width instead of the full 70 bits — fixed by explicit `EST_W` casts. `mod_mul` / `butterfly_unit` / `twiddle_rom` are now verified through the core. |
 | 2026-05-23 | **Verification increment 4 — `ntt_engine` stream front-end complete & verified.** Implemented the AXI-Stream front-end FSM (RX 256 → RUN → TX 256) wrapping `ntt_core`, plus `tb_ntt_engine.sv` + `sim/ntt_engine_check.do`. **23/23 checks pass**. Two testbench handshake bugs found & fixed during bring-up (premature `m_tready` deassert; `start` pulsed during the 1-cycle `E_DONE` state) — RTL was correct, TB now waits on `busy_o`; a watchdog was added. |
 | 2026-05-23 | **Increment 3a — `ntt_core` pipelined.** Reworked the core from hold-each-butterfly (increment 2, ~13k cycles) to a true pipeline: one butterfly issued per cycle, agen→feed→write stages, a BF_LAT-deep write-delay line, and a short inter-stage drain (the only hazard is stage→stage). SCALE pass pipelined likewise. **~10× faster (~1.1k cycles/transform)**, still 33/33 (core) and 23/23 (engine) golden-compared. Remaining: increment 3b (widen to the 4-butterfly 2×2 tile + conflict-free banking → ~300 cycles) and OP_PWM. |
+| 2026-05-23 | **UVM environment built for `ntt_engine`.** Added the full UVM TB under `tb_uvm/tb_uvm_ntt/` (interface, transaction, sequences, driver, monitor, agent, scoreboard, coverage, env, tests, `tb_top.sv`), reusing the keccak-v2 pattern (no clocking blocks, per-tx async reset, `uvm_event` driver↔monitor sync, every tx golden-compared). `ntt_run.do` updated to compile it. **Passes 38/38 with 100 % functional coverage, 0 errors** on first run. This supersedes the directed `tb_ntt_engine.sv` as the regression environment. |

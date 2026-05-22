@@ -30,8 +30,11 @@ vlog -sv -work work $RTL/ntt_core.sv
 vlog -sv -work work $RTL/ntt_engine.sv
 
 # ---- compile UVM testbench --------------------------------------------------
-# Populated when tb_uvm_ntt/ is built (verification step on branch 2_ntt).
+# Golden model + interface compiled stand-alone; tb_top.sv `includes the rest
+# of the UVM class files.
 if {[file exists $TB/tb_top.sv]} {
+    vlog -sv +incdir+$TB -L mtiUvm -work work $TB/ntt_ref_pkg.sv
+    vlog -sv +incdir+$TB -L mtiUvm -work work $TB/ntt_if.sv
     vlog -sv +incdir+$TB -L mtiUvm -work work $TB/tb_top.sv
 }
 
