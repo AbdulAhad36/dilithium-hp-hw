@@ -1,26 +1,26 @@
 // ============================================================================
-// ntt_core.sv  --  Memory-based NTT / INTT core  (increment 2: correct-first)
+// ntt_core.sv  --  Memory-based NTT / INTT core  (increment 3a: pipelined)
 // ----------------------------------------------------------------------------
-// This is the FUNCTIONALLY-CORRECT core: it implements the exact CRYSTALS-
-// Dilithium NTT / INTT schedule with a SINGLE butterfly, one butterfly at a
-// time, against a flat 256-coefficient memory. It is deliberately not yet fast
-// -- correctness is verified first (golden-compared against ntt_ref_pkg by
-// tb_ntt_core.sv); the pipelined conflict-free 2x2 datapath is increment 3.
+// Pipelined single-butterfly core. Same proven NTT/INTT schedule as increment
+// 2, but instead of holding each butterfly's inputs for its full latency, one
+// butterfly is *issued every clock cycle*: within a stage all 128 butterflies
+// touch disjoint index pairs, so they are independent and can be pipelined.
 //
-//   - 256 coefficients in a flat memory `mem`.
-//   - ONE butterfly_unit. Per butterfly: present (a,b,zeta), hold for the
-//     butterfly pipeline latency, write the two results back -- no in-place
-//     hazard because the wait fully drains the pipeline.
-//   - Forward NTT : Cooley-Tukey, len = 128,64,...,1, twiddle index k = 1..255.
-//   - Inverse NTT : Gentleman-Sande, len = 1,2,...,128, k = 255..1, twiddle
-//     negated (-zetas[k]); then a SCALE pass multiplies every coefficient by
-//     N_INV (the 1/256 factor) reusing the butterfly in CT mode (a=0).
+//   issue (cycle t)  : address generator emits (ra, rb, k) for butterfly t
+//   feed  (cycle t+1): mem read + twiddle ready -> butterfly fed
+//   write (cycle t+1+BF_LAT): butterfly result written back to mem
 //
-// Schedule is a direct mirror of ntt_ref_pkg::ntt_fwd / ntt_inv, so the golden
-// model is the exact reference.
+// A BF_LAT-deep write-delay line carries each butterfly's write addresses
+// alongside the pipeline so results land at the right place. Between stages a
+// short DRAIN lets all in-flight writes settle before the next stage reads
+// (the only inter-stage hazard). The INTT SCALE pass (x N_INV) is pipelined
+// the same way, reusing the butterfly in CT mode with a = 0.
 //
-// OP_PWM is not handled here yet -- it needs a two-operand load interface and
-// is a separate increment. tb_ntt_core.sv exercises OP_NTT and OP_INTT only.
+// ~10x faster than increment 2 (~1.1k cycles/transform). Increment 3b widens
+// this to the 4-butterfly 2x2 tile with conflict-free banking.
+//
+// Verified by tb_ntt_core.sv (golden-compared against ntt_ref_pkg).
+// OP_PWM still needs a two-operand interface -- a later increment.
 // ============================================================================
 import ntt_pkg::*;
 
@@ -28,13 +28,11 @@ module ntt_core (
     input  logic                 clk,
     input  logic                 rst,
 
-    // ---- control ----------------------------------------------------------
-    input  logic                 start_i,     // pulse: begin an operation
-    input  ntt_op_e               op_i,        // OP_NTT / OP_INTT / OP_PWM
+    input  logic                 start_i,
+    input  ntt_op_e               op_i,
     output logic                  busy_o,
     output logic                  done_o,
 
-    // ---- coefficient memory load / unload (one coeff per cycle) -----------
     input  logic                  wr_en_i,
     input  logic [LOGN-1:0]        wr_addr_i,
     input  logic [COEFF_W-1:0]     wr_data_i,
@@ -43,125 +41,158 @@ module ntt_core (
     output logic [COEFF_W-1:0]     rd_data_o
 );
 
-  // Cycles to hold a butterfly's inputs stable before capturing its output.
-  // butterfly_unit latency is 4; 6 gives margin (incl. the 1-cycle twiddle ROM
-  // read). Generous on purpose -- increment 3 replaces this with true
-  // pipelining.
-  localparam int unsigned BF_PIPE = 6;
+  localparam int unsigned BF_LAT    = 4;   // butterfly_unit latency
+  localparam int unsigned DRAIN_LEN = 6;   // >= BF_LAT+1, lets writes settle
 
   // ==========================================================================
-  // Coefficient memory : flat 256 x 23-bit.
+  // Coefficient memory : flat 256 x 23-bit
   // ==========================================================================
   logic [COEFF_W-1:0] mem [N];
 
   // ==========================================================================
-  // Twiddle ROM  (synchronous read: tw_data valid 1 cycle after tw_addr)
+  // Twiddle ROM (synchronous: tw_data valid 1 cycle after tw_addr)
   // ==========================================================================
   logic [LOGN-1:0]    tw_addr;
   logic [COEFF_W-1:0] tw_data;
 
-  twiddle_rom u_tw (
-      .clk    (clk),
-      .addr_i (tw_addr),
-      .tw_o   (tw_data)
-  );
+  twiddle_rom u_tw (.clk(clk), .addr_i(tw_addr), .tw_o(tw_data));
 
   // ==========================================================================
-  // Single butterfly unit  (increment 3 widens this to the 2x2 tile)
+  // Single butterfly unit
   // ==========================================================================
   bf_mode_e            bf_mode;
   logic [COEFF_W-1:0]  bf_a_i, bf_b_i, bf_zeta;
   logic [COEFF_W-1:0]  bf_a_o, bf_b_o;
 
   butterfly_unit u_bf (
-      .clk    (clk),
-      .rst    (rst),
-      .mode_i (bf_mode),
-      .a_i    (bf_a_i),
-      .b_i    (bf_b_i),
-      .zeta_i (bf_zeta),
-      .a_o    (bf_a_o),
-      .b_o    (bf_b_o)
+      .clk(clk), .rst(rst), .mode_i(bf_mode),
+      .a_i(bf_a_i), .b_i(bf_b_i), .zeta_i(bf_zeta),
+      .a_o(bf_a_o), .b_o(bf_b_o)
   );
 
-  // ==========================================================================
-  // Control FSM
-  //   IDLE -> (per butterfly: SETUP -> WAIT -> WRITE -> NEXT) x 1024
-  //        -> [INTT only: (SC_SETUP -> SC_WAIT -> SC_WRITE -> SC_NEXT) x 256]
-  //        -> DONE -> IDLE
-  // ==========================================================================
-  typedef enum logic [3:0] {
-    S_IDLE, S_SETUP, S_WAIT, S_WRITE, S_NEXT,
-    S_SC_SETUP, S_SC_WAIT, S_SC_WRITE, S_SC_NEXT, S_DONE
-  } state_e;
-
-  state_e      state;
-
-  ntt_op_e     op_r;                 // latched operation
-  logic        fwd;                  // 1 = forward NTT, 0 = inverse
-  logic [8:0]  len_r;                // butterfly half-distance
-  logic [8:0]  start_r;              // current group base index
-  logic [7:0]  jg_r;                 // index within group (0..len_r-1)
-  logic [8:0]  k_r;                  // twiddle index
-  logic [3:0]  wait_cnt;             // butterfly-latency wait counter
-  logic [7:0]  sc_i;                 // SCALE-pass coefficient index
-
-  // current coefficient pair (combinational from the loop counters)
-  logic [8:0]  idx0_c, idx1_c;
-  assign idx0_c = start_r + {1'b0, jg_r};
-  assign idx1_c = idx0_c + len_r;
-
-  // -zeta mod q  (inverse-NTT twiddle = modular negation of the forward one)
   function automatic logic [COEFF_W-1:0] modneg(input logic [COEFF_W-1:0] x);
     return (x == '0) ? '0 : (COEFF_W'(Q) - x);
   endfunction
 
-  // is the datapath currently in the SCALE pass?
-  logic scaling;
-  assign scaling = (state == S_SC_SETUP) ||
-                   (state == S_SC_WAIT)  ||
-                   (state == S_SC_WRITE);
+  // ==========================================================================
+  // Control FSM
+  //   IDLE -> [RUN stage -> DRAIN] x8 -> [INTT: SCALE -> SDRAIN] -> DONE
+  // ==========================================================================
+  typedef enum logic [2:0] {
+    S_IDLE, S_RUN, S_DRAIN, S_SCALE, S_SDRAIN, S_DONE
+  } state_e;
+
+  state_e      state;
+  ntt_op_e     op_r;
+  logic        fwd;
+  logic [8:0]  len_r;          // butterfly half-distance
+  logic [8:0]  start_r;        // group base index
+  logic [8:0]  jg_r;           // index within group
+  logic [8:0]  k_r;            // twiddle index
+  logic [8:0]  sc_r;           // SCALE-pass coefficient index
+  logic [3:0]  drain_cnt;
+  logic        post_run;       // last DRAIN before SCALE/DONE
 
   // --------------------------------------------------------------------------
-  // Datapath wiring (combinational)
+  // Address generator (combinational, over the loop counters)
   // --------------------------------------------------------------------------
+  logic        issue_valid;
+  logic        issue_scale;
+  logic [8:0]  issue_ra, issue_rb;
+  bf_mode_e    issue_mode;
+
   always_comb begin
-    tw_addr = k_r[LOGN-1:0];
-    bf_mode = (op_r == OP_INTT && !scaling) ? BF_GS : BF_CT;
+    issue_valid = (state == S_RUN) || (state == S_SCALE);
+    issue_scale = (state == S_SCALE);
+    if (issue_scale) begin
+      issue_ra = '0;
+      issue_rb = sc_r;                       // scale: read & write mem[sc_r]
+    end else begin
+      issue_ra = start_r + jg_r;             // butterfly pair
+      issue_rb = (start_r + jg_r) + len_r;
+    end
+    issue_mode = (op_r == OP_INTT && !issue_scale) ? BF_GS : BF_CT;
+    tw_addr    = k_r[LOGN-1:0];
+  end
 
-    bf_a_i  = '0;
-    bf_b_i  = '0;
-    bf_zeta = '0;
+  // --------------------------------------------------------------------------
+  // Feed stage : registered one cycle after issue (twiddle ROM now valid)
+  // --------------------------------------------------------------------------
+  logic [8:0]  feed_ra, feed_rb;
+  logic        feed_valid, feed_scale;
+  bf_mode_e    feed_mode;
 
-    if (state == S_SETUP || state == S_WAIT || state == S_WRITE) begin
-      // butterfly on the coefficient pair
-      bf_a_i  = mem[idx0_c[LOGN-1:0]];
-      bf_b_i  = mem[idx1_c[LOGN-1:0]];
-      bf_zeta = fwd ? tw_data : modneg(tw_data);
-    end else if (scaling) begin
-      // SCALE: a_o = 0 + mem[sc_i] * N_INV   (CT butterfly with a = 0)
-      bf_a_i  = '0;
-      bf_b_i  = mem[sc_i];
-      bf_zeta = COEFF_W'(N_INV);
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      feed_ra <= '0; feed_rb <= '0;
+      feed_valid <= 1'b0; feed_scale <= 1'b0; feed_mode <= BF_CT;
+    end else begin
+      feed_ra    <= issue_ra;
+      feed_rb    <= issue_rb;
+      feed_valid <= issue_valid;
+      feed_scale <= issue_scale;
+      feed_mode  <= issue_mode;
+    end
+  end
+
+  // butterfly inputs at the feed cycle
+  always_comb begin
+    bf_mode = feed_mode;
+    bf_a_i  = feed_scale ? '0 : mem[feed_ra[LOGN-1:0]];
+    bf_b_i  = mem[feed_rb[LOGN-1:0]];
+    bf_zeta = feed_scale ? COEFF_W'(N_INV)
+                         : (fwd ? tw_data : modneg(tw_data));
+  end
+
+  // --------------------------------------------------------------------------
+  // Write-delay line : carry write addresses BF_LAT cycles to meet bf outputs
+  // --------------------------------------------------------------------------
+  logic [8:0]  w_ra  [BF_LAT];
+  logic [8:0]  w_rb  [BF_LAT];
+  logic        w_vld [BF_LAT];
+  logic        w_scl [BF_LAT];
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      for (int i = 0; i < BF_LAT; i++) begin
+        w_ra[i] <= '0; w_rb[i] <= '0; w_vld[i] <= 1'b0; w_scl[i] <= 1'b0;
+      end
+    end else begin
+      w_ra[0] <= feed_ra;  w_rb[0] <= feed_rb;
+      w_vld[0] <= feed_valid;  w_scl[0] <= feed_scale;
+      for (int i = 1; i < BF_LAT; i++) begin
+        w_ra[i] <= w_ra[i-1];  w_rb[i] <= w_rb[i-1];
+        w_vld[i] <= w_vld[i-1];  w_scl[i] <= w_scl[i-1];
+      end
     end
   end
 
   // --------------------------------------------------------------------------
-  // Memory write port : RUN/SCALE results, else external load (when IDLE)
+  // Memory write : pipelined butterfly/scale results, else external load
   // --------------------------------------------------------------------------
+  logic        wb_valid;
+  logic [8:0]  wb_ra, wb_rb;
+  logic        wb_scale;
+  assign wb_valid = w_vld[BF_LAT-1];
+  assign wb_ra    = w_ra [BF_LAT-1];
+  assign wb_rb    = w_rb [BF_LAT-1];
+  assign wb_scale = w_scl[BF_LAT-1];
+
   always_ff @(posedge clk) begin
-    if (state == S_WRITE) begin
-      mem[idx0_c[LOGN-1:0]] <= bf_a_o;
-      mem[idx1_c[LOGN-1:0]] <= bf_b_o;
-    end else if (state == S_SC_WRITE) begin
-      mem[sc_i]             <= bf_a_o;
+    if (wb_valid) begin
+      if (wb_scale) begin
+        mem[wb_rb[LOGN-1:0]] <= bf_a_o;           // scaled coefficient
+      end else begin
+        mem[wb_ra[LOGN-1:0]] <= bf_a_o;
+        mem[wb_rb[LOGN-1:0]] <= bf_b_o;
+      end
     end else if (wr_en_i && state == S_IDLE) begin
-      mem[wr_addr_i]        <= wr_data_i;
+      mem[wr_addr_i] <= wr_data_i;                // external load
     end
   end
 
   // --------------------------------------------------------------------------
-  // Memory read port (registered, one-cycle latency)
+  // Memory read port (registered)
   // --------------------------------------------------------------------------
   always_ff @(posedge clk) begin
     if (rd_en_i) rd_data_o <= mem[rd_addr_i];
@@ -170,6 +201,13 @@ module ntt_core (
   // --------------------------------------------------------------------------
   // Control FSM
   // --------------------------------------------------------------------------
+  logic last_in_group, last_group, last_stage;
+  always_comb begin
+    last_in_group = (jg_r == len_r - 1'b1);
+    last_group    = ((start_r + (len_r << 1)) == N);
+    last_stage    = (fwd && len_r == 9'd1) || (!fwd && len_r == 9'd128);
+  end
+
   always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
       state    <= S_IDLE;
@@ -181,13 +219,14 @@ module ntt_core (
       start_r  <= '0;
       jg_r     <= '0;
       k_r      <= 9'd1;
-      wait_cnt <= '0;
-      sc_i     <= '0;
+      sc_r     <= '0;
+      drain_cnt<= '0;
+      post_run <= 1'b0;
     end else begin
       done_o <= 1'b0;
       case (state)
 
-        // ---- idle : wait for a start pulse --------------------------------
+        // ---- wait for a start pulse ---------------------------------------
         S_IDLE: begin
           if (start_i) begin
             op_r    <= op_i;
@@ -197,77 +236,68 @@ module ntt_core (
             start_r <= '0;
             jg_r    <= '0;
             k_r     <= (op_i != OP_INTT) ? 9'd1 : 9'd255;
-            state   <= S_SETUP;
+            post_run<= 1'b0;
+            state   <= S_RUN;
           end
         end
 
-        // ---- per-butterfly : settle twiddle ROM ---------------------------
-        S_SETUP: begin
-          wait_cnt <= '0;
-          state    <= S_WAIT;
-        end
-
-        // ---- per-butterfly : hold inputs through the BF pipeline ----------
-        S_WAIT: begin
-          if (wait_cnt == BF_PIPE[3:0]) state <= S_WRITE;
-          else                          wait_cnt <= wait_cnt + 1'b1;
-        end
-
-        // ---- per-butterfly : results written by the memory port -----------
-        S_WRITE: state <= S_NEXT;
-
-        // ---- advance the (stage, group, j) loop counters ------------------
-        S_NEXT: begin
-          if (jg_r != len_r[7:0] - 1'b1) begin
-            // next butterfly in the same group
-            jg_r  <= jg_r + 1'b1;
-            state <= S_SETUP;
+        // ---- issue one butterfly per cycle --------------------------------
+        S_RUN: begin
+          if (!last_in_group) begin
+            jg_r <= jg_r + 1'b1;
           end else begin
             jg_r <= '0;
-            if (start_r + 2*len_r != N) begin
-              // next group of the same stage
+            if (!last_group) begin
               start_r <= start_r + (len_r << 1);
               k_r     <= fwd ? k_r + 1'b1 : k_r - 1'b1;
-              state   <= S_SETUP;
-            end else if ((fwd && len_r == 9'd1) ||
-                         (!fwd && len_r == 9'd128)) begin
-              // all 8 stages done
-              if (op_r == OP_INTT) begin
-                sc_i  <= '0;
-                state <= S_SC_SETUP;
-              end else begin
-                state <= S_DONE;
-              end
             end else begin
-              // next stage
-              start_r <= '0;
-              len_r   <= fwd ? (len_r >> 1) : (len_r << 1);
-              k_r     <= fwd ? k_r + 1'b1 : k_r - 1'b1;
-              state   <= S_SETUP;
+              // stage complete -> drain
+              if (last_stage) begin
+                post_run <= 1'b1;
+              end else begin
+                start_r <= '0;
+                len_r   <= fwd ? (len_r >> 1) : (len_r << 1);
+                k_r     <= fwd ? k_r + 1'b1 : k_r - 1'b1;
+              end
+              drain_cnt <= '0;
+              state     <= S_DRAIN;
             end
           end
         end
 
-        // ---- SCALE pass (INTT only) : coeff <- coeff * N_INV --------------
-        S_SC_SETUP: begin
-          wait_cnt <= '0;
-          state    <= S_SC_WAIT;
-        end
-        S_SC_WAIT: begin
-          if (wait_cnt == BF_PIPE[3:0]) state <= S_SC_WRITE;
-          else                          wait_cnt <= wait_cnt + 1'b1;
-        end
-        S_SC_WRITE: state <= S_SC_NEXT;
-        S_SC_NEXT: begin
-          if (sc_i == 8'd255) begin
-            state <= S_DONE;
+        // ---- let in-flight writes settle ----------------------------------
+        S_DRAIN: begin
+          if (drain_cnt == DRAIN_LEN[3:0]) begin
+            if (post_run) begin
+              if (op_r == OP_INTT) begin
+                sc_r  <= '0;
+                state <= S_SCALE;
+              end else begin
+                state <= S_DONE;
+              end
+            end else begin
+              state <= S_RUN;
+            end
           end else begin
-            sc_i  <= sc_i + 1'b1;
-            state <= S_SC_SETUP;
+            drain_cnt <= drain_cnt + 1'b1;
           end
         end
 
-        // ---- done : single-cycle done pulse -------------------------------
+        // ---- INTT SCALE pass : coeff <- coeff * N_INV ---------------------
+        S_SCALE: begin
+          if (sc_r == 9'd255) begin
+            drain_cnt <= '0;
+            state     <= S_SDRAIN;
+          end else begin
+            sc_r <= sc_r + 1'b1;
+          end
+        end
+        S_SDRAIN: begin
+          if (drain_cnt == DRAIN_LEN[3:0]) state <= S_DONE;
+          else                             drain_cnt <= drain_cnt + 1'b1;
+        end
+
+        // ---- done : single-cycle pulse ------------------------------------
         S_DONE: begin
           busy_o <= 1'b0;
           done_o <= 1'b1;
