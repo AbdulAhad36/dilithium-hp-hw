@@ -1,5 +1,6 @@
 # QuestaSim build artifacts
 sim/work/
+sim/*_work/
 sim/transcript
 sim/vsim.wlf
 sim/*.wlf

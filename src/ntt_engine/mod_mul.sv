@@ -32,8 +32,17 @@ module mod_mul (
   end
 
   // ---- Stage 2 : Barrett estimate  est = (prod*M) >> K --------------------
+  // prod_s1 (46-bit) * BARRETT_M (24-bit) needs the FULL 70-bit product width.
+  // Both operands are cast to EST_W so the multiply is not truncated to the
+  // context width before the >> BARRETT_K shift.
+  localparam int unsigned EST_W = PROD_W + BM_W;   // 70
+
   logic [PROD_W-1:0]            prod_s2;
   logic [BM_W-1:0]              est_s2;
+  logic [EST_W-1:0]             bm_prod;           // full-width prod_s1 * M
+
+  always_comb
+    bm_prod = EST_W'(prod_s1) * EST_W'(BARRETT_M);
 
   always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
@@ -41,7 +50,7 @@ module mod_mul (
       est_s2  <= '0;
     end else begin
       prod_s2 <= prod_s1;
-      est_s2  <= ($unsigned(prod_s1) * BARRETT_M) >> BARRETT_K;
+      est_s2  <= (bm_prod >> BARRETT_K);
     end
   end
 
