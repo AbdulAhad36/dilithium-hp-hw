@@ -1,11 +1,25 @@
 // ============================================================================
-// ntt_core.sv  --  Memory-based NTT / INTT core  (increment 3b: 2x2 tile)
+// ntt_core.sv  --  Memory-based NTT / INTT core  (increment 3b-ii: 4 banks)
 // ----------------------------------------------------------------------------
-// 4-butterfly 2x2 tile + intra-tile stage forwarding. One TILE issued per
-// clock cycle: 4 coefficients are processed by 4 butterfly units arranged as
-// two ranks of two (rank-s does the coarse stage, rank-t does the fine stage
-// fed directly from rank-s outputs, no mem hop between stages). 8 radix-2
-// stages collapse to 4 memory passes of 64 tiles each.
+// 4-butterfly 2x2 tile + intra-tile stage forwarding + conflict-free 4-bank
+// coefficient memory. One TILE issued per clock cycle: 4 coefficients are
+// processed by 4 butterfly units arranged as two ranks of two (rank-s does
+// the coarse stage, rank-t does the fine stage fed directly from rank-s
+// outputs, no mem hop between stages). 8 radix-2 stages collapse to 4
+// memory passes of 64 tiles each.
+//
+// Bank function (conflict-free for EVERY pass of NTT and INTT):
+//   bank(addr)   = addr[1:0] ^ addr[3:2] ^ addr[5:4] ^ addr[7:6]
+//   offset(addr) = addr[7:2]
+//
+// Across every tile in any pass the 4 coefficients differ only in one bit
+// pair (positions 2k, 2k+1 with k chosen by the pass). XORing all four bit
+// pairs of the address makes that pair the only variable contributor to
+// bank(), so the 4 banks come out as a permutation of {0,1,2,3}.
+//
+// Each bank is 64x23 with 1R+1W per cycle -- exactly what Cyclone V M10K
+// dual-port BRAM provides. The 4 tile reads/writes are routed through 4-way
+// crossbars between {logical positions} and {physical banks}.
 //
 //   compute cycles  ~=  N_PASSES x 64 + drain  ~=  ~290  (NTT)
 //                  ~=  292 + 64-tile SCALE pass + drain  ~=  ~360  (INTT)
@@ -67,9 +81,32 @@ module ntt_core (
   localparam int unsigned DRAIN_LEN  = RUN_LAT + 1;      // 10 cycles between passes
 
   // ===========================================================================
-  // Coefficient memory  : flat 256 x 23
+  // Coefficient memory : 4 banks x 64 x 23, conflict-free
   // ===========================================================================
-  logic [COEFF_W-1:0] mem [N];
+  logic [COEFF_W-1:0] bank_mem [4] [64];
+
+  // Per-bank ports (sync 1R + 1W, infers M10K)
+  logic [5:0]         bank_rd_off  [4];
+  logic [COEFF_W-1:0] bank_rd_data [4];
+  logic [5:0]         bank_wr_off  [4];
+  logic [COEFF_W-1:0] bank_wr_data [4];
+  logic               bank_wr_en   [4];
+
+  // Bank/offset functions (combinational)
+  function automatic logic [1:0] bank_of(input logic [7:0] a);
+    return a[1:0] ^ a[3:2] ^ a[5:4] ^ a[7:6];
+  endfunction
+  function automatic logic [5:0] off_of(input logic [7:0] a);
+    return a[7:2];
+  endfunction
+
+  // One synchronous BRAM per bank (1R + 1W per port)
+  always_ff @(posedge clk) begin
+    for (int b = 0; b < 4; b++) begin
+      if (bank_wr_en[b]) bank_mem[b][bank_wr_off[b]] <= bank_wr_data[b];
+      bank_rd_data[b] <= bank_mem[b][bank_rd_off[b]];
+    end
+  end
 
   // ===========================================================================
   // Three twiddle ROMs (synchronous read, 1-cycle latency)
@@ -208,25 +245,48 @@ module ntt_core (
   end
 
   // ===========================================================================
-  // Stage-1 registers : capture mem reads + flags (issue@T -> available@T+1)
-  // (tw_a/b/c become valid at T+1 directly from the sync ROMs.)
+  // Stage-1 routing : bank reads -> logical positions m_r0..3
+  //   issue at T   -> bank_rd_off populated combinationally
+  //   posedge T    -> bank_rd_data sampled (sync BRAM, 1-cycle latency)
+  //   cycle T+1    -> m_r[i] = bank_rd_data[bank_of(a_i)@T] via bank_a*_dly
+  // tw_a/b/c become valid at T+1 directly from the sync ROMs.
   // ===========================================================================
   logic [COEFF_W-1:0] m_r0, m_r1, m_r2, m_r3;
   logic               v_s1, sc_s1;
+  logic [1:0]         bank_a0_dly, bank_a1_dly, bank_a2_dly, bank_a3_dly;
 
+  // Route the 4 tile read addresses to the 4 (guaranteed-distinct) banks.
+  // External rd_en_i (only in S_IDLE) overrides one bank for TX.
+  always_comb begin
+    for (int b = 0; b < 4; b++) bank_rd_off[b] = 6'd0;
+    bank_rd_off[bank_of(a0_idx[7:0])] = off_of(a0_idx[7:0]);
+    bank_rd_off[bank_of(a1_idx[7:0])] = off_of(a1_idx[7:0]);
+    bank_rd_off[bank_of(a2_idx[7:0])] = off_of(a2_idx[7:0]);
+    bank_rd_off[bank_of(a3_idx[7:0])] = off_of(a3_idx[7:0]);
+    if (rd_en_i) bank_rd_off[bank_of(rd_addr_i)] = off_of(rd_addr_i);
+  end
+
+  // Delay the 4 bank indices by 1 cycle to align with the sync read data.
   always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
-      m_r0  <= '0; m_r1 <= '0; m_r2 <= '0; m_r3 <= '0;
-      v_s1  <= 1'b0;
-      sc_s1 <= 1'b0;
+      bank_a0_dly <= '0; bank_a1_dly <= '0;
+      bank_a2_dly <= '0; bank_a3_dly <= '0;
+      v_s1 <= 1'b0; sc_s1 <= 1'b0;
     end else begin
-      m_r0  <= mem[a0_idx[LOGN-1:0]];
-      m_r1  <= mem[a1_idx[LOGN-1:0]];
-      m_r2  <= mem[a2_idx[LOGN-1:0]];
-      m_r3  <= mem[a3_idx[LOGN-1:0]];
-      v_s1  <= issue_run || issue_scale;
-      sc_s1 <= issue_scale;
+      bank_a0_dly <= bank_of(a0_idx[7:0]);
+      bank_a1_dly <= bank_of(a1_idx[7:0]);
+      bank_a2_dly <= bank_of(a2_idx[7:0]);
+      bank_a3_dly <= bank_of(a3_idx[7:0]);
+      v_s1        <= issue_run || issue_scale;
+      sc_s1       <= issue_scale;
     end
+  end
+
+  always_comb begin
+    m_r0 = bank_rd_data[bank_a0_dly];
+    m_r1 = bank_rd_data[bank_a1_dly];
+    m_r2 = bank_rd_data[bank_a2_dly];
+    m_r3 = bank_rd_data[bank_a3_dly];
   end
 
   // ===========================================================================
@@ -349,49 +409,79 @@ module ntt_core (
   end
 
   // ===========================================================================
-  // Memory write
-  //   - external load (S_IDLE only): single coefficient via wr_en_i
-  //   - SCALE writeback  : 4 coeffs from {bf0_a_o..bf3_a_o} at wb[SCL_LAT-1]
-  //   - RUN   writeback  : 4 coeffs from rank-t outputs at wb[RUN_LAT-1]
-  //                        position mapping differs NTT vs INTT (see tile docs)
+  // Memory write : drive the 4 bank write ports via the bank crossbar.
+  //   - external load (S_IDLE only) : single coefficient via wr_en_i
+  //   - SCALE writeback             : 4 coeffs from BFU0..3 a_o    at wb[SCL_LAT-1]
+  //   - RUN   writeback             : 4 coeffs from rank-t outputs at wb[RUN_LAT-1]
+  // These three are mutually exclusive in the FSM. Each tile's 4 target
+  // addresses land in 4 distinct banks (bank() XOR property).
   // ===========================================================================
   wb_entry_t scl_tail, run_tail;
   assign scl_tail = wb[SCL_LAT-1];
   assign run_tail = wb[RUN_LAT-1];
 
-  always_ff @(posedge clk) begin
+  logic [COEFF_W-1:0] wd0, wd1, wd2, wd3;   // RUN writeback values per a0..a3
+  always_comb begin
+    if (run_tail.fwd) begin
+      // NTT  : {b, b+L/2, b+L, b+3L/2}  <-  {bf2.a, bf2.b, bf3.a, bf3.b}
+      wd0 = bf2_a_o; wd1 = bf2_b_o; wd2 = bf3_a_o; wd3 = bf3_b_o;
+    end else begin
+      // INTT : {b, b+L, b+2L, b+3L}    <-  {bf2.a, bf3.a, bf2.b, bf3.b}
+      wd0 = bf2_a_o; wd1 = bf3_a_o; wd2 = bf2_b_o; wd3 = bf3_b_o;
+    end
+  end
+
+  always_comb begin
+    for (int b = 0; b < 4; b++) begin
+      bank_wr_en[b]   = 1'b0;
+      bank_wr_off[b]  = 6'd0;
+      bank_wr_data[b] = '0;
+    end
     if (wr_en_i && state == S_IDLE) begin
-      mem[wr_addr_i] <= wr_data_i;
+      bank_wr_en  [bank_of(wr_addr_i)] = 1'b1;
+      bank_wr_off [bank_of(wr_addr_i)] = off_of(wr_addr_i);
+      bank_wr_data[bank_of(wr_addr_i)] = wr_data_i;
     end
     if (scl_tail.v && scl_tail.sc) begin
-      mem[scl_tail.a0[LOGN-1:0]] <= bf0_a_o;
-      mem[scl_tail.a1[LOGN-1:0]] <= bf1_a_o;
-      mem[scl_tail.a2[LOGN-1:0]] <= bf2_a_o;
-      mem[scl_tail.a3[LOGN-1:0]] <= bf3_a_o;
+      bank_wr_en  [bank_of(scl_tail.a0[7:0])] = 1'b1;
+      bank_wr_off [bank_of(scl_tail.a0[7:0])] = off_of(scl_tail.a0[7:0]);
+      bank_wr_data[bank_of(scl_tail.a0[7:0])] = bf0_a_o;
+      bank_wr_en  [bank_of(scl_tail.a1[7:0])] = 1'b1;
+      bank_wr_off [bank_of(scl_tail.a1[7:0])] = off_of(scl_tail.a1[7:0]);
+      bank_wr_data[bank_of(scl_tail.a1[7:0])] = bf1_a_o;
+      bank_wr_en  [bank_of(scl_tail.a2[7:0])] = 1'b1;
+      bank_wr_off [bank_of(scl_tail.a2[7:0])] = off_of(scl_tail.a2[7:0]);
+      bank_wr_data[bank_of(scl_tail.a2[7:0])] = bf2_a_o;
+      bank_wr_en  [bank_of(scl_tail.a3[7:0])] = 1'b1;
+      bank_wr_off [bank_of(scl_tail.a3[7:0])] = off_of(scl_tail.a3[7:0]);
+      bank_wr_data[bank_of(scl_tail.a3[7:0])] = bf3_a_o;
     end
     if (run_tail.v && !run_tail.sc) begin
-      if (run_tail.fwd) begin
-        // NTT writeback : {b, b+L/2, b+L, b+3L/2}  <-  {bf2.a, bf2.b, bf3.a, bf3.b}
-        mem[run_tail.a0[LOGN-1:0]] <= bf2_a_o;
-        mem[run_tail.a1[LOGN-1:0]] <= bf2_b_o;
-        mem[run_tail.a2[LOGN-1:0]] <= bf3_a_o;
-        mem[run_tail.a3[LOGN-1:0]] <= bf3_b_o;
-      end else begin
-        // INTT writeback : {b, b+L, b+2L, b+3L}  <-  {bf2.a, bf3.a, bf2.b, bf3.b}
-        mem[run_tail.a0[LOGN-1:0]] <= bf2_a_o;
-        mem[run_tail.a1[LOGN-1:0]] <= bf3_a_o;
-        mem[run_tail.a2[LOGN-1:0]] <= bf2_b_o;
-        mem[run_tail.a3[LOGN-1:0]] <= bf3_b_o;
-      end
+      bank_wr_en  [bank_of(run_tail.a0[7:0])] = 1'b1;
+      bank_wr_off [bank_of(run_tail.a0[7:0])] = off_of(run_tail.a0[7:0]);
+      bank_wr_data[bank_of(run_tail.a0[7:0])] = wd0;
+      bank_wr_en  [bank_of(run_tail.a1[7:0])] = 1'b1;
+      bank_wr_off [bank_of(run_tail.a1[7:0])] = off_of(run_tail.a1[7:0]);
+      bank_wr_data[bank_of(run_tail.a1[7:0])] = wd1;
+      bank_wr_en  [bank_of(run_tail.a2[7:0])] = 1'b1;
+      bank_wr_off [bank_of(run_tail.a2[7:0])] = off_of(run_tail.a2[7:0]);
+      bank_wr_data[bank_of(run_tail.a2[7:0])] = wd2;
+      bank_wr_en  [bank_of(run_tail.a3[7:0])] = 1'b1;
+      bank_wr_off [bank_of(run_tail.a3[7:0])] = off_of(run_tail.a3[7:0]);
+      bank_wr_data[bank_of(run_tail.a3[7:0])] = wd3;
     end
   end
 
   // ===========================================================================
-  // External read port (1-cycle registered)
+  // External read port : route via the delayed bank index.
+  // rd_en_i high at T  ->  bank read returns at T+1  ->  rd_data_o = that bank.
   // ===========================================================================
-  always_ff @(posedge clk) begin
-    if (rd_en_i) rd_data_o <= mem[rd_addr_i];
+  logic [1:0] rd_bank_dly;
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst)            rd_bank_dly <= '0;
+    else if (rd_en_i)   rd_bank_dly <= bank_of(rd_addr_i);
   end
+  assign rd_data_o = bank_rd_data[rd_bank_dly];
 
 
   // ===========================================================================
