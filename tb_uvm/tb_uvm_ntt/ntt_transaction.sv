@@ -16,12 +16,13 @@ class ntt_transaction extends uvm_sequence_item;
     `uvm_object_utils(ntt_transaction)
 
     string      test_name;
-    ntt_op_e    op;            // OP_NTT or OP_INTT
+    ntt_op_e    op;            // OP_NTT, OP_INTT, or OP_PWM
     in_kind_e   in_kind;       // stimulus class (coverage)
 
-    poly_t      in_poly;       // input polynomial (driven into the sink)
-    poly_t      exp_poly;      // golden output    (from ntt_ref_pkg)
-    poly_t      obs_poly;      // observed output  (filled by the monitor)
+    poly_t      in_poly;       // input polynomial   A (driven into the sink)
+    poly_t      in_poly_b;     // input polynomial   B (only used for OP_PWM)
+    poly_t      exp_poly;      // golden output       (from ntt_ref_pkg)
+    poly_t      obs_poly;      // observed output     (filled by the monitor)
 
     function new(string name = "ntt_transaction");
         super.new(name);

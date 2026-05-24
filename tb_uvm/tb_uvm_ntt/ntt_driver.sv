@@ -70,7 +70,7 @@ class ntt_driver extends uvm_driver #(ntt_transaction);
         @(negedge vif.clk);
         vif.start = 1'b0;
 
-        // 3. stream 256 coefficients into the sink
+        // 3. stream 256 coefficients of operand A
         while (!vif.s_tready) @(negedge vif.clk);
         for (int i = 0; i < N; i++) begin
             vif.s_tvalid = 1'b1;
@@ -80,6 +80,19 @@ class ntt_driver extends uvm_driver #(ntt_transaction);
         end
         vif.s_tvalid = 1'b0;
         vif.s_tlast  = 1'b0;
+
+        // 4. PWM only: stream 256 coefficients of operand B
+        if (req.op == OP_PWM) begin
+            while (!vif.s_tready) @(negedge vif.clk);
+            for (int i = 0; i < N; i++) begin
+                vif.s_tvalid = 1'b1;
+                vif.s_tdata  = req.in_poly_b[i];
+                vif.s_tlast  = (i == N-1);
+                @(negedge vif.clk);
+            end
+            vif.s_tvalid = 1'b0;
+            vif.s_tlast  = 1'b0;
+        end
         vif.s_tdata  = '0;
     endtask
 

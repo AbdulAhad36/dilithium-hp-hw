@@ -14,6 +14,7 @@ class ntt_coverage extends uvm_subscriber #(ntt_transaction);
         cp_op : coverpoint tx_sampled.op {
             bins ntt  = {OP_NTT};
             bins intt = {OP_INTT};
+            bins pwm  = {OP_PWM};
         }
         cp_in_kind : coverpoint tx_sampled.in_kind {
             bins zero   = {IK_ZERO};

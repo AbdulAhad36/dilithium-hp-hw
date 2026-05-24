@@ -28,6 +28,7 @@ module tb_ntt_core;
   ntt_op_e            op;
   logic               busy, done;
   logic               wr_en;
+  logic               wr_b_sel;
   logic [LOGN-1:0]    wr_addr;
   logic [COEFF_W-1:0] wr_data;
   logic               rd_en;
@@ -35,18 +36,19 @@ module tb_ntt_core;
   logic [COEFF_W-1:0] rd_data;
 
   ntt_core dut (
-      .clk       (clk),
-      .rst       (rst),
-      .start_i   (start),
-      .op_i      (op),
-      .busy_o    (busy),
-      .done_o    (done),
-      .wr_en_i   (wr_en),
-      .wr_addr_i (wr_addr),
-      .wr_data_i (wr_data),
-      .rd_en_i   (rd_en),
-      .rd_addr_i (rd_addr),
-      .rd_data_o (rd_data)
+      .clk        (clk),
+      .rst        (rst),
+      .start_i    (start),
+      .op_i       (op),
+      .busy_o     (busy),
+      .done_o     (done),
+      .wr_en_i    (wr_en),
+      .wr_b_sel_i (wr_b_sel),
+      .wr_addr_i  (wr_addr),
+      .wr_data_i  (wr_data),
+      .rd_en_i    (rd_en),
+      .rd_addr_i  (rd_addr),
+      .rd_data_o  (rd_data)
   );
 
   // ---- 10 ns clock ---------------------------------------------------------
@@ -147,14 +149,15 @@ module tb_ntt_core;
     $display("============================================================");
 
     // reset
-    rst     = 1'b1;
-    start   = 1'b0;
-    op      = OP_NTT;
-    wr_en   = 1'b0;
-    wr_addr = '0;
-    wr_data = '0;
-    rd_en   = 1'b0;
-    rd_addr = '0;
+    rst      = 1'b1;
+    start    = 1'b0;
+    op       = OP_NTT;
+    wr_en    = 1'b0;
+    wr_b_sel = 1'b0;
+    wr_addr  = '0;
+    wr_data  = '0;
+    rd_en    = 1'b0;
+    rd_addr  = '0;
     repeat (4) @(negedge clk);
     rst = 1'b0;
     repeat (2) @(negedge clk);

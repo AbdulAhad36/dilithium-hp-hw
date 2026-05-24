@@ -63,6 +63,7 @@ module ntt_core (
     output logic                  done_o,
 
     input  logic                  wr_en_i,
+    input  logic                  wr_b_sel_i,   // 0 = load operand A, 1 = load operand B (PWM)
     input  logic [LOGN-1:0]       wr_addr_i,
     input  logic [COEFF_W-1:0]    wr_data_i,
     input  logic                  rd_en_i,
@@ -82,15 +83,27 @@ module ntt_core (
 
   // ===========================================================================
   // Coefficient memory : 4 banks x 64 x 23, conflict-free
+  //   bank_mem    holds operand A (NTT input / INTT input / PWM A; PWM writes
+  //               its product result back here)
+  //   bank_mem_b  holds operand B (PWM second operand, read-only during PWM)
+  // The B-banks share the same read-offset routing as the A-banks since PWM
+  // reads identical addresses from both.
   // ===========================================================================
-  logic [COEFF_W-1:0] bank_mem [4] [64];
+  logic [COEFF_W-1:0] bank_mem   [4] [64];
+  logic [COEFF_W-1:0] bank_mem_b [4] [64];
 
-  // Per-bank ports (sync 1R + 1W, infers M10K)
-  logic [5:0]         bank_rd_off  [4];
-  logic [COEFF_W-1:0] bank_rd_data [4];
-  logic [5:0]         bank_wr_off  [4];
-  logic [COEFF_W-1:0] bank_wr_data [4];
-  logic               bank_wr_en   [4];
+  // Per-bank ports for A (sync 1R + 1W, infers M10K)
+  logic [5:0]         bank_rd_off    [4];
+  logic [COEFF_W-1:0] bank_rd_data   [4];
+  logic [5:0]         bank_wr_off    [4];
+  logic [COEFF_W-1:0] bank_wr_data   [4];
+  logic               bank_wr_en     [4];
+
+  // Per-bank ports for B (sync 1R + 1W; write only used during external load)
+  logic [COEFF_W-1:0] bank_rd_data_b [4];
+  logic [5:0]         bank_b_wr_off  [4];
+  logic [COEFF_W-1:0] bank_b_wr_data [4];
+  logic               bank_b_wr_en   [4];
 
   // Bank/offset functions (combinational)
   function automatic logic [1:0] bank_of(input logic [7:0] a);
@@ -103,8 +116,10 @@ module ntt_core (
   // One synchronous BRAM per bank (1R + 1W per port)
   always_ff @(posedge clk) begin
     for (int b = 0; b < 4; b++) begin
-      if (bank_wr_en[b]) bank_mem[b][bank_wr_off[b]] <= bank_wr_data[b];
-      bank_rd_data[b] <= bank_mem[b][bank_rd_off[b]];
+      if (bank_wr_en  [b]) bank_mem  [b][bank_wr_off  [b]] <= bank_wr_data  [b];
+      if (bank_b_wr_en[b]) bank_mem_b[b][bank_b_wr_off[b]] <= bank_b_wr_data[b];
+      bank_rd_data  [b] <= bank_mem  [b][bank_rd_off[b]];
+      bank_rd_data_b[b] <= bank_mem_b[b][bank_rd_off[b]];
     end
   end
 
@@ -144,10 +159,13 @@ module ntt_core (
   endfunction
 
   // ===========================================================================
-  // FSM  :  IDLE -> [RUN -> RDRAIN] x 4 -> (INTT: SCALE -> SDRAIN) -> DONE
+  // FSM
+  //   NTT  :  IDLE -> [RUN -> RDRAIN] x 4 -> DONE
+  //   INTT :  IDLE -> [RUN -> RDRAIN] x 4 -> SCALE -> SDRAIN -> DONE
+  //   PWM  :  IDLE -> PWM -> PDRAIN -> DONE
   // ===========================================================================
-  typedef enum logic [2:0] {
-    S_IDLE, S_RUN, S_RDRAIN, S_SCALE, S_SDRAIN, S_DONE
+  typedef enum logic [3:0] {
+    S_IDLE, S_RUN, S_RDRAIN, S_SCALE, S_SDRAIN, S_PWM, S_PDRAIN, S_DONE
   } state_e;
   state_e       state;
   ntt_op_e      op_r;
@@ -155,7 +173,7 @@ module ntt_core (
   logic [1:0]   pass_r;        // 0..3
   logic [6:0]   g_outer_r;     // outer-group counter (0..63)
   logic [6:0]   off_r;         // intra-group offset
-  logic [6:0]   sc_r;          // SCALE tile counter (0..63)
+  logic [6:0]   sc_r;          // SCALE / PWM tile counter (0..63)
   logic [3:0]   drain_cnt;
   logic         last_pass;     // marks the final pass before SCALE/DONE
 
@@ -206,18 +224,20 @@ module ntt_core (
   logic [LOGN-1:0] k_a, k_b, k_c;
   logic        issue_run;
   logic        issue_scale;
+  logic        issue_pwm;
 
   always_comb begin
     issue_run   = (state == S_RUN);
     issue_scale = (state == S_SCALE);
+    issue_pwm   = (state == S_PWM);
 
-    if (issue_scale) begin
-      // SCALE: pack 4 coefficients per cycle at {4*sc_r .. 4*sc_r+3}
+    if (issue_scale || issue_pwm) begin
+      // SCALE / PWM : pack 4 coefficients per cycle at {4*sc_r .. 4*sc_r+3}
       a0_idx = {sc_r, 2'b00};
       a1_idx = {sc_r, 2'b01};
       a2_idx = {sc_r, 2'b10};
       a3_idx = {sc_r, 2'b11};
-      k_a    = '0; k_b = '0; k_c = '0;   // twiddles unused in SCALE
+      k_a    = '0; k_b = '0; k_c = '0;   // twiddles unused in SCALE/PWM
       base_b = '0;
     end else if (fwd) begin
       base_b = (9'(g_outer_r) * (L << 1)) + 9'(off_r);
@@ -251,8 +271,9 @@ module ntt_core (
   //   cycle T+1    -> m_r[i] = bank_rd_data[bank_of(a_i)@T] via bank_a*_dly
   // tw_a/b/c become valid at T+1 directly from the sync ROMs.
   // ===========================================================================
-  logic [COEFF_W-1:0] m_r0, m_r1, m_r2, m_r3;
-  logic               v_s1, sc_s1;
+  logic [COEFF_W-1:0] m_r0,  m_r1,  m_r2,  m_r3;     // A-bank reads, routed
+  logic [COEFF_W-1:0] mb_r0, mb_r1, mb_r2, mb_r3;    // B-bank reads, routed (PWM)
+  logic               v_s1, sc_s1, pw_s1;
   logic [1:0]         bank_a0_dly, bank_a1_dly, bank_a2_dly, bank_a3_dly;
 
   // Route the 4 tile read addresses to the 4 (guaranteed-distinct) banks.
@@ -271,22 +292,27 @@ module ntt_core (
     if (rst) begin
       bank_a0_dly <= '0; bank_a1_dly <= '0;
       bank_a2_dly <= '0; bank_a3_dly <= '0;
-      v_s1 <= 1'b0; sc_s1 <= 1'b0;
+      v_s1 <= 1'b0; sc_s1 <= 1'b0; pw_s1 <= 1'b0;
     end else begin
       bank_a0_dly <= bank_of(a0_idx[7:0]);
       bank_a1_dly <= bank_of(a1_idx[7:0]);
       bank_a2_dly <= bank_of(a2_idx[7:0]);
       bank_a3_dly <= bank_of(a3_idx[7:0]);
-      v_s1        <= issue_run || issue_scale;
+      v_s1        <= issue_run || issue_scale || issue_pwm;
       sc_s1       <= issue_scale;
+      pw_s1       <= issue_pwm;
     end
   end
 
   always_comb begin
-    m_r0 = bank_rd_data[bank_a0_dly];
-    m_r1 = bank_rd_data[bank_a1_dly];
-    m_r2 = bank_rd_data[bank_a2_dly];
-    m_r3 = bank_rd_data[bank_a3_dly];
+    m_r0  = bank_rd_data  [bank_a0_dly];
+    m_r1  = bank_rd_data  [bank_a1_dly];
+    m_r2  = bank_rd_data  [bank_a2_dly];
+    m_r3  = bank_rd_data  [bank_a3_dly];
+    mb_r0 = bank_rd_data_b[bank_a0_dly];
+    mb_r1 = bank_rd_data_b[bank_a1_dly];
+    mb_r2 = bank_rd_data_b[bank_a2_dly];
+    mb_r3 = bank_rd_data_b[bank_a3_dly];
   end
 
   // ===========================================================================
@@ -299,12 +325,13 @@ module ntt_core (
   logic [COEFF_W-1:0] twc_dly [BF_LAT];
   logic               vt_dly  [BF_LAT];
   logic               sct_dly [BF_LAT];
+  logic               pwt_dly [BF_LAT];
 
   always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
       for (int i = 0; i < BF_LAT; i++) begin
         twa_dly[i] <= '0; twb_dly[i] <= '0; twc_dly[i] <= '0;
-        vt_dly[i]  <= 1'b0; sct_dly[i] <= 1'b0;
+        vt_dly[i]  <= 1'b0; sct_dly[i] <= 1'b0; pwt_dly[i] <= 1'b0;
       end
     end else begin
       twa_dly[0] <= tw_a;
@@ -312,12 +339,14 @@ module ntt_core (
       twc_dly[0] <= tw_c;
       vt_dly [0] <= v_s1;
       sct_dly[0] <= sc_s1;
+      pwt_dly[0] <= pw_s1;
       for (int i = 1; i < BF_LAT; i++) begin
         twa_dly[i] <= twa_dly[i-1];
         twb_dly[i] <= twb_dly[i-1];
         twc_dly[i] <= twc_dly[i-1];
         vt_dly [i] <= vt_dly [i-1];
         sct_dly[i] <= sct_dly[i-1];
+        pwt_dly[i] <= pwt_dly[i-1];
       end
     end
   end
@@ -328,9 +357,10 @@ module ntt_core (
   //   BFU2/3 fed at SCALE: same cycle (T+1) with m_r2/m_r3, N_INV
   //          fed at RUN  : T+5, with BFU0/1 outputs + delayed inner/outer tw
   // ===========================================================================
-  logic vt_tail, sct_tail;
+  logic vt_tail, sct_tail, pwt_tail;
   assign vt_tail  = vt_dly [BF_LAT-1];
   assign sct_tail = sct_dly[BF_LAT-1];
+  assign pwt_tail = pwt_dly[BF_LAT-1];
 
   always_comb begin
     // ---- rank-s (BFU0, BFU1) -------------------------------------------------
@@ -339,6 +369,11 @@ module ntt_core (
       bf0_mode = BF_CT;   bf1_mode = BF_CT;
       bf0_a_i  = '0;      bf0_b_i  = m_r0; bf0_z = COEFF_W'(N_INV);
       bf1_a_i  = '0;      bf1_b_i  = m_r1; bf1_z = COEFF_W'(N_INV);
+    end else if (pw_s1) begin
+      // PWM: c[i] = A[i] * B[i]  (CT with a=0 -> a_o = m_r * mb_r)
+      bf0_mode = BF_CT;   bf1_mode = BF_CT;
+      bf0_a_i  = '0;      bf0_b_i  = m_r0; bf0_z = mb_r0;
+      bf1_a_i  = '0;      bf1_b_i  = m_r1; bf1_z = mb_r1;
     end else if (fwd) begin
       // NTT stage 2p (CT): pairs (b,b+L) and (b+L/2, b+3L/2); same outer tw
       bf0_mode = BF_CT;   bf1_mode = BF_CT;
@@ -357,7 +392,12 @@ module ntt_core (
       bf2_mode = BF_CT;   bf3_mode = BF_CT;
       bf2_a_i  = '0;      bf2_b_i  = m_r2; bf2_z = COEFF_W'(N_INV);
       bf3_a_i  = '0;      bf3_b_i  = m_r3; bf3_z = COEFF_W'(N_INV);
-    end else if (vt_tail && !sct_tail) begin
+    end else if (pw_s1) begin
+      // PWM: BFU2/3 do the same pointwise multiply on m_r2/m_r3 with mb_r2/3
+      bf2_mode = BF_CT;   bf3_mode = BF_CT;
+      bf2_a_i  = '0;      bf2_b_i  = m_r2; bf2_z = mb_r2;
+      bf3_a_i  = '0;      bf3_b_i  = m_r3; bf3_z = mb_r3;
+    end else if (vt_tail && !sct_tail && !pwt_tail) begin
       // RUN stage 2p+1 : rank-s outputs feed rank-s+1 (intra-tile forwarding)
       bf2_mode = fwd ? BF_CT : BF_GS;
       bf3_mode = fwd ? BF_CT : BF_GS;
@@ -387,7 +427,8 @@ module ntt_core (
   typedef struct packed {
     logic [8:0]   a0, a1, a2, a3;
     logic         v;
-    logic         sc;
+    logic         sc;        // SCALE writeback (4 from BFU0..3 a_o at SCL_LAT)
+    logic         pw;        // PWM   writeback (same depth as SCALE)
     logic         fwd;
   } wb_entry_t;
 
@@ -401,8 +442,9 @@ module ntt_core (
     end else begin
       wb[0].a0  <= a0_idx; wb[0].a1 <= a1_idx;
       wb[0].a2  <= a2_idx; wb[0].a3 <= a3_idx;
-      wb[0].v   <= issue_run || issue_scale;
+      wb[0].v   <= issue_run || issue_scale || issue_pwm;
       wb[0].sc  <= issue_scale;
+      wb[0].pw  <= issue_pwm;
       wb[0].fwd <= fwd;
       for (int i = 1; i < WB_DEPTH; i++) wb[i] <= wb[i-1];
     end
@@ -433,16 +475,27 @@ module ntt_core (
 
   always_comb begin
     for (int b = 0; b < 4; b++) begin
-      bank_wr_en[b]   = 1'b0;
-      bank_wr_off[b]  = 6'd0;
-      bank_wr_data[b] = '0;
+      bank_wr_en    [b] = 1'b0;
+      bank_wr_off   [b] = 6'd0;
+      bank_wr_data  [b] = '0;
+      bank_b_wr_en  [b] = 1'b0;
+      bank_b_wr_off [b] = 6'd0;
+      bank_b_wr_data[b] = '0;
     end
+    // External load (S_IDLE only): operand A or operand B depending on wr_b_sel_i.
     if (wr_en_i && state == S_IDLE) begin
-      bank_wr_en  [bank_of(wr_addr_i)] = 1'b1;
-      bank_wr_off [bank_of(wr_addr_i)] = off_of(wr_addr_i);
-      bank_wr_data[bank_of(wr_addr_i)] = wr_data_i;
+      if (!wr_b_sel_i) begin
+        bank_wr_en  [bank_of(wr_addr_i)] = 1'b1;
+        bank_wr_off [bank_of(wr_addr_i)] = off_of(wr_addr_i);
+        bank_wr_data[bank_of(wr_addr_i)] = wr_data_i;
+      end else begin
+        bank_b_wr_en  [bank_of(wr_addr_i)] = 1'b1;
+        bank_b_wr_off [bank_of(wr_addr_i)] = off_of(wr_addr_i);
+        bank_b_wr_data[bank_of(wr_addr_i)] = wr_data_i;
+      end
     end
-    if (scl_tail.v && scl_tail.sc) begin
+    // SCALE / PWM writeback (same pipeline depth, 4 BFU.a_o values).
+    if (scl_tail.v && (scl_tail.sc || scl_tail.pw)) begin
       bank_wr_en  [bank_of(scl_tail.a0[7:0])] = 1'b1;
       bank_wr_off [bank_of(scl_tail.a0[7:0])] = off_of(scl_tail.a0[7:0]);
       bank_wr_data[bank_of(scl_tail.a0[7:0])] = bf0_a_o;
@@ -456,7 +509,8 @@ module ntt_core (
       bank_wr_off [bank_of(scl_tail.a3[7:0])] = off_of(scl_tail.a3[7:0]);
       bank_wr_data[bank_of(scl_tail.a3[7:0])] = bf3_a_o;
     end
-    if (run_tail.v && !run_tail.sc) begin
+    // RUN writeback (tile rank-t outputs).
+    if (run_tail.v && !run_tail.sc && !run_tail.pw) begin
       bank_wr_en  [bank_of(run_tail.a0[7:0])] = 1'b1;
       bank_wr_off [bank_of(run_tail.a0[7:0])] = off_of(run_tail.a0[7:0]);
       bank_wr_data[bank_of(run_tail.a0[7:0])] = wd0;
@@ -520,7 +574,7 @@ module ntt_core (
             off_r     <= '0;
             sc_r      <= '0;
             last_pass <= 1'b0;
-            state     <= S_RUN;
+            state     <= (op_i == OP_PWM) ? S_PWM : S_RUN;
           end
         end
 
@@ -571,6 +625,21 @@ module ntt_core (
         end
 
         S_SDRAIN: begin
+          if (drain_cnt == DRAIN_LEN[3:0] - 4'd1) state <= S_DONE;
+          else                                    drain_cnt <= drain_cnt + 4'd1;
+        end
+
+        // ----- PWM pass : 4 coeffs/cycle, c[i] = A[i]*B[i] mod q -----------
+        S_PWM: begin
+          if (sc_r == 7'd63) begin
+            drain_cnt <= '0;
+            state     <= S_PDRAIN;
+          end else begin
+            sc_r <= sc_r + 7'd1;
+          end
+        end
+
+        S_PDRAIN: begin
           if (drain_cnt == DRAIN_LEN[3:0] - 4'd1) state <= S_DONE;
           else                                    drain_cnt <= drain_cnt + 4'd1;
         end

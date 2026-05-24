@@ -26,6 +26,20 @@ class ntt_base_seq extends uvm_sequence #(ntt_transaction);
         finish_item(tx);
     endtask
 
+    // PWM-specific item: two operand polynomials, exp = pointwise A o B.
+    task send_pwm(string nm, in_kind_e ik, poly_t pa, poly_t pb);
+        ntt_transaction tx;
+        tx = ntt_transaction::type_id::create("tx");
+        start_item(tx);
+        tx.test_name = nm;
+        tx.op        = OP_PWM;
+        tx.in_kind   = ik;
+        tx.in_poly   = pa;
+        tx.in_poly_b = pb;
+        tx.exp_poly  = pwm(pa, pb);
+        finish_item(tx);
+    endtask
+
     // ---- stimulus builders ----
     function automatic poly_t make_const(coeff_t v);
         poly_t p;
@@ -67,6 +81,10 @@ class ntt_directed_seq extends ntt_base_seq;
         send_item("DIR all-(q-1) INTT",    OP_INTT, IK_MAX,   maxv);
         send_item("DIR delta@0 NTT",       OP_NTT,  IK_DELTA, delta);
         send_item("DIR delta@0 INTT",      OP_INTT, IK_DELTA, delta);
+        // PWM directed: zero, max, delta, identity.
+        send_pwm("DIR PWM zero o zero",    IK_ZERO,  zero,  zero);
+        send_pwm("DIR PWM max  o max",     IK_MAX,   maxv,  maxv);
+        send_pwm("DIR PWM delta o delta",  IK_DELTA, delta, delta);
     endtask
 endclass
 
@@ -83,15 +101,17 @@ class ntt_stress_seq extends ntt_base_seq;
     endfunction
 
     task body();
-        poly_t p;
+        poly_t p, q;
         for (int i = 0; i < num_items; i++) begin
             p = make_random();
+            q = make_random();
             send_item($sformatf("STRESS %0d NTT",   i), OP_NTT,  IK_RANDOM, p);
             send_item($sformatf("STRESS %0d INTT",  i), OP_INTT, IK_RANDOM, p);
             // round-trip: feed the golden forward transform back through INTT.
             // exp_poly = ntt_inv(ntt_fwd(p)) == p.
             send_item($sformatf("STRESS %0d round", i), OP_INTT, IK_RANDOM,
                       ntt_fwd(p));
+            send_pwm ($sformatf("STRESS %0d PWM",   i), IK_RANDOM, p, q);
         end
     endtask
 endclass
@@ -117,6 +137,13 @@ class ntt_cov_seq extends ntt_base_seq;
             send_item($sformatf("COV %s random", ops[i].name()),
                       ops[i], IK_RANDOM, make_random());
         end
+        // PWM coverage closure: 4 in_kinds.
+        send_pwm("COV PWM zero",   IK_ZERO,   make_const(coeff_t'(0)),
+                                              make_const(coeff_t'(0)));
+        send_pwm("COV PWM max",    IK_MAX,    make_const(coeff_t'(Q-1)),
+                                              make_const(coeff_t'(Q-1)));
+        send_pwm("COV PWM delta",  IK_DELTA,  make_delta(), make_delta());
+        send_pwm("COV PWM random", IK_RANDOM, make_random(), make_random());
     endtask
 endclass
 
