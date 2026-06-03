@@ -412,6 +412,33 @@ precompute per-pass base offsets into a small ROM/register instead of computing
 shift-add `mod_mul` (§4.2), since the datapath is not currently the limiter.
 Re-run synthesis after each step and re-check the path — do not pipeline blind.
 
+**Optimisation progression (each step verified 33/33 + 23/23 + UVM 53/53, 100 % cov):**
+
+| Step | Change | Fmax | ALM | DSP | Critical path after |
+|------|--------|-----:|----:|----:|---------------------|
+| baseline | Barrett, single-cycle addr-gen | 56.85 MHz | 2,227 | 18 | read-address generation |
+| **A1** | register address generation | 60.47 MHz | 2,189 | 18 | butterfly datapath (mem→mux→msub→mult) |
+| **D1** | register datapath inputs (`m_r`/twiddles/flags) | 63.09 MHz | 2,229 | 18 | inside `mod_mul` (Barrett stage-2/3 multiply → `r_o`) |
+| **R** | q-specific shift-add reduction (replaces Barrett) | **75.44 MHz** | 2,313 | **6** | registered read data → BFU mux + `msub` → `a*b` multiply → `prod_s1` |
+
+**Cumulative (baseline → A1+D1+R): Fmax 56.85 → 75.44 MHz (+33 %), DSP 18 → 6
+(−67 %), ALM ~unchanged, M10K 18.** A huge ATP win — both terms improved. NTT
+latency now ≈ 299 cycles (A1 and D1 each +1) → ≈ 3.96 µs at 75.44 MHz (was
+5.22 µs). The Barrett reduction (two big multiplies, 46×24 and 24×23) was the
+~63 MHz wall; the shift-add fold (§4.2) removed it and 12 DSP blocks at once.
+
+**Lesson, reinforced four times this session:** each registering step gave a
+small bump and moved the critical path somewhere unpredicted — always re-run
+`report_paths.tcl` and read the *actual* path before the next change. The big
+win came not from registering but from the algorithmic change (Barrett →
+shift-add), which is what the literature and §4.2 always pointed to.
+
+**Remaining Fmax headroom:** the surviving path is the registered read data
+through the BFU input mux + modular subtract into the one remaining `a*b`
+multiply. Registering the multiplier inputs (`mod_mul` input stage, +1 to
+`MUL_LAT`/`BF_LAT`) would isolate the multiply and push toward ~110–120 MHz,
+at the cost of a pipeline-constant ripple through `butterfly_unit`/`ntt_core`.
+
 ---
 
 ## 8. Deferred / Future Work
