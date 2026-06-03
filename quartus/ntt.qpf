@@ -1,0 +1,5 @@
+QUARTUS_VERSION = "25.1"
+DATE = "2026-06-04"
+
+# Revision: ntt_engine NTT/INTT/PWM engine — Cyclone V benchmark
+PROJECT_REVISION = "ntt"

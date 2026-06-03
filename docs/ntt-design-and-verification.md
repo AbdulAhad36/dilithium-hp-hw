@@ -370,20 +370,77 @@ in range of EMINEM (271) and the 4-butterfly memory designs (Mu 270, Li 284).
 US+) head-to-head. The honest thesis claim is competitive **cycle count** and
 **area-efficiency** on Cyclone V, plus a correct, fully-verified design.
 
+### 7.1 Synthesis results — first pass (Barrett baseline)
+
+Quartus Prime Lite 25.1std, device **5CGXFC7C7F23C8** (Cyclone V GX, same as the
+keccak benchmark), top `ntt_engine`, 5 ns SDC constraint. Clean compile: 0
+synthesis errors, 0 fitter errors.
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **Fmax** | **56.85 MHz** (Slow 85 °C) / 55.02 MHz (Slow 0 °C) | Worst-case sign-off ≈ **55 MHz** |
+| ALMs | **2,227 / 56,480** (4 %) | 1,984 LUT-logic + 106 reg + 137 combined |
+| Registers | 814 | — |
+| DSP blocks | **18 / 156** (12 %) | Barrett multipliers across the 4 BFUs + addr-gen |
+| M10K blocks | **18 / 686** (3 %) | 4+4 coeff banks + twiddle ROMs as dual-port BRAM ✓ |
+| Block memory bits | 30,292 | — |
+
+**Latency (at 56.85 MHz, 17.59 ns period):** NTT 297 cyc → **5.22 µs**; INTT
+370 cyc → 6.51 µs; PWM 74 cyc → 1.30 µs. NTT **ATP ≈ 2,227 ALM × 5.22 µs ≈
+11.6 k ALM·µs** (Barrett baseline, pre-optimisation).
+
+**Critical path — it is NOT the butterfly/Barrett datapath.** The worst setup
+path (slack −12.589 ns at 5 ns) runs entirely in **address generation**:
+
+```
+pass_r (pass counter)
+  → Mult1 (a DSP MULTIPLY in addr-gen, ~3.26 ns)
+  → Add8 → Add10 → Add4 (long adder chain)
+  → bank_of (XOR bank function)
+  → bank_rd_off (read-address crossbar)
+  → bank_mem[*] RAM read-address port
+```
+
+So Fmax is gated by a **combinational multiply + adder chain + XOR-bank +
+crossbar** from the pass counter to the memory read-address port — *not* by
+`mod_mul`. This is the [[feedback-synthesis-critical-path]] lesson in action:
+the obvious bottleneck (Barrett) is not the real one. **Improvement targets,
+in order:** (1) register/pipeline the read-address generation (break the path
+at the crossbar or bank-offset stage); (2) eliminate the addr-gen multiply —
+precompute per-pass base offsets into a small ROM/register instead of computing
+`pass × stride` combinationally; (3) only then consider the q-specific
+shift-add `mod_mul` (§4.2), since the datapath is not currently the limiter.
+Re-run synthesis after each step and re-check the path — do not pipeline blind.
+
 ---
 
 ## 8. Deferred / Future Work
 
-- **`ntt_core` next step:** control FSM + address-resolver-ROM conflict-free
-  generator (§4.3a) + intra-tile stage-1→stage-2 forwarding muxes (§4.1).
-- Stream front-end FSM + decoupling input FIFO for `ntt_engine`.
-- Pure-SV golden model and the UVM-v2 testbench.
+Design and verification are **complete** (§6, §9). The RTL foundation,
+`ntt_core` (2×2 tile + 4-bank conflict-free memory), `ntt_engine` stream
+front-end, `OP_PWM`, the golden model, and the full UVM environment are all
+done and golden-compared (53/53, 100 % functional coverage).
+
+### Active — this branch (`2_ntt`)
+
+- **Quartus synthesis on Cyclone V** (`5CGXFC7C7F23C8`, same device as the
+  keccak benchmark). Measure **Fmax**, area (ALMs / registers / DSP / M10K),
+  and the **ATP** that is the win condition (§7); confirm the 4-bank memory
+  infers as dual-port M10K and the DSP count matches the Barrett multipliers.
+  ATP comparison vs the §3 designs. **Check TimeQuest before any pipelining —
+  the obvious-looking critical path is often not the real one.**
+
+### Deferred — integration branch / future optimisation
+
 - **q-specific shift-add reduction** — swap the verified Barrett `mod_mul` for
   the `q = 2²³−2¹³+1` shift-add path (§4.2); cuts to one multiplier per BF.
-- Radix-4 butterfly evaluation (EMINEM-style) once radix-2 is verified.
-- Quartus synthesis on Cyclone V; ATP comparison vs the §3 designs.
+  Revisit after the Barrett synthesis baseline is measured (so the ATP gain is
+  quantified, not assumed).
+- Radix-4 butterfly evaluation (EMINEM-style).
+- Decoupling input FIFO for `ntt_engine` (back-pressure already correct via
+  `s_tready`; the FIFO is for the bursty upstream sampler rate).
 - **Integration branch:** pipelined sampler→NTT reordering path (PALS-style),
-  not a plain BRAM decoupling buffer (§4.4).
+  not a plain BRAM decoupling buffer (§4.4); right-size keccak `N_LANES`.
 
 ---
 
@@ -401,4 +458,5 @@ US+) head-to-head. The honest thesis claim is competitive **cycle count** and
 | 2026-05-23 | **UVM environment built for `ntt_engine`.** Added the full UVM TB under `tb_uvm/tb_uvm_ntt/` (interface, transaction, sequences, driver, monitor, agent, scoreboard, coverage, env, tests, `tb_top.sv`), reusing the keccak-v2 pattern (no clocking blocks, per-tx async reset, `uvm_event` driver↔monitor sync, every tx golden-compared). `ntt_run.do` updated to compile it. **Passes 38/38 with 100 % functional coverage, 0 errors** on first run. This supersedes the directed `tb_ntt_engine.sv` as the regression environment. |
 | 2026-05-24 | **Increment 3b-i — 4-butterfly 2×2 tile + intra-tile forwarding.** Rewrote `ntt_core.sv` as a true radix-2² tile: 4 BFUs in two ranks (BFU0/1 rank-s, BFU2/3 rank-t, rank-s outputs feed rank-t directly with no mem hop), 3 twiddle ROMs, one tile issued per cycle (4 coeffs/cycle). 8 radix-2 stages collapse to 4 memory passes of 64 tiles each. Flat 256×23 memory with 4R+4W per cycle (synthesis-bank refactor deferred to 3b-ii; compute schedule and cycle count are the same either way). SCALE pass widened to 4 coeffs/cycle using the 4 BFUs in parallel. **~297 compute cycles for NTT, ~370 for INTT** (measured via UVM TB) — the ≤300-cycle thesis target for NTT compute is met. **One bug found & fixed during bring-up:** `pass_r << 1` was evaluated in 2-bit context, overflowing for `pass_r ≥ 2` and silently re-running pass 0 four times — fixed by widening the shift amount via explicit 4-bit signals. After fix: **33/33 (tb_ntt_core), 38/38 (UVM env)**, 100 % functional coverage. Remaining: 3b-ii (4-bank conflict-free memory for synthesis-to-BRAM) and OP_PWM. |
 | 2026-05-24 | **Increment 3b-ii — 4-bank conflict-free memory.** Refactored the flat 256×23 array into 4 banks of 64×23 with the XOR bank function `bank(addr) = addr[1:0] ^ addr[3:2] ^ addr[5:4] ^ addr[7:6]` (offset = `addr[7:2]`). Every tile across NTT/INTT all 4 passes maps to a permutation of {bank 0..3}, so each bank only needs 1R+1W per cycle — exactly Cyclone V dual-port M10K BRAM. Reads / writes route via combinational 4-way crossbars between the 4 logical tile positions and the 4 physical banks; a 1-cycle delay aligns the bank index with the sync read data. Cycle count and compute schedule unchanged. **33/33, 38/38, 100 % coverage on first run.** |
+| 2026-06-04 | **Synthesis phase opened.** Design + verification declared complete; CLAUDE.md rewritten from the keccak description to the NTT engine; §8 reframed (synthesis now the active task on `2_ntt`, the rest deferred to integration); GitHub issue #2 checkboxes reconciled. Quartus Prime Lite 25.1std project created (`quartus/ntt.{qpf,qsf,sdc}`, top `ntt_engine`, device `5CGXFC7C7F23C8`). **First-pass results (§7.1): Fmax 56.85 MHz, 2,227 ALMs, 18 DSP, 18 M10K; NTT 5.22 µs.** Critical path is the read-address generation (combinational multiply + adder chain + XOR-bank + crossbar from `pass_r` to the RAM addr port), *not* the Barrett datapath — improvement targets identified in §7.1. |
 | 2026-05-25 | **OP_PWM — pointwise multiply complete & verified.** Added a second 4-bank memory `bank_mem_b` for operand B, a `wr_b_sel_i` core input, FSM states `S_PWM` / `S_PDRAIN`, and a PWM branch in the BFU mux that uses all 4 BFUs in CT mode with `a=0`, `b=A[i]`, `z=B[i]` (so `a_o = A[i]*B[i] mod q`). PWM reuses the SCALE writeback path (5-cycle pipeline depth). The engine FSM gained `E_RX_B` so the AXI sink accepts the second polynomial when `op_i == OP_PWM`. PWM compute is ~74 cycles (64 issue + 10 drain) — vastly faster than NTT since no inter-stage forwarding is needed. UVM env extended with 15 PWM stimuli (directed + stress + coverage closure). **Result: 33/33 (tb_ntt_core), 23/23 (tb_ntt_engine), 53/53 (UVM env), 100 % functional coverage on first run.** The NTT engine now supports all three ML-DSA polynomial operations end-to-end. |

@@ -6,6 +6,8 @@ sim/vsim.wlf
 sim/*.wlf
 sim/wlft*
 sim/*.ucdb
+sim/*.vcd
+*.vcd
 transcript
 vsim.wlf
 modelsim.ini
