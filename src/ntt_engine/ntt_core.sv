@@ -259,10 +259,47 @@ module ntt_core (
       k_a    = LOGN'((9'd256 >> sh2p1) - 9'd1 - 9'(g_outer_r));
     end
 
-    tw_a_addr = k_a;
-    tw_b_addr = k_b;
-    tw_c_addr = k_c;
   end
+
+  // ===========================================================================
+  // A1: REGISTERED address generation  (Fmax fix)
+  // The combinational cone  counters -> (g_outer*2L multiply + adder chain)
+  // -> a*_idx -> bank() XOR -> read crossbar -> BRAM read-address port  was the
+  // Fmax-limiting path (~17 ns). Insert one pipeline register here so the deep
+  // address arithmetic is decoupled from the bank-routing / RAM stage.
+  //
+  // Every downstream consumer (twiddle ROM address, read crossbar, bank-index
+  // delay line, writeback shift register, and the v/sc/pw valid flags) now keys
+  // off these REGISTERED versions, so the entire read/compute pipeline shifts
+  // exactly one cycle later relative to the FSM counters. All *relative*
+  // alignments are preserved -> RUN_LAT / SCL_LAT / WB_DEPTH / DRAIN_LEN are
+  // unchanged. The registered issue_*_r flags carry the "valid tile" marker
+  // forward, so a tile issued in the last S_RUN cycle is still processed after
+  // the FSM has moved to S_RDRAIN. Cost: +1 cycle total latency.
+  // ===========================================================================
+  logic [8:0]      a0_idx_r, a1_idx_r, a2_idx_r, a3_idx_r;
+  logic [LOGN-1:0] k_a_r, k_b_r, k_c_r;
+  logic            issue_run_r, issue_scale_r, issue_pwm_r;
+  logic            fwd_r;
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      a0_idx_r <= '0; a1_idx_r <= '0; a2_idx_r <= '0; a3_idx_r <= '0;
+      k_a_r <= '0; k_b_r <= '0; k_c_r <= '0;
+      issue_run_r <= 1'b0; issue_scale_r <= 1'b0; issue_pwm_r <= 1'b0;
+      fwd_r <= 1'b1;
+    end else begin
+      a0_idx_r <= a0_idx; a1_idx_r <= a1_idx; a2_idx_r <= a2_idx; a3_idx_r <= a3_idx;
+      k_a_r <= k_a; k_b_r <= k_b; k_c_r <= k_c;
+      issue_run_r <= issue_run; issue_scale_r <= issue_scale; issue_pwm_r <= issue_pwm;
+      fwd_r <= fwd;
+    end
+  end
+
+  // Twiddle ROM addresses come from the registered indices (1-cycle later).
+  assign tw_a_addr = k_a_r;
+  assign tw_b_addr = k_b_r;
+  assign tw_c_addr = k_c_r;
 
   // ===========================================================================
   // Stage-1 routing : bank reads -> logical positions m_r0..3
@@ -280,10 +317,10 @@ module ntt_core (
   // External rd_en_i (only in S_IDLE) overrides one bank for TX.
   always_comb begin
     for (int b = 0; b < 4; b++) bank_rd_off[b] = 6'd0;
-    bank_rd_off[bank_of(a0_idx[7:0])] = off_of(a0_idx[7:0]);
-    bank_rd_off[bank_of(a1_idx[7:0])] = off_of(a1_idx[7:0]);
-    bank_rd_off[bank_of(a2_idx[7:0])] = off_of(a2_idx[7:0]);
-    bank_rd_off[bank_of(a3_idx[7:0])] = off_of(a3_idx[7:0]);
+    bank_rd_off[bank_of(a0_idx_r[7:0])] = off_of(a0_idx_r[7:0]);
+    bank_rd_off[bank_of(a1_idx_r[7:0])] = off_of(a1_idx_r[7:0]);
+    bank_rd_off[bank_of(a2_idx_r[7:0])] = off_of(a2_idx_r[7:0]);
+    bank_rd_off[bank_of(a3_idx_r[7:0])] = off_of(a3_idx_r[7:0]);
     if (rd_en_i) bank_rd_off[bank_of(rd_addr_i)] = off_of(rd_addr_i);
   end
 
@@ -294,13 +331,13 @@ module ntt_core (
       bank_a2_dly <= '0; bank_a3_dly <= '0;
       v_s1 <= 1'b0; sc_s1 <= 1'b0; pw_s1 <= 1'b0;
     end else begin
-      bank_a0_dly <= bank_of(a0_idx[7:0]);
-      bank_a1_dly <= bank_of(a1_idx[7:0]);
-      bank_a2_dly <= bank_of(a2_idx[7:0]);
-      bank_a3_dly <= bank_of(a3_idx[7:0]);
-      v_s1        <= issue_run || issue_scale || issue_pwm;
-      sc_s1       <= issue_scale;
-      pw_s1       <= issue_pwm;
+      bank_a0_dly <= bank_of(a0_idx_r[7:0]);
+      bank_a1_dly <= bank_of(a1_idx_r[7:0]);
+      bank_a2_dly <= bank_of(a2_idx_r[7:0]);
+      bank_a3_dly <= bank_of(a3_idx_r[7:0]);
+      v_s1        <= issue_run_r || issue_scale_r || issue_pwm_r;
+      sc_s1       <= issue_scale_r;
+      pw_s1       <= issue_pwm_r;
     end
   end
 
@@ -440,12 +477,12 @@ module ntt_core (
         wb[i] <= '{default:'0};
       end
     end else begin
-      wb[0].a0  <= a0_idx; wb[0].a1 <= a1_idx;
-      wb[0].a2  <= a2_idx; wb[0].a3 <= a3_idx;
-      wb[0].v   <= issue_run || issue_scale || issue_pwm;
-      wb[0].sc  <= issue_scale;
-      wb[0].pw  <= issue_pwm;
-      wb[0].fwd <= fwd;
+      wb[0].a0  <= a0_idx_r; wb[0].a1 <= a1_idx_r;
+      wb[0].a2  <= a2_idx_r; wb[0].a3 <= a3_idx_r;
+      wb[0].v   <= issue_run_r || issue_scale_r || issue_pwm_r;
+      wb[0].sc  <= issue_scale_r;
+      wb[0].pw  <= issue_pwm_r;
+      wb[0].fwd <= fwd_r;
       for (int i = 1; i < WB_DEPTH; i++) wb[i] <= wb[i-1];
     end
   end
