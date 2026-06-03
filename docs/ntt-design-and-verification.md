@@ -439,6 +439,48 @@ multiply. Registering the multiplier inputs (`mod_mul` input stage, +1 to
 `MUL_LAT`/`BF_LAT`) would isolate the multiply and push toward ~110–120 MHz,
 at the cost of a pipeline-constant ripple through `butterfly_unit`/`ntt_core`.
 
+### 7.2 Comparison with published NTT designs
+
+Our post-optimisation NTT engine vs the §3 designs. **NTT cycles are compute-only**
+where the source reports them that way; latency = cycles / Fmax.
+
+| Design | Device (node) | Fmax | NTT cyc | Latency | Logic | DSP | BRAM |
+|--------|---------------|-----:|--------:|--------:|-------|----:|------|
+| **Ours (A1+D1+R)** | **Cyclone V (28 nm)** | **75.4 MHz** | **~299** | **3.96 µs** | **2,313 ALM** | **6** | 18 M10K |
+| EMINEM 2025 | Kintex US+ (16 nm) | 324 MHz | 271 | 0.84 µs | 1,552 LUT | 6 | — |
+| MDC-NTT Cui 2025 | Artix-7 (28 nm) | 297 MHz | 286 | 0.96 µs | 4,187 LUT | 18 | 0 |
+| Area-Time 2025 | Versal (7 nm) | 328 MHz | ~256 | 0.78 µs | — | — | — |
+| Conflict-Free 2026 (dual-BF) | Zynq US+ (16 nm) | 308 MHz | 563 | 1.83 µs | — | 8 | — |
+| Conflict-Free 2026 (1-BF) | Zynq US+ (16 nm) | 332 MHz | 1075 | 3.24 µs | — | 4 | — |
+| ParaPM 2026 | Artix-7 (28 nm) | 270 MHz | 379 | 1.40 µs | — | — | — |
+| PQShield 2024 | Zynq US+ (16 nm) | 322 MHz | — | — | 3,821 LUT | 20 | 5 |
+| Zhao TCHES 2022 | Artix-7 (28 nm) | 96.9 MHz¹ | 533 | 5.50 µs | — | — | — |
+
+¹ full-accelerator Fmax, not NTT-only.
+
+**Honest reading (no manufactured win):**
+
+- **Cycle count — competitive / top cluster.** ~299 sits with EMINEM (271),
+  Cui (286), Area-Time (~256); well ahead of Conflict-Free 1-BF (1075), Zhao
+  (533), ParaPM (379). The 2×2-tile architecture is sound.
+- **DSP — excellent.** 6 DSP **ties EMINEM** (the efficiency leader) and beats
+  Cui (18) and PQShield (20). The shift-add reduction is what bought this — it
+  removed 12 DSP. On a Cyclone V DSP budget this is a genuine strength.
+- **Fmax / latency — device-limited, not design-limited.** 75 MHz vs
+  270–328 MHz is the **fabric gap** (Cyclone V 28 nm, slow speed grade, vs
+  Kintex/Zynq US+ 16 nm and Versal 7 nm). Our own keccak engine tops out at
+  84 MHz on the same part. So our 3.96 µs latency trails the ~0.8–1 µs designs.
+- **ATP — mixed, and not cleanly comparable.** A single ATP number across
+  Cyclone V ALMs and Xilinx LUTs (which are not equivalent cells) on different
+  process nodes is **not defensible** as a head-to-head win. The *time* term is
+  dominated by the device Fmax gap, so raw ATP trails the US+/Versal designs.
+  What is defensible: **architecturally competitive cycle count and
+  best-in-class DSP efficiency (6), fully verified, on Cyclone V.** A fair ATP
+  claim would require either same-fabric synthesis or explicit process
+  normalisation — out of scope for a single-device thesis result, but the
+  design is structured so that on a faster fabric (≥250 MHz) it would be
+  directly ATP-competitive.
+
 ---
 
 ## 8. Deferred / Future Work
