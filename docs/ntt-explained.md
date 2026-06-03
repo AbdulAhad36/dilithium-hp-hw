@@ -373,8 +373,8 @@ sum or product gets bigger than that, we **wrap it around** (like a clock: after
 That number, `q = 8,380,417`, is special — it was hand-picked so the whole NTT
 trick mathematically works. Wrapping around it is called **modular reduction**,
 and doing it fast is itself a small puzzle — that's what the `mod_mul` file
-(Barrett reduction) solves. For now just know: **every add and multiply in a
-butterfly is followed by a "wrap it back into range" step.**
+(a q-specific shift-and-add reduction) solves. For now just know: **every add
+and multiply in a butterfly is followed by a "wrap it back into range" step.**
 
 ---
 
@@ -410,7 +410,7 @@ Our design is two boxes, one inside the other.
 | `ntt_core.sv`   | Inner box — memory + controller + datapath |
 | `butterfly_unit.sv` | The CT/GS butterfly mixing machine |
 | `twiddle_rom.sv` | Pre-computed table of all twiddle factors `ζ` |
-| `mod_mul.sv` | Fast "wrap back into range" (Barrett modular reduction) |
+| `mod_mul.sv` | Fast "wrap back into range" (q-specific shift-add modular reduction) |
 | `ntt_pkg.sv` | Parameters: `q = 8,380,417`, `N = 256`, etc. |
 
 ---

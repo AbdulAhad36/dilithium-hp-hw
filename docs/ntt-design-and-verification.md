@@ -79,13 +79,15 @@ bit-reversal cancels out — no explicit re-ordering pass is needed.
 Every butterfly contains one modular multiplication (a·b mod q). The choice of
 reduction algorithm sets the critical path:
 
-- **Barrett** — works for any q; needs one precomputed constant. Used here.
+- **Barrett** — works for any q; needs one precomputed constant. Used for the
+  first verified bring-up.
 - **Montgomery** — fast, but requires operands in a transformed domain.
 - **q-specific** — q = 2²³ − 2¹³ + 1, so 2²³ ≡ 2¹³ − 1 (mod q), enabling a
-  shift-add reduction. Cheapest, but more error-prone to verify.
+  shift-add reduction. Cheapest, but more error-prone to verify. **Now adopted.**
 
-We start with **Barrett** for verifiability and revisit the q-specific path as
-an Fmax optimisation later (see §8).
+We brought up with **Barrett** for verifiability, then — once the golden model
+and UVM env were green — switched `mod_mul` to the **q-specific shift-add
+reduction** (§4.2, done 2026-06-04): it cut DSP 18→6 and lifted Fmax 63→75 MHz.
 
 ---
 
@@ -173,9 +175,12 @@ single-stage design and is the main reason the 2×2 tile is worth its area.
 We deliberately do **not** use pure radix-4 (EMINEM) as the first design: the
 4-point butterfly is a verification burden. Radix-4 is noted as a later option.
 
-### 4.2 Modular reduction: Barrett
+### 4.2 Modular reduction: Barrett → q-specific shift-add (adopted)
 
-q is 23-bit; a butterfly product is 46-bit. We use Barrett reduction:
+q is 23-bit; a butterfly product is 46-bit.
+
+**Bring-up (Barrett, verifiable for any q).** The first verified `mod_mul`
+used Barrett reduction:
 
 ```
 est = (P · M) >> 46          M = floor(2⁴⁶ / q) = 8 396 807
@@ -183,16 +188,25 @@ r   = P − est·q              r ∈ [0, 2q)
 out = (r ≥ q) ? r − q : r    at most ONE conditional subtract
 ```
 
-The constant M and the single-conditional-subtract bound were verified
-exhaustively over random products before being embedded (see `mod_mul.sv`).
+This has THREE multiplies (P = a·b, P·M, est·q) and synthesised to **18 DSP**
+across the 4 BFUs — and, once the addr-gen and datapath paths were registered
+(§7.1 A1/D1), the two Barrett multiplies became the Fmax wall at ~63 MHz.
 
-**q-specific reduction is now a firm planned optimisation, not a "maybe."**
-Conflict-Free NTT 2026 demonstrates that `q = 2²³ − 2¹³ + 1 = (2¹⁰−1)·2¹³ + 1`
-lets the constant multiplications in modular reduction collapse into
-shift-and-add — `t·q = (((t≪10) − t)≪13) + t` — so a butterfly needs only
-**one true multiplier**. The branch keeps **Barrett first** for verifiability,
-then switches the verified `mod_mul` to the q-specific shift-add path as a
-defined Fmax/area optimisation (§8) once the golden model passes.
+**Adopted (q-specific shift-add, 2026-06-04).** Since `q = 2²³ − 2¹³ + 1`,
+`2²³ ≡ 2¹³ − 1 (mod q)`, so the high part of any value folds down with shifts
+and adds only:
+
+```
+fold(x):  hi = x>>23,  lo = x[22:0]
+          x ≡ (hi≪13) − hi + lo   (mod q),   always ≥ 0
+```
+
+Four folds reduce the 46-bit product below `2q`; one conditional subtract
+lands in `[0, q)`. **Only the `a·b` multiply remains** — the reduction has no
+multiplier. Latency kept at 3 cycles so `butterfly_unit`/`ntt_core` are
+untouched. Result: **DSP 18 → 6, Fmax 63 → 75 MHz** (§7.1), all golden-compared
+(core 33/33, engine 23/23, UVM 53/53, 100 % cov). The Barrett constants remain
+in `ntt_pkg.sv` (now vestigial) in case the path is ever reverted.
 
 ### 4.3 Twiddle factors
 
@@ -260,14 +274,14 @@ ntt_engine          top-level: stream I/O front-end + decoupling FIFO
 └── ntt_core        memory-based core: coeff banks + 2×2 butterfly tile + FSM
     ├── twiddle_rom  256-entry twiddle ROM (script-generated)
     └── butterfly_unit  [×4]   configurable CT/GS radix-2 butterfly
-        └── mod_mul          pipelined Barrett modular multiplier
-ntt_pkg             parameters: q, n, ζ, n⁻¹, Barrett constants, types
+        └── mod_mul          pipelined modular multiplier (q-specific shift-add)
+ntt_pkg             parameters: q, n, ζ, n⁻¹, (vestigial Barrett constants), types
 ```
 
 | File | Status | Description |
 |------|--------|-------------|
-| `ntt_pkg.sv` | Complete | Ring + Barrett constants, `bf_mode_e`, `ntt_op_e` |
-| `mod_mul.sv` | **Complete & verified** | 3-cycle pipelined Barrett modular multiplier. **Bug fixed 2026-05-23:** the stage-2 estimate `prod·M` was evaluated at the 46-bit context width and truncated — the 70-bit product is now formed explicitly (`EST_W'(...)` casts) |
+| `ntt_pkg.sv` | Complete | Ring constants, `bf_mode_e`, `ntt_op_e` (`BARRETT_*` now vestigial) |
+| `mod_mul.sv` | **Complete & verified** | 3-cycle pipelined modular multiplier. **q-specific shift-add reduction** (2026-06-04): one `a·b` multiply + four shift-add folds + a conditional subtract; replaced the Barrett version (18→6 DSP, 63→75 MHz). Earlier Barrett bug (stage-2 `prod·M` 70-bit truncation) is moot now |
 | `butterfly_unit.sv` | **Complete & verified** | CT/GS butterfly, fixed 4-cycle latency, shared multiplier — exercised through `ntt_core` |
 | `twiddle_rom.sv` | **Complete & verified** | 256 twiddles, ζ^brv8(i) mod q, synchronous read — cross-checked vs the golden model |
 | `ntt_core.sv` | **Increment 3a — pipelined, verified** | Single-butterfly memory-based NTT/INTT + SCALE, now **fully pipelined** — one butterfly issued per cycle, BF_LAT-deep write-delay line, inter-stage drain. ~1.1k cycles/transform (~10× faster than increment 2). 33/33 golden-compared. Increment 3b widens to the 4-butterfly 2×2 tile; OP_PWM is a later increment |
@@ -499,12 +513,16 @@ done and golden-compared (53/53, 100 % functional coverage).
   ATP comparison vs the §3 designs. **Check TimeQuest before any pipelining —
   the obvious-looking critical path is often not the real one.**
 
+### Done (2026-06-04)
+
+- **q-specific shift-add reduction** — DONE (§4.2, §7.1). Replaced Barrett;
+  18→6 DSP, 63→75 MHz, fully verified.
+
 ### Deferred — integration branch / future optimisation
 
-- **q-specific shift-add reduction** — swap the verified Barrett `mod_mul` for
-  the `q = 2²³−2¹³+1` shift-add path (§4.2); cuts to one multiplier per BF.
-  Revisit after the Barrett synthesis baseline is measured (so the ATP gain is
-  quantified, not assumed).
+- **Register `mod_mul` inputs** — isolate the surviving `a·b` multiply (the
+  current ~75 MHz critical path; +1 to `MUL_LAT`/`BF_LAT`, ripples through
+  `butterfly_unit`/`ntt_core`) → ~110–120 MHz. The last cheap Fmax lever.
 - Radix-4 butterfly evaluation (EMINEM-style).
 - Decoupling input FIFO for `ntt_engine` (back-pressure already correct via
   `s_tready`; the FIFO is for the bursty upstream sampler rate).
@@ -527,5 +545,6 @@ done and golden-compared (53/53, 100 % functional coverage).
 | 2026-05-23 | **UVM environment built for `ntt_engine`.** Added the full UVM TB under `tb_uvm/tb_uvm_ntt/` (interface, transaction, sequences, driver, monitor, agent, scoreboard, coverage, env, tests, `tb_top.sv`), reusing the keccak-v2 pattern (no clocking blocks, per-tx async reset, `uvm_event` driver↔monitor sync, every tx golden-compared). `ntt_run.do` updated to compile it. **Passes 38/38 with 100 % functional coverage, 0 errors** on first run. This supersedes the directed `tb_ntt_engine.sv` as the regression environment. |
 | 2026-05-24 | **Increment 3b-i — 4-butterfly 2×2 tile + intra-tile forwarding.** Rewrote `ntt_core.sv` as a true radix-2² tile: 4 BFUs in two ranks (BFU0/1 rank-s, BFU2/3 rank-t, rank-s outputs feed rank-t directly with no mem hop), 3 twiddle ROMs, one tile issued per cycle (4 coeffs/cycle). 8 radix-2 stages collapse to 4 memory passes of 64 tiles each. Flat 256×23 memory with 4R+4W per cycle (synthesis-bank refactor deferred to 3b-ii; compute schedule and cycle count are the same either way). SCALE pass widened to 4 coeffs/cycle using the 4 BFUs in parallel. **~297 compute cycles for NTT, ~370 for INTT** (measured via UVM TB) — the ≤300-cycle thesis target for NTT compute is met. **One bug found & fixed during bring-up:** `pass_r << 1` was evaluated in 2-bit context, overflowing for `pass_r ≥ 2` and silently re-running pass 0 four times — fixed by widening the shift amount via explicit 4-bit signals. After fix: **33/33 (tb_ntt_core), 38/38 (UVM env)**, 100 % functional coverage. Remaining: 3b-ii (4-bank conflict-free memory for synthesis-to-BRAM) and OP_PWM. |
 | 2026-05-24 | **Increment 3b-ii — 4-bank conflict-free memory.** Refactored the flat 256×23 array into 4 banks of 64×23 with the XOR bank function `bank(addr) = addr[1:0] ^ addr[3:2] ^ addr[5:4] ^ addr[7:6]` (offset = `addr[7:2]`). Every tile across NTT/INTT all 4 passes maps to a permutation of {bank 0..3}, so each bank only needs 1R+1W per cycle — exactly Cyclone V dual-port M10K BRAM. Reads / writes route via combinational 4-way crossbars between the 4 logical tile positions and the 4 physical banks; a 1-cycle delay aligns the bank index with the sync read data. Cycle count and compute schedule unchanged. **33/33, 38/38, 100 % coverage on first run.** |
+| 2026-06-04 | **Fmax/area optimisation — A1, D1, shift-add reduction.** Three verified steps (each core 33/33 + engine 23/23 + UVM 53/53, 100 % cov): **A1** register address generation (56.85→60.47 MHz); **D1** register datapath inputs `m_r`/twiddles/flags (60.47→63.09 MHz, MEM_LAT 1→2); **R** replace Barrett with the q-specific shift-add reduction in `mod_mul` (§4.2) — four shift-add folds + one conditional subtract, one multiply per BFU, LAT kept at 3 (63.09→**75.44 MHz**, **DSP 18→6**). Cumulative: **Fmax +33 %, DSP −67 %**, ALM ~unchanged, M10K 18; NTT ~299 cyc → ~3.96 µs. §7.1 progression + §7.2 honest ATP comparison added. Lesson (4×): re-read the *actual* critical path after every change — the win came from the algorithmic swap, not the registering. Remaining headroom: register `mod_mul` inputs → ~110–120 MHz. |
 | 2026-06-04 | **Synthesis phase opened.** Design + verification declared complete; CLAUDE.md rewritten from the keccak description to the NTT engine; §8 reframed (synthesis now the active task on `2_ntt`, the rest deferred to integration); GitHub issue #2 checkboxes reconciled. Quartus Prime Lite 25.1std project created (`quartus/ntt.{qpf,qsf,sdc}`, top `ntt_engine`, device `5CGXFC7C7F23C8`). **First-pass results (§7.1): Fmax 56.85 MHz, 2,227 ALMs, 18 DSP, 18 M10K; NTT 5.22 µs.** Critical path is the read-address generation (combinational multiply + adder chain + XOR-bank + crossbar from `pass_r` to the RAM addr port), *not* the Barrett datapath — improvement targets identified in §7.1. |
 | 2026-05-25 | **OP_PWM — pointwise multiply complete & verified.** Added a second 4-bank memory `bank_mem_b` for operand B, a `wr_b_sel_i` core input, FSM states `S_PWM` / `S_PDRAIN`, and a PWM branch in the BFU mux that uses all 4 BFUs in CT mode with `a=0`, `b=A[i]`, `z=B[i]` (so `a_o = A[i]*B[i] mod q`). PWM reuses the SCALE writeback path (5-cycle pipeline depth). The engine FSM gained `E_RX_B` so the AXI sink accepts the second polynomial when `op_i == OP_PWM`. PWM compute is ~74 cycles (64 issue + 10 drain) — vastly faster than NTT since no inter-stage forwarding is needed. UVM env extended with 15 PWM stimuli (directed + stress + coverage closure). **Result: 33/33 (tb_ntt_core), 23/23 (tb_ntt_engine), 53/53 (UVM env), 100 % functional coverage on first run.** The NTT engine now supports all three ML-DSA polynomial operations end-to-end. |
