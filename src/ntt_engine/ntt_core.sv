@@ -75,7 +75,7 @@ module ntt_core (
   // Pipeline / timing constants
   // ===========================================================================
   localparam int unsigned BF_LAT     = 4;                // butterfly_unit latency
-  localparam int unsigned MEM_LAT    = 1;                // mem-read register
+  localparam int unsigned MEM_LAT    = 2;                // mem-read reg + D1 datapath-input reg
   localparam int unsigned RUN_LAT    = MEM_LAT + 2*BF_LAT; // = 9, RUN issue -> writeback
   localparam int unsigned SCL_LAT    = MEM_LAT + BF_LAT;   // = 5, SCALE issue -> writeback
   localparam int unsigned WB_DEPTH   = RUN_LAT;          // shift-reg length (deepest path)
@@ -353,6 +353,36 @@ module ntt_core (
   end
 
   // ===========================================================================
+  // D1: REGISTERED datapath inputs  (Fmax fix #2)
+  // After A1 the worst path was: BRAM read -> m_r crossbar mux -> BFU input mux
+  // -> modular subtract -> 23x23 multiply -> mod_mul prod_s1, all in one cycle
+  // (~14.5 ns). Register the routed read data + twiddles + valid flags here so
+  // the RAM-access + crossbar land in one stage and the BFU-mux + msub + multiply
+  // in the next. Twiddles and v/sc/pw are delayed one matching cycle so the
+  // rank-s feed stays aligned; the BF_LAT delay lines (driving rank-t) are
+  // seeded from these delayed versions. MEM_LAT 1->2 propagates to RUN_LAT/
+  // SCL_LAT/WB_DEPTH/DRAIN_LEN. +1 cycle latency.
+  // ===========================================================================
+  logic [COEFF_W-1:0] m_r0_r, m_r1_r, m_r2_r, m_r3_r;
+  logic [COEFF_W-1:0] mb_r0_r, mb_r1_r, mb_r2_r, mb_r3_r;
+  logic [COEFF_W-1:0] tw_a_d, tw_b_d, tw_c_d;
+  logic               v_s2, sc_s2, pw_s2;
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      m_r0_r <= '0; m_r1_r <= '0; m_r2_r <= '0; m_r3_r <= '0;
+      mb_r0_r <= '0; mb_r1_r <= '0; mb_r2_r <= '0; mb_r3_r <= '0;
+      tw_a_d <= '0; tw_b_d <= '0; tw_c_d <= '0;
+      v_s2 <= 1'b0; sc_s2 <= 1'b0; pw_s2 <= 1'b0;
+    end else begin
+      m_r0_r <= m_r0; m_r1_r <= m_r1; m_r2_r <= m_r2; m_r3_r <= m_r3;
+      mb_r0_r <= mb_r0; mb_r1_r <= mb_r1; mb_r2_r <= mb_r2; mb_r3_r <= mb_r3;
+      tw_a_d <= tw_a; tw_b_d <= tw_b; tw_c_d <= tw_c;
+      v_s2 <= v_s1; sc_s2 <= sc_s1; pw_s2 <= pw_s1;
+    end
+  end
+
+  // ===========================================================================
   // BF_LAT-deep delay line for the 3 twiddles + valid + sc flag.
   // These are needed BF_LAT cycles after stage-s feed to drive the rank-t
   // inputs (only relevant for RUN; SCALE feeds rank-t directly at T+1).
@@ -371,12 +401,12 @@ module ntt_core (
         vt_dly[i]  <= 1'b0; sct_dly[i] <= 1'b0; pwt_dly[i] <= 1'b0;
       end
     end else begin
-      twa_dly[0] <= tw_a;
-      twb_dly[0] <= tw_b;
-      twc_dly[0] <= tw_c;
-      vt_dly [0] <= v_s1;
-      sct_dly[0] <= sc_s1;
-      pwt_dly[0] <= pw_s1;
+      twa_dly[0] <= tw_a_d;
+      twb_dly[0] <= tw_b_d;
+      twc_dly[0] <= tw_c_d;
+      vt_dly [0] <= v_s2;
+      sct_dly[0] <= sc_s2;
+      pwt_dly[0] <= pw_s2;
       for (int i = 1; i < BF_LAT; i++) begin
         twa_dly[i] <= twa_dly[i-1];
         twb_dly[i] <= twb_dly[i-1];
@@ -401,39 +431,39 @@ module ntt_core (
 
   always_comb begin
     // ---- rank-s (BFU0, BFU1) -------------------------------------------------
-    if (sc_s1) begin
+    if (sc_s2) begin
       // SCALE: multiply each mem coeff by N_INV (CT with a=0 -> a_o = b*z)
       bf0_mode = BF_CT;   bf1_mode = BF_CT;
-      bf0_a_i  = '0;      bf0_b_i  = m_r0; bf0_z = COEFF_W'(N_INV);
-      bf1_a_i  = '0;      bf1_b_i  = m_r1; bf1_z = COEFF_W'(N_INV);
-    end else if (pw_s1) begin
+      bf0_a_i  = '0;      bf0_b_i  = m_r0_r; bf0_z = COEFF_W'(N_INV);
+      bf1_a_i  = '0;      bf1_b_i  = m_r1_r; bf1_z = COEFF_W'(N_INV);
+    end else if (pw_s2) begin
       // PWM: c[i] = A[i] * B[i]  (CT with a=0 -> a_o = m_r * mb_r)
       bf0_mode = BF_CT;   bf1_mode = BF_CT;
-      bf0_a_i  = '0;      bf0_b_i  = m_r0; bf0_z = mb_r0;
-      bf1_a_i  = '0;      bf1_b_i  = m_r1; bf1_z = mb_r1;
+      bf0_a_i  = '0;      bf0_b_i  = m_r0_r; bf0_z = mb_r0_r;
+      bf1_a_i  = '0;      bf1_b_i  = m_r1_r; bf1_z = mb_r1_r;
     end else if (fwd) begin
       // NTT stage 2p (CT): pairs (b,b+L) and (b+L/2, b+3L/2); same outer tw
       bf0_mode = BF_CT;   bf1_mode = BF_CT;
-      bf0_a_i  = m_r0;    bf0_b_i  = m_r2; bf0_z = tw_a;
-      bf1_a_i  = m_r1;    bf1_b_i  = m_r3; bf1_z = tw_a;
+      bf0_a_i  = m_r0_r;  bf0_b_i  = m_r2_r; bf0_z = tw_a_d;
+      bf1_a_i  = m_r1_r;  bf1_b_i  = m_r3_r; bf1_z = tw_a_d;
     end else begin
       // INTT stage 2p (GS): pairs (b,b+L) and (b+2L,b+3L); two inner tw
       bf0_mode = BF_GS;   bf1_mode = BF_GS;
-      bf0_a_i  = m_r0;    bf0_b_i  = m_r1; bf0_z = modneg(tw_b);
-      bf1_a_i  = m_r2;    bf1_b_i  = m_r3; bf1_z = modneg(tw_c);
+      bf0_a_i  = m_r0_r;  bf0_b_i  = m_r1_r; bf0_z = modneg(tw_b_d);
+      bf1_a_i  = m_r2_r;  bf1_b_i  = m_r3_r; bf1_z = modneg(tw_c_d);
     end
 
     // ---- rank-t (BFU2, BFU3) -------------------------------------------------
-    if (sc_s1) begin
+    if (sc_s2) begin
       // SCALE: BFU2/3 also do multiply-by-N_INV on m_r2/m_r3
       bf2_mode = BF_CT;   bf3_mode = BF_CT;
-      bf2_a_i  = '0;      bf2_b_i  = m_r2; bf2_z = COEFF_W'(N_INV);
-      bf3_a_i  = '0;      bf3_b_i  = m_r3; bf3_z = COEFF_W'(N_INV);
-    end else if (pw_s1) begin
+      bf2_a_i  = '0;      bf2_b_i  = m_r2_r; bf2_z = COEFF_W'(N_INV);
+      bf3_a_i  = '0;      bf3_b_i  = m_r3_r; bf3_z = COEFF_W'(N_INV);
+    end else if (pw_s2) begin
       // PWM: BFU2/3 do the same pointwise multiply on m_r2/m_r3 with mb_r2/3
       bf2_mode = BF_CT;   bf3_mode = BF_CT;
-      bf2_a_i  = '0;      bf2_b_i  = m_r2; bf2_z = mb_r2;
-      bf3_a_i  = '0;      bf3_b_i  = m_r3; bf3_z = mb_r3;
+      bf2_a_i  = '0;      bf2_b_i  = m_r2_r; bf2_z = mb_r2_r;
+      bf3_a_i  = '0;      bf3_b_i  = m_r3_r; bf3_z = mb_r3_r;
     end else if (vt_tail && !sct_tail && !pwt_tail) begin
       // RUN stage 2p+1 : rank-s outputs feed rank-s+1 (intra-tile forwarding)
       bf2_mode = fwd ? BF_CT : BF_GS;
