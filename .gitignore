@@ -33,11 +33,16 @@ quartus/*.cdf
 quartus/*.qws
 quartus/*.bak
 
-# Claude Code local state
-.claude/
+# Claude Code local state (track CLAUDE.md; ignore everything else)
+.claude/*
+!.claude/CLAUDE.md
 
 # OS / editor
 .DS_Store
 Thumbs.db
 *.swp
 *.swo
+
+# Word temp / lock files
+docs/~$*.docx
+docs/~$*.doc
