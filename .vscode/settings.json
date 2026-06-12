@@ -13,5 +13,6 @@
     "vlib",
     "voptargs",
     "vsim"
-]
+],
+"claudeCode.allowDangerouslySkipPermissions": true
 }

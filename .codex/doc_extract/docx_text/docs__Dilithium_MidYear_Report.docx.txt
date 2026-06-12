@@ -1,0 +1,1203 @@
+﻿POSTGRADUATE THESIS
+
+Department of Electronics
+
+M.Engg Electronics — Specialization in Integrated Circuit Design (EL-5002)
+
+NED University of Engineering and Technology
+
+Hardware Design and Verification of Dilithium —
+
+A Post-Quantum Digital Signature Algorithm
+
+Mid-Year Evaluation Report
+
+Submitted by
+
+Muhammad Abdul Ahad
+
+[Seat Number]
+
+Supervisor
+
+[Name of Thesis Supervisor]
+
+NED University of Engineering & Technology
+
+Co-Supervisor
+
+[Name of Thesis Co-Supervisor]
+
+© NED University of Engineering & Technology. All Rights Reserved — June 2026
+
+Author's Declaration
+
+I declare that I am the sole author of this thesis. It is the actual copy of the thesis that was accepted by my supervisor(s), including any necessary revisions. I also grant NED University of Engineering and Technology permission to reproduce and distribute electronic or paper copies of this thesis.
+
+Signature and Date
+
+.................................
+
+Muhammad Abdul Ahad
+
+[Seat Number]
+
+smabdulahad03@gmail.com
+
+Acknowledgments
+
+I am grateful to my thesis supervisor and co-supervisor for their guidance and continued support throughout this work, and to the Department of Electronics at NED University of Engineering and Technology for providing the EDA tools and computing resources used for simulation and synthesis. I also thank my family, colleagues and friends for their encouragement during the course of this research.
+
+Dedication
+
+To my family, for their constant support and encouragement.
+
+Table of Contents
+TOC \h \o "1-3"
+
+List of Figures
+
+ Figure 1.1 The two accelerated primitives within the Dilithium accelerator dataflow: parallel Keccak/SHAKE cores → sampler → decoupling FIFO → NTT engine. 
+
+ Figure 1.2 Thesis methodology — reference-model analysis, per-module RTL design and verification, then evaluation and benchmarking. 
+
+ Figure 3.1 The Keccak sponge construction: absorb (XOR message blocks into the rate, then permute) and squeeze (read output, re-permute as needed). 
+
+ Figure 3.2 Keccak engine module hierarchy: parameterisable parallel wrapper over N independent cores, each with parameter, absorb, step and output units. 
+
+ Figure 3.3 keccak_core five-state FSM (IDLE → ABSORB → SUFFIX_PADDING → PERMUTE → SQUEEZE), with multi-block absorb and XOF re-permutation loops. 
+
+ Figure 3.4 keccak_engine_parallel — N independent lanes sharing only the clock; reset, control, mode and AXI streams are all per-lane. 
+
+ Figure 3.5 UVM verification environment structure and phase schedule (test → env → agent/scoreboard/coverage over the DUT). 
+
+ Figure 3.6 QuestaSim UVM regression transcript for the Keccak engine (208/208 PASS, 0 errors). 
+
+ Figure 3.7 QuestaSim functional-coverage report for the Keccak engine (100% per lane). 
+
+ Figure 3.8 Keccak parallelism: 4-lane wall-clock versus the serial four-core baseline — a measured 3.84× speedup. 
+
+ Figure 3.9 Keccak Fmax across the four optimisation iterations (+14% overall). 
+
+ Figure 3.10 Quartus TimeQuest Fmax summary for keccak_core (84.31 MHz, slow corner). 
+
+ Figure 3.11 Quartus resource-utilisation report for keccak_core (~3,747 ALMs, 0 DSP, 0 BRAM). 
+
+ Figure 4.1 The two butterfly datapaths: Cooley-Tukey (forward NTT) and Gentleman-Sande (inverse NTT). 
+
+ Figure 4.2 The 2×2 butterfly tile: four BFUs in two ranks, with intra-tile forwarding (dashed) from rank-s to rank-t — no memory write between the two collapsed stages. 
+
+ Figure 4.3 The pipelined modular multiplier: one a·b multiply followed by four shift-add folds and a conditional subtract — replacing Barrett's three multiplies. 
+
+ Figure 4.4 Conflict-free 4-bank coefficient memory with read/write crossbars feeding the 2×2 tile; the XOR bank function guarantees one read and one write per bank per cycle. 
+
+ Figure 4.5 NTT engine module hierarchy: ntt_engine wraps ntt_core (banks + 2×2 tile + FSM), which uses twiddle ROMs and four butterfly units, each containing a mod_mul. 
+
+ Figure 4.6 ntt_core FSM: the NTT/INTT run-and-drain path, the INTT-only scale pass, and the dedicated PWM path. 
+
+ Figure 4.7 ntt_engine AXI-Stream front-end FSM: receive A (and B for PWM), run the core, transmit the result. 
+
+ Figure 4.8 QuestaSim UVM regression transcript for the NTT engine (53/53 PASS, 0 errors). 
+
+ Figure 4.9 QuestaSim functional-coverage report for the NTT engine (100%). 
+
+ Figure 4.10 NTT optimisation: Fmax rises +33% (56.85→75.44 MHz) while DSP usage falls −67% (18→6). 
+
+ Figure 4.11 Quartus TimeQuest Fmax summary for ntt_engine (75.44 MHz, slow corner). 
+
+ Figure 4.12 Quartus resource-utilisation report for ntt_engine (2,313 ALM, 6 DSP, 18 M10K). 
+
+ Figure 4.13 NTT compute-cycle count versus published designs — the engine sits in the top cluster. 
+
+List of Tables
+
+ Table 2.1 Representative published Keccak / SHAKE hardware (per-core figures). 
+
+ Table 2.2 Representative published Dilithium NTT hardware (NTT compute-only cycles). 
+
+ Table 3.1 SHAKE usage in the ML-DSA / Dilithium operations. 
+
+ Table 3.2 Key parameters of the Keccak engine (keccak_pkg.sv). 
+
+ Table 3.3 Keccak verification results. 
+
+ Table 3.4 Keccak Fmax optimisation iterations (Cyclone V, keccak_core). 
+
+ Table 4.1 Key parameters of the NTT engine (ntt_pkg.sv). 
+
+ Table 4.2 NTT verification results. 
+
+ Table 4.3 NTT Fmax / DSP optimisation progression (Cyclone V, ntt_engine). 
+
+ Table 4.4 Optimised NTT engine versus published designs (NTT compute-only cycles). 
+
+List of Abbreviations
+
+Abbreviation 
+
+Definition 
+
+ML-DSA 
+
+Module-Lattice-Based Digital Signature Algorithm 
+
+PQC 
+
+Post-Quantum Cryptography 
+
+NTT / INTT 
+
+(Inverse) Number-Theoretic Transform 
+
+PWM 
+
+Point-Wise Multiplication 
+
+SHAKE 
+
+Secure Hash Algorithm Keccak (XOF) 
+
+XOF 
+
+Extendable-Output Function 
+
+CT / GS 
+
+Cooley-Tukey / Gentleman-Sande butterfly 
+
+RTL 
+
+Register-Transfer Level 
+
+UVM 
+
+Universal Verification Methodology 
+
+FSM 
+
+Finite-State Machine 
+
+AXI 
+
+Advanced eXtensible Interface 
+
+FPGA 
+
+Field-Programmable Gate Array 
+
+DSP 
+
+Digital Signal Processing block 
+
+ALM 
+
+Adaptive Logic Module (Cyclone V) 
+
+M10K / BRAM 
+
+10-Kbit / Block Random-Access Memory 
+
+Fmax 
+
+Maximum operating frequency 
+
+ATP 
+
+Area-Time Product 
+
+DUT 
+
+Device Under Test 
+
+KAT 
+
+Known-Answer Test 
+
+List of Symbols
+
+Symbol 
+
+Meaning 
+
+q 
+
+Modulus of the ring, 8 380 417 = 2²³ − 2¹³ + 1 
+
+n 
+
+Polynomial degree / ring dimension, 256 
+
+R_q 
+
+Ring Z_q[x] / (x²⁵⁶ + 1) 
+
+ζ (zeta) 
+
+2n-th root of unity mod q, 1753 
+
+N_INV 
+
+Inverse of N mod q (1/N scaling), 8 347 681 
+
+⊙ 
+
+Coefficient-wise (point-wise) multiplication 
+
+r, c, b 
+
+Sponge rate, capacity, and state width (b = r + c = 1600) 
+
+θ ρ π χ ι 
+
+The five Keccak-f step mappings 
+
+United Nations Sustainable Development Goals
+
+The Sustainable Development Goals (SDGs) are the blueprint to achieve a better and more sustainable future for all. The goals relevant to this thesis are checked below.
+
+☐ No Poverty
+
+☐ Zero Hunger
+
+☐ Good Health and Well-being
+
+☐ Quality Education
+
+☐ Gender Equality
+
+☐ Clean Water and Sanitation
+
+☐ Affordable and Clean Energy
+
+☐ Decent Work and Economic Growth
+
+☑ Industry, Innovation and Infrastructure
+
+☐ Reduced Inequalities
+
+☐ Sustainable Cities and Communities
+
+☐ Responsible Consumption and Production
+
+☐ Climate Action
+
+☐ Life Below Water
+
+☐ Life on Land
+
+☑ Peace, Justice and Strong Institutions
+
+☐ Partnerships to Achieve the Goals
+
+Justification of SDG Mapping
+
+This work maps primarily to SDG 9 (Industry, Innovation and Infrastructure): it advances quantum-resistant cryptographic hardware that strengthens the security infrastructure underpinning digital industry and communications. It also supports SDG 16 (Peace, Justice and Strong Institutions) by helping protect the integrity and authenticity of digital information and institutional systems against the emerging quantum threat.
+
+Certificate
+
+This is to certify that the following student has compiled this thesis on the topic given below for partial fulfilment of the requirement for the Master's degree in Electronics (Integrated Circuit Design).
+
+Thesis Title: Hardware Design and Verification of Dilithium — A Post-Quantum Digital Signature Algorithm
+
+Student: Muhammad Abdul Ahad Seat Number: [____________]
+
+This is to certify that a plagiarism test was conducted on the complete report, and the overall similarity index was found to be less than 20%, with a maximum of 5% from a single source, as required.
+
+ …………………… ……………………
+
+ Co-Supervisor Supervisor
+
+ [Name of Co-Supervisor] [Name of Supervisor]
+
+Plagiarism (Turnitin) Report
+
+[ Attach here the 3 pages of the Turnitin plagiarism report ]
+
+Abstract
+
+Post-quantum cryptography is becoming essential to long-term digital security, as the maturing of quantum computing threatens the public-key schemes — RSA and ECC — on which today's systems rely. CRYSTALS-Dilithium, standardised by NIST as the Module-Lattice-Based Digital Signature Algorithm (ML-DSA, FIPS 204), is a lattice-based signature scheme offering strong security with practical key and signature sizes, but its heavy polynomial arithmetic and extensive use of the SHAKE hash function make purely software implementations costly on embedded platforms.
+
+This thesis investigates a modular, register-transfer-level hardware implementation of Dilithium, accelerating its two most performance-critical primitives: the Keccak/SHAKE hashing engine and the Number-Theoretic-Transform (NTT) engine. Each module is designed in SystemVerilog, verified against a pure-SystemVerilog golden model in a UVM environment with every transaction compared, and synthesised on an Intel Cyclone V FPGA. At this mid-year stage both modules are complete and fully verified. The Keccak engine implements SHAKE128/256, scales across four parallel lanes with a measured 3.84× speedup, achieves 100% functional coverage (208/208 tests), and reaches 84.31 MHz. The NTT engine implements the forward and inverse transforms and point-wise multiplication with a 2×2 conflict-free butterfly tile and a q-specific shift-add modular reduction, achieves 100% functional coverage (53/53 tests), and reaches 75.44 MHz using only 6 DSP blocks with a top-cluster compute-cycle count of ~299. The results demonstrate that a carefully verified Cyclone V implementation is competitive on fabric-neutral metrics, and establish a trustworthy foundation for the full accelerator — sampler, controller and integration — which constitutes the planned remaining work.
+
+1. Introduction
+
+1.1 Background Information
+
+Modern digital systems rely on public-key cryptography for secure communication, data integrity, authentication, secure boot and firmware verification. The asymmetric schemes in widest use today, RSA and Elliptic-Curve Cryptography (ECC), derive their security from the computational hardness of integer factorisation and the discrete-logarithm problem on conventional computers [1]. The maturing of quantum computing threatens these foundations directly: Shor's algorithm solves both problems in polynomial time on a sufficiently large quantum computer, which would render RSA and ECC insecure [1], [2].
+
+Because data captured today can be stored and decrypted once such machines exist — the "harvest-now, decrypt-later" threat — the migration to quantum-resistant cryptography is urgent rather than hypothetical. The U.S. National Institute of Standards and Technology (NIST) ran a multi-year, multi-round standardisation programme to evaluate Post-Quantum Cryptography (PQC) candidates [2]. From that process, the lattice-based signature scheme CRYSTALS-Dilithium was selected and standardised as the Module-Lattice-Based Digital Signature Algorithm (ML-DSA) in FIPS 204 [3], [5].
+
+Dilithium offers strong security with practical key and signature sizes, but it is computationally heavy: every key-generation, signing and verification operation is dominated by polynomial arithmetic over the ring R_q = Z_q[x]/(x^256 + 1) and by extensive use of the SHAKE extendable-output function. Executed purely in software on embedded processors, these operations impose significant latency and energy cost. This motivates a dedicated hardware accelerator, which is the subject of this thesis.
+
+1.2 Significance and Motivation
+
+The significance of this work lies at the intersection of two trends: the unavoidable migration to post-quantum cryptography, and the deployment of long-lifetime embedded and IoT devices that must remain secure for a decade or more. Such devices are exactly the platforms least able to absorb the software cost of Dilithium, yet most exposed to the harvest-now-decrypt-later threat. A modular, resource-efficient hardware implementation directly addresses this gap.
+
+Profiling of published implementations shows the cost is concentrated: the signature-generation phase accounts for roughly 74% of total execution time, and that time is dominated by the polynomial multiplications inside the rejection-sampling loop, each of which is an NTT operation. The SHAKE hashing primitive is the second concentration point — for the highest security level, expanding the public matrix A alone requires 56 independent SHAKE128 invocations. These two primitives, hashing and the NTT, are therefore the natural targets for hardware acceleration and are the focus of this report.
+
+Figure 1.1 places these two primitives within the dataflow of the complete accelerator: parallel Keccak/SHAKE cores feed a rejection sampler, whose bursty coefficient output is decoupled through a FIFO into the fixed-rate NTT engine.
+
+Figure 1.1 The two accelerated primitives within the Dilithium accelerator dataflow: parallel Keccak/SHAKE cores → sampler → decoupling FIFO → NTT engine.
+
+1.2.1 Benefits of a Hardware Realisation
+
+A register-transfer-level (RTL) implementation provides three concrete benefits over software: higher throughput through spatial parallelism and pipelining; lower energy per operation, which matters for battery-powered nodes; and a clean, verified, reusable IP foundation on which a complete ML-DSA accelerator and future side-channel countermeasures can be built. This thesis prioritises correctness and verifiability first, then performance, so that the resulting modules are trustworthy building blocks rather than unverified speed records.
+
+1.3 Aims and Objectives
+
+The aim of this thesis is to design and verify an efficient, modular hardware implementation of the CRYSTALS-Dilithium (ML-DSA) signature scheme at register-transfer level. The specific objectives are:
+
+To analyse the Dilithium reference C implementation and decompose the algorithm into hardware-mappable computational modules.
+
+To design synthesisable SystemVerilog RTL for the two most performance-critical primitives — the Keccak/SHAKE hashing engine and the Number-Theoretic-Transform (NTT) engine.
+
+To verify each module functionally against a trusted golden reference using a UVM-based verification environment, achieving full functional coverage.
+
+To synthesise each module on an Intel Cyclone V FPGA and evaluate area, maximum frequency (Fmax) and latency.
+
+To compare the results honestly against the published state of the art and identify the optimisation path toward a complete, integrated accelerator.
+
+1.4 Methodology
+
+The work follows a structured, module-by-module flow: analysis of the reference C model, architectural decomposition, RTL design of each module, golden-model-based functional verification, and FPGA synthesis with iterative optimisation. The guiding principle throughout is "correct first, fast later": each module is brought up in a verifiable form, golden-compared on every transaction, and only then optimised for area and frequency, with the design re-verified after every change. The repository is organised one module per Git branch so that each engine can be developed and verified in isolation before integration. The overall methodology is summarised in Figure 1.2.
+
+Figure 1.2 Thesis methodology — reference-model analysis, per-module RTL design and verification, then evaluation and benchmarking.
+
+Simulation is performed in QuestaSim with SystemVerilog/UVM; synthesis targets the Cyclone V device 5CGXFC7C7F23C8 in Quartus Prime Lite 25.1std, with timing closure assessed in the TimeQuest Timing Analyzer. The same Cyclone V part is used for both engines so the two sets of results are directly comparable.
+
+1.5 Report Outline
+
+The remainder of this report is organised as follows. Chapter 2 reviews post-quantum cryptography, the ML-DSA scheme, and the published hardware literature for both the Keccak/SHAKE primitive and the NTT, establishing how this work differs from prior art. Chapter 3 presents the first completed module — the Keccak/SHAKE hashing engine — covering its design decisions, RTL architecture, UVM verification, synthesis results and comparison with published designs. Chapter 4 presents the second completed module — the NTT engine — in the same structure. Chapter 5 concludes the report and sets out recommendations for future work, namely the remaining optimisation levers and the integration of both engines into a complete Dilithium accelerator. As this is a mid-year evaluation report, both engines are complete and verified; the sampler, controller and top-level integration are in progress and are described as future work.
+
+2. Literature Review
+
+2.1 Introduction
+
+This chapter surveys the background and prior work relevant to the thesis. It first establishes why post-quantum cryptography is needed and where ML-DSA fits, then reviews published hardware implementations of the two primitives accelerated in this work: the Keccak/SHAKE hashing function and the Number-Theoretic Transform. The objective is to position this thesis against the state of the art — to show which architectural choices are established best practice, which trade-offs remain open, and where a Cyclone V implementation can make a defensible contribution.
+
+2.2 Post-Quantum Cryptography and ML-DSA
+
+Lattice-based cryptography has emerged as the most practical family of post-quantum schemes, owing to strong security reductions and efficient implementations [1]. Its security rests on hard lattice problems such as Learning With Errors (LWE) and its ring/module variants, for which no efficient classical or quantum algorithm is known. After several evaluation rounds, NIST standardised the module-lattice signature scheme CRYSTALS-Dilithium as ML-DSA (FIPS 204) [3]. The design and security analysis were originally presented by Ducas et al. [5], who showed that the scheme achieves strong existential unforgeability while keeping key and signature sizes practical.
+
+ML-DSA operates over the ring R_q = Z_q[x]/(x^256 + 1) with n = 256 and the prime q = 8 380 417. Two primitives dominate its cost. First, polynomial multiplication, performed efficiently via the NTT using the identity a·b = INTT(NTT(a) ⊙ NTT(b)), where ⊙ denotes coefficient-wise multiplication. Second, the SHAKE extendable-output function (an instance of Keccak/SHA-3 [4]), which ML-DSA uses as its only symmetric primitive for matrix expansion (ExpandA), secret sampling (ExpandS), mask sampling (ExpandMask) and challenge hashing (H). Both primitives are therefore the natural targets for hardware acceleration.
+
+2.3 Hardware Implementations of the Keccak/SHAKE Primitive
+
+Published Keccak hardware for PQC clusters around two design axes: how a round is scheduled in time, and how independent SHAKE jobs are parallelised in space. On the time axis, the dominant choice in high-performance Dilithium hardware is one round per cycle, evaluating all five Keccak-f step mappings combinationally — used by Beckwith et al. [6], the compact TCHES design of Zhao et al. [10], and the open-source ML-DSA-OSH [9]. Unrolled (two rounds per cycle) designs such as Sundal and Chaves [20] reach very high throughput on Virtex-7 at large area cost, while pipelined-round designs trade bytes-per-cycle for frequency.
+
+On the space axis, high-performance designs almost universally replicate the Keccak core to exploit the independence of ExpandA's many SHAKE jobs, feeding N cores from a dispatcher [6], [9], [11]. A more recent refinement, LightHD [17], interleaves two cores with a 26-cycle phase offset so that one core absorbs while the other permutes, hiding permutation latency. Direct Cyclone V comparisons are rare; Tan et al. [21] (Cyclone V GX, ~140 MHz, one round per cycle) is the closest same-fabric reference and is therefore the fairest single benchmark for the engine in this thesis. The relevant published reference points are summarised in Table 2.1.
+
+Table 2.1 Representative published Keccak / SHAKE hardware (per-core figures).
+
+Work 
+
+Year 
+
+Device 
+
+Fmax 
+
+Round arch. 
+
+Sundal & Chaves [20] 
+
+2017 
+
+Virtex-7 
+
+~400 MHz 
+
+unrolled 2/cyc 
+
+Beckwith et al. [6] 
+
+2021 
+
+Artix-7 
+
+~250 MHz 
+
+1 round/cyc 
+
+Tan et al. [21] 
+
+2021 
+
+Cyclone V GX 
+
+~140 MHz 
+
+1 round/cyc 
+
+Zhao et al. (TCHES) [10] 
+
+2022 
+
+Artix-7 
+
+~166 MHz 
+
+1 round/cyc 
+
+ML-DSA-OSH [9] 
+
+2025 
+
+Artix-7 
+
+~200 MHz 
+
+1 round/cyc 
+
+LightHD (dual-core) [17] 
+
+2026 
+
+Artix-7 
+
+212.8 MHz 
+
+interleaved 
+
+2.4 Hardware Implementations of the NTT
+
+Published Dilithium NTT designs split into two architectural families. Family A is memory-based (iterative): coefficients live in on-chip RAM and butterfly units read and write each cycle through a conflict-free address scheme. Family B is pipelined/streaming (multi-path delay-commutator, MDC): a fixed dataflow of butterflies and delay lines with no address controller, but a long pipeline-fill latency. The clear 2024–2026 trend within Family A is the 2×2 butterfly tile, which processes two NTT layers per cycle (four coefficients): Area-Time Efficient [12] and ML-DSA-OSH [9] both adopt it, the latter explicitly rejecting a 4×4 tile as too area-costly. EMINEM [11] pushes a mixed-radix variant to best-in-class efficiency. Representative designs are summarised in Table 2.2.
+
+Table 2.2 Representative published Dilithium NTT hardware (NTT compute-only cycles).
+
+Work 
+
+Device 
+
+Fmax 
+
+NTT cyc 
+
+DSP 
+
+Family 
+
+Zhao et al. (TCHES) [10] 
+
+Artix-7 
+
+96.9 MHz 
+
+533 
+
+— 
+
+A 
+
+EMINEM [11] 
+
+Kintex US+ 
+
+324 MHz 
+
+271 
+
+6 
+
+A (radix-4) 
+
+Area-Time [12] 
+
+Versal 
+
+328 MHz 
+
+~256 
+
+— 
+
+A (2×2) 
+
+Cui et al. MDC [13] 
+
+Artix-7 
+
+297 MHz 
+
+286 
+
+18 
+
+B 
+
+Conflict-Free [14] 
+
+Zynq US+ 
+
+308 MHz 
+
+563 
+
+8 
+
+A 
+
+ParaPM [15] 
+
+Artix-7 
+
+270 MHz 
+
+379 
+
+— 
+
+B 
+
+PQShield [18] 
+
+Zynq US+ 
+
+322 MHz 
+
+— 
+
+20 
+
+B 
+
+2.5 Research Gap and Summary
+
+The literature establishes a clear best-practice direction — memory-based NTT with a 2×2 conflict-free tile, and replicated one-round-per-cycle Keccak cores — but most reported results are on faster Xilinx (Artix-7/Kintex/Zynx UltraScale+) and AMD Versal fabrics, against which a Cyclone V design cannot win on raw frequency. Two gaps remain addressable. First, there is little published, fully golden-model-verified Dilithium hardware on Intel Cyclone V; correctness and verification rigour are often under-reported. Second, area-efficiency metrics such as DSP count and area-time product are fabric-neutral and remain a fair contest. This thesis therefore targets architecturally competitive cycle counts and best-in-class resource efficiency on Cyclone V, with every transaction golden-compared and full functional coverage — rather than chasing a frequency record on a faster device. The two completed modules and their results are presented in Chapters 3 and 4.
+
+3. The Keccak / SHAKE Hashing Engine
+
+3.1 Introduction
+
+This chapter describes the first completed module of the accelerator: the Keccak/SHAKE hashing engine, developed on the 1_hashing branch of the repository. It begins with the role of Keccak in Dilithium, then presents the design decisions, the RTL architecture, the UVM verification methodology, and the verification, throughput and synthesis results, closing with an honest comparison against published designs. The engine implements SHAKE128 and SHAKE256, is verified to 100% functional coverage across four parallel lanes, and is synthesised on Cyclone V at 84.31 MHz.
+
+3.2 Role of Keccak in Dilithium
+
+ML-DSA uses the SHAKE XOF as its only symmetric primitive; there is no AES or SHA-2 anywhere in the scheme. SHAKE is used both as a hash and as a deterministic pseudo-random generator for sampling polynomials, as summarised in Table 3.1. The dominant consumer is ExpandA: for the highest security level (Dilithium-5) the public matrix A has dimensions k×l = 8×7, so ExpandA performs 56 independent SHAKE128 invocations, one per polynomial A[i][j], each seeded by ρ and the index (i,j). Because the index differs per call, these 56 jobs are mutually independent — there is no data dependency and no ordering requirement.
+
+Table 3.1 SHAKE usage in the ML-DSA / Dilithium operations.
+
+Operation 
+
+XOF 
+
+Purpose 
+
+ExpandA 
+
+SHAKE128 
+
+Expand public matrix A from seed ρ 
+
+ExpandS 
+
+SHAKE256 
+
+Sample secret vectors s₁, s₂ from ρ′ 
+
+ExpandMask 
+
+SHAKE256 
+
+Sample masking vector y during signing 
+
+H (challenge) 
+
+SHAKE256 
+
+Hash μ‖w₁ into the challenge polynomial c 
+
+This independence is the single most important architectural observation of the branch: SHAKE is not merely a bottleneck, it is a bottleneck composed of dozens of embarrassingly-parallel jobs. That directly motivates a replicated, multi-lane engine rather than a single faster core. Keccak itself is built on the sponge construction (Figure 3.1): a 1600-bit state split into a rate r and a capacity c; the message is absorbed r bits at a time, each block XORed into the rate and followed by the Keccak-f[1600] permutation, after which output is squeezed r bits at a time. SHAKE128 uses r = 1344 bits (168 bytes) and SHAKE256 uses r = 1088 bits (136 bytes).
+
+Figure 3.1 The Keccak sponge construction: absorb (XOR message blocks into the rate, then permute) and squeeze (read output, re-permute as needed).
+
+3.3 Design Decisions
+
+Four decisions shaped the RTL, all following the philosophy of correctness first, then verified parallelism, then synthesis-driven Fmax optimisation.
+
+3.3.1 SHAKE-only
+
+The engine supports SHAKE128 and SHAKE256 only; SHA3-256 and SHA3-512 are not implemented. FIPS 204 uses SHAKE exclusively, so the fixed-output SHA-3 modes appear nowhere in Dilithium and would add logic to the parameter and output units for no benefit. The two families differ only in the domain-separation suffix (0x1F for SHAKE, 0x06 for SHA-3); the permutation is identical.
+
+3.3.2 Bus width DWIDTH = 64
+
+The AXI4-Stream data bus is 64 bits (8 bytes per beat). The SHAKE rates are 168 and 136 bytes and gcd(168, 136) = 8, so a 64-bit bus is the widest that divides both rates cleanly, meaning the absorb unit never straddles a rate boundary across two beats. A wider 256-bit bus divides neither rate and would require carry-over logic for a modest absorb-side gain; it is deferred.
+
+3.3.3 One-cycle-per-round permutation (baseline)
+
+In the baseline, all five step mappings (θ, ρ, π, χ, ι) are evaluated combinationally in one cycle, giving 24 cycles per Keccak-f[1600] permutation. This maximises bytes-per-cycle and matches the high-performance literature [6], [10]. The decision was deliberately measured before being changed — the synthesis story in Section 3.6 shows why.
+
+3.3.4 Spatial parallelism — N independent cores
+
+N independent keccak_core instances are wrapped behind one parameterisable module boundary, keccak_engine_parallel (default N_LANES = 4). This is the direct hardware answer to ExpandA's 56 independent jobs: a single core processes them serially, while N lanes process N at a time. The wrapper is the synthesisable top-level of the branch; a later Dilithium controller will dispatch jobs across the lanes.
+
+3.4 RTL Architecture
+
+The module hierarchy is shown in Figure 3.2. The parameterisable wrapper keccak_engine_parallel instantiates N_LANES copies of keccak_core; each core contains the parameter unit (KPU), absorb unit (KAU), step unit (KSU, which instantiates the five step submodules), and output unit (KOU). All parameters are centralised in keccak_pkg.sv.
+
+Figure 3.2 Keccak engine module hierarchy: parameterisable parallel wrapper over N independent cores, each with parameter, absorb, step and output units.
+
+Each core implements a five-state Mealy FSM (Figure 3.3): IDLE latches the mode, rate, suffix and XOF length on start; ABSORB XORs AXI beats into the state; SUFFIX_PADDING applies the 0x1F suffix and 0x80 pad byte at the rate boundary; PERMUTE runs the 24-round permutation and returns to ABSORB for multi-block messages or to SQUEEZE when absorption is complete; SQUEEZE reads output bytes, re-entering PERMUTE for multi-block XOF output and returning to IDLE on completion or stop.
+
+Figure 3.3 keccak_core five-state FSM (IDLE → ABSORB → SUFFIX_PADDING → PERMUTE → SQUEEZE), with multi-block absorb and XOF re-permutation loops.
+
+The wrapper itself is purely structural (Figure 3.4): only the clock is shared, while reset, start, stop, mode, XOF length and both AXI bundles are per-lane. There is no arbiter or scheduler — dispatch is the responsibility of the next-level controller. Replication does not lengthen any combinational path, so Fmax is unchanged by N_LANES, while area scales approximately linearly. Key parameters are listed in Table 3.2.
+
+Figure 3.4 keccak_engine_parallel — N independent lanes sharing only the clock; reset, control, mode and AXI streams are all per-lane.
+
+Table 3.2 Key parameters of the Keccak engine (keccak_pkg.sv).
+
+Parameter 
+
+Value 
+
+Description 
+
+DWIDTH 
+
+64 
+
+AXI data bus width (8 bytes/beat) 
+
+LANE_SIZE 
+
+64 
+
+Keccak lane width (bits) 
+
+ROW_SIZE / COL_SIZE 
+
+5 / 5 
+
+State-array dimensions (1600-bit state) 
+
+MAX_ROUNDS 
+
+24 
+
+Rounds per Keccak-f[1600] permutation 
+
+XOF_LEN_WIDTH 
+
+16 
+
+XOF output-length field; 0 = continuous 
+
+N_LANES 
+
+4 
+
+Number of parallel keccak_core instances 
+
+3.5 Verification Methodology
+
+The active testbench (tb_uvm_keccak_v2) is a UVM environment targeting keccak_engine_parallel at N_LANES = 4. It uses four independent (agent, scoreboard, coverage) triples — one per lane — with no shared state, so cross-lane corruption would surface immediately as a comparison failure. The environment follows a set of principles adopted after an earlier testbench failed: no clocking blocks (all sampling is direct on the clock edge, avoiding a one-cycle skew that caused missed handshakes); the output-ready signal is owned exclusively by the monitor; a per-transaction asynchronous reset guarantees each test starts from a clean IDLE; and driver-monitor coordination is via a uvm_event so the driver never starts the next job before the monitor has finished the current one. The generic UVM architecture and phasing are shown in Figure 3.5.
+
+Figure 3.5 UVM verification environment structure and phase schedule (test → env → agent/scoreboard/coverage over the DUT).
+
+Correctness is anchored by a pure-SystemVerilog golden model (keccak_ref_pkg.sv) implementing the complete Keccak-f[1600] permutation, the sponge and SHAKE128/256, with no DPI or external C model. The stress and coverage sequences call this model at simulation time to compute the expected output for every randomly-generated message, so every transaction has a precomputed expected value and is genuinely compared — there is no skip path. Each lane runs 52 tests (13 directed NIST FIPS 202 vectors in both bounded and continuous XOF modes, 20 random-stress tests, and 19 coverage-closure tests), for 208 tests across four lanes. Functional coverage crosses mode against message length and XOF length.
+
+3.6 Results
+
+3.6.1 Functional Verification
+
+The regression passes completely: 52/52 per lane in single-lane configuration and 208/208 across four parallel lanes, all golden-compared, with 100% functional coverage on every lane (Table 3.3). DUT instance coverage at the wrapper level is ≥92% overall, with 100% FSM-state coverage; the only uncovered items are three asynchronous-reset (abort) FSM transitions, which require asserting reset mid-operation and do not affect the correctness of the SHAKE computation. The QuestaSim regression transcript and coverage report are shown in Figures 3.6 and 3.7.
+
+Table 3.3 Keccak verification results.
+
+Configuration 
+
+Tests 
+
+Functional coverage 
+
+Single-lane (N_LANES = 1) 
+
+52 / 52 PASS 
+
+100% 
+
+4-lane parallel (N_LANES = 4) 
+
+208 / 208 PASS 
+
+100% × 4 lanes 
+
+⧈ SCREENSHOT PLACEHOLDERInsert QuestaSim transcript: vsim -c -do "do run.do; quit -f" showing 208/208 PASS
+
+Figure 3.6 QuestaSim UVM regression transcript for the Keccak engine (208/208 PASS, 0 errors).
+
+⧈ SCREENSHOT PLACEHOLDERInsert QuestaSim coverage report: vcover report keccak_cov.ucdb
+
+Figure 3.7 QuestaSim functional-coverage report for the Keccak engine (100% per lane).
+
+3.6.2 Throughput and Parallelism
+
+The parallelism claim is a wall-clock-cycle claim, not a frequency claim. Measured in simulation, one core processes its 52-test sequence in 39 745 ns, while four lanes process all 208 tests in 41 395 ns — four times the work in essentially the same time. Against an honest serial baseline (four sequential single-core runs = 158 980 ns, since a single 1600-bit state cannot overlap two streams), this is a 3.84× speedup, 96% of the ideal 4× (Figure 3.8). The 4% residual comes from fork-join staggering and non-uniform random message lengths, which vanish in the limit of many queued jobs.
+
+Figure 3.8 Keccak parallelism: 4-lane wall-clock versus the serial four-core baseline — a measured 3.84× speedup.
+
+3.6.3 FPGA Synthesis
+
+Synthesis targets the Cyclone V device 5CGXFC7C7F23C8 in Quartus Prime Lite 25.1std with a 5 ns clock constraint and false-path I/O. The synthesis target is keccak_core (single lane): every published comparison reports single-core numbers, and the four-lane wrapper exposes 805 I/O pins, far beyond any package. Four TimeQuest-guided optimisation iterations raised Fmax from a 73.96 MHz baseline to 84.31 MHz, a 14% improvement, with the 208/208 regression re-verified after every change (Table 3.4, Figure 3.9).
+
+Table 3.4 Keccak Fmax optimisation iterations (Cyclone V, keccak_core).
+
+Iter. 
+
+Change 
+
+Fmax 
+
+ALMs 
+
+1 
+
+Baseline — 1-cycle round, all steps combinational 
+
+73.96 MHz 
+
+4,222 
+
+2 
+
+Pipelined round (register between θρπ and χι) 
+
+76.42 MHz 
+
+3,747 
+
+3 
+
+Gate state-array clear to IDLE only 
+
+81.93 MHz 
+
+~3,747 
+
+4 
+
+Drop redundant init at SQUEEZE end (final) 
+
+84.31 MHz 
+
+~3,747 
+
+Figure 3.9 Keccak Fmax across the four optimisation iterations (+14% overall).
+
+The final design uses ~3,747 ALMs (7% of the device), zero DSP blocks and zero block RAM, as expected for a pure XOR/AND/rotate engine over a register-held state. Crucially, the critical path was not the Keccak round: TimeQuest reported the worst-case path in the squeeze-side XOF control logic (the chain from the byte-counting registers through the output unit's adders and comparators into a wide register-enable net). Pipelining the round therefore bought only +2.5 MHz, whereas removing a redundant reset assertion on that control path delivered the larger gains. This "the obvious critical path is the wrong one" lesson, confirmed by post-fit timing analysis, became a standing rule for the project. The TimeQuest Fmax summary and resource report are shown in Figures 3.10 and 3.11.
+
+⧈ SCREENSHOT PLACEHOLDERInsert Quartus TimeQuest 'Report Fmax Summary' screenshot
+
+Figure 3.10 Quartus TimeQuest Fmax summary for keccak_core (84.31 MHz, slow corner).
+
+⧈ SCREENSHOT PLACEHOLDERInsert Quartus Fitter resource summary screenshot
+
+Figure 3.11 Quartus resource-utilisation report for keccak_core (~3,747 ALMs, 0 DSP, 0 BRAM).
+
+3.7 Comparison with Published Designs
+
+At 84.31 MHz the per-core frequency is below the Artix-7 designs, but that comparison is across fabrics: Artix-7 is a faster process than Cyclone V, so a frequency-for-frequency comparison systematically understates a Cyclone V design. The fair same-fabric reference is Tan et al. [21] on Cyclone V GX (~140 MHz), against which the engine is roughly 1.7× behind. Two mitigations make the result defensible: LightHD's single-core baseline is only ~96.9 MHz on a faster device — about 15% above this work — and the remaining gap is localised to the squeeze-side control logic, not the Keccak round, so it is recoverable. The engine's strengths are its verified 3.84× parallel scaling and full functional coverage. The optimisation of per-core Fmax is deliberately deferred until after NTT bring-up, to keep only one module in flight at a time (Table 2.1 gives the broader context).
+
+3.8 Summary
+
+This chapter presented a complete, fully-verified SHAKE128/SHAKE256 hashing engine: a SHAKE-only keccak_core and a parameterisable parallel wrapper, a UVM environment that golden-compares all 208 transactions across four lanes with 100% functional coverage, a measured 3.84× parallel speedup, and a Cyclone V synthesis result of 84.31 MHz after a four-iteration optimisation pass. The key lesson recorded was that post-fit timing analysis, not intuition, must drive pipelining decisions. The per-core frequency gap to the closest same-fabric reference is understood, localised and recoverable, and is deferred to a later optimisation pass.
+
+4. The Number-Theoretic-Transform Engine
+
+4.1 Introduction
+
+This chapter describes the second completed module: the NTT engine, developed on the 2_ntt branch. The NTT is the polynomial-multiplication primitive of Dilithium and the single most performance-critical arithmetic block in the accelerator. The engine performs the forward NTT, the inverse NTT with 1/N scaling, and point-wise multiplication over R_q = Z_q[x]/(x^256 + 1). It is feature-complete, verified to 100% functional coverage (UVM 53/53), and synthesised and optimised on Cyclone V at 75.44 MHz using only 6 DSP blocks. The chapter follows the same structure as Chapter 3.
+
+4.2 Role and Background
+
+Polynomial multiplication by the schoolbook method is O(n²); the NTT — a Fourier transform over a finite field — reduces it to O(n log n) via a·b = INTT(NTT(a) ⊙ NTT(b)). Dilithium was designed to be NTT-friendly: q ≡ 1 (mod 2n), so a 2n-th root of unity exists (ζ = 1753) and the negacyclic twist of the ring x^256 + 1 folds directly into the twiddle factors. Because the signature-generation phase is roughly 74% of total execution time and is dominated by the polynomial multiplications in the rejection-sampling loop, the NTT is the focus of this branch.
+
+In hardware the transform is computed stage-by-stage with butterfly operations, as in an FFT; for n = 256 there are log₂(n) = 8 radix-2 stages of 128 butterflies each. Two butterfly types are used: Cooley-Tukey (CT) for the forward transform (t = ζ·b; a′ = a + t; b′ = a − t) and Gentleman-Sande (GS) for the inverse (a′ = a + b; b′ = ζ·(a − b)), shown in Figure 4.1. CT takes naturally-ordered input and produces bit-reversed output; GS does the reverse, so using CT forward and GS inverse cancels the bit-reversal and avoids an explicit re-ordering pass.
+
+Figure 4.1 The two butterfly datapaths: Cooley-Tukey (forward NTT) and Gentleman-Sande (inverse NTT).
+
+4.3 Design Decisions
+
+4.3.1 Memory-based core with a 2×2 butterfly tile
+
+The engine adopts the memory-based family with a 2×2 butterfly tile — four coefficients in and out per cycle, two radix-2 stages collapsed per memory pass (Figure 4.2). This choice is driven by verifiability (deterministic, fixed latency, trivial to golden-model), by current best practice (the 2×2 tile is used by the strongest recent designs [9], [12], with 4×4 rejected as too area-costly), and by the absence of any pipeline-fill penalty (unlike streaming MDC, which can waste ~250 cycles filling a delay line for a single transform). Inside the tile the two rank-s butterfly results are forwarded directly to the rank-t butterflies through multiplexers — they are not written back to memory between the two stages — which halves coefficient-memory traffic and is the main reason the tile is worth its area. The eight radix-2 stages thus collapse into N_PASSES = 4 memory passes of 64 tiles each.
+
+Figure 4.2 The 2×2 butterfly tile: four BFUs in two ranks, with intra-tile forwarding (dashed) from rank-s to rank-t — no memory write between the two collapsed stages.
+
+4.3.2 Modular reduction: Barrett → q-specific shift-add
+
+Every butterfly contains one modular multiplication (a·b mod q), and the reduction algorithm sets the critical path. The engine was brought up with Barrett reduction (valid for any q) for verifiability, then — once the golden model and UVM environment were green — switched to a q-specific shift-add reduction. Because q = 2²³ − 2¹³ + 1, the identity 2²³ ≡ 2¹³ − 1 (mod q) lets the high part of any product fold down with shifts and adds only: four folds reduce the 46-bit product below 2q, and one conditional subtract lands it in [0, q). Only the a·b multiply remains; the reduction itself has no multiplier (Figure 4.3). This cut DSP usage from 18 to 6 and lifted Fmax from 63 to 75 MHz, with latency kept at three cycles so the butterfly and core were untouched.
+
+Figure 4.3 The pipelined modular multiplier: one a·b multiply followed by four shift-add folds and a conditional subtract — replacing Barrett's three multiplies.
+
+4.3.3 Conflict-free 4-bank memory
+
+So the tile can read four coefficients and write four back every cycle without two accesses colliding on one RAM port, the flat 256×23 coefficient array is split into four banks of 64×23 using the XOR bank function bank(addr) = addr[1:0] ⊕ addr[3:2] ⊕ addr[5:4] ⊕ addr[7:6] (offset = addr[7:2]). Every tile across all NTT and INTT passes maps to a permutation of the four banks, so each bank needs only one read and one write per cycle — exactly a Cyclone V dual-port M10K — with a four-way combinational crossbar routing the four tile positions to the four physical banks (Figure 4.4). Point-wise multiplication uses a second bank set for operand B. The address-resolver approach is chosen over the alternative PTM scheme because its headline benefit, single-port RAM, is moot on Cyclone V, whose block RAM is natively dual-port.
+
+Figure 4.4 Conflict-free 4-bank coefficient memory with read/write crossbars feeding the 2×2 tile; the XOR bank function guarantees one read and one write per bank per cycle.
+
+4.4 RTL Architecture
+
+The module hierarchy is shown in Figure 4.5. The synthesisable top-level ntt_engine wraps the verified ntt_core with an AXI4-Stream-style I/O front-end (one 23-bit coefficient per beat). ntt_core contains the control FSM, conflict-free address generation, the 2×2 tile of four butterfly units, three twiddle ROMs and the four-bank memory; each butterfly_unit instantiates the pipelined mod_mul. Parameters are centralised in ntt_pkg.sv (Table 4.1).
+
+Figure 4.5 NTT engine module hierarchy: ntt_engine wraps ntt_core (banks + 2×2 tile + FSM), which uses twiddle ROMs and four butterfly units, each containing a mod_mul.
+
+Table 4.1 Key parameters of the NTT engine (ntt_pkg.sv).
+
+Parameter 
+
+Value 
+
+Description 
+
+Q 
+
+8 380 417 
+
+Modulus = 2²³ − 2¹³ + 1 
+
+N / LOGN 
+
+256 / 8 
+
+Ring degree and log₂(N) 
+
+COEFF_W 
+
+23 
+
+Coefficient width (bits) 
+
+ZETA 
+
+1753 
+
+2n-th root of unity 
+
+N_INV 
+
+8 347 681 
+
+256⁻¹ mod q (1/N scaling) 
+
+COEFFS_PER_CYCLE 
+
+4 
+
+Coefficients processed per cycle 
+
+N_PASSES 
+
+4 
+
+Memory passes (LOGN/2) 
+
+The ntt_core FSM (Figure 4.6) issues one tile per cycle across the four passes in S_RUN, draining the butterfly pipeline at each pass boundary in S_RDRAIN; for the inverse transform an additional S_SCALE pass multiplies every coefficient by N_INV (1/N scaling merged into the final pass), and point-wise multiplication uses the dedicated S_PWM/S_PDRAIN path that drives all four butterflies in CT mode. The ntt_engine front-end FSM (Figure 4.7) receives polynomial A (and B for PWM) over AXI-Stream, runs the core, then transmits the 256-coefficient result.
+
+Figure 4.6 ntt_core FSM: the NTT/INTT run-and-drain path, the INTT-only scale pass, and the dedicated PWM path.
+
+Figure 4.7 ntt_engine AXI-Stream front-end FSM: receive A (and B for PWM), run the core, transmit the result.
+
+4.5 Verification Methodology
+
+The NTT testbench reuses the proven UVM pattern from the Keccak branch — no clocking blocks, per-transaction asynchronous reset, driver-monitor synchronisation via a uvm_event, and every transaction golden-compared with no skip path — targeting ntt_engine with a single agent. The golden model (ntt_ref_pkg.sv) is a pure-SystemVerilog port of the Dilithium reference ntt() and invntt_tomont() kept in the normal integer domain, plus PWM and an independent negacyclic schoolbook poly_mul for cross-checking. It is self-verified by a standalone testbench that passes 208/208 checks (round-trip INTT(NTT(a)) = a, NTT-based multiply cross-checked against the schoolbook, twiddle spot-checks, edge cases and 100 random vectors). The UVM sequences cover directed edge cases, random stress across NTT/INTT/round-trip, and coverage-closure crosses, with expected results computed by the golden model at sequence time.
+
+4.6 Results
+
+4.6.1 Functional Verification
+
+All verification passes: the UVM regression is 53/53 with 100% functional coverage and zero errors, and the directed self-checks pass golden model 208/208, ntt_core 33/33 and ntt_engine 23/23 (Table 4.2). The engine supports NTT, INTT and PWM end-to-end. The QuestaSim regression transcript and coverage report are shown in Figures 4.8 and 4.9.
+
+Table 4.2 NTT verification results.
+
+Check 
+
+Result 
+
+Coverage 
+
+UVM regression (ntt_engine) 
+
+53 / 53 PASS 
+
+100% functional 
+
+Golden-model self-check 
+
+208 / 208 PASS 
+
+— 
+
+Directed ntt_core 
+
+33 / 33 PASS 
+
+— 
+
+Directed ntt_engine 
+
+23 / 23 PASS 
+
+— 
+
+⧈ SCREENSHOT PLACEHOLDERInsert QuestaSim transcript: vsim -c -do "do ntt_run.do; quit -f" showing 53/53 PASS
+
+Figure 4.8 QuestaSim UVM regression transcript for the NTT engine (53/53 PASS, 0 errors).
+
+⧈ SCREENSHOT PLACEHOLDERInsert QuestaSim coverage report: vcover report ntt_cov.ucdb
+
+Figure 4.9 QuestaSim functional-coverage report for the NTT engine (100%).
+
+4.6.2 Cycle Counts
+
+Measured via the UVM environment, the compute-only cycle counts are ~297 for the forward NTT (meeting the ≤300-cycle target), ~370 for the INTT (including the scale pass), and ~74 for PWM (64 issue cycles plus 10 drain, with no inter-stage forwarding needed). The 2×2 tile processes 4 coefficients/cycle over 4 passes — 256 cycles of butterfly work plus pipeline and control overhead — placing the design squarely with the best memory-based designs.
+
+4.6.3 FPGA Synthesis and Optimisation
+
+Synthesis targets the same Cyclone V part (5CGXFC7C7F23C8) with a 5 ns constraint and top-level ntt_engine. The baseline (Barrett) achieved 56.85 MHz with 18 DSP blocks; the critical path was found in the read-address generation — a combinational multiply, adder chain, XOR-bank function and crossbar from the pass counter to the RAM address port — not in the Barrett datapath, reconfirming the Keccak-branch lesson. Three verified optimisation steps followed (Table 4.3, Figure 4.10): A1 registered the address generation, D1 registered the datapath inputs, and R replaced Barrett with the q-specific shift-add reduction. Each step was re-verified (core 33/33, engine 23/23, UVM 53/53, 100% coverage).
+
+Table 4.3 NTT Fmax / DSP optimisation progression (Cyclone V, ntt_engine).
+
+Step 
+
+Change 
+
+Fmax 
+
+DSP 
+
+ALM 
+
+base 
+
+Barrett, single-cycle addr-gen 
+
+56.85 MHz 
+
+18 
+
+2,227 
+
+A1 
+
+Register address generation 
+
+60.47 MHz 
+
+18 
+
+2,189 
+
+D1 
+
+Register datapath inputs 
+
+63.09 MHz 
+
+18 
+
+2,229 
+
+R 
+
+q-specific shift-add reduction 
+
+75.44 MHz 
+
+6 
+
+2,313 
+
+Figure 4.10 NTT optimisation: Fmax rises +33% (56.85→75.44 MHz) while DSP usage falls −67% (18→6).
+
+Cumulatively, Fmax improved by 33% and DSP usage fell by 67%, with ALMs essentially unchanged and 18 M10K blocks — a substantial area-time win on both terms. The final design measures 75.44 MHz, 6 DSP, 2,313 ALM and 18 M10K, giving an NTT latency of ~299 cycles ≈ 3.96 µs. As on the Keccak branch, the decisive gain came from the algorithmic change (shift-add reduction), not from registering; the standing rule of re-reading the actual TimeQuest critical path after every change held four times this branch. The TimeQuest Fmax summary and resource report are shown in Figures 4.11 and 4.12.
+
+⧈ SCREENSHOT PLACEHOLDERInsert Quartus TimeQuest 'Report Fmax Summary' screenshot
+
+Figure 4.11 Quartus TimeQuest Fmax summary for ntt_engine (75.44 MHz, slow corner).
+
+⧈ SCREENSHOT PLACEHOLDERInsert Quartus Fitter resource summary screenshot
+
+Figure 4.12 Quartus resource-utilisation report for ntt_engine (2,313 ALM, 6 DSP, 18 M10K).
+
+4.7 Comparison with Published Designs
+
+Table 4.4 compares the optimised engine against the published designs of Chapter 2; NTT cycles are compute-only and latency = cycles / Fmax. On cycle count (~299) the design sits in the top cluster with EMINEM (271), Cui (286) and Area-Time (~256), and well ahead of the single-butterfly and streaming designs (Figure 4.13). On DSP efficiency the 6 blocks tie EMINEM — the efficiency leader — and beat Cui (18) and PQShield (20); the shift-add reduction is what bought this. Frequency and absolute latency are device-limited: 75 MHz against 270–328 MHz is the fabric gap between Cyclone V (28 nm, slow grade) and the Kintex/Zynq UltraScale+ (16 nm) and Versal (7 nm) parts, and indeed the project's own Keccak engine tops out at 84 MHz on the same device.
+
+Table 4.4 Optimised NTT engine versus published designs (NTT compute-only cycles).
+
+Design 
+
+Device 
+
+Fmax 
+
+NTT cyc 
+
+DSP 
+
+Latency 
+
+Ours (A1+D1+R) 
+
+Cyclone V 
+
+75.4 MHz 
+
+~299 
+
+6 
+
+3.96 µs 
+
+EMINEM [11] 
+
+Kintex US+ 
+
+324 MHz 
+
+271 
+
+6 
+
+0.84 µs 
+
+Cui MDC [13] 
+
+Artix-7 
+
+297 MHz 
+
+286 
+
+18 
+
+0.96 µs 
+
+Area-Time [12] 
+
+Versal 
+
+328 MHz 
+
+~256 
+
+— 
+
+0.78 µs 
+
+Conflict-Free (1-BF) [14] 
+
+Zynq US+ 
+
+332 MHz 
+
+1075 
+
+4 
+
+3.24 µs 
+
+ParaPM [15] 
+
+Artix-7 
+
+270 MHz 
+
+379 
+
+— 
+
+1.40 µs 
+
+Figure 4.13 NTT compute-cycle count versus published designs — the engine sits in the top cluster.
+
+An honest reading avoids manufacturing a win: a single area-time-product number across Cyclone V ALMs and Xilinx LUTs on different process nodes is not defensible as a head-to-head result, because the time term is dominated by the device frequency gap. What is defensible is an architecturally competitive cycle count and best-in-class DSP efficiency, fully verified, on Cyclone V — and a design structured so that on a faster fabric (≥250 MHz) it would be directly area-time-competitive.
+
+4.8 Summary
+
+This chapter presented a complete, fully-verified NTT engine supporting forward NTT, inverse NTT and point-wise multiplication: a memory-based ntt_core with a 2×2 conflict-free tile and a q-specific shift-add modular reduction, an AXI-Stream front-end, a pure-SystemVerilog golden model, and a UVM environment passing 53/53 with 100% functional coverage. The optimised Cyclone V result is 75.44 MHz, 6 DSP, 2,313 ALM and ~299 NTT cycles (3.96 µs) — a top-cluster cycle count and a DSP efficiency that ties the published leader, with the frequency gap attributable to the device rather than the architecture.
+
+5. Conclusions
+
+5.1 Summary
+
+This thesis set out to design and verify an efficient, modular hardware implementation of the CRYSTALS-Dilithium (ML-DSA) signature scheme, targeting its two most performance-critical primitives. At this mid-year point both primitives are complete, fully verified and synthesised on Intel Cyclone V. The Keccak/SHAKE hashing engine implements SHAKE128 and SHAKE256, scales across four independent lanes with a measured 3.84× speedup, passes 208/208 golden-compared transactions at 100% functional coverage, and reaches 84.31 MHz after a TimeQuest-guided optimisation pass. The NTT engine implements the forward NTT, inverse NTT and point-wise multiplication over R_q with a 2×2 conflict-free tile and a q-specific shift-add modular reduction, passes 53/53 with 100% functional coverage, and reaches 75.44 MHz using only 6 DSP blocks with a top-cluster compute-cycle count of ~299.
+
+The objectives of analysing the reference model, designing synthesisable RTL for both primitives, verifying each against a trusted golden model to full functional coverage, and evaluating area and frequency on FPGA have all been met for the two completed modules. Two methodological findings recur across both engines and are the most transferable contributions of the work: that a pure-SystemVerilog golden model comparing every transaction is a practical route to trustworthy correctness; and that the obvious-looking critical path is frequently not the real one, so post-fit timing analysis — not intuition — must drive every pipelining decision. Honest benchmarking has been applied throughout: the engines are competitive on fabric-neutral metrics (cycle count, DSP efficiency, verified parallelism) while the raw-frequency gap to faster Xilinx and Versal fabrics is reported as a device limitation rather than disguised.
+
+5.2 Recommendations for Future Work
+
+Several clear directions remain for the second half of the thesis. The most immediate frequency lever is to register the inputs of the modular multiplier, which would isolate the surviving multiply and is expected to push the NTT engine toward 110–120 MHz; the analogous squeeze-side pipelining would recover much of the Keccak engine's frequency gap toward the same-fabric reference. A radix-4 butterfly and a decoupling input FIFO for the NTT engine are worth evaluating for further area-time and integration gains.
+
+The principal remaining work is integration: combining the hashing and NTT engines with a rejection sampler and a Dilithium controller into a complete key-generation, signing and verification accelerator. The interface between the modules deserves particular care — published work shows the dominant cost in a full accelerator is the data-format mismatch between modules, so a pipelined sampler-to-NTT reordering path is preferable to a plain store-and-reload buffer, and the number of Keccak lanes should be right-sized by throughput-matching against the measured sampler and NTT rates. Longer-term, side-channel countermeasures such as masking and a final ASIC characterisation would extend the work toward deployment. Each of these builds directly on the verified, synthesised foundation established in this report.
+
+Appendix A Reproduction and Tooling
+
+This appendix records the commands and environment used to reproduce the simulation and synthesis results, kept out of the main body so as not to interrupt the flow of ideas.
+
+A.1 Simulation (QuestaSim)
+
+Keccak (branch 1_hashing), from sim/:
+
+vsim -c -do "do run.do; quit -f" # compile + simulate + coveragevcover report keccak_cov.ucdb # coverage report
+
+NTT (branch 2_ntt), from sim/:
+
+vsim -c -do "do ntt_run.do; quit -f" # full UVM regression + coveragevsim -c -do "do ntt_ref_check.do; quit -f" # golden self-check (208/208)vsim -c -do "do ntt_core_check.do; quit -f" # directed core (33/33)vsim -c -do "do ntt_engine_check.do; quit -f" # directed engine (23/23)
+
+A.2 Synthesis (Quartus Prime Lite 25.1std, Cyclone V 5CGXFC7C7F23C8)
+
+quartus_map.exe ntt -c ntt # analysis & synthesisquartus_fit.exe ntt -c ntt # place & route (area)quartus_sta.exe ntt -c ntt # timing analysis (Fmax)
+
+References
+
+[1] D. J. Bernstein, J. Buchmann, and E. Dahmen, Post-Quantum Cryptography. Berlin: Springer, 2009.
+
+[2] National Institute of Standards and Technology, "Post-Quantum Cryptography Standardization Project," NIST, 2016–2024.
+
+[3] National Institute of Standards and Technology, FIPS 204: Module-Lattice-Based Digital Signature Standard (ML-DSA), 2024.
+
+[4] National Institute of Standards and Technology, FIPS 202: SHA-3 Standard — Permutation-Based Hash and Extendable-Output Functions, 2015.
+
+[5] L. Ducas, E. Kiltz, T. Lepoint, V. Lyubashevsky, P. Schwabe, G. Seiler, and D. Stehlé, "CRYSTALS-Dilithium: Algorithm Specifications and Supporting Documentation," NIST PQC Round 3, 2021.
+
+[6] L. Beckwith, D. T. Nguyen, and K. Gaj, "High-Performance Hardware Implementation of CRYSTALS-Dilithium," Int. Conf. on Field-Programmable Technology (ICFPT), 2021.
+
+[7] U. Banerjee, T. Pöppelmann, and K. Gaj, "Efficient Number-Theoretic-Transform Architectures for Lattice-Based Cryptography," IEEE Int. Symp. on Hardware-Oriented Security and Trust (HOST), 2020.
+
+[8] G. Mao, D. Chen, G. Li, and W. Dai, "High-Performance and Configurable SW/HW Co-Design of Post-Quantum Signature CRYSTALS-Dilithium," 2023.
+
+[9] Q. Norga, S. Kundu, and I. Verbauwhede, "ML-DSA-OSH: An Efficient, Open-Source Hardware Implementation of ML-DSA (Full Version)," 2025.
+
+[10] Z. Zhao et al., "A Compact and High-Performance Hardware Architecture for CRYSTALS-Dilithium," IACR TCHES, 2022.
+
+[11] "EMINEM: Efficient FPGA Implementation of Mixed-Radix NTT Hardware Accelerators for NIST Post-Quantum Cryptography (Falcon, Dilithium, HAWK)," 2025.
+
+[12] "Area-Time Efficient Hardware Design for CRYSTALS-Dilithium," 2025.
+
+[13] Y. Cui et al., "High-Performance Hardware Implementation of CRYSTALS-Dilithium Based on Improved MDC-NTT," 2025.
+
+[14] "Efficient Conflict-Free NTT Hardware Architecture," IACR ePrint 2026/621.
+
+[15] "ParaPM: Efficient Hardware Accelerator for Post-Quantum Signature with High-Performance Polynomial Multiplier," 2026.
+
+[16] "PALS: A High-Speed ML-DSA Hardware Accelerator with Enhanced Pipeline on FPGA," 2026.
+
+[17] "LightHD: A Lightweight and High-Performance Hardware Accelerator of CRYSTALS-Dilithium," 2026.
+
+[18] PQShield, "High-Performance NTT Hardware Accelerator to Support ML-KEM and ML-DSA," 2024.
+
+[19] "KiD: Unified NTT Multiplication for Kyber and Dilithium on FPGA," arXiv:2311.04581, 2023.
+
+[20] Ø. Sundal and R. Chaves, "Efficient FPGA Implementation of the SHA-3 Hash Function," IEEE Computer Society Annual Symp. on VLSI (ISVLSI), 2017.
+
+[21] Y. Tan et al., "FPGA Implementation of the Keccak Hash Function on Cyclone V," 2021.
+
+[22] "Optimized HW-SW Co-Design for Kyber and Dilithium on RISC-V SoC FPGA," IACR TCHES, 2024.
+
+
+Hardware Design and Verification of Dilithium
+PAGE
+

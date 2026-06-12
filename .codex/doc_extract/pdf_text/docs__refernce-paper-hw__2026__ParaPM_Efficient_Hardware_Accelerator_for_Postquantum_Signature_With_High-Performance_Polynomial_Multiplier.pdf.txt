@@ -1,0 +1,688 @@
+                       This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+   IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS                                                                                                       1
+
+
+
+
+                     ParaPM: Efficient Hardware Accelerator
+                           for Postquantum Signature
+                             With High-Performance
+                             Polynomial Multiplier
+              Yumeng Zhao , Gaoming Du , Xiaolei Wang, Yongsheng Yin , Member, IEEE, Duoli Zhang ,
+                                               and Zhenmin Li
+
+      Abstract—During the Institute of Standards and Technology                             However, efficient hardware implementation of Dilithium
+   (NIST) postquantum cryptography standardization process, the                          remains a significant challenge. Computational profiling
+   lattice-based Dilithium scheme was selected as one of the three                       reveals that the signature-generation phase is the primary
+   third-round finalists for digital signature algorithms. Although
+   numerous hardware implementations of Dilithium have been
+                                                                                         bottleneck, accounting for approximately 74% of the total
+   proposed, there remains substantial room for performance                              execution time. This latency is dominated by the high-
+   optimization, particularly in terms of computational speed. In                        frequency polynomial multiplications required inside the
+   this work, we target the two most time-consuming operations,                          rejection-sampling loop. Specifically, Dilithium involves inten-
+   namely the coefficient generation and polynomial multiplica-                          sive matrix–vector operations where a single polynomial
+   tion. We propose a high-speed hardware architecture that fully                        vector is sequentially multiplied by a matrix.
+   exploits hardware parallelism. Our design introduces a fully
+   pipelined radix-2 multipath delay commutator (R2MDC) struc-                              Despite the urgency, existing hardware architectures fail
+   ture supporting both NTT and inverse NTT (INTT) modes, a                              to fully exploit the potential parallelism in this process. The
+   throughput-matched polynomial multiplier enabling on-the-fly                          fundamental limitation lies in the “tightly coupled” design of
+   pointwise multiplication (PWM) without buffering, and a low-                          the number theoretic transform (NTT) and pointwise multipli-
+   resource Keccak. These optimizations collectively eliminate the                       cation (PWM) units. In conventional designs, these units are
+   throughput mismatch bottleneck and maximize hardware uti-                             often scheduled sequentially or matched with static throughput
+   lization through task-level parallelism. We implement coefficient
+   generation, signing, and verification for three security levels on                    ratios. This leads to two critical inefficiencies as follows.
+   the A7 and Z7 platforms. Experimental results demonstrate that                           1) Underutilized Parallelism: Software-oriented workflows
+   our current design achieves the optimal area-time product (ATP)                              serialize the NTT and PWM steps, ignoring the field-
+   across all three security levels.                                                            programmable gate array (FPGA’s) capability for deep
+      Index Terms—Coefficient generation, CRYSTALS-Dilithium,                                   pipelining.
+   field-programmable gate array (FPGA), hardware, high speed,                              2) Throughput Mismatch: The volume of PWMs in the
+   polynomial multiplier, postquantum cryptography.                                             rejection loop vastly exceeds the number of required
+                                                                                                NTT operations. Existing designs often lack a mecha-
+                                                                                                nism to balance these unequal workloads, causing either
+                             I. I NTRODUCTION
+                                                                                                the NTT unit to stall or the PWM unit to become a
+
+   W        ITH the rapid development of quantum computers,
+            Accenture predicts that by 2028, Shor’s algorithm
+   [1], [2] will be deployed on quantum computing platforms,
+                                                                                                bottleneck, resulting in significant buffering overhead
+                                                                                                and structural inefficiency.
+                                                                                            To bridge this gap, this work proposes a throughput-
+   signaling that existing cryptographic systems will no longer be                       matched hardware architecture that harmonizes the algorithmic
+   sufficient to protect data security [3]. In response, the National                    workflow with hardware acceleration. Building on our prior
+   Institute of Standards and Technology (NIST) began a process                          component-level work [7], which validated a pipelined radix-2
+   to select postquantum cryptographic algorithms in 2017 [4].                           multipath delay commutator (R2MDC) polynomial multiplier,
+   By 2022, NIST had standardized four algorithms—Dilithium,                             we extend this foundation to a complete, system-level imple-
+   Falcon, SPHINCS+, and Kyber [5]—and in March 2025,                                    mentation of Dilithium. Our design features a decoupled
+   HQC was announced as the fifth postquantum algorithm for                              datapath that enables “on-the-fly” PWM, effectively eliminat-
+   encryption [6].                                                                       ing the throughput mismatch and minimizing the latency of
+                                                                                         the critical rejection loop.
+      Received 16 December 2025; revised 18 February 2026 and 18 March
+   2026; accepted 18 March 2026. This work was supported in part by Hefei
+                                                                                            In our prior work [7], we proposed a fully pipelined
+   University of Technology under Grant W2025JSKF0152. (Corresponding                    R2MDC structure for high-speed processing, enabling concur-
+   authors: Zhenmin Li; Xiaolei Wang.)                                                   rent support for both NTT and inverse NTT (INTT) modes,
+      The authors are with the School of Microelectronics, Hefei Univer-                 and a fully pipelined polynomial multiplication architecture
+   sity of Technology, Hefei 230009, China (e-mail: zhenmin.li@hfut.edu.cn;
+   wangxiaolei@hfut.edu.cn).                                                             that overlaps PWM with NTT/INTT. At Security Level V, the
+      Digital Object Identifier 10.1109/TVLSI.2026.3678026                               design reduces latency by 33% relative to the fastest prior
+                1063-8210 © 2026 IEEE. All rights reserved, including rights for text and data mining, and training of artificial intelligence and
+                          similar technologies. Personal use is permitted, but republication/redistribution requires IEEE permission.
+                                        See https://www.ieee.org/publications/rights/index.html for more information.
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 18:55:05 UTC from IEEE Xplore. Restrictions apply.
+                       This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+   2                                                                                  IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+                                                                                         mized the radix-2 MDC-NTT architecture to reduce BRAM
+                                                                                         usage. Bisheh-Niasar et al. [18] proposed a parametric NTT
+                                                                                         design that improved efficiency by 44% with over 25% fewer
+                                                                                         Slices and 80% fewer BRAMs. Consequently, they realized
+                                                                                         a compact and high-speed ASIC implementation within the
+                                                                                         same year [19].
+                                                                                            Despite these advancements, a critical gap remains in
+                                                                                         system-level scheduling. Most state-of-the-art designs focus on
+                                                                                         optimizing individual modules (NTT or Keccak) in isolation
+   Fig. 1. Motivation example. (a) Memory-based architecture employs reused              but overlook the throughput mismatch between the coefficient
+   BF units for NTT/INTT and PWM operations, leading to extended cycles.                 generation and the intensive polynomial multiplication in the
+   (b) Sequential connection of BF units results in reduced clock frequency              signing phase. They either couple these stages too tightly
+   for pipeline-based configuration. (c) This work integrates an independently
+   developed PWM unit to shorten cycle times, and pipeline structure enhance-            (causing stalls) or serialize them (increasing latency). There
+   ments increase clock frequency. (d) Cycle reduction. (e) Comparison of the            is a lack of a unified architecture that dynamically matches
+   fundamental frequencies between the two structures.                                   the throughput of NTT and PWM to fully exploit task-
+                                                                                         level parallelism without excessive resource consumption. This
+                                                                                         work aims to address this specific limitation.
+   design and improves area-time product (ATP) by 20% over
+   top benchmarks (Fig. 1). Building on these foundations, our
+   work extends the high-performance polynomial multiplier to                            B. Contribution
+   a complete hardware implementation of the Dilithium digital-
+   signature algorithm.                                                                     This work combines our previously reported high-
+                                                                                         performance polynomial multiplier architecture (Du et al.
+                                                                                         [7]) with the development of a complete Dilithium hardware
+   A. Related Work                                                                       architecture. The main contributions of this work can be
+      Postquantum cryptography spans lattice-based, code-based,                          summarized as follows.
+   multivariate-based, and hash-based schemes. Hardware imple-                              1) We design a fully pipelined R2MDC NTT/INTT archi-
+   mentations of Dilithium, a lattice-based signature scheme                                   tecture incorporating a five-stage pipelined butterfly (BF)
+   reliant on M-LWE [8], and SIS [9] problems, have been                                       unit, which supports both NTT and INTT. By inserting
+   actively researched. Existing works can be broadly categorized                              strategically placed pipeline registers and replacing the
+   into resource-intensive parallel designs, compact co-designs,                               register-based sort buffer with BRAM, the proposed
+   and algorithmic optimizations.                                                              design mitigates the frequency degradation caused by
+      Early implementations prioritized throughput by instan-                                  the long combinational paths in traditional serial BF
+   tiating massive parallelism. For instance, Beckwith et al.                                  connections, thereby achieving high clock rates without
+   [10] employed three concurrent KECCAK units and mul-                                        incurring excessive resource overhead.
+   tiple sampling units to accelerate coefficient generation.                               2) We decouple the NTT and PWM into independent
+   Similarly, Ricci et al. [11] utilized independent hardware                                  modules, enabling true parallel execution. The pro-
+   modules for SHAKE128/256 and matrix expansion. However,                                     posed throughput-matching multiplier performs point-
+   this approach incurs prohibitive hardware resource overhead,                                wise operations immediately once the NTT outputs are
+   making deployment on resource-constrained edge devices                                      ready, thereby eliminating the need to store the NTT
+   impractical.                                                                                results. To execute PWM, four configurable process-
+      To optimize area efficiency, recent works have shifted                                   ing elements (PEs) are instantiated, allowing the NTT
+   toward hardware-software co-design. Wang et al. [12] pro-                                   outputs to be processed concurrently with multiple vec-
+   posed a compact architecture using a single KECCAK unit,                                    tors. This design achieves dynamic throughput matching
+   where matrix A and vectors s1 , s2 are generated sequentially.                              according to computational demands.
+   Mao et al. [13] adopted a unified sampler to process data for                            3) Building upon the parallel polynomial multiplier in (2),
+   rejection sampling. While these designs improve integration,                                we restructure the software workflow of the Dilithium
+   they often suffer from limited parallelism. For example, the                                algorithm to enable concurrent execution of independent
+   sequential generation of polynomial coefficients in [12] creates                            polynomial multiplications (e.g., c × s1 , c × s2 , and
+   a long latency path as vector dimensions grow. Similarly, in                                c × t0 ). This approach eliminates unnecessary serializa-
+   [13], the overall latency remains high (at least 168 cycles for                             tion, with the most significant improvement observed in
+   permutation) due to the serialization of data dependencies.                                 the sign stage, where it reduces the rejection loop delay
+      Several works focus on optimizing specific arithmetic ker-                               and shortens the overall signature computation time by
+   nels. Zhao et al. [14] reduced the KECCAK permutation                                       20%–40%.
+   to 12 cycles, yet the parallelism of the rejection sampling                              4) We introduce mathematical factorization techniques
+   remained low. More recently, Li et al. [15] proposed a mul-                                 for large-constant multiplications, breaking down
+   tiinstruction architecture to partition processes into parallel                             28 × 23-bit operations into smaller DSP-friendly units,
+   instructions, and Zhao et al. [16] introduced a sparse multipli-                            and using shift-and-add operations for selected twiddle
+   cation technique to reduce bit-level complexity. Cui et al. [17]                            factors. These optimizations reduce DSP usage while
+   further refined the modular multiplication scaling and opti-                                improving maximum operating frequency.
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 18:55:05 UTC from IEEE Xplore. Restrictions apply.
+                       This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+   ZHAO et al.: ParaPM: EFFICIENT HARDWARE ACCELERATOR FOR POSTQUANTUM SIGNATURE                                                                                          3
+
+
+
+      5) We optimize the SHA-3 Keccak unit by eliminating                                Algorithm 3 Verification
+         redundant XOR operations unnecessary for hardware                               01: A ∈ Rk×l
+                                                                                                    q   := ExpandA(ρ)
+         execution, leading to significant logic resource savings                        02: µ ∈ {0, 1}384 := CRH(CRH(ρkt1 )kM);
+         without affecting functionality or speed.                                       03: c := SampleInBall(c̃);
+                                                                                         04: w01 := UseHintq (h, Az − ct1 · 2d , 2γ2 );
+                            II. P RELIMINARIES                                           05: if kzk∞ < γ1 −β and c̃ = H(µkw01 ) and # of 1’s in h is ≤ ω
+
+   A. Crystals-Dilithium Overview                                                            then
+                                                                                         06: return Valid;
+      Dilithium uses a rejection sampling approach within a                              07: else;
+   lattice-based Fiat–Shamir framework derived from MLWE and
+                                                                                         08: return Invalid;
+   employs Gaussian sampling to produce signatures. Among
+                                                                                         08: end if;
+   lattice-based signature schemes that rely solely on uniform
+   sampling, Dilithium offers the smallest public-key and sig-
+   nature sizes. The key generation, signing, and verification
+   procedures are described in [20, Algorithms 1–3].                                     and greater computational complexity. This parameter scaling
+                                                                                         also results in changes to η and γ1 . The generation of A
+   Algorithm 1 Key Generation                                                            incurs substantial latency, and producing the column vectors
+                                                                                         s1 and s2 requires a nontrivial number of cycles. Consequently,
+   01: ξ ← {0, 1}256 ; B Generate a 256-bit random number(ξ)
+                                                                                         the efficient generation of polynomial coefficients becomes a
+   02: (ρ, ζ, k) ∈ {0, 1}256×3 = SHAKE256(ξ);
+                                                                                         critical factor in optimizing overall performance.
+   03: (s1 , s2 ) ∈ S`η × Skη = SHAKE128(ζ);
+   04: A ∈ Rk×` = SHAKE128(ρ);
+   05: t = A × s1 + s2 ;                                                                 B. Number Theoretic Transform
+   06: (t1 , t0 ) = Power2Roundq (t, d);                                                    NTT [21], [22] serves as the number–theoretic counterpart
+   07: tr ∈ {0, 1}384 = CRH(ρ||tr); B CRH is instantiated as                             to the discrete Fourier transform (DFT) [23], [24]. Among
+       SHAKE256                                                                          existing methodologies, both the fast Fourier transform (FFT)
+   08: return(pk = (ρ, t1 ), sk = (ρ, k, tr, s1 , s2 , t0 ));                            [25] and the NTT achieve the optimal asymptotic time com-
+                                                                                         plexity of O(n log n). However, unlike the FFT, which relies
+                                                                                         on floating-point arithmetic and consequently suffers from
+   Algorithm 2 Signing                                                                   precision loss, NTT operates within the integer coefficient
+   01: A ∈ Rk×l    := ExpandA(ρ)                                                         polynomial ring Rq = Zq [x]/(xN + 1). This reliance on exact
+               q
+                                                                                         integer arithmetic has established NTT as the predominant
+   02: µ ∈ {0, 1}384 := CRH(trkM);
+                                                                                         approach for contemporary polynomial multiplication. In the
+   03: κ = 0, (z, h) :=⊥;
+                                                                                         context of lattice-based cryptography, polynomial multipli-
+   04: ρ0 ∈ {0, 1}384 := CRH(Kkµ);
+                                                                                         cation over the ring is typically implemented via negative
+   05: while(z, h) =⊥ do;
+                                                                                         wrapped convolution (NWC). This process involves trans-
+   06: y ∈ S̃lγ1 := ExpandMask(ρ0 , κ);
+                                                                                         forming the polynomials via NTT, performing point-wise
+   07: w := Ay
+                                                                                         multiplication, and reconstructing the P result via     the INTT.
+   08: w1 := HighBitsq (w, 2γ2 );
+                                                                                         Formally, the NTT is defined as âi = N−1     a j ωij
+                                                                                                                                                mod  q, and
+   09: c̃ ∈ {0, 1}256 := H(µkw1 );                                                                                            P j=0 −i j
+                                                                                         the INTT is expressed as ai = N −1 N−1     â
+                                                                                                                                 j=0 j ω       mod  q.
+   10: c ∈ Bτ := S ampleInBall(c̃);
+                                                                                            Two standard BF structures are used to implement
+   11: z := y + cs1 ;
+                                                                                         NTT/INTT: the Cooley–Tukey (CT) BF and the
+   12: r0 := LowBitsq (w − cs2 , 2γ2 );
+                                                                                         Gentleman–Sande (GS) BF. The CT BF follows a decimation-
+   13: if kzk∞ ≥ γ1 − βorkr0 k∞ ≥ γ2 − β then;
+                                                                                         in-time (DIT) approach, taking inputs in standard order and
+   14: (z, h) :=⊥;
+                                                                                         producing outputs in bit-reversed order. The GS BF follows
+   15: else
+                                                                                         a decimation-in-frequency (DIF) approach, taking inputs in
+   16: h := MakeHintq (−ct0 , w − cs2 + ct0 , 2γ2 );
+                                                                                         bit-reversed order and producing outputs in standard order.
+   17: if kct0 k∞ ≥ γ2 or the # of 10 s in h is greater than ω then
+                                                                                         Combining CT for the forward NTT and GS for the INTT
+   18: (z, h) :=⊥
+                                                                                         eliminates the need for explicit bit-reversal.
+   19: end if
+   20: end if
+   21: κ := κ + l
+                                                                                                            III. P ROPOSED A RCHITECTURE
+   22: end while                                                                         A. Top-Level Architecture of Dilithium
+   23: return σ = (z, h, c̃)                                                                1) Timing Scheduling: To illustrate how the proposed
+                                                                                         architecture improves parallelism, the signing-phase timing
+     Table I summarizes the parameters across the three NIST                             schedule is shown in Fig. 2. Our optimization targets the
+   security levels. The modulus q, polynomial degree n, and the                          polynomial multiplications inside the rejection loop. In the
+   number of dropped bits from t remain fixed across levels.                             traditional design, after the NTT, the polynomial c is multi-
+   In contrast, the dimension of the matrix A increases with                             plied sequentially with the independent polynomials s1 , s2 ,
+   higher security levels, reflecting stronger security guarantees                       and t0 in a strictly serial fashion. However, s1 , s2 , and t0
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 18:55:05 UTC from IEEE Xplore. Restrictions apply.
+                       This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+   4                                                                                  IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+                                                                                            The signature peripheral circuitry handles operations such
+                                                                                         as mask generation, MakeHint, rejection loop, SampleInBall,
+                                                                                         index decomposition, and packing. The verification peripheral
+                                                                                         circuitry manages timing and control flow for verification
+                                                                                         operations, including value comparisons. The Power2Round
+                                                                                         module remaps out-of-range data back into the modular
+                                                                                         domain while compressing the public-key element t to improve
+                                                                                         hardware area efficiency. The compression/decompression unit
+                                                                                         compresses the public key during key generation and decom-
+                                                                                         presses it during signing and verification.
+
+                                                                                         B. Polynomial Multiplier
+                                                                                            To efficiently execute the parallel scheduling strategy pro-
+                                                                                         posed in Section III-A, the hardware architecture must support
+                                                                                         high-throughput, decoupled operations. We adopt the high-
+                                                                                         performance R2MDC NTT kernel and the pipelined BF unit
+                                                                                         (BFU) structure from our previous work [7]. This kernel
+                                                                                         provides the fundamental arithmetic capability for separate
+   Fig. 2. Flowchart of the optimized signing stage, demonstrating a 40%                 NTT and PWM operations.
+   reduction in clock cycles compared with conventional implementations.                    Polynomial multiplication consists of two main compo-
+                                                                                         nents: NTT and PWM. Most existing designs integrate these
+                                                                                         two functions, reusing DSP resources within the NTT to
+                                                                                         perform polynomial point-wise multiplication. In contrast,
+                                                                                         we separate these functions and design them independently.
+                                                                                         This approach is motivated by the following reasons: when
+                                                                                         restructuring the software flow, we parallelize the triple poly-
+                                                                                         nomial point-wise multiplication. To meet this parallelization
+                                                                                         requirement, the PWM module must have sufficient resources;
+                                                                                         relying solely on the internal resources of the NTT mod-
+                                                                                         ule is insufficient. Additionally, introducing dedicated PWM
+                                                                                         modules can further increase the polynomial multiplication
+                                                                                         throughput.
+   Fig. 3. Hardware architecture of Dilithium.
+                                                                                            To finalize the NTT architecture, we evaluate two preva-
+                                                                                         lent design paradigms: memory-based implementations and
+   are all precomputed and mutually independent, permitting                              pipelined implementations. We adopt the pipelined architec-
+   their corresponding multiplications to be executed in parallel.                       ture for the following reasons: our design aims to decouple
+   Although this improvement may appear modest, it yields a                              the computation rates of the PWM and NTT to enable
+   substantial performance gain: our experimental results indicate                       parallel computation. Simply increasing the resources of the
+   that this optimization translates to a 20% to 40% reduction                           PWM leads to excessive hardware consumption. Therefore,
+   in the overall signing latency across different security lev-                         we reduce the PWM computation rate. However, reducing the
+   els. This improvement becomes increasingly pronounced at                              NTT’s computation rate increases its processing latency. Thus,
+   higher security levels, where vector dimensions are larger,                           we instead reduce the NTT’s output rate, that is, the number
+   and the rejection probability necessitates more frequent loop                         of outputs generated per cycle.
+   executions.                                                                              In summary, memory-based implementations have output
+      2) Architecture of Dilithium: The overall hardware archi-                          rates that match their computation rates. Designing a stan-
+   tecture of the Dilithium implementation is illustrated in                             dalone PWM module requires instantiating N PWM units
+   Fig. 3, and comprises the following components: a finite                              (where N is the number of BFUs) to process NTT out-
+   state machine (FSM), coefficient generation unit, polyno-                             puts, which wastes hardware resources. Reducing the number
+   mial multiplier, coefficient operation unit, signature peripheral                     of BFUs to match PWM units prolongs NTT computation,
+   circuitry, verification peripheral circuitry, Power2Round, com-                       increasing overall latency. Conversely, pipelined NTT archi-
+   pression/decompression unit, and data storage.                                        tectures have output rates significantly lower than computation
+      The FSM serves as the status control module, coordinat-                            rates, allowing for optimal PWM quantity configuration and
+   ing all functional units. The coefficient generator (CoeGen)                          reduced hardware consumption.
+   supplies the random values required at each stage of the                                 However, pipelined architectures introduce a major draw-
+   algorithm. The polynomial multiplier performs all polynomial                          back: pipeline buffering cycles. For example, processing a
+   multiplication tasks. The coefficient operation unit primarily                        256-term polynomial with the R2MDC NTT structure results
+   carries out polynomial addition and subtraction following                             in a total latency of 379 clock cycles, with pipeline buffering
+   the INTT stage. The data storage module holds intermediate                            accounting for 66.2% of this time. In the Dilithium algorithm,
+   results produced by various computational units.                                      serial input of multiple polynomials to the NTT reduces the
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 18:55:05 UTC from IEEE Xplore. Restrictions apply.
+                        This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+   ZHAO et al.: ParaPM: EFFICIENT HARDWARE ACCELERATOR FOR POSTQUANTUM SIGNATURE                                                                                           5
+
+
+
+                                                                                          Sort3 through Sort7 stages. This depth-aware configuration
+                                                                                          maximizes resource efficiency.
+                                                                                             3) BF Unit: The five-stage pipelined BF unit (Fig. 6) is
+                                                                                          designed to support both GS and CT configurations, enabling
+                                                                                          NTT and INTT execution at high frequencies. Modular arith-
+                                                                                          metic is implemented via Montgomery reduction [26]. To
+                                                                                          optimize resource usage, multiplications by the fixed Mont-
+                                                                                          gomery constants (5 87 28 449 and 83 80 417) are converted
+                                                                                          into shift-and-add operations. Specifically, to minimize the
+                                                                                          number of required adders, we exploit that 83 80 416 +
+                                                                                           8, 192 = 83 88 608 (where 83 88 608 = 223 ), which has a
+                                                                                          single “1” bit in binary. The same optimization applies to the
+                                                                                          constant 5 87 28 449, further saving hardware resources.
+   Fig. 4. Proportion of pipeline buffering cycles within the total NTT computa-             Furthermore, the 28 × 23-bit multiplication required prior
+   tion cycles. The proportion decreases as the security level increases, reaching
+   11.5% at Security Level V, indicating that the cycle overhead of the MDC
+                                                                                          to reduction exceeds the native 25 × 18-bit capacity of Xilinx
+   structure becomes progressively less significant at higher security levels.            7-series DSP slices. To prevent automatic DSP cascading,
+                                                                                          which degrades operating frequency, we explicitly decompose
+   relative buffering overhead. Higher security levels require pro-                       the operation into parallel 11 × 23-bit and 17 × 13-bit
+   cessing more polynomials, but the pipeline buffering latency                           multiplications [Fig. 6(c)]. Although this manual partitioning
+   remains constant at 251 clock cycles. Hence, the buffering                             slightly increases logic usage, it yields substantial timing
+   proportion is                                                                          improvements. Additionally, shift-and-add optimizations are
+                                               251                                        selectively applied to the fixed twiddle factors in BF1 and
+              Buffering Proportion =                                                      BF2 to save DSP resources, whereas standard multipliers are
+                                       128 × (k + l) + 251
+   indicating that as security levels increase, the relative overhead                     retained for subsequent stages due to the large volume of
+   of buffering decreases, demonstrating the practical viability of                       distinct factors.
+                                                                                             4) Multiplication Calculation Example: Fig. 7 exempli-
+   this architecture. This behavior is illustrated in Fig. 4.
+                                                                                          fies the vector–matrix multiplication workflow under Security
+      Therefore, although the conventional MDC NTT architec-
+                                                                                          Level II. To synchronize with the NTT output throughput,
+   ture requires slightly more computation cycles than memory-
+                                                                                          two PEs are activated to process the first two matrix rows in
+   based methods, our customized PWM module enables parallel
+                                                                                          parallel. Valid output from the final BF stage (BF8) emerges
+   execution of polynomial multiplication with NTT/INTT
+                                                                                          after 132 cycles, triggering immediate polynomial multipli-
+   operations, reducing clock cycle overhead by 30%–40% com-
+                                                                                          cation. By cycle 686, the first two rows are processed, and
+   pared to traditional memory architectures. Furthermore, while
+                                                                                          computation transitions to the subsequent rows. Crucially, a
+   memory-based designs require additional storage and complex
+                                                                                          synchronization delay is introduced prior to the dot product
+   addressing, the proposed MDC NTT architecture offers sig-
+                                                                                          operation. Since the INTT processing rate exceeds that of the
+   nificant advantages in both temporal efficiency and hardware
+                                                                                          polynomial multiplication, this delay compensates for the rate
+   resource utilization, as shown in Fig. 1.
+      1) Top-Level Structure of Polynomial Multipliers: The top-                          mismatch, thereby preventing data interruptions and ensuring
+   level architecture of our design is illustrated in Fig. 5 and                          seamless pipeline continuity.
+   comprises two main components: NTT/INTT and PWM,
+   which completes the polynomial multiplication.                                         C. Coefficient Generator
+      Based on the pipelined R2MDC NTT architecture, we                                      The CoeGen is pivotal across key generation, signing,
+   designed a dedicated polynomial multiplication unit compris-                           and verification phases, responsible for deriving matrix A
+   ing four PEs. After the first two datasets complete eight                              and vectors s1 , s2 , y, and w. Software profiling (Fig. 8)
+   rounds of NTT, two of the PEs directly perform polynomial                              reveals that CoeGen dominates the computation, accounting
+   multiplication with previously computed data. When the NTT                             for approximately 55% of the total execution time during key
+   output needs to be multiplied with multiple data sets—such                             generation, thereby necessitating a high-performance hardware
+   as during the sign phase where the output c0 is multiplied                             implementation.
+   separately with s1 , s2 , and t0 —all four PEs are utilized. This                         To ensure a compact and complete hardware implemen-
+   design enables dynamic throughput matching, eliminates the                             tation, we adopt a straightforward system architecture based
+   need for buffering NTT outputs, and significantly reduces                              on the foundational works of [11] and [12]. Specifically, we
+   computational latency.                                                                 utilize the unified SHAKE128/256 structure [12] to support
+      2) NTT/INTT: The NTT module, depicted in Fig. 5, inte-                              multimode operation. However, our specific implementation
+   grates pipeline registers within the BF and sort units to                              choices are driven by the system-level “Throughput-Matching”
+   mitigate the frequency bottlenecks inherent in traditional                             constraint.
+   R2MDC designs. For data buffering, a hybrid storage strategy                              We deliberately chose the 24-cycle per round scheme [11]
+   is employed to optimize resource allocation. Since the buffer-                         over the faster 12-cycle alternative. While a 12-cycle core
+   ing depths across the eight NTT rounds decrease geometrically                          offers higher raw throughput, it would impose excessive
+   from 64 to 1, BRAMs are utilized for the deeper Sort1 and                              pressure on the downstream sampling module (>4.6 data
+   Sort2 stages, while registers are allocated for the shallower                          sets/cycle), necessitating complex and resource-heavy parallel
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 18:55:05 UTC from IEEE Xplore. Restrictions apply.
+                        This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+   6                                                                                   IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+
+   Fig. 5. Structure of fully pipelined R2MDC module.
+
+
+
+
+                                                                                          Fig. 8. Dilithium’s time share for each part of the software.
+
+
+                                                                                                                             TABLE I
+   Fig. 6. Five-stage pipelined low-area BF structure.
+                                                                                                                    D ILITHIUM PARAMETER S ET
+
+
+
+
+                                                                                             For vector y, we mitigate the 64-bit to 18-bit width mis-
+   Fig. 7. Illustration of the vector–matrix multiplication process for Security          match via an LCM-based partitioning strategy (576 bits).
+   Level II, showing the timing relationship between the NTT pipeline and the
+   polynomial multiplication unit. The first data batch enters BF1 at cycle 0, with       By processing fixed 9 × 64-bit blocks, this approach enables
+   BF8 producing its first output at cycle 132, enabling the parallel computation         continuous data flow with minimal buffering, significantly
+   of the first and second matrix rows using two PEs. By cycle 686, the first             reducing the area and latency overhead associated with full
+   and second rows are complete, and computation proceeds to the third and
+   fourth rows.                                                                           intermediate storage.
+                                                                                             1) Top-Level Architecture of CoeGen: The unified CoeGen
+                                                                                          architecture, illustrated in Fig. 9, supports all three Dilithium
+   samplers. The 24-cycle configuration provides a data rate that                         security levels. It comprises five functional stages: a pseudo-
+   perfectly matches our pipelined sampler, achieving the optimal                         random number generator (PRNG), a SHAKE128/256 core, a
+   balance between area and throughput.                                                   data preparation unit, an FSM, and a sampling module.
+     To further optimize this standard core, we analyzed the Kec-                            The process initiates in the PRNG, which employs two
+   cak round constants (RC) and identified that 75% are zero. We                          parallel 32-bit linear feedback shift registers (LFSRs). By
+   pruned the corresponding redundant XOR operations (Table II),                          concatenating their outputs, the module achieves a 64-bit
+   reducing the logic footprint beyond standard implementations.                          throughput, generating the requisite 256-bit initial seed within
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 18:55:05 UTC from IEEE Xplore. Restrictions apply.
+                       This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+   ZHAO et al.: ParaPM: EFFICIENT HARDWARE ACCELERATOR FOR POSTQUANTUM SIGNATURE                                                                                          7
+
+
+
+                                   TABLE II                                                 2) SHAKE128/256 and Sampling: The SHAKE128/256
+                            O PTIMIZATION OF RC[ I ]                                     module (Fig. 10) features a unified architecture supporting dual
+                                                                                         modes via configurable (r, c) parameters (r = 1344, c = 256
+                                                                                         for SHAKE128; r = 1088, c = 512 for SHAKE256). Despite
+                                                                                         differing valid output lengths, both modes execute 24 identical
+                                                                                         permutation rounds comprising the standard sequence: θ, ρ, π,
+                                                                                         χ, and ι.
+                                                                                            The sampling module is employed to filter the output of the
+                                                                                         SHAKE128/256 generator to ensure data validity. During the
+                                                                                         generation of matrix A and vectors s1 and s2 , the input data
+                                                                                         is zero-padded by extending the most significant bit. Upon
+                                                                                         successful sampling, the MSB of the qualified data is asserted
+                                                                                         (set to 1). Subsequently, the validated data is transmitted to the
+                                                                                         storage module with the MSB concatenated. This transmission
+                                                                                         strategy, based on concatenation, optimizes storage efficiency
+                                                                                         and reduces BRAM resource consumption by a factor of
+                                                                                         at least two. Specifically, for matrix A, four parallel 24-bit
+                                                                                         input streams are filtered, and valid samples are buffered in
+                                                                                         temporary registers until a full 48-bit word is assembled for
+                                                                                         downstream storage.
+                                                                                            A specific challenge arises during vector y generation due to
+                                                                                         the bit-width mismatch between the 64-bit Keccak output and
+                                                                                         the target 18-bit coefficients. Storing the entire intermediate
+                                                                                         output (85 × 64 bits) would impose significant latency
+                                                                                         and register overhead. To address this, we partition the data
+   Fig. 9. CoeGen architecture.
+                                                                                         processing based on the least common multiple of 64 and
+                                                                                         18, which is 576 bits. This alignment allows the data to
+                                                                                         be processed in fixed 9 × 64-bit blocks. Consequently, the
+                                                                                         splitting operation is completed using only two hardware units
+                                                                                         with a minimal internal buffer, eliminating the need for bulky
+                                                                                         intermediate storage and redundant dismantling cycles.
+
+                                                                                                IV. E XPERIMENTAL R ESULTS AND C OMPARISON
+                                                                                            The proposed architecture was implemented in Verilog and
+                                                                                         synthesized using Vivado 2019.2 on the Xilinx Zynq-7000
+                                                                                         system-on-chip (SoC). We present comprehensive resource
+                                                                                         utilization and performance metrics across all three NIST secu-
+                                                                                         rity levels. Furthermore, to facilitate equitable benchmarking
+                                                                                         against prior art, implementation results for Artix-7, Kintex-7,
+                                                                                         and Virtex Ultrascale+ platforms are included.
+
+                                                                                         A. Implementation Results
+                                                                                            Table III details the hardware resource utilization for the
+                                                                                         critical components of the proposed architecture. With the
+                                                                                         escalation of security levels, the corresponding expansion in
+                                                                                         vector dimensions necessitates increased computational cycles
+                                                                                         and larger storage capacity, whereas the resource footprint of
+   Fig. 10. Data flow and architecture of SHAKE128/256.                                  the remaining components remains constant.
+                                                                                            The polynomial multiplier exhibits a constant footprint
+                                                                                         across all security levels, consuming 5837 LUTs, 4304 FFs,
+   four clock cycles. This seed drives the SHAKE core, which                             44 DSPs, and four BRAMs. The specific DSP allocation is
+   first operates in SHAKE256 mode. From the initial output,                             attributed to its dual functionality: NTT/INTT utilizes 12 DSPs
+   the middle 32 bytes of the first 96 bytes are extracted to seed                       for twiddle factor multiplication in rounds 3–8, while the
+   the subsequent SHAKE128 operation. The data preparation                               dedicated PWM unit employs 32 DSPs (distributed as eight
+   unit then adapts the 64-bit SHAKE output to align with the                            DSPs per PE). Additionally, the four BRAMs are dedicated to
+   24-bit input width required downstream. Finally, the sampling                         storing twiddle factors for the final three NTT rounds.
+   module executes ETA and rejection sampling sequentially to                               The     CoeGen        module,     comprising   the    unified
+   derive the coefficients for vectors s1 , s2 , and matrix A.                           SHAKE128/256 core and the sampling unit, utilizes 6486
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 18:55:05 UTC from IEEE Xplore. Restrictions apply.
+                       This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+   8                                                                                  IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+                               TABLE III
+   R ESOURCE U TILIZATION OF THE H ARDWARE M ODULE FOR D ILITHIUM .
+               N OTATION FOR P LATFORM : Z YNQ -7000 (Z7)
+
+
+
+
+                                                                                         Fig. 11. ATP comparison across three stages under three security levels.
+                                                                                         At Security Level III, our ATP is comparable to that of [16], while at
+                                                                                         Security Level V, our design achieves the smallest ATP among all compared
+                                                                                         implementations.
+                                    TABLE IV
+                                                                                         slices are defined as LUT/4 (7-series) or LUT/8 (UltraScale+)
+   ASIC P OWER AND E NERGY E STIMATION FOR T HREE S ECURITY L EVELS
+                OF D ILITHIUM (SMIC 55 NM , 166.6 MH Z )
+                                                                                         [29], [30].
+                                                                                            Zhao et al. [14] utilized a folding transformation to merge
+                                                                                         adjacent BFUs. While this halved DSP usage, it increased
+                                                                                         latency and limited operating frequency due to a lack of
+                                                                                         internal optimization. Wang et al. [12] adopted a Radix-4 NTT
+                                                                                         structure with a single BFU. However, limited pipeline depth
+                                                                                         restricted their frequency to 217 MHz (versus our 270 MHz).
+                                                                                         Although their compact design offers a lower ATP at Security
+   LUTs and 4192 FFs. This utilization reflects the complexity                           Level II, our higher frequency yields superior ATP at Levels
+   of supporting dual SHAKE modes and integrating both                                   III and V. Li et al. [28] employed a memory-based architecture
+   rejection and ETA sampling mechanisms. In contrast, the                               with internal BF pipelining; however, extensive BRAM usage
+   resource usage of the other modules (including FSM and data                           and a lower frequency (220 MHz) resulted in a higher ATP.
+   storage) scales with the security level. Specifically, BRAM                              Cui et al. [17] proposed an optimized modular multiplication
+   consumption increases to 14, 18, and 22 blocks for levels II,                         algorithm integrated with a fully pipelined Radix-2 MDC-NTT
+   III, and V, respectively, necessitated by the growth in vector                        architecture, which streamlines the overall hardware design
+   and matrix dimensions.                                                                and mitigates the resource overhead of the NTT module. To
+      To provide a comprehensive evaluation of the proposed                              further reduce computation latency, their design employs dual
+   architecture, we performed an ASIC-based power estimation.                            parallel NTT units. Although the fully pipelined structure
+   The design was synthesized using the SMIC 55nm low-leakage                            enhances the operating frequency, the aggregate computa-
+   (LL) high-density (HD) standard cell library via Synopsys                             tion latency remains relatively high. Furthermore, [17] lacks
+   Design Compiler. To evaluate the design under stringent                               explicit detail regarding the utilization of BRAM for twiddle
+   operating conditions, the physical setup was constrained at                           factor storage within the NTT module, reporting only the
+   the slow–slow (SS) corner with a supply voltage of 1.08 V                             system-level BRAM usage. Consequently, the NTT component
+   and an operating temperature of 125 ◦ C.                                              in their implementation exhibits reduced Slice utilization,
+      The design was synthesized at an operating frequency of                            yielding a lower ATP.
+   166.6 MHz (clock period of 6.0 ns). The dynamic power                                    In contrast, our NTT design prioritizes computational speed,
+   calculation was performed using the tool’s default switching                          achieving the lowest ATP on Z7, K7, and VUS+ platforms
+   activity propagation. The estimated power consumption and                             (Table V), with the A7 platform being the sole exception where
+   the corresponding energy required per operation across differ-                        [17] performs marginally better. However, at the system level,
+   ent security levels are summarized in Table IV. Furthermore,                          our integration of dedicated point-wise multiplication modules
+   since total energy consumption is directly proportional to exe-                       and parallelized dataflow significantly reduces global cycle
+   cution latency, the significant reduction in computation cycles                       counts, ensuring superior overall execution time and ATP.
+   achieved by our proposed decoupled architecture translates                               Table VI benchmarks the proposed comprehensive
+   directly into a highly optimized energy footprint.                                    Dilithium hardware implementation against state-of-the-art
+                                                                                         designs. To facilitate a clearer visualization of ATP, Fig. 11
+                                                                                         presents bar charts contrasting these metrics across the three
+   B. Comparison With the State-of-the-Art Works                                         distinct cryptographic phases as well as the overall system
+     Table V compares the NTT/INTT modules of our design                                 performance, evaluated on the A7 FPGA platform.
+   against related works. To ensure equitable benchmark-                                    Li et al. [15] aggregate hardware resources to acceler-
+   ing, we employ the ATP metric. Resource utilization is                                ate the sampling and polynomial multiplication stages to
+   normalized to equivalent slices (ENS) via the formula:                                reduce latency. Specifically, their sampling module occupies
+   ENS = Slices + 100 × DSP + 196 × BRAM, where                                          a larger area to achieve higher throughput. Consequently, in
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 18:55:05 UTC from IEEE Xplore. Restrictions apply.
+                       This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+   ZHAO et al.: ParaPM: EFFICIENT HARDWARE ACCELERATOR FOR POSTQUANTUM SIGNATURE                                                                                          9
+
+
+
+                                                                                 TABLE V
+                         FPGA I MPLEMENTATION R ESULTS OF NTT/INTT M ODULE . N OTATION FOR P LATFORM : Z YNQ -7000 (Z7),
+                                             A RTIX -7 (A7), K INTEX 7 (K7), VUS+ (U LTRA S CALE +)
+
+
+
+
+                                                                                 TABLE VI
+                      FPGA I MPLEMENTATION R ESULTS OF DILITHIUM. N OTATION FOR P LATFORM : A RTIX -7 (A7), Z YNQ -7000 (Z7)
+
+
+
+
+   the CoeGen stage at Security Level III, their design achieves a                       usage inherent to our dedicated multipliers, resulting in a
+   slightly better ATP than ours. However, due to our optimized                          comparable overall ENS performance.
+   pipeline and resource management, our design demonstrates a                              Cui et al. [17] adopted a parallel strategy, deploying two
+   lower ATP across all other security levels and stages.                                NTT-based multipliers and three Keccak cores to accelerate the
+      Wu et al. [31] dynamically compute the polynomial                                  CoeGen phase. While this reduces the coefficient generation
+   matrix A, thereby eliminating the need for static storage.                            time, the execution times for the sign and verify phases remain
+   This strategy reduced BRAM usage to 16, 20, and 24 across                             largely unchanged. Furthermore, the significant hardware over-
+   the three security levels, respectively—two fewer blocks than                         head associated with instantiating multiple cores leads to a
+   required by our design. However, this memory efficiency                               higher overall ATP compared to our solution.
+   comes at the cost of logic complexity. Our architecture con-                             Zhao et al. [16] introduced a hybrid architecture replac-
+   sumes fewer LUTs, which counterbalances the higher DSP                                ing standard NTT-based multiplication with a sparse
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 18:55:05 UTC from IEEE Xplore. Restrictions apply.
+                        This article has been accepted for inclusion in a future issue of this journal. Content is final as presented, with the exception of pagination.
+
+
+   10                                                                                  IEEE TRANSACTIONS ON VERY LARGE SCALE INTEGRATION (VLSI) SYSTEMS
+
+
+
+   multiplication core. This sparse core supports concurrent                              [9]  M. Ajtai, “Generating hard instances of the short basis problem,” in
+   processing of multiple sparse polynomial multiplications, sig-                              Proc. 26th Int. Colloq., Automata, Lang. Program. Cham, Switzerland:
+                                                                                               Springer, 1999, pp. 1–9.
+   nificantly shortening computation cycles in the sign and verify                        [10] L. Beckwith, D. T. Nguyen, and K. Gaj, “High-performance hardware
+   phases. As a result, at Security Levels II and III, their design                            implementation of CRYSTALS-Dilithium,” in Proc. Int. Conf. Field-
+   achieves lower total execution time and ATP. However, the                                   Program. Technol. (ICFPT), Dec. 2021, pp. 1–10.
+                                                                                          [11] S. Ricci et al., “Implementing CRYSTALS-Dilithium signature scheme
+   advantage of our dedicated polynomial multiplier lies in its                                on FPGAs,” in Proc. 16th Int. Conf. Availability, Rel. Secur., Aug. 2021,
+   scalability. At Security Level V, where computational demands                               pp. 1–11.
+   peak, our design outperforms [16] and all other existing works                         [12] T. Wang, C. Zhang, P. Cao, and D. Gu, “Efficient implementation of
+   in both execution time and ATP, utilizing 35% fewer LUTs                                    dilithium signature scheme on FPGA SoC platform,” IEEE Trans. Very
+                                                                                               Large Scale Integr. (VLSI) Syst., vol. 30, no. 9, pp. 1158–1171, Sep.
+   while maintaining comparable ENS due to DSP substitution.                                   2022.
+      Finally, on the Zynq-7000 platform, our design achieves                             [13] G. Mao et al., “High-performance and configurable SW/HW co-design
+   optimal performance in terms of frequency, execution time,                                  of post-quantum signature CRYSTALS-dilithium,” ACM Trans. Recon-
+                                                                                               figurable Technol. Syst., vol. 16, no. 3, pp. 1–28, Sep. 2023.
+   and ATP among existing studies. Although employing a ded-                              [14] C. Zhao et al., “A compact and high-performance hardware architecture
+   icated point-wise multiplication module increases DSP and                                   for CRYSTALS-dilithium,” in Proc. IACR Trans. Cryptograph. Hardw.
+   ENS consumption compared to single-unit designs like [12],                                  Embedded Syst., Nov. 2021, pp. 270–295.
+                                                                                          [15] X. Li, J. Lu, D. Liu, A. Li, S. Yang, and T. Huang, “A high speed post-
+   this tradeoff is justified. The resulting reduction in computa-                             quantum crypto-processor for crystals-dilithium,” IEEE Trans. Circuits
+   tion cycles and the increase in operating frequency ultimately                              Syst. II, Exp. Briefs, vol. 71, no. 1, pp. 435–439, Jan. 2023.
+   yield the most favorable ATP results.                                                  [16] H. Zhao, C. Zhao, W. Zhu, B. Yang, S. Wei, and L. Liu, “Sparse poly-
+                                                                                               nomial multiplication-based high-performance hardware implementation
+                                                                                               for CRYSTALS-dilithium,” in Proc. IEEE Int. Symp. Hardw. Oriented
+                          V. C ONCLUSION                                                       Secur. Trust (HOST), May 2024, pp. 150–159.
+      We propose a high-speed Dilithium hardware architecture                             [17] Y. Cui, J. Zhong, B. Wang, T. Xu, C. Wang, and W. Liu, “High-
+                                                                                               performance hardware implementation of crystals-dilithium based
+   featuring a polynomial multiplier with dynamic throughput                                   on improved MDC-NTT,” IEEE Trans. Comput., vol. 74, no. 9,
+   matching. By employing independent polynomial multipli-                                     pp. 2896–2908, Sep. 2025.
+   cation units, the design aligns the throughput of NTT                                  [18] M. Bisheh-Niasar, R. Azarderakhsh, and M. Mozaffari-Kermani,
+                                                                                               “High-speed NTT-based polynomial multiplication accelerator for post-
+   outputs with subsequent polynomial multiplication operations,                               quantum cryptography,” in Proc. IEEE 28th Symp. Comput. Arithmetic
+   enabling multistep parallelism. This approach significantly                                 (ARITH), Jun. 2021, pp. 94–101.
+   reduces intermediate data buffering, thereby saving substan-                           [19] M. Bisheh-Niasar, R. Azarderakhsh, and M. Mozaffari-Kermani, “A
+                                                                                               monolithic hardware implementation of Kyber: Comparing apples to
+   tial computation time. Across all three security levels, the                                apples in PQC candidates,” in Proc. Int. Conf. Cryptol. Inf. Secur. Latin
+   proposed Dilithium architecture demonstrates superior perfor-                               Amer. Bogotá, Colombia: Springer, 2021, pp. 108–126.
+   mance relative to state-of-the-art designs, achieving an optimal                       [20] D. Soni, K. Basu, M. Nabeel, N. Aaraj, M. Manzano, and
+   ATP.                                                                                        R. Karri, “CRYSTALS-dilithium,” in Hardware Architectures for Post-
+                                                                                               Quantum Digital Signature Schemes. Cham, Switzerland: Springer,
+                                                                                               2021, pp. 13–30.
+                       VI. F UTURE W ORK                                                  [21] R. C. Agarwal and C. S. Burrus, “Number theoretic transforms to imple-
+                                                                                               ment fast digital convolution,” Proc. IEEE, vol. 63, no. 4, pp. 550–560,
+      Future work will focus on implementing higher radix                                      Apr. 2005.
+   pipelined NTT structures to further boost throughput and                               [22] Z. Liang and Y. Zhao, “Number theoretic transform and its applications
+   reduce latency. Furthermore, we intend to extend our                                        in lattice-based cryptosystems: A survey,” 2022, arXiv:2211.13546.
+                                                                                          [23] E. Chu and A. George, Inside the FFT Black Box: Serial and Parallel
+   Dilithium-specific optimizations to develop a unified, recon-                               Fast Fourier Transform Algorithms. Boca Raton, FL, USA: CRC Press,
+   figurable polynomial multiplier capable of supporting Kyber                                 1999.
+   and FALCON, achieving a versatile hardware solution for the                            [24] R. E. Hufnagel and N. R. Stanley, “An algorithm for the machine
+   postquantum era.                                                                            calculation of complex Fourier series,” J. Opt. Soc. Amer., vol. 54, no. 1,
+                                                                                               pp. 52–61, 1964.
+                                                                                          [25] W. M. Gentleman and G. Sande, “Fast Fourier transforms: For fun and
+                                  R EFERENCES                                                  profit,” in Proc. Amer. Fed. Inf. Process. Societies Joint Comput. Conf.
+                                                                                               (AFIPS), vol. 29, Nov. 1966, pp. 563–578.
+   [1]   P. W. Shor, “Algorithms for quantum computation: Discrete logarithms             [26] M. Knezevic, F. Vercauteren, and I. Verbauwhede, “Faster interleaved
+         and factoring,” in Proc., 35th Annu. Symp. Found. Comput. Sci., 1994,                 modular multiplication based on Barrett and Montgomery reduction
+         pp. 124–134.                                                                          methods,” IEEE Trans. Comput., vol. 59, no. 12, pp. 1715–1721, Dec.
+   [2]   P. W. Shor, “Polynomial-time algorithms for prime factorization and                   2010.
+         discrete logarithms on a quantum computer,” SIAM Rev., vol. 41, no. 2,           [27] X. Chen, B. Yang, Y. Lu, S. Yin, S. Wei, and L. Liu, “Efficient access
+         pp. 303–332, 1999.                                                                    scheme for multi-bank based NTT architecture through conflict graph,”
+   [3]   L. O’Connor et al., “Cryptography in a postquantum world: Preparing                   in Proc. 59th ACM/IEEE Design Autom. Conf., Jul. 2022, pp. 91–96.
+         intelligent enterprises now for a secure future,” Accenture Labs, Dublin,        [28] B. Li, Y. Yan, Y. Wei, and H. Han, “Scalable and parallel optimization
+         Ireland, 2018.                                                                        of the number theoretic transform based on FPGA,” IEEE Trans. Very
+   [4]   L. Chen et al., “Report on post-quantum cryptography,” U.S. Dept.                     Large Scale Integr. (VLSI) Syst., vol. 32, no. 2, pp. 291–304, Feb. 2024.
+         Commerce, Nat. Inst. Standards Technol., USA, 2016, vol. 12.                     [29] 7 Series FPGAs Configurable Logic Block User Guide, AMD Xilinx,
+   [5]   G. Alagic et al., “Status report on the third round of the NIST post-                 Santa Clara, CA, USA, Apr. 2025.
+         quantum cryptography standardization process,” National Institute of             [30] UltraScale Architecture Configurable Logic Block User Guide, AMD
+         Standards and Technology, USA, Tech. Rep. 8413, 2022.                                 Xilinx, Santa Clara, CA, USA, Jan. 2025.
+   [6]   G. Alagic et al., “Status report on the fourth round of the NIST post-           [31] Z. Wu, R. Chen, Y. Wang, Q. Wang, and W. Peng, “An efficient hardware
+         quantum cryptography standardization process,” National Institute of                  implementation of CRYSTAL-dilithium on FPGA,” in Proc. Australas.
+         Standards and Technology, USA, Tech. Rep. 8545, 2025.                                 Conf. Inf. Secur. Privacy. Cham, Switzerland: Springer, 2024, pp. 64–83.
+   [7]   G. Du, Z. P. Chen, Z. Li, X. Wang, and D. Zhang, “A low-                         [32] N. Gupta, A. Jati, A. Chattopadhyay, and G. Jha, “Lightweight hardware
+         latency polynomial multiplier accelerator for CRYSTALS-dilithium                      accelerator for post-quantum digital signature CRYSTALS-dilithium,”
+         digital signature,” in Proc. Great Lakes Symp. VLSI, 2024, pp. 258–262.               IEEE Trans. Circuits Syst. I, Reg. Papers, vol. 70, no. 8, pp. 3234–3243,
+   [8]   A. Langlois and D. Stehlé, “Worst-case to average-case reductions for                Aug. 2023.
+         module lattices,” Designs, Codes Cryptogr., vol. 75, no. 3, pp. 565–599,
+         Jun. 2015.
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 18:55:05 UTC from IEEE Xplore. Restrictions apply.
+

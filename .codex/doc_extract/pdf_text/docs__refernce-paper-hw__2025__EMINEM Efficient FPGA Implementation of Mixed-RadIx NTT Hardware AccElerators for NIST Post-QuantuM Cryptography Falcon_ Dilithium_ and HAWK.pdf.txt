@@ -1,0 +1,1162 @@
+EMINEM: Efficient FPGA Implementation of Mixed-RadIx
+NTT Hardware AccElerators for NIST Post-QuantuM
+Cryptography Falcon, Dilithium, and HAWK
+
+YAZHENG TU and JIAFENG XIE, Department of Electrical and Computer Engineering,
+Villanova University, Villanova, Pennsylvania, USA
+
+
+The advent of quantum computing poses a significant threat to modern cryptography. To address this chal-
+lenge, the National Institute of Standards and Technology (NIST) has initiated the Post-Quantum
+Cryptography (PQC) standardization process, and several algorithms have been selected (a few are still
+under consideration in the additional standardization process). Among these schemes, lattice-based PQC has
+emerged as a promising approach and garnered substantial attention from the implementation community,
+especially on the hardware platforms. Notably, the Field-Programmable Gate Array (FPGA) has gained
+considerable attention as a convenient platform for hardware implementation, not only from NIST but also
+from the research community, as reflected by the related recommendations from NIST and the number of
+works reported recently.
+   This work follows the existing trend of developing novel FPGA implementations for PQC. It is worth
+mentioning that the polynomial multiplication in these NIST lattice-based PQC algorithms can be implemented
+with Number Theoretic Transform (NTT) for efficiency. Nevertheless, there remains a lack of novel and
+universal NTT methods for polynomial multiplication at different sizes. For instance, for 𝑛 = 512 (Falcon and
+HAWK), the existing works are mostly limited to the Radix-2 NTT (other methods like Radix-4 or Radix-8
+cannot be directly applied). To fill the research gap, this article presents a novel design framework, i.e.,
+Efficient Mixed-RadIx NTT hardware accElerators for NIST post-quantuM cryptography (EMINEM),
+specially tailored for targeted schemes. Our design leverages Radix-4 for polynomial sizes of 256 and 1,024,
+while introducing a hybrid Radix-2/4 strategy for NTT of length 512 and achieving comparable performance
+to pure Radix-4 at other lengths. In total, our contributions include: (i) a generic Radix-4/Mixed-Radix NTT
+algorithm is proposed for 𝑛 = 256, 512, and 1,024; (ii) an efficient NTT hardware accelerator is designed
+with the help of a new memory access pattern and some optimization techniques; (iii) two types of butterfly
+architectures are developed to obtain pure Radix-4 time complexity and low resource usage, respectively;
+(iv) a detailed implementation and comparison showcase the superior performance of the proposed design
+strategy. Overall, the proposed strategy enables the efficient deployment of Mixed-Radix NTT in targeted
+NIST schemes, surpassing the limitations of the conventional Radix-2 approach for 512-length NTT designs.
+The proposed design offers a significant advancement in the field, facilitating efficient FPGA acceleration of
+PQC standards.
+CCS Concepts: • Security and privacy → Hardware security implementation; • Hardware → Logic cir-
+cuits; Application specific integrated circuits; • Computer systems organization → Other architectures;
+
+
+This work was supported by the NSF (National Science Foundation) under Grant No. CNS-2453370 and the Villanova
+College of Engineering Last Year Ph.D. Fellowship.
+Authors’ Contact Information: Yazheng Tu, Department of Electrical and Computer Engineering, Villanova Univer-
+sity, Villanova, Pennsylvania, USA; e-mail: ytu1@villanova.edu; Jiafeng Xie (corresponding author), Department of
+Electrical and Computer Engineering, Villanova University, Villanova, Pennsylvania, USA; e-mail: jiafeng.xie@villanova.edu.
+
+
+
+This work is licensed under Creative Commons Attribution International 4.0.
+© 2025 Copyright held by the owner/author(s).
+ACM 1936-7414/2025/12-ART52
+https://doi.org/10.1145/3771287
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:2                                                                                                Y. Tu and J. Xie
+
+Additional Key Words and Phrases: FPGA, hardware accelerator, lattice-based, Mixed-Radix NTT, NIST PQC
+Falcon, Dilithium, HAWK
+
+ACM Reference format:
+Yazheng Tu and Jiafeng Xie. 2025. EMINEM: Efficient FPGA Implementation of Mixed-RadIx NTT Hardware
+AccElerators for NIST Post-QuantuM Cryptography Falcon, Dilithium, and HAWK. ACM Trans. Reconfig.
+Technol. Syst. 18, 4, Article 52 (December 2025), 25 pages.
+https://doi.org/10.1145/3771287
+
+
+
+1   Introduction
+Post-Quantum Cryptography (PQC) has gained substantial attention from the research commu-
+nity recently, as the existing public-key cryptosystems are proven to be insecure against quantum
+attacks [4, 25, 29]. Among the proposed PQC schemes, lattice-based cryptography constitutes an
+important PQC category due to its strong security proof and relative ease of implementation. In
+particular, the National Institute of Standards and Technology (NIST) PQC standardization
+process has selected the five algorithms for standardization, and three of them are lattice-based
+schemes (including Kyber, Dilithium, and Fast Fourier Lattice-based Compact Signatures over
+NTRU (Falcon)) [24]. Meanwhile, the additional NIST PQC digital signature “competition” pro-
+cess also involves a lattice-based scheme HAWK [13]. In any case, these mentioned PQC algorithms
+have gained significant attention recently from the implementation community, specifically on the
+hardware platforms [29].
+   Following this trend, a number of hardware implementation works have been carried out for
+the efficient acceleration of PQC schemes and/or primitives (major components) on the Field-
+Programmable Gate Array (FPGA) platforms, e.g., [3, 19, 31]. Overall, FPGAs are crucial for
+accelerating PQC algorithms due to their unique architectural advantages. Firstly, in contrast to
+CPUs, which execute instructions serially, FPGAs support true hardware parallelism, allowing
+extensive bit- or word-level parallelization and enabling different cryptographic operations or
+stages to be processed simultaneously. Secondly, the reconfigurability of FPGAs is a key feature that
+provides significant benefits compared to CPUs and Application-Specific Integrated Circuits
+(ASICs). Unlike ASICs, which are a one-time, fixed-function design, FPGAs can be precisely
+reprogrammed to match the specific computational requirements of an algorithm. This allows for
+customized optimizations for various PQC operations and parameters. It also offers the flexibility
+for researchers to span a broad range of design categories, from highly optimized, low-complexity
+solutions for resource-constrained environments to high-parallelism, high-speed designs for high-
+performance scenarios, making FPGA an exceptionally adaptable platform for diverse design
+requirements. Additionally, FPGAs offer excellent system-level integration due to their customizable
+I/O structures, which enable seamless communication with other devices, such as CPUs and external
+memory. This makes them a very adaptable platform for a variety of PQC hardware designs, from
+resource-constrained to high-performance applications. In fact, NIST also recommends the Artix-7
+FPGA as the hardware implementation platform for PQC algorithms [20].
+   In terms of the actual implementation target on the FPGA platform, among the mentioned
+lattice-based PQC schemes, polynomial multiplication over the ring can be regarded as one of
+the most important components. Consequently, Number Theoretic Transform (NTT), a type
+of Fast Fourier Transform (FFT) tailored for finite fields [21], has been widely deployed in
+various mentioned lattice-based PQC schemes. NTT, in general, allows for rapid computation
+of polynomial multiplication at the complexity of O (𝑛log𝑛), and hence is essential for different
+operational phases of these PQC algorithms. Note that in this article, we target the general NTT
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                            52:3
+
+used in the mentioned NIST PQC schemes Falcon, HAWK, and Dilithium (Kyber uses a special
+type of NTT [14], and hence is out of the scope of this work). Both Falcon and Dilithium have
+been standardized by NIST as digital signature algorithms, making a unified hardware accelerator
+crucial for practical deployment. These algorithms, along with candidates like HAWK (which is in
+the second round of the additional digital signature schemes), require different parameters and
+radices. For example, Falcon utilizes 𝑛 values of 512 and 1,024, while Dilithium employs an 𝑛
+value of 256. Our design provides a solution for this multi-scheme environment by supporting
+different n values and radices. This flexibility allows a single hardware platform to efficiently
+execute multiple NIST-selected PQC schemes, providing the ability to adapt to different security
+applications and standards without the need for reconfiguration. Specifically, as there are only a
+few works released for Falcon and HAWK (no hardware implementation work has been released
+for HAWK), we hope this work can stimulate many follow-up explorations, focusing on the
+efficient hardware acceleration of NTT and even whole schemes for these PQC algorithms on
+FPGA platforms.
+
+1.1   Prior Works
+Several hardware implementations (related to FPGAs) of NTT accelerators have been released for
+the targeted lattice-based PQC schemes. While the specific NTT designs for Falcon are still not
+abundant, we do find some NTT architectures using the same parameter settings of Falcon. A
+high-throughput and energy-efficient pipelined NTT was proposed in [31], but requires bit-reversed
+ordered input polynomials which increases the logic complexity for control unit. A low-complexity
+NTT architecture was presented in [32], and an efficient NTT design was introduced in [30].
+However, the proposed designs are based exclusively on Radix-2, and the proportional increase in
+delay with each additional butterfly limits the achievable speedup. Authors of [19] proposed an
+optimized hardware accelerator for NTT but relies on a high usage of DSPs, while authors of [33]
+propose an NTT design with a low-complexity memory mapping scheme with a Fixed-Radix-4
+selection which limits the range of polynomial length 𝑛. A scalable radix-2/4 NTT multiplication
+architecture with an efficient conflict-free memory mapping scheme was proposed in [5], and a
+hardware/software co-design of the NTT accelerator was introduced in [9]. The proposed designs
+are limited to a single radix, which either introduces length range limitations [9] or increases
+resource usage when scaling performance by adding more butterfly units [5].
+   Similarly, a number of NTT works on the FPGA platform for Dilithium have been proposed
+recently. Li et al. [16] presented a scalable and parallel-optimized NTT design on the FPGA plat-
+form. The DSP and BRAM usage increases linearly with the number of butterflies, which leads
+to a redundant and inefficient use of resources. Land et al. [15] introduced an optimized NTT
+component making extensive use of DSPs on modern low-end FPGAs. Zhou et al. [34] proposed
+an efficient NTT design for software/hardware co-designed Dilithium. Both of the proposed de-
+signs require a relatively high number of DSPs, yet they do not achieve a commensurate im-
+provement in speed. Derya et al. [6] proposed a configurable hardware architecture of NTT for
+polynomial multiplier used in lattice-based cryptography. However, the resource consumption is
+prohibitively large, rendering the design impractical for real-world applications. Wang et al. [27]
+presented a Radix-4 NTT architecture with a conflict-free memory mapping scheme for Dilithium,
+which involves high LUT usage, and thus is not suitable for resource-constraint designs. Very
+recently, Mandal and Roy [18] have reported a standalone, fully pipelined, and scalable Radix-2
+Dilithium NTT unit with reduced area and enhanced frequency but did not explore different
+radix options.
+   Note that, to the authors’ best knowledge, no NTT hardware design has been released based on
+HAWK’s parameter setting.
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:4                                                                                                Y. Tu and J. Xie
+
+1.2     Challenge and Motivation
+Overall, existing design structures for NTT (of the targeted PQC) have three significant limitations
+that hinder their flexibility and applicability. Firstly, they rely on a fixed-radix that is only suitable
+for a specific value of the parameter 𝑛. This means that most existing works are limited to using
+Radix-2 or Radix-4 for specific values of 𝑛, such as 𝑛 = 256 or 𝑛 = 1,024, but are restricted to
+only using Radix-2 for 𝑛 = 512. This is because when 𝑛 = 512, the length of the input polynomial
+is a power-of-2, but not a power-of-4, making Radix-4 inapplicable in this case. This limitation
+restricts the design’s adaptability and efficiency, as it cannot be easily modified to accommodate
+different values of 𝑛. Furthermore, existing designs for the second case mentioned above, i.e.,
+not a power-of-4 (𝑛 = 512), rely solely on increasing the number of butterflies, which leads to
+a linear increase in resource costs as the number of butterflies increases. While this approach
+reduces latency, it results in a suboptimal tradeoff between time and resources, particularly in
+terms of Area and Delay Product (ADP) efficiency. This means that the increased resources
+required to reduce latency come at a disproportionate cost, making the solution less efficient
+overall. Lastly, the existing works’ modular reduction and multiplication can be made more efficient
+by optimizing their frequency and resource usage, potentially achieving improvements in the
+overall NTT. Therefore, adopting a flexible Radix-2/4 design is more practical than using dedicated
+accelerators for each PQC instance. While dedicated designs are optimized for single parameters,
+they require time-consuming reconfiguration to switch between security levels, which is not feasible
+for real-world applications. A Mixed-Radix design, in contrast, creates a unified accelerator that
+supports a range of 𝑛 values without any reconfiguration penalty, allowing for seamless transitions
+via control signals. Additionally, this approach is more area-efficient. Instead of creating multiple,
+large hardware blocks, our design reuses a single, reconfigurable core. This shared resource usage
+significantly reduces the hardware footprint, making the design more scalable and flexible for
+different PQC deployments.
+
+1.3     Major Contributions
+With the above considerations, a Mixed-Radix NTT with efficiency seems to be necessary, as it
+offers a more versatile solution that can maintain a consistent speed while adapting to different
+values of 𝑛 with low resource cost. Following this direction, this article proposes a Mixed-Radix
+NTT implementation for the targeted NIST PQC on FPGA platforms. Specifically, we propose a
+novel generic design framework, i.e., Efficient Mixed-radIx NTT hardware accElerators for
+NIST post-quantuM cryptography (EMINEM). The theoretical time complexity of the proposed
+design equals log4𝑛 for 𝑛 = 256, 512, and 1,024, though Radix-4 NTT cannot be directly used
+for 𝑛 = 512. To the authors’ best knowledge, this is the first swift Mixed-Radix NTT hardware
+implementation for the mentioned NIST PQC schemes (that can switch between pure Radix-4 mode
+and Mixed-Radix-2/4 mode). The main contributions of the article include:
+      — We have rigorously formulated the major arithmetic operation of the NTT into desired Mixed-
+        Radix forms to lay the mathematical foundation for the proposed hardware accelerator design
+        strategy on the FPGA platform.
+      — We employed the derived Mixed-Radix strategy to develop a versatile Radix-4/Mixed-Radix
+        NTT accelerator that efficiently handles different polynomial sizes.
+      — We introduced two distinct Mixed-Radix NTT (butterfly) architectures: a high-performance
+        variant with uniform log4 𝑛 latency for both 𝑛 = 512 and 𝑛 = 1,024, and a compact, resource-
+        efficient design with a slightly minor tradeoff in speed.
+      — We implemented the accelerators for the targeted different NIST PQC schemes on various
+        FPGA devices and performed optimization according to the features of each scheme.
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                            52:5
+
+      — We have thoroughly listed the complexities and FPGA implementation results of the proposed
+        accelerators, along with those of competing designs, to demonstrate the superior performance
+        of the proposed designs.
+   The rest of the article is organized as follows. Section 2 gives the preliminaries. The proposed
+algorithm is presented in Section 3. Proposed accelerators and related design strategies are intro-
+duced in Section 4. FPGA implementation results, complexity, and comparison are provided in
+Section 5. The final conclusion is given in Section 6.
+
+2     Preliminaries
+2.1     Targeted NIST PQC
+In July 2022, the NIST PQC standardization process finally selected four algorithms, including the
+targeted Falcon and Dilithium [24]. Besides that, the additional round of PQC digital signature
+competition was also launched [22], and many algorithms have been submitted, e.g., the lattice-
+based scheme HAWK [13] (which was promoted to the second round recently [23]). Note that in
+alignment with HAWK, we still use the original names of Falcon and Dilithium here, though NIST
+standards Dilithium as Module-Lattice-Based Digital Signature Algorithm (ML-DSA) [8].
+Brief introductions to these PQC algorithms are described below:
+      — Falcon. Falcon is a CCA2 (Indistinguishability under Adaptive Chosen Ciphertext Attack)
+        digital signature scheme standardized by NIST recently [24]. Overall, Falcon signature scheme
+        can be described as: Falcon = GPV framework + NTRU lattices + Fast Fourier sampling [2],
+        to provide NIST Level I/V security depending on the parameter selection. The parameters
+        settings are 𝑛 = 512, 𝑞 = 12,289 and 𝑛 = 1,024, 𝑞 = 12,289 for Falcon-512 and Falcon-1,024,
+        respectively. Among all NIST-selected algorithms, Falcon is known for its compact key size
+        and fastest signature verification [2]. The detailed algorithm of Falcon can be seen at [2].
+      — Dilithium. Dilithium is a digital signature scheme that is strongly secure under chosen message
+        attacks [1]. The security is based on the hardness of lattice problems over module-lattices
+        [1]. It has the smallest public-key + signature size of any lattice-based signature scheme that
+        only uses uniform sampling [1]. Besides, it has three security levels—Dilithium2, Dilithium3,
+        Dilithium5, and all three levels share 𝑛 = 256 and 𝑞 = 8,380,417 [1]. The details of Dilithium
+        can be seen at [1] (ML-DSA can be seen at [8]).
+      — HAWK . HAWK is a signature scheme inspired by the lattice Isomorphism problem, providing
+        NIST Level I/V security [13]. It is based on the hardness of the one more (approximate)
+        Shortest Vector Problem (omSVP) and the search module-Lattice Isomorphism Prob-
+        lem (smLIP) [13]. There are two security levels for HAWK, namely HAWK-512 and HAWK-
+        1,024, where 𝑛 = 512 and 𝑛 = 1,024, respectively. The authors did not specify the prime 𝑞 but
+        used 𝑞 = 18,433 as a demonstration in the specification (software implementation) [13]. The
+        detailed algorithm of HAWK can be seen at [13].
+  Note here we do not implement our design on Kyber since normal NTT is not suitable to be
+applied to Kyber directly due to the absence of the 2𝑛-primitive root of unity of 𝑞 = 3,329 when
+𝑛 = 256. The NTT itself is valid in this case since the 𝑛th primitive of 𝑞 = 3,329 still exists, however,
+we need to multiply the 2𝑛-primitive root with the coefficients in order to complete the polynomial
+multiplication (this absence makes the normal NTT not applicable).
+
+2.2     NTT
+The NTT is a fast algorithm for multiplying large polynomials over finite fields [21], derived from
+the Cooley–Tukey FFT algorithm. NTT offers a significant advantage in computation reduction
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:6                                                                                                Y. Tu and J. Xie
+
+Algorithm 1: Radix-2 Gentleman–Sande NTT (Derived from [10])
+
+
+
+
+(compared with the schoolbook complexity of O (𝑛 2 )), making it a crucial component in various
+lattice-based PQC schemes such as those mentioned above.
+   NTTs can be implemented using different radices, including Radix-2 and Radix-4, which have a
+significant impact on performance.
+   Radix-2 NTT is the most common implementation method, using a binary tree structure to
+compute the NTT in O (𝑛 · log2𝑛) time. The provided Algorithm 1 outlines the procedure for a
+Radix-2 Gentleman–Sande NTT [10]. This algorithm’s structure is based on a Decimation-In-
+Frequency (DIF) approach, as evident from the outer loop that iterates downwards from 𝑠 = 𝑚 − 1
+to 0. The loop controls the stages of the algorithm, processing the data with a dynamically changing
+stride. The nested inner loops then systematically execute the core “butterfly” computations. The
+butterfly operation is a two-part process that calculates both the sum and the difference of two
+inputs, 𝑢 and 𝑣. A critical aspect of this operation is the modular multiplication of the second input,
+𝑣, by a pre-computed twiddle factor (𝑊 𝑗 mod 𝑞). These factors, derived from a primitive root of
+unity, are essential for ensuring the correct transformation across all stages of the algorithm.
+   Radix-4 NTT, on the other hand, uses a quaternary tree structure, reducing the number of modular
+multiplications and achieving better performance in certain scenarios, with a time complexity of
+O (𝑛 · log4𝑛). The provided Algorithm 2 outlines a Radix-4 Gentleman–Sande NTT [10], which,
+similar to its Radix-2 counterpart, employs a DIF approach. The core structure involves a descending
+outer loop that controls the stages of computation. Unlike the Radix-2 algorithm, which processes
+data in pairs, the Radix-4 algorithm operates on groups of four elements at a time within its butterfly
+operation. This four-point butterfly is significantly more complex, involving the combination
+of four inputs (𝑢 0, 𝑢 1, 𝑢 2, and 𝑢 3 ) and the application of multiple twiddle factors. The twiddle
+factors (𝑊 𝑙 , 𝑤 2𝑙 , 𝑤 3𝑙 , etc.) are powers of 𝜔 4 and are applied to each of the three non-first inputs
+                                                    𝑠
+
+
+before summation. This higher radix approach typically reduces the total number of stages and
+multiplications compared to a Radix-2 algorithm for the same polynomial size, which can lead
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                            52:7
+
+Algorithm 2: Radix-4 Gentleman–Sande NTT (Derived from [10])
+
+
+
+
+to a more compact and faster implementation, particularly in hardware. However, the increased
+complexity of the four-point butterfly operation requires more intricate logic and more intricate
+control flow.
+   For polynomials whose length is not a power-of-4, however, Radix-4 NTT cannot be applied
+directly. Therefore, a Mixed-Radix, where both Radix-2 and Radix-4 NTT are involved, can be used
+to increase the computation speed (as presented in the next section).
+
+2.3    FPGA Acceleration for PQC
+As mentioned above, FPGAs are essential for accelerating PQC (including schemes and important
+components) due to their parallel processing capabilities and hardware flexibility, and have been
+widely adopted in both academic and industry studies. NIST’s recommendation of the Xilinx Artix-7
+FPGA [20] as the standard evaluation platform for PQC implementations further endorses the
+advantages, demonstrating its effectiveness in handling complex PQC operations, such as the NTT.
+By following NIST’s recommendation, our implementation maintains alignment with established
+benchmarks, enabling meaningful performance comparisons and contributing to the advancement
+of efficient PQC implementations.
+
+3     Algorithmic Formulation
+Given the limitations of current NTT designs that the Fixed-Radix inflexibility introduces inef-
+ficiency for numbers not a power-of-4, e.g., 512, and suboptimal modular arithmetic, we first go
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:8                                                                                                       Y. Tu and J. Xie
+
+back to basics and look at the NTT algorithm itself. To overcome these challenges, we begin with
+a thorough derivation of the algorithm’s mathematical foundations. This allows us to derive the
+Mixed-Radix NTT algorithm and then further develop computational structures that inherently
+adapt to different values of 𝑛, for example, 𝑛 = 256,512 and 1,024, without the disadvantages of
+Fixed-Radix approaches.
+   To better illustrate the proposed algorithm and architecture, this section presents the derivation
+of the proposed Mixed-Radix algorithm and demonstrates its flexibility in handling different values
+of 𝑛.
+   Let us focus on the NTT representation first:
+                                                          𝑛−1
+                                                          Õ
+                                               𝑋 [𝑘] =          𝑥 [𝑖]𝜔𝑛𝑖 ·𝑘 mod 𝑞,                                      (1)
+                                                          𝑖=0
+
+where 𝑘 = 0, 1, ..., 𝑛 − 1 and 𝜔𝑛 is the primitive 𝑛th root of unity.
+   Here, we divide the entire NTT formula into two summations: one involving the sum over the
+first 𝑛/2 data points and the second involving the last 𝑛/2 data points:
+                                     𝑛−1
+                                     Õ
+                          𝑋 [𝑘] =           𝑥 [𝑖]𝜔𝑛𝑖 ·𝑘 mod 𝑞
+                                      𝑖=0
+                                     𝑛/2−1
+                                      Õ                         𝑛−1
+                                                                Õ
+                                 =             𝑥 [𝑖]𝜔𝑛𝑖 ·𝑘 +           𝑥 [𝑖]𝜔𝑛𝑖 ·𝑘 mod 𝑞
+                                      𝑖=0                      𝑖=𝑛/2
+                                     𝑛/2−1
+                                      Õ
+                                 =             𝑥 [ 𝑗]𝜔𝑛𝑗 ·𝑘 mod 𝑞
+                                       𝑗=0
+                                         𝑛/2−1
+                                                                                                                        (2)
+                                          Õ
+                                     +             𝑥 [ 𝑗 + 𝑛/2]𝜔𝑛( 𝑗+𝑛/2) ·𝑘 mod 𝑞
+                                            𝑗=0
+                                     𝑛/2−1
+                                      Õ                                    𝑛/2−1
+                                                                            Õ
+                                 =             𝑥 [ 𝑗]𝜔𝑛𝑗 ·𝑘 + 𝜔𝑛𝑘 ·𝑛/2 ·           𝑥 [ 𝑗 + 𝑛/2]𝜔𝑛𝑗 ·𝑘
+                                       𝑗=0                                  𝑗=0
+                                     𝑛/2−1
+                                      Õ                                     𝑛/2−1
+                                                                             Õ
+                                 =             𝑥 [ 𝑗]𝜔𝑛𝑗 ·𝑘 + (𝜔𝑛𝑛/2 )𝑘 ·           𝑥 [ 𝑗 + 𝑛/2]𝜔𝑛𝑗 ·𝑘 ,
+                                       𝑗=0                                    𝑗=0
+
+where 𝑗 = 0, 1, ..., 𝑛/2 − 1, and we can further have:
+                                      𝑛/2−1
+                                       Õ                                    𝑛/2−1
+                                                                             Õ
+                           𝑋 [𝑘] =                𝑥 [ 𝑗]𝜔𝑛𝑗 ·𝑘 + (−1)𝑘 ·            𝑥 [ 𝑗 + 𝑛/2]𝜔𝑛𝑗 ·𝑘
+                                         𝑗=0                                 𝑗=0
+                                      𝑛/2−1
+                                       Õ                                                                                (3)
+                                  =               (𝑥 [ 𝑗] + (−1)𝑘 · 𝑥 [ 𝑗 + 𝑛/2])𝜔𝑛𝑗 ·𝑘 mod 𝑞,
+                                         𝑗=0
+                                      𝑗 = 0, 1, ..., 𝑛/2 − 1,
+
+for 𝜔𝑛𝑛/2 = −1. We can see that the sign of the second term (−1)𝑘 depends on the value of 𝑘, which
+is the index of the input polynomial coefficient.
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                                    52:9
+
+  Then, if we further split the decimate split 𝑋 [𝑘] into the even- and odd-numbered coefficients.
+For even-indexed numbers, we obtain (for 𝑗 = 0, 1, ..., 𝑛/2 − 1):
+                                           𝑛/2−1
+                                            Õ
+                            𝑋 [2𝑗] =               (𝑥 [2𝑗] + 𝑥 [2𝑗 + 𝑛/2])𝜔𝑛2𝑗 ·𝑘 mod 𝑞
+                                             𝑖=0
+                                           𝑛/2−1
+                                            Õ
+                                       =           (𝑥 [2𝑗] + 𝑥 [2𝑗 + 𝑛/2])(𝜔𝑛2 ) 𝑗 ·𝑘 mod 𝑞
+                                             𝑖=0
+                                           𝑛/2−1
+                                            Õ
+                                       =           (𝑥 [2𝑗] + 𝑥 [2𝑗 + 𝑛/2])(𝜔𝑛/2 ) 𝑗 ·𝑘 mod 𝑞,                              (4)
+                                             𝑖=0
+                                           𝑛/2−1
+                                            Õ
+                                       =            𝑥 [2𝑗] (𝜔𝑛/2 ) 𝑗 ·𝑘
+                                             𝑖=0
+                                                 𝑛/2−1
+                                                  Õ
+                                           +             𝑥 [2𝑗 + 𝑛/2] (𝜔𝑛/2 ) 𝑗 ·𝑘 mod 𝑞,
+                                                  𝑖=0
+
+because of the property of the twiddle factor that 𝜔𝑛2 = 𝜔𝑛/2 .
+  Similarly, we apply the same property to the odd-numbered coefficients and derive that:
+                                       𝑛/2−1
+                                        Õ
+                    𝑋 [2𝑗 + 1] =                 (𝑥 [2𝑗 + 1] − 𝑥 [2𝑗 + 1 + 𝑛/2])𝜔𝑛(2𝑗+1) ·𝑘 mod 𝑞,
+                                           𝑖=0
+                                       𝑛/2−1
+                                        Õ
+                                   =             (𝑥 [2𝑗 + 1] − 𝑥 [2𝑗 + 1 + 𝑛/2])𝜔𝑛(2𝑗+1) ·𝑘 mod 𝑞,
+                                           𝑖=0
+                                       𝑛/2−1
+                                        Õ
+                                   =             (𝑥 [2𝑗 + 1] − 𝑥 [2𝑗 + 1 + 𝑛/2])𝜔𝑛2𝑗𝑘+𝑘 mod 𝑞,                             (5)
+                                           𝑖=0
+                                                 𝑛/2−1
+                                                  Õ
+                                   = 𝜔𝑛𝑘 ·               (𝑥 [2𝑗 + 1] − 𝑥 [2𝑗 + 1 + 𝑛/2])𝜔𝑛2𝑗𝑘 mod 𝑞,
+                                                  𝑖=0
+                                                 𝑛/2−1
+                                                  Õ
+                                                                                         𝑗𝑘
+                                   = 𝜔𝑛𝑘 ·               (𝑥 [2𝑗 + 1] − 𝑥 [2𝑗 + 1 + 𝑛/2])𝜔𝑛/2 mod 𝑞,
+                                                  𝑖=0
+where 𝑗 = 0, 1, ..., 𝑛/2 − 1.
+   The computational procedure above can be repeated through decimation of the 𝑛/2-point NTT
+as 𝑋 [2𝑗] and 𝑋 [2𝑗 + 1]. The entire process involves 𝑠 = log2𝑛 stages of decimation, where each
+stage involves 𝑛/2 Gentleman–Sande butterflies. Consequently, the computation of the 𝑛-point
+NTT via the DIF NTT requires (𝑛/2)log2𝑛 complex multiplications and 𝑛log2𝑛 complex additions,
+just as in the Decimation-In-Time (DIT) algorithm [11].
+   For illustrative purposes, here we re-derive the Radix-4 DIF algorithm by breaking the 𝑛-point
+NTT formula into four smaller NTTs. Here, we have:
+                          𝑛−1
+                          Õ
+                𝑋 [𝑘] =       𝑥 [𝑖]𝜔𝑛𝑖𝑘 mod 𝑞
+                            𝑖=0
+                            𝑛/4−1
+                             Õ                          𝑛/2−1
+                                                         Õ                    3𝑛/4−1
+                                                                               Õ                      𝑛−1
+                                                                                                      Õ
+                        =           𝑥 [𝑖]𝜔𝑛𝑖𝑘 +                 𝑥 [𝑖]𝜔𝑛𝑖𝑘 +            𝑥 [𝑖]𝜔𝑛𝑖𝑘 +            𝑥 [𝑖]𝜔𝑛𝑖𝑘
+                             𝑖=0                        𝑖=𝑛/4                 𝑖=𝑛/2                  𝑖=3𝑛/4
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:10                                                                                               Y. Tu and J. Xie
+
+                                  𝑛/4−1
+                                   Õ                             𝑛/4−1
+                                                                  Õ
+                              =           𝑥 [𝑖]𝜔𝑛𝑖𝑘 + 𝜔𝑛𝑛𝑘/4 ·           𝑥 [𝑖 + 𝑛/4]𝜔𝑛𝑖𝑘
+                                   𝑖=0                            𝑖=0
+                                               𝑛/4−1
+                                                Õ
+                                  + 𝜔𝑛𝑛𝑘/2 ·           𝑥 [𝑖 + 𝑛/2]𝜔𝑛𝑖𝑘
+                                                𝑖=0
+                                                𝑛/4−1
+                                                 Õ                                                                 (6)
+                                  + 𝜔𝑛3𝑛𝑘/4 ·           𝑥 [𝑖 + 3𝑛/4]𝜔𝑛𝑖𝑘
+                                                 𝑖=0
+                                  𝑛/4−1
+                                   Õ
+                              =           (𝑥 [𝑖] + (−1)𝑖 · 𝑥 [𝑖 + 𝑛/4]
+                                   𝑖=0
+                                  + (−1)𝑖 · 𝑥 [𝑖 + 𝑛/2] + (−1)𝑖 · 𝑥 [𝑖 + 3𝑛/4])𝜔𝑛𝑖𝑘 ,
+where we used the two properties of the twiddle factors (periodicity and symmetry).
+  From Equation (6), one can see that the outcome (last line) is not an 𝑛/4-point NTT because
+the twiddle factor depends on 𝑛 and not on 𝑛/4. To convert it into an 𝑛/4-point NTT, we need to
+further divide the NTT sequence into four 𝑛/4-point subsequences, 𝑋 [4𝑗], 𝑋 [ 𝑗𝑘 + 1], 𝑋 [ 𝑗𝑘 + 2],
+and 𝑋 [ 𝑗𝑘 + 3], 𝑗 = 0, 1, ..., 𝑛/4. Following this strategy, we obtain the Radix-4 DIF NTT as:
+                               𝑛/4−1
+                                Õ
+                    𝑋 [4𝑗] =            (𝑥 [𝑖] + 𝑥 [𝑖 + 𝑛/4] + 𝑥 [𝑖 + 𝑛/2] + 𝑥 [𝑖 + 3𝑛/4])𝜔𝑛0 𝜔𝑛/4
+                                                                                               𝑖𝑗
+                                                                                                   ,
+                                  𝑖=0
+                               𝑛/4−1
+                                Õ
+                                                                                               𝑖𝑗
+               𝑋 [4𝑗 + 1] =             (𝑥 [𝑖] − 𝑥 [𝑖 + 𝑛/4] − 𝑥 [𝑖 + 𝑛/2] + 𝑥 [𝑖 + 3𝑛/4])𝜔𝑛𝑖 𝜔𝑛/4 ,
+                                                                                                                   (7)
+                                  𝑖=0
+                               𝑛/4−1
+                                Õ
+               𝑋 [4𝑗 + 2] =             (𝑥 [𝑖] − 𝑥 [𝑖 + 𝑛/4] − 𝑥 [𝑖 + 𝑛/2] + 𝑥 [𝑖 + 3𝑛/4])𝜔𝑛2 𝑖𝜔𝑛/4
+                                                                                                𝑖𝑗
+                                                                                                    ,
+                                  𝑖=0
+                               𝑛/4−1
+                                Õ
+               𝑋 [4𝑗 + 3] =             (𝑥 [𝑖] − 𝑥 [𝑖 + 𝑛/4] − 𝑥 [𝑖 + 𝑛/2] + 𝑥 [𝑖 + 3𝑛/4])𝜔𝑛3 𝑖𝜔𝑛/4
+                                                                                                𝑖𝑗
+                                                                                                    ,
+                                  𝑖=0
+
+where 𝜔𝑛4𝑖 𝑗 = 𝜔𝑛/4
+                𝑖𝑗
+                    . Note that the input to each 𝑛/4-point NTT is a linear combination of four signal
+samples scaled by a twiddle factor. This procedure is repeated log4𝑛 times.
+   Brief Summary of the Proposed Strategy. From Equations (2)–(7), we can see that the 𝑛-point NTT
+can be decomposed into smaller-sized NTTs. In this way, if 𝑛 is a power-of-4, we can directly divide
+the NTT using the Radix-4 NTT algorithm, as shown in Equation (7). However, when 𝑛 is not a
+power-of-4, to better utilize the advantage in calculation speed of Radix-4 NTT, we can first divide
+the whole 𝑛-point NTT into two 𝑛/2-point NTTs where 𝑛/2 is a power-of-4. Then, we can apply
+the Radix-4 NTT to the two subsequent 𝑛/2-point sets individually to complete the entire NTT
+process, producing radix-4 digit-reversed order outputs (see the example in Figure 1).
+   Notice [33] and [5] have decomposed the NTT computation into sub-groups to form their final
+algorithms. Following this, we can further derive Lines 7–15 in Algorithm 2 as:
+                            𝑢 0 ← (𝑥 [4𝑑𝑘 + 𝑙] + 𝑥 [(4𝑘 + 2)𝑑 + 𝑙]) mod 𝑞,
+                            𝑢 1 ← (𝑥 [(4𝑘 + 1)𝑑 + 𝑙] + 𝑥 [(4𝑘 + 3)𝑑 + 𝑙]) mod 𝑞,
+                                                                                                                   (8)
+                            𝑢 2 ← (𝑥 [4𝑑𝑘 + 𝑙] − 𝑥 [(4𝑘 + 2)𝑑 + 𝑙]) mod 𝑞,
+                            𝑢 3 ← (𝑥 [(4𝑘 + 1)𝑑 + 𝑙] − 𝑥 [(4𝑘 + 3)𝑑 + 𝑙]) mod 𝑞,
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                          52:11
+
+
+
+
+Fig. 1. Eight-point NTT dataflow graph (proposed strategy). The output order is slightly different from the
+Radix-2 NTT due to the composed NTT structure.
+
+
+where 𝑋 [4𝑑𝑘 +𝑙] ← 𝑢 0 +𝑢 1 , 𝑋 [(4𝑑 +1)𝑘 +𝑙] ← (𝑢2+𝑢3) ·𝜔𝑛𝑚𝑠 , 𝑋 [(4𝑑 +2)𝑘 +𝑙] ← (𝑢0−𝑢1) ·𝜔𝑛2𝑚𝑠 ,
+and 𝑋 [(4𝑑 + 3)𝑘 + 𝑙] ← (𝑢2 − 𝑢3) · 𝜔𝑛3𝑚𝑠 , for 𝜔𝑛𝑚𝑠 = 𝜔𝑛𝑚/𝑠 .
+   The provided Algorithm 3 outlines a proposed generic Mixed-Radix NTT algorithm designed
+to handle a broader range of polynomial sizes compared to pure radix implementations. This
+algorithm’s key feature is its ability to process any polynomial of degree 𝑛 = 2𝑚 .
+   The algorithm first checks if the input polynomial’s degree 𝑛 is a perfect power-of-4 (i.e., if 𝑚 is
+an even integer). If 𝑚 is odd, it executes an initial Radix-2 stage. This stage efficiently processes
+the first half of the polynomial and uses twiddle factors to setup the data for the subsequent core
+computation. After this, or if 𝑛 is already a power-of-4, the algorithm will directly proceed to its
+main Radix-4 computation core.
+   The core of the algorithm is a DIF approach, with a descending outer loop that controls the
+stages of computation. Unlike the simple butterfly of a standard Radix-4 algorithm (Algorithm
+2), the butterfly calculates four intermediate values (𝑢 0 to 𝑢 3 ) by adding and subtracting linear
+combinations of strategically indexed input elements, following the structure presented in Equation
+(8) and Refs. [33] and [5]. The final output values are then computed by combining these intermediate
+values, each multiplied by a specific twiddle factor, before being stored in their final positions. This
+dual-purpose structure allows the algorithm to be both flexible and highly parallelizable, making it
+suitable for hardware implementations that need to support different polynomial sizes without
+requiring entirely separate architectures.
+   For example, when we perform this NTT algorithm on a polynomial [0, 1, 2, …, 7] on a ring
+with 𝑛 = 8, 𝑞 = 12,289, and 𝜔 = 4,043. The initial Radix-2 stage of the NTT first processes the
+input, yielding two sub-polynomials: [4, 6, 8, 10] and [12,285, 8,406, 6,373, 8,295]. Subsequently, the
+Radix-4 core is applied to these two resultant sub-polynomials in a single stage, which produces
+the results [28, 6,369, 12,285, 5,912] and [10,781, 10,324, 1,957, 1,500]. The final NTT result is then
+obtained by combining these two sub-polynomials.
+   Note that the time complexities for Radix-2 and Radix-4 are different, as stated above. It takes
+log2𝑛 stages (where each stage costs 𝑛/2 operations) for Radix-2 NTT while taking log4𝑛 stages
+(where each stage costs 𝑛/4 operations) for Radix-4 NTT. However, by increasing the number of
+butterflies, we can increase the calculation speed to 𝑛/(2 · 𝑘), where 𝑘 is the number of butterflies.
+   The above-mentioned strategy enables us to accelerate the first stage of the Mixed-Radix NTT,
+thereby enhancing the overall speed to approach that of Radix-4 NTT alone. For example, when
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:12                                                                                               Y. Tu and J. Xie
+
+Algorithm 3: Proposed Generic Mixed-Radix NTT Algorithm
+
+
+
+
+𝑛 = 512, the theoretical calculation time, although not valid, using Radix-4 NTT is log4 (512) ·
+(512/4) = 576. If we use 4 Radix-2 butterflies in the first stage and one Radix-4 butterfly in the
+rest stages (of the Mixed-Radix NTT), the timing would be (512/8 + 2 · log4(256) · (256/4)) = 576,
+which is identical to the one using Radix-4 NTT only. Note that Radix-4 NTT cannot be applied to
+512-point length polynomials; here, we just use its time complexity to illustrate how to accelerate
+the Mixed-Radix NTT.
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                          52:13
+
+  Based on the discussion above, here we summarize the proposed generic (Radix-4 originated)
+Mixed-Radix NTT for 𝑛 = 256, 512, and 1,024, as shown in Algorithm 3.
+  Summary. The proposed Mixed-Radix NTT algorithm is a hybrid approach that combines the
+advantages of Radix-2 and Radix-4 methods to efficiently compute the NTT at various polynomial
+lengths. By decomposing the NTT into smaller-sized NTTs and utilizing the faster calculation
+speed of Radix-4 NTT when 𝑛 is not a power-of-4, this algorithm achieves a significant reduction in
+computational complexity by accelerating the calculation speed to approach the speed of the method
+deploying Radix-4 NTT only, making it particularly useful for the targeted NTT computations.
+
+4     EMINEM: Accelerator Details
+Brief Introduction. Building upon the foundational algorithmic work, the practical implementation
+of our proposed Mixed-Radix NTT (EMINEM) is designed to fully leverage the strengths of FPGAs.
+As previously discussed, FPGAs offer the crucial parallelism and reconfigurability necessary to
+translate complex mathematical operations into efficient hardware. The components of EMINEM
+are specifically designed to leverage these FPGA features, thereby maximizing performance and
+efficiency. By mapping these units onto FPGA elements, such as LUT, DSP, and Memory, the
+proposed EMINEM achieves high calculation efficiency while maintaining the flexibility to adapt
+to different 𝑛 values and optimizing resource usage.
+
+4.1    Architectural Details
+Following the proposed algorithm, in this section, we introduce the architectural details of the
+proposed accelerator (EMINEM). As shown in Figure 2, the proposed EMINEM includes four major
+components: Butterfly Unit, Control Unit, Output Sequencer, and Data Storage. When the proposed
+accelerator starts to work, the control unit first decides if the Radix-2 NTT should be executed and
+calculates the corresponding addresses and the selection signals (for all the RAM banks that are
+storing the coefficients as well as the ROM where the twiddle factors are stored), and finally sends
+them to the butterfly unit (if Radix-2 is not needed in the first stage, then the accelerator directly
+executes Radix-4 format). The butterfly unit fetches the corresponding coefficients according to
+the addresses received to calculate and delivers the transformed results to the output sequencer
+(where the results are ordered and sent back to the RAM banks). The same process lasts until
+the entire NTT is completed, and the final results (where the transformed coefficients are in the
+bit/digit-reversed order) are stored in the RAM banks.
+   Control Unit. As stated above, the control unit is responsible for generating all control signals,
+including the selection signals, reading/writing address for each RAM bank, and the Radix-2 NTT
+indication signal. Details of the address calculation, RAM bank selection, as well as radix switching,
+are given in the following part of this subsection.
+   The memory mapping scheme is the most critical component of the NTT hardware design.
+However, our design faces additional challenges due to the adoption of a high-radix algorithm.
+Traditional in-place memory mapping schemes often result in complex datapaths due to irregular
+memory access patterns, leading to significant overhead costs. Based on this consideration, here
+we propose a novel memory mapping strategy as described below (see also Algorithm 4).
+   When mapping the proposed generic Mixed-Radix NTT algorithm (Algorithm 3) into the desired
+NTT architecture, the memory access pattern undoubtedly is critical. As shown in Algorithm 4, the
+proposed address mapping algorithm efficiently manages complex memory access to ensure memory
+conflicts are avoided for parallel computations during the different stages of NTT computation. In
+brief, the patterns presented by Algorithm 4 directly follow the central thought of Algorithm 3: (i)
+when 𝑛 is a power-of-4, it uses a cross-bank-write-back scheme to determine read/write addresses
+and bank selections, allowing simultaneous reading and adjusted writing for Radix-4 operations;
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:14                                                                                               Y. Tu and J. Xie
+
+
+
+
+ Fig. 2. Architectural overview of the proposed EMINEM. GS-PE, Gentleman–Sande Processing Element.
+
+
+(ii) when 𝑛 is not a power-of-4, it enables all RAM banks for parallel Radix-2 initial stages, and then
+apply the similar cross-bank-write-back scheme for sub 𝑛/2-point NTT’s computation. The related
+address calculations from Algorithm 4 perfectly align with the NTT computation dataflow, ensuring
+coefficients are available precisely when needed while preventing conflicts through address offsets
+and bank selections. The detailed description of Algorithm 4 is provided later.
+    When 𝑛 is a power-of-4, or dealing with the two divided sub-sets after the first round of Radix-
+2 NTT when 𝑛 = 512, similar to [33], here we also apply the cross-bank-write-back memory
+mapping scheme to fetch/write correct coefficients from/to different RAM banks. However, unlike
+the scheme proposed in [33] that uses four memory banks (since only four coefficients are needed to
+be read/written per cycle), here we adjusted the number of memory banks to eight, with half-sized
+depth for each bank, to corporate with the calculation set up for the Radix-2 NTT stage (see Lines
+5–7 in Algorithm 3). Meanwhile, there is a difference in RAM bank selection in these two scenarios:
+when 𝑛 is a power-of-4, we can treat two adjacent RAM banks as one group, i.e., RAM0/1, RAM2/3,
+RAM4/5, RAM6/7. Meanwhile, the results in stage 𝑠 are written back to the original bank group
+with an address offset of 𝑚 · 𝑜 mod 𝑑 (𝑜 = 𝑛/4𝑠+2 ) as is shown in Algorithm 4 (here 𝑑 is the size
+of the RAM banks, as shown in Line 11 of Algorithm 4). The results are then fed to both RAM
+banks in the same group, but the bank selection signal (which is decided by the address and the
+offset) chooses the correct bank to write by disabling the “write enable” for the other RAM bank as
+in Line 15 in Algorithm 4. Figure 3 shows the access pattern for the Radix-4 mode for a 16-point
+NTT example. As shown in the figure, at each cycle, four coefficients from four different RAM
+banks are selected. After the calculation, one coefficient is written back to the RAM bank with the
+corresponding address offset at each cycle.
+    However, when 𝑛 is not a power-of-4, after the first round of Radix-2 NTT, we need to execute
+an 𝑛-point NTT to split the first and second halves. Therefore, the control unit selects the RAM
+banks 0/4, 1/5, 2/6, and 3/7 in parallel until all the coefficients have been selected to finish the
+first layer Radix-2 NTT. Note that when executing the Radix-2 NTT, all the banks are selected
+because coefficients are fetched from all RAM banks (one per bank), to perform multiple Radix-2
+Gentleman–Sande butterflies in parallel. After the calculation, the results are written back to the
+same position/𝑎𝑑𝑑𝑟 in each RAM bank. The conflict between read and write is avoided by the
+pipelined registers inserted in the butterfly unit (there is a 7-cycle delay between read and write
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                          52:15
+
+Algorithm 4: Proposed NTT Address Mapping
+
+
+
+
+operations) and the address access pattern; the Radix-4 NTT only starts after all the results are
+written back to the RAM banks, introducing a 7-cycle overhead for the whole NTT.
+   Butterfly Unit. The proposed butterfly unit consists of Gentleman–Sande Processing Elements
+(GS-PEs) and three or four Montgomery multipliers, where the number of GS-PEs is 4 while the
+number of Montgomery multipliers depends on how many Radix-2 operations need to be executed
+in parallel. Accordingly, we propose two kinds of butterflies: (i) the pure Radix-4 speed butterfly,
+and (ii) the resource-friendly butterfly. Both butterflies can work in two modes: Radix-2 and Radix-4.
+When working in the Radix-4 mode, the butterfly unit takes four coefficients (𝑅𝑑𝑥4𝑖𝑛), in two groups,
+to compute the corresponding transformation results. The coefficients are first fed to the first layer
+of GS-PEs, where the sum and difference between the two coefficients in each group are calculated.
+The results of one group are fed to the second layer of GS-PEs without any manipulation, while the
+difference in the other group is multiplied by 𝜔 41 before being sent to the second layer of GS-PEs.
+The results coming out of the second layer of GS-PEs are then multiplied by the corresponding
+twiddle factors, except for the first one, which is the sum of all four coefficients. When working
+in Radix-2 mode, the butterfly unit takes 2𝑛𝑚𝑚 coefficients (𝑅𝑑𝑥2𝑖𝑛 in Figures 4 and 5) per cycle,
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:16                                                                                               Y. Tu and J. Xie
+
+
+
+
+                  Fig. 3. Proposed memory access pattern (case example of 𝑛 = 16, Radix-4).
+
+
+
+
+        Fig. 4. Butterfly unit with four Montgomery multipliers (pure Radix-4 butterfly architecture).
+
+
+where 𝑛𝑚𝑚 is the number of Montgomery multipliers involved. In this way, the butterfly unit works
+as 𝑛𝑚𝑚 Radix-2 Gentleman–Sande butterflies to calculate the results, corresponding to Lines 5–7
+in Algorithm 3. In order to match the time complexity of Radix-4 NTT, we use four Montgomery
+multipliers (Figure 4), one for each Montgomery multiplication, so that these four Radix-2 NTT
+butterfly operations can be executed in parallel.
+   Further Optimization (Resource-Friendly Style). To reduce the resource cost, we could also use
+three Montgomery multipliers for the multiplications following the second layer of GS-PEs, and
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                          52:17
+
+
+
+
+    Fig. 5. Butterfly unit with three Montgomery multipliers (resource-friendly butterfly architecture).
+
+Algorithm 5: Modified Montgomery Multiplication
+
+
+
+
+execute the first multiplication using LUTs since it is a multiplication with a constant. This results
+in a resource usage saving of one DSP compared to the pure Radix-4 butterfly unit. However, it
+executes one fewer butterfly operation during the Radix-2 stage and thus leads to an extra time
+cost (see the differences in Figures 4 and 5). The dataflow of the Radix-4 operation is shown in blue,
+while the dataflow of Radix-2 is shown in red. Since we integrated multiple Radix-2 butterflies into
+one Radix-4 butterfly, the Montgomery multipliers and the GS-PEs are involved repeatedly in the
+proposed butterfly, and the dataflow for both operations is marked in black in the figures.
+   Montgomery Multiplier. All the multiplications are executed using a modified Montgomery
+multiplier proposed in [12], as shown in Algorithm 5 and Figure 6. Here, we need a pre-processing
+of the twiddle factors by multiplying the twiddle factors with 𝛽, which is 2𝑛 . In this way, we can
+reduce one multiplication which converts the result of traditional Montgomery multiplication
+(𝑥 − 𝑦) · 𝜔𝛽 −1 mod 𝑞 to the desired result (𝑥 − 𝑦) · 𝜔 mod 𝑞. A further comparison and conditional
+subtraction/addition is performed to normalize the result into [0, 𝑞). Note we have inserted pipelined
+registers in both GS-PEs and Montgomery Multipliers to cut the critical path and increase the
+frequency, which would lead to a delay between reading/writing coefficients from/to the RAM
+banks but has no impact on the memory access pattern scheme.
+   Output Sequencer. As shown in Figure 7, the output sequencer is responsible for ordering the
+outputs written to each memory bank. The ordering is realized by inserting different numbers
+of pipelined registers. Meanwhile, the output sequencer works in two modes: Radix-2 mode and
+Radix-4 mode. In the Radix-4 mode, the four valid outputs from the butterfly unit are fed to four
+different register chains, each with a different number of registers (7, 2, 1, and 3 registers for outputs
+0, 1, 2, and 3, respectively). The register chains cause delays to all the inputs, making the order
+match the memory access pattern. Note that the seven pipelined registers inserted for Input0 are
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:18                                                                                               Y. Tu and J. Xie
+
+
+
+
+                            Fig. 6. Internal structure of the Montgomery multiplier.
+
+
+for aligning the time with other outputs from the butterfly unit, since the Montgomery multipliers
+contain pipelined registers. When combining the butterfly unit and output sequencer together,
+the output order is Input0, Input2, Input1, and Input3. When working in the Radix-2 mode, the
+8 valid outputs from the butterfly unit are directly fed to the RAM banks without going through
+any pipelined registers. This ensures all outputs are written back to the RAM banks accordingly to
+accelerate the Radix-2 stage processing.
+
+4.2     Brief Summary
+The proposed architectures, with the pure Radix-4 butterfly unit and the resource-friendly butterfly
+unit, execute NTT on power-of-4 point polynomials with no time difference since the time com-
+plexity for both architectures is the same (𝑂 (𝑛 · 𝑙𝑜𝑔4 (𝑛))) with a pipelined delay (here is 7 clock
+cycles). However, when 𝑛 is not a power-of-4, the architecture with pure Radix-4 butterfly unit
+takes 𝑂 (𝑛/4 + 2 · 𝑙𝑜𝑔4 (𝑛/2)) cycles while the one with the resource-friendly butterfly unit takes
+𝑂 ( d(𝑛/3)e + 2 · 𝑙𝑜𝑔4 (𝑛/2)) cycles due to the difference of the number of Montgomery multiplier
+used. Also, two pipelined delays will add to the total latency for both architectures.
+   Overall, the major advantages of the proposed NTT accelerators lie in: (i) flexibility to support
+𝑛 = 256, 𝑛 = 512, and 𝑛 = 1,024 with Radix-4 (or like) complexities; (ii) applicability to different
+parameter settings with respect to different PQC schemes, including Falcon, Dilithium, and HAWK.
+One potential “overhead” for such benefits may be the additional control logic and datapaths required
+within the accelerators. Nevertheless, compared with the gains we obtain from such architectural
+innovations, these “extra limitations” are minor and negligible, as demonstrated in the next section.
+
+5     FPGA Implementation Results and Comparison
+This section provides an in-depth evaluation of the performance of the proposed NTT accelerators
+(EMINEM) for Falcon, Dilithium, and HAWK, along with a comparison with existing works on
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                          52:19
+
+
+
+
+                               Fig. 7. Internal structure of the output sequencer.
+
+
+Falcon and Dilithium, to demonstrate the efficiency of the proposed design. To obtain the actual
+implementation performance precisely, we have firstly used the parameter settings from Falcon
+(𝑛 = 512 and 1,024 with 𝑞 = 12,289), and then extended to the parameters of Dilithium (𝑛 = 256
+and 𝑞 = 8,380,417) and also HAWK (𝑛 = 512 and 𝑛 = 1,024 with 𝑞 = 18,433).
+
+5.1   Experimental Setup
+The experimental setup is as follows: (i) all the designs (under different parameter settings) are coded
+in VHDL, simulated and tested through ModelSim, and finally implemented using Vivado 2022.2; (ii)
+we have implemented the proposed designs on the NIST recommended Artix-7 (XC7a200t) FPGA,
+and we have also followed the existing works’ styles such as [16, 31, 32] to report results on other
+FPGAs, i.e., Virtex-7 (XC7Vxc7v2000t), Zynq-7000 (XC7Z100t), and Ultrascale+ (XCKU-060); (iii)
+key results obtained from the implementation, including resource usage, maximum frequency, delay,
+and ADP, are listed and compared with the existing works; (iv) we have followed the approach used
+in [17, 26] to calculate Equivalent ADP (EADP) for a balanced area-time overall consideration
+(see the footnote of Table 1); (v) note many designs have no slice data reported so here we use
+Equivalent LUT (ELUT) instead to calculate EADP; (vi) we also define Prop.-I as the proposed
+architecture involving the resource-friendly butterfly unit (see Figure 5), while Prop.-II is the one
+where the pure Radix-4 butterfly is applied (Figure 4). Note Prop.-I and Prop.-II have no time
+difference when 𝑛 is a power-of-4, so we only implement Prop.-I for this case (when 𝑛 = 256 and
+𝑛 = 1,024).
+   Our proposed architectures are universal, i.e., supporting various 𝑛 sizes and different PQC
+schemes. Because our architectures can handle different polynomial sizes, they require additional
+control logic and datapaths, e.g., the proposed EMINEM may need to use two sets of ROMs to store
+the necessary twiddle factors with respect to different 𝑛 (power-of-4 or not). It is thus ideal that
+the proposed accelerators can be compared solely with existing similar generic architectures, such
+as [19]. Nevertheless, due to the limited availability of such designs in the literature, we have to
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:20                                                                                                             Y. Tu and J. Xie
+
+                       Table 1. Comparison with the Existing NTT Works for Falcon (𝑞 = 12,289)
+
+       Design        Device       LUT       FF     DSP      BRAM     Slice Fmaxa   Latencyb    Delayc    ELUTd     EADPe      EADPRf
+                                                                    𝑛 = 512
+          [3]        Artix-7     7,690       16        11    13       NA     250     2,826      11.30    13,706    1,54,935    93.23%
+        Prop.-I      Artix-7     1,064      853         3     6       404    193      629       3.26     3,050       9,940        -
+        Prop.-II     Artix-7     1,085      876         4     6       413    195      598       3.07     3,421      10,490        -
+         [31]        Virtex-7    2,178     1,694        8     3       NA     234     1,074      4.59     5,803      26,636     72.76%
+      [19] (1 PE)    Virtex-7     537       NA          3    5.5      NA     125     2,340      18.72    2,405      45,020     83.88%
+      [19] (8 PE)    Virtex-7    2,514      NA         24    12       NA     125      324       2.59     13,739     35,611     79.63%
+     [19] (32 PE)    Virtex-7    16,983     NA         96    48       NA     125      108       0.86     61,882     53,466     86.43%
+          [7]        Virtex-7    8,712     6,538       32     0       NA     302      128       0.42     21,819      9,164     20.82%
+        Prop.-I      Virtex-7     956       794         3    5.5      344    269      629       2.34     2,824       6,597        -
+        Prop.-II     Virtex-7     978       836         4    5.5      362    268      598       2.23     3,256       7,256        -
+         [32]       Zynq-7000     741       330         2     5       NA     245     1,289      5.26     2,141      11,265     36.19%
+          [9]       Zynq-7000     980       395        26     2       NA     250     4,608      18.43    11,862    2,18,640    96.71%
+         [28]       Zynq-7000     994       994         1     3       NA     278     3,443      12.38    1,752      21,701     66.86%
+          [7]       Zynq-7000    8,713     6,538       32     0       NA     293      128       0.44     21,820      9,601     25.1%
+        Prop.-I     Zynq-7000     958       864         3     6       366    269      629       2.34     2,884       6,737        -
+        Prop.-II    Zynq-7000     980       884         4     6       382    276      598       2.17     3,316       7,191        -
+                                                                   𝑛 = 1,024
+         [33]        Artix-7      957       890         4     3       NA     240     1,295      5.40     2,944      15,885     6.92%
+       Prop.-Ig      Artix-7      710       588         3     3       279    215     1,392      6.46     2,287      14,787        -
+         [31]        Virtex-7    2,151     1,475        9    2.5      NA     232     2,104      9.07     6,128      55,574     76.70%
+      [19] (1 PE)    Virtex-7     576       NA          3    11       NA     125     5,160      41.28    3,083     1,27,266    89.82%
+      [19] (8 PE)    Virtex-7    2,584      NA         24    16       NA     125      680       5.44     14,274     77,648     83.32%
+     [19] (32 PE)    Virtex-7    17,188     NA         96    48       NA     125      200       1.60     62,087     99,340     86.96%
+       [5] (2x2)     Virtex-7    1,196      969        12     3       NA     270     1,308      4.84     6,460      31,294     58.62%
+       [5] (4x2)     Virtex-7    2,953     1,875       27    5.5      NA     250      668       2.67     14,651     39,148     66.92%
+        [5] (1)      Virtex-7     475       307         3    1.5      NA     278     5,134      18.47    1,878      34,684     62.66%
+        [5] (2)      Virtex-7     863       561         6    2.5      NA     270     2,574      9.53     3,611      34,426     62.38%
+        [5] (4)      Virtex-7    2,011     1,070       12     5       NA     263     1,294      4.92     7,507      36,937     64.94%
+        [5] (8)      Virtex-7    6,300     2,124       27    10       NA     227      654       2.88     18,521     53,361     75.73%
+          [7]        Virtex-7    10,758    7,146       36     0       NA     302      256       0.85     25,504     21,678     40.26%
+        Prop.-I      Virtex-7     621       534         3     5       240    261     1,391      5.33     2,431      12,950        -
+         [32]       Zynq-7000     847       375         2     6       NA     244     2,569      10.53    2,363      24,884     47.05%
+         [30]       Zynq-7000    4,823     2,901        8     0       NA     152     1,280      8.42     8,100      68,209     80.68%
+          [7]        Virtex-7    10,765    7,146       36     0       NA     293      256       0.87     25,511     22,194     41.65%
+        Prop.-I     Zynq-7000     625       548         3     5       228    257     1,391      5.41     2,435      13,175        -
+
+a
+    Fmax: Maximum frequency; Unit: MHz.
+b
+    Latency: Calculation latency (number of cycles).
+c
+    Delay = Latency/Fmax; Unit: μs.
+d
+  ELUT: Equivalent LUT (all other resources have been transferred to ELUT), following [17]. 1 DSP = 102.4 Slices (7 series)/51.2 Slices
+(UltraScale+); one 18 K BRAM = 116.2 Slices (7 series)/58.1 Slices (UltraScale+). UltraScale+ has 8 LUTs in one Slice/CLB while 7 series
+contains 4 LUTs in one Slice/CLB.
+e
+  EADP: Equivalent ADP. EADP = #ELUT × delay (since the Slice number is not available for all designs, we use LUT as the main resource
+usage metric).
+f
+ EADPR: EADP reduction. Note the reported value represents the lower value of the two EADPR results based on Prop.-I and Prop.-II, i.e.,
+the listed value represents the minimum EADPR that the proposed accelerators can achieve.
+g
+  For a fair comparison with [33], optimization is performed for Radix-4 only structure when n = 1,024.
+
+
+
+include different NTT works (with respect to targeted PQC schemes) in comparison, even though
+they are specifically optimized and focused on only one parameter size. Based on this consideration,
+we may have to specifically optimize the proposed NTT accelerator for a fair comparison in some
+unique cases. In particular, we apply this principle to a special case, as described below. The design
+proposed in [33] is specific to Falcon’s 𝑛 = 1,024 implementation (it exclusively supports Radix-4
+NTT, which significantly simplifies the control logic and datapath by eliminating support for other
+parameters like 𝑛 = 512). This makes a direct comparison of the proposed one with the Radix-4
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                                                              52:21
+
+                    Table 2. Comparison with the Existing NTT Works for Dilithium (𝑞 = 8,380,417)
+
+      Design             Device       LUT           FF         DSP         BRAM    Slice     Fmax     Latency      Delay      ELUT      EADP       EADPR
+                                                                                𝑛 = 256
+   [16] (1 BF)      XCKU-060        1,623      1,325              3         1.5     NA       255       1,052       4.13        3,026     12,484    69.24%
+   [16] (4 BF)      XCKU-060        5,478      4,955              12         6      NA       250        284        1.14       11,090     12,599    69.52%
+   [16] (8 BF)      XCKU-060       11,006      8,791              24        12      NA       220        156        0.71       22,231     15,764    75.64%
+  [16] (16 BF)      XCKU-060       26,520      15,171             48        24      NA       194        113        0.58       48,970     28,524    86.54%
+  [16] (32 BF)      XCKU-060       63,533      27,488             96        48      NA       135         95        0.70      1,08,432    76,304    94.97%
+     Prop.-I        XCKU-060        1,552      1,867              6          5      336      324        271        0.84        4,591      3,840       -
+      [15]           Artix-7         524        759               17         1      NA       311        533        1.71        7,603     13,031    39.51%
+      [34]           Artix-7        2,044       NA                16         6      NA       216       1,170       5.42        9,295     50,347    84.34%
+       [6]           Artix-7       63,000      18,000            256        48      NA       126        103        0.82      1,73,435   1,41,776   95.39%
+     Prop.-I         Artix-7        1,557      1,652              6          5      534      158        271        1.72        4,596      7,882       -
+      [27]          Zynq-7000       3,690      1,148              8         15    1,166      217        264        1.22        8,710     10,596    37.80%
+      [18]          Zynq-7000        698        771               2         2.5     NA       279       1,024       3.67        1,808      6,635    0.66%
+     Prop.-I        Zynq-7000       1,558      1,611              6          5      524      189        271        1.46        4,597      6,596       -
+     Prop.-I         Virtex-7       1,564      1,772              6         5.5     555      191        271        1.42        4,661      6,613       -
+
+
+
+                         Table 3. FPGA Implementation Results of the Proposed NTT Accelerators for
+                                                   HAWK (𝑞 = 18,433)
+
+               Design        Device         LUT           FF       DSP       BRAM Slice        Fmax      Latency      Delay     ELUT     EADP
+                                                                               𝑛 = 512
+               Prop.-I       Artix-7        1,124        800           3       6       376      193        629        3.26      3,050    9,940
+               Prop.-II      Artix-7        1,154        814           4       6       399      193        598        3.10      3,490    10,820
+               Prop.-I       Virtex-7       1,133        766           3       5       384      267        629        2.36      3,001    7,076
+               Prop.-II      Virtex-7       1,198        811           4      5.5      409      270        598        2.22      3,476    7,707
+               Prop.-I      Zynq-7000       1,133        802           3       6       381      274        629        2.30      3,059    7,021
+               Prop.-II     Zynq-7000       1,198        859           4       6       401      277        598        2.16      3,534    7,632
+                                                                              𝑛 = 1,024
+               Prop.-I       Artix-7        773          5,431         3       5       248      188       1,391       7.39      2,583    19,091
+               Prop.-I       Virtex-7       780           529          3      5.5      257      258       1,391       5.39      2,590    13,952
+               Prop.-I      Zynq-7000       778           516          3       5       276      259       1,391       5.37      2,588    13,884
+
+
+
+design in [33] not favorable. To ensure a fair comparison, we slightly optimized our architecture
+for power-of-4 size (i.e., 𝑛 = 1,024), including eliminating extra control logic and related datapaths
+for Radix-2 associated address/memory operations, and halving ROM usage (as only one set of
+twiddle factors is required). Note that we only make this specific adjustment for comparison with
+[33], but still maintain the accelerator’s universality and generality when implementing it with
+other polynomial sizes 𝑛 and related parameter settings.
+
+5.2     Overall Performance
+As shown in Tables 1–3, our proposed accelerators consistently demonstrate superior performance
+across different PQC schemes, namely Falcon, Dilithium, and HAWK. Nevertheless, we still have
+some interesting observations on the obtained performance data. First of all, the LUT and FF usage
+decrease when 𝑛 goes from 512 to 1,024, because the accelerator operating at 𝑛 = 512 needs a
+slight “overhead” for extra logic in Radix-2 determination and associated calculations as well as the
+switch between Radix-2 and Radix-4. Second, due to the necessity for storing two sets of twiddle
+factors for 𝑛 and 𝑛/2, the memory usage of the proposed ones is slightly high, and meanwhile,
+the memory usage of 𝑛 = 512 is slightly higher than 𝑛 = 1,024. Lastly, although the overhead is
+inevitable, the two proposed architectures still maintain high efficiency by utilizing relatively low
+resources and operating at high frequency, and thus outperform the existing designs in the major
+metric of EADP (as discussed in the following sections).
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:22                                                                                               Y. Tu and J. Xie
+
+5.3     Comparison with the Existing Works for Falcon
+We have listed the implementation results of the proposed and existing ones in Table 1 for 𝑛 = 512
+and 𝑛 = 1,024 on the different FPGA devices. As seen from Table 1, the proposed accelerators have
+significantly better area-time complexities than the existing works. More precisely, for 𝑛 = 512, on
+the Virtex-7 device, the two proposed accelerators have at 72.76% and 79.63% lower EADP than
+[31] and [19], respectively. On the Zynq-7000 device, the proposed accelerators can obtain at least
+36.19%, 96.71%, and 66.86% lower EADP compared with [9, 32], and [28], respectively. For 𝑛 = 1,024,
+the proposed NTT accelerator has at least 83.32% and 62.38% more efficiency in EADP than [19]
+and [5] on Virtex-7. Meanwhile, it can achieve 47.05% and 80.68% lower EADP compared with
+[32] and [30] on Zynq-7000. Considering the special case of comparing with [33], as shown in
+Table 1, the proposed design achieved a 6.92% reduction in EADP on the Artix-7 platform. All these
+comparisons undoubtedly prove that the proposed accelerators have superior performance when
+implementing Falcon parameter settings.
+   Note we noticed that Duong-Ngoc and Lee [7] proposed a Mixed-Radix Multi-path Delay
+Feedback (MDF) NTT for Falcon, but this design did not report the data memory usage (which
+is actually needed, see Figure 7 in [7]). However, we still included it in the comparison. As is
+shown in Table 1, although it does not include any memory, the advantage in other resource usage
+like LUT and DSP still leads to at least 20.82% reduction in EADP for 𝑛 = 512 and 40.26% for
+𝑛 = 1,024. Meanwhile, we want to mention that there exist fundamental algorithmic differences
+between the proposed designs and [7]. The work of Duong-Ngoc and Lee [7] utilizes a DIT NTT,
+which requires a bit-reversed input ordering. In contrast, our approach is based on a DIF NTT,
+which operates on naturally ordered input data. The order of sub-NTT varies based on the method,
+and leads to different algorithms and architecture designs. Furthermore, while the Mixed-Radix
+concept has been explored, the specific method combining our simplified butterfly operations
+and derivations, which are unique to our article, has not been presented before. Moreover, on the
+hardware architecture aspect, our hardware design and architecture are fundamentally different.
+The work of Duong-Ngoc and Lee [7] employs a MDF architecture. This architecture uses a pipeline
+of serially connected butterflies to process coefficients and avoids writing back to memory, which is
+a key design choice. Our approach, however, uses an in-place write-back NTT architecture, where
+the results of each stage are written back to memory. This design decision is critical for our overall
+resource optimization.
+
+
+5.4     Comparison with Other Designs for Dilithium
+The extended and enhanced versions of the proposed NTT accelerators, based on the Dilithium’s
+parameter setting of 𝑛 = 256 and 8,380,417, are again implemented to obtain performance for
+comparison with existing designs. Similarly, we have listed all the relevant performance data
+in Table 2, encompassing resource utilization metrics such as LUTs, FFs, Slices, and other rele-
+vant parameters, as well as timing performance criteria like latency and delay. As presented in
+Table 2, the comparative analysis reveals that our proposed designs have achieved substantial
+reductions in EADP compared to the existing solutions. Specifically, on the Kintex Ultrascale+
+device, our proposed accelerator exhibits a remarkable reduction of at least 69.24% in EADP com-
+pared to the design presented in [16]. Similarly, on the Zynq-7000 device, our design achieves
+EADP reductions of 38.37% and 1.57% compared to existing designs. Furthermore, on the Artix-
+7 device, our accelerator outperforms the existing designs [6, 15, 34] with EADP reductions of
+39.51%, 84.34%, and 95.39%, respectively. These results demonstrate the efficacy of our proposed
+NTT accelerator.
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                          52:23
+
+5.5     Implementation Performance of the NTT Accelerator for HAWK
+As there are no existing hardware works for HAWK, we list the implementation performance of the
+proposed accelerators under HAWK parameter settings in Table 3 with respect to different FPGA
+devices. Considering the modulus used in HAWK is close to Falcon, we can actually compare the
+results in Table 3 with the existing works for Falcon listed in Table 1. Again, it is shown that the
+proposed accelerators under HAWK parameter settings have superior performance.
+
+5.6     Discussion and Future Work
+While a direct quantitative comparison between FPGAs and other platforms like ASICs, GPUs, and
+CPUs is challenging due to the lack of a universal metric—for instance, ASIC area is measured in
+square millimeters while FPGA resources are measured in LUTs and FF (and others)—we believe
+each platform has its own distinct advantages. Our work focuses on FPGAs, specifically the Artix-7,
+aligns with the NIST recommendations [20] and provides a consistent benchmark against other
+state-of-the-art implementations in our field. This allows for a clear and fair comparison.
+   Overall, the proposed NTT acceleration strategy on the FPGA platform is highly efficient, not
+only innovatively exploring a universal method for NTT computation under various parameter
+settings but also fully utilizing the resources available on the FPGA devices. One prominent feature
+of the proposed EMINEM (including both algorithm and accelerators) is that it can execute the NTT
+computation process by achieving Radix-4 speed, even when 𝑛 is not a power-of-4. This makes it
+applicable to various post-quantum lattice-based cryptographic schemes (high potential used as a
+standard method in various NIST lattice-based schemes), especially after extending this strategy to
+another NIST-standardized lattice-based scheme Kyber.
+   Due to the aforementioned various factors, such as reconfigurability, parallel processing, and
+flexibility, FPGA acceleration for computationally intensive algorithms, like the targeted NIST
+PQC schemes, will become the mainstream research in the field. Following this trend, future work
+may also focus on deploying the proposed NTT-based polynomial multiplication to construct
+efficient PQC accelerators on FPGAs for various applications. Side-channel analysis and related
+countermeasure design based on the proposed NTT method can be another primary direction.
+Future research may also consider providing a more holistic performance analysis between different
+platforms like ASICs, GPUs, and CPUs.
+
+6     Conclusion
+This article has presented a novel design framework for efficient Mixed-Radix NTT hardware
+accelerators (EMINEM), covering three NIST lattice-based PQC schemes (Falcon, Dilithium, and
+HAWK). Our contributions include a new Mixed-Radix NTT algorithm, a versatile hardware
+accelerator design, two butterfly architectures with different performance focuses (achieved by
+efficiently utilizing FPGA resources and novel datapath design), and detailed final implementations
+and comparisons. The proposed design strategy surpasses the limitations of existing Radix-2
+implementations for 512-length NTT designs, achieving superior performance and enabling the
+deployment of Mixed-Radix NTT in NIST lattice-based PQC. Overall, the outcome of this article
+will pave the way for further efficient and innovative implementations of NIST lattice-based PQC
+schemes on the FPGA platforms. We hope this research will impact the ongoing PQC standardization
+and initiate further follow-up work on PQC hardware implementation on FPGA platforms.
+
+References
+    [1] CRYSTALS Team. 2021. Dilithium. Retrieved from https://pq-crystals.org/dilithium/
+    [2] Falcon. 2022. Fast Fourier Lattice-Based Compact Signatures over NTRU (Falcon). Retrieved from https://falcon-
+        sign.info/
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+52:24                                                                                                    Y. Tu and J. Xie
+
+ [3] Utsav Banerjee, Tenzin S. Ukyab, and Anantha P. Chandrakasan. 2019. Sapphire: A configurable crypto-processor for
+     post-quantum lattice-based protocols (extended version). Paper 2019/1140. Cryptology ePrint Archive. Retrieved from
+     https://eprint.iacr.org/2019/1140
+ [4] Daniel J. Bernstein. 2009. Introduction to post-quantum cryptography. In Post-Quantum Cryptography. Daniel J.
+     Bernstein, Johannes Buchmann, and Erik Dahmen (Eds.), Springer, 1–14.
+ [5] Xiangren Chen, Bohan Yang, Shouyi Yin, Shaojun Wei, and Leibo Liu. 2021. CFNTT: Scalable radix-2/4 NTT multi-
+     plication architecture with an efficient conflict-free memory mapping scheme. IACR Transactions on Cryptographic
+     Hardware and Embedded Systems 2022, 1, (Nov. 2021), 94–126. DOI: https://doi.org/10.46586/tches.v2022.i1.94-126
+ [6] Kemal Derya, Ahmet Can Mert, Erdinç Öztürk, and Erkay Savaş. 2022. CoHA-NTT: A configurable hardware
+     accelerator for NTT-based polynomial multiplication. Microprocessors and Microsystems 89 (2022) 104451.
+ [7] Phap Duong-Ngoc and Hanho Lee. 2022. Configurable mixed-radix number theoretic transform architecture for
+     lattice-based cryptography. IEEE Access 10 (2022), 12732–12741.
+ [8] Gina M. Raimondo and Laurie E. Locascio. 2024. FIPS 204 module-lattice-based digital signature standard. Retrieved
+     from https://csrc.nist.gov/pubs/fips/204/final
+ [9] Tim Fritzmann, Uzair Sharif, Daniel Müller-Gritschneder, Cezar Reinbrecht, Ulf Schlichtmann, and Johanna Sepulveda.
+     2019. Towards reliable and secure post-quantum co-processors based on RISC-V. In Proceedings of the 2019 Design,
+     Automation & Test in Europe Conference & Exhibition (DATE), 1148–1153. DOI: https://doi.org/10.23919/DATE.2019.
+     8715173
+[10] W. Morven Gentleman and Gordon Sande. 1966. Fast Fourier transforms: For fun and profit. In Proceedings of the
+     November 7-10, 1966, Fall Joint Computer Conference, 563–578.
+[11] W. M. Gentleman and G. Sande. 1966. Fast fourier transforms: For fun and profit. In Proceedings of the 1966 Fall Joint
+     Computer Conference (AFIPS ’66 (Fall)). ACM, New York, NY, 563–578. DOI: https://doi.org/10.1145/1464291.1464352
+[12] David Harvey. 2014. Faster arithmetic for number-theoretic transforms. Journal of Symbolic Computation 60 (Jan.
+     2014), 113–119. DOI: https://doi.org/10.1016/j.jsc.2013.09.002
+[13] HAWK. 2025. HAWK: A Signature Scheme Inspired by the Lattice Isomorphism Problem. Retrieved from https://hawk-
+     sign.info/
+[14] CRYSTALS Team. 2022. Kyber. Retrieved from https://pq-crystals.org/kyber/index.shtml
+[15] Georg Land, Pascal Sasdrich, and Tim Güneysu. 2021. A hard crystal-implementing Dilithium on reconfigurable
+     hardware. In Proceedings of the International Conference on Smart Card Research and Advanced Applications. Springer,
+     210–230.
+[16] Bin Li, Yunfei Yan, Yuanxin Wei, and Heru Han. 2024. Scalable and parallel optimization of the number theoretic
+     transform based on FPGA. IEEE Transactions on Very Large Scale Integration (VLSI) Systems 32 (2024), 291–304.
+[17] Weiqiang Liu, Sailong Fan, Ayesha Khalid, Ciara Rafferty, and Maire O’Neill. 2019. Optimized schoolbook polynomial
+     multiplication for compact lattice-based cryptography on FPGA. IEEE Transactions on Very Large Scale Integration
+     (VLSI) Systems 27, 10 (2019), 2459–2463.
+[18] Suraj Mandal and Debapriya Basu Roy. 2024. KiD: A hardware design framework targeting unified NTT multiplication
+     for CRYSTALS-Kyber and CRYSTALS-Dilithium on FPGA. In Proceedings of the 2024 37th International Conference on
+     VLSI Design and 2024 23rd International Conference on Embedded Systems (VLSID). IEEE, 455–460.
+[19] Ahmet Can Mert, Emre Karabulut, Erdinc Ozturk, Erkay Savas, and Aydin Aysu. 2022. An extensive study of flexible
+     design methods for the number theoretic transform. IEEE Transactions on Computers 71, 11 (2022), 2829–2843. DOI:
+     https://doi.org/10.1109/TC.2020.3017930
+[20] NIST PQC Forum. 2025. On Recommended Hardware. Retrieved from https://groups.google.com/a/list.nist.gov/g/pqc-
+     forum/c/cJxMq0_90gU/m/qbGEs3TXGwAJ
+[21] John M. Pollard. 1971. The Fast Fourier transform in a finite field. Mathematics of Computation 25, 114 (1971), 365–374.
+[22] National Institute of Standards and Technology. 2024. Post-Quantum Cryptography: Additional Digital Signature
+     Schemes. Retrieved from https://csrc.nist.gov/projects/pqc-dig-sig
+[23] National Institute of Standards and Technology. 2025. Post-Quantum Cryptography: Additional Digital Signature
+     Schemes, Round 2 Additional Signatures. Retrieved from https://csrc.nist.gov/projects/pqc-dig-sig/round-2-additional-
+     signatures
+[24] National Institute of Standards and Technology. 2022. Post-Quantum Cryptography (PQC) Selected Algorithms 2022.
+     Retrieved from https://csrc.nist.gov/Projects/post-quantum-cryptography/selected-algorithms-2022
+[25] P. W. Shor. 1994. Algorithms for quantum computation: Discrete logarithms and factoring. In Proceedings of the 35th
+     Annual Symposium on Foundations of Computer Science. IEEE, 124–134.
+[26] Yazheng Tu, Pengzhou He, Çetin Kaya Koç, and Jiafeng Xie. 2023. LEAP: Lightweight and efficient accelerator for
+     sparse polynomial multiplication of HQC. IEEE Transactions on Very Large Scale Integration (VLSI) Systems 31, 6 (2023),
+     892–896.
+
+
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators                                             52:25
+
+[27] Tengfei Wang, Chi Zhang, Pei Cao, and Dawu Gu. 2022. Efficient implementation of dilithium signature scheme on
+     FPGA SoC platform. IEEE Transactions on Very Large Scale Integration (VLSI) Systems 30, 9 (2022), 1158–1171.
+[28] Wei Wang, Xinming Huang, Niall Emmart, and Charles Weems. 2014. VLSI design of a Large-Number multiplier
+     for fully homomorphic encryption. IEEE Transactions on Very Large Scale Integration (VLSI) Systems 22, 9 (2014),
+     1879–1887. DOI: https://doi.org/10.1109/TVLSI.2013.2281786
+[29] Jiafeng Xie, Wenfeng Zhao, Hanho Lee, Debapriya Basu Roy, and Xinmiao Zhang. 2024. Hardware circuits and systems
+     design for post-quantum cryptography—A tutorial brief. IEEE Transactions on Circuits and Systems II: Express Briefs
+     71, 3 (2024), 1670–1676.
+[30] Yufei Xing and Shuguo Li. 2020. An efficient implementation of the NewHope key exchange on FPGAs. IEEE
+     Transactions on Circuits and Systems I: Regular Papers 67, 3 (2020), 866–878. DOI: https://doi.org/10.1109/TCSI.2019.
+     2956651
+[31] Zewen Ye, Ray C. C. Cheung, and Kejie Huang. 2022. PipeNTT: A pipelined number theoretic transform architecture.
+     IEEE Transactions on Circuits and Systems II: Express Briefs 69, 10 (2022), 4068–4072. DOI: https://doi.org/10.1109/
+     TCSII.2022.3184703
+[32] Neng Zhang, Bohan Yang, Chen, Chen Shouyi Yin, Shaojun Wei, and Leibo Liu. 2020. Highly efficient architecture
+     of NewHope-NIST on FPGA using low-complexity NTT/INTT. IACR Transactions on Cryptographic Hardware and
+     Embedded Systems 2020, 2 (Mar. 2020), 49–72. DOI: https://doi.org/10.13154/tches.v2020.i2.49-72
+[33] Yanrui Zhao, Xiaofan Liu, Yue Hu, and Hao Xiao. 2024. Design of an efficient NTT/INTT architecture with Low-
+     Complex memory mapping scheme. IEEE Transactions on Circuits and Systems II: Express Briefs 71, 1 (2024), 400–404.
+     DOI: https://doi.org/10.1109/TCSII.2023.3296492
+[34] Zhen Zhou, Debiao He, Zhe Liu, Min Luo, and Kim-Kwang Raymond Choo. 2021. A software/hardware co-design of
+     crystals-Dilithium signature scheme. ACM Transactions on Reconfigurable Technology and Systems 14, 2 (2021), 1–21.
+
+Received 19 June 2025; revised 31 August 2025; accepted 28 September 2025
+
+
+
+
+ACM Transactions on Reconfigurable Technology and Systems, Vol. 18, No. 4, Article 52. Publication date: December 2025.
+

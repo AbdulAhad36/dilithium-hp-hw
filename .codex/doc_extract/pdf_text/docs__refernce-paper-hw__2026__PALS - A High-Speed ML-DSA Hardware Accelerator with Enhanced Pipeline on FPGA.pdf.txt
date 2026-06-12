@@ -1,0 +1,160 @@
+                                                                                                                                                                                                              2025 IEEE 8th International Conference on Integrated Circuits, Technologies and Applications
+
+
+
+
+                                                                                                                                                                                  PALS: A High-Speed ML-DSA Hardware
+                                                                                                                                                                                  Accelerator with Enhanced Pipeline on
+                                                                                                                                                                                  FPGA
+                                                                                                                                                                                  Pengfei Sun1 , Qirui Wang1, Makoto Ikeda1
+                                                                                                                                                                                  1
+                                                                                                                                                                                    The University of Tokyo, Department of Electrical
+                                                                                                                                                                                  Engineering
+                                                                                                                                                                                  Abstract—This paper presents PALS, a high-speed and resource-
+                                                                                                                                                                                  efﬁcient ML-DSA accelerator with a fully pipelined architecture,
+                                                                                                                                                                                  supporting all security levels. Implementation on Artix-7 and Ultra-
+                                                                                                                                                                                  Scale+ platforms shows that, compared with the best previous work,             Fig. 1: FSM Design in Key Generation, redline marks the
+2025 IEEE International Conference on Integrated Circuits, Technologies and Applications (ICTA) | 979-8-3315-7162-7/25/$31.00 ©2025 IEEE | DOI: 10.1109/ICTA68203.2025.11330133
+
+
+
+
+                                                                                                                                                                                  our design reduces clock cycles, latency, and Area-Time Product                breakpoint in previous works [2]–[4].
+                                                                                                                                                                                  (ATP) by approximately 40%, 25%, and 10%, respectively.
+                                                                                                                                                                                  Index Terms—Field Programmable Gate Array (FPGA), hardware
+                                                                                                                                                                                  accelerator, Module-Lattice-Based Digital Signature Algorithm (ML-
+                                                                                                                                                                                  DSA), Post-Quantum Cryptography (PQC).
+
+                                                                                                                                                                                                            I. I NTRODUCTION
+                                                                                                                                                                                     As quantum computing evolves, the ML-DSA digital signature
+                                                                                                                                                                                  has been standardized by the National Institute of Standards and
+                                                                                                                                                                                  Technology [1]. To meet its high computational demands, re-
+                                                                                                                                                                                  searchers have proposed high-performance hardware accelerators
+                                                                                                                                                                                  for ML-DSA [2]–[4]. However, a major bottleneck limiting top-
+                                                                                                                                                                                  level efﬁciency in existing designs is the data formats among
+                                                                                                                                                                                  different modules are incompatible, thus hindering efﬁcient co-
+                                                                                                                                                                                  operation and forcing pipelines to be interrupted [2], [3].
+                                                                                                                                                                                     In this paper, we propose PALS extending our preliminary                    Fig. 2: Comparison of Clock Cycles in Key Generation State 3,
+                                                                                                                                                                                  research in [5], which addressed only the reordering unit, by                  PALS eliminates RAM buffering, reducing delay by 42 cycles.
+                                                                                                                                                                                  integrating it into a fully pipelined architecture with speed-                 executing INTT (inverse Number Theoretic Transform), as the
+                                                                                                                                                                                  matching modules and supporting all ML-DSA security levels.                    dividing red line in Fig. 1.
+                                                                                                                                                                                  We solve the above challenges with the following innovations:                     Fig. 2 compares the Key Generation process between (a)
+                                                                                                                                                                                    1) The ﬁrst fully pipelined collaborative architecture for the               traditional method and (b) our proposal. The traditional approach
+                                                                                                                                                                                        ML-DSA accelerator: By integrating a further optimized                   requires a delay of at least 62 clock cycles to write data from
+                                                                                                                                                                                        reordering mechanism, PALS allows all calculation modules                Sampler to BRAM before it can be read in the format required
+                                                                                                                                                                                        to be connected in pipeline and reduces the total clock cycles           by INTT. This procedure would occupy the BRAM resources
+                                                                                                                                                                                        of the most time-consuming reordering related operations by              and delay the next sampling round. In contrast, our solution
+                                                                                                                                                                                        approximately 37%.                                                       enables SHAKE128/256 and Sampler to almost immediately start
+                                                                                                                                                                                    2) A speed-matching submodule design: PALS achieves a high-                  pipeline reordering after completing an output, without waiting.
+                                                                                                                                                                                        throughput pipeline by engineering all submodules to operate             This innovation allows PALS to begin the calculation of the
+                                                                                                                                                                                        in a speed-matched manner. This approach allows savings                  second polynomial 42 cycles earlier, resulting in an approximately
+                                                                                                                                                                                        achieved by designing pipelines in speciﬁc operations to be              37% reduction in clock cycles. For Key Generation under Security
+                                                                                                                                                                                        fully utilized.                                                          Level 5, Key Generation State 3 takes up 78% time. Through
+                                                                                                                                                                                     On Artix-7 and UltraScale+ platforms, compared with the                     our optimized design, we achieved a clock cycle reduction of
+                                                                                                                                                                                  state-of-the-art ML-DSA accelerators, PALS reduces the total                   approximately 28% compared to the pipeline-severing design [2].
+                                                                                                                                                                                  clock cycles by approximately 40% and reduces ATP by 10%,                                               III. A RCHITECTURE
+                                                                                                                                                                                  demonstrating its efﬁciency across all ML-DSA security levels.
+                                                                                                                                                                                                                                                                    The high-level architecture of PALS shown in Fig. 3 is divided
+                                                                                                                                                                                                     II. O PTIMIZATION P ROPOSAL                                 into two parts: Memory and Processing Unit.
+                                                                                                                                                                                     Fig. 1 illustrates the FSM (ﬁnite state machine) transition logic              The Memory stores polynomials in Polynomial RAM and
+                                                                                                                                                                                  during Key Generation (a function deﬁned in ML-DSA) in PALS.                   the seeds of hashing in SHAKE RAM. The Polynomial RAM
+                                                                                                                                                                                  The X-axis denotes states, and the Y-axis represents dataﬂow                   is instantiated as three 92-bit wide dual-port RAMs, enabling
+                                                                                                                                                                                  directions between modules, which will be introduced in Section                simultaneous read or write of 4 polynomial coefﬁcients. The
+                                                                                                                                                                                  III Architecture. For example, in Key Generation State 3, which                SHAKE RAM is instantiated as a 64-bit wide simple-dual-port
+                                                                                                                                                                                  is the most time-consuming part of Key Generation, our work                    RAM. A Controller controls FSM according to whether the
+                                                                                                                                                                                  provides pipelined connection through all submodules, which is                 RAM addresses reach a speciﬁc location, thereby directing the
+                                                                                                                                                                                  due to the pipeline reordering in PALS. In contrast, conventional              Processing Unit to execute ML-DSA deﬁned functions.
+                                                                                                                                                                                  approaches require two separate processing stages: 1) computing                   The Processing Unit is responsible for computations in the
+                                                                                                                                                                                  As1 , 2) storing/retrieving intermediate results via BRAM before               ML-DSA. PALS introduces a Polynomial Multiplication and
+
+
+
+
+                                                                                                                                                                                    979-8-3315-7162-7/25/$31.00 ©2025 IEEE                                   141
+                                                                                                                                                                                  Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 21,2026 at 22:34:46 UTC from IEEE Xplore. Restrictions apply.
+                                                   TABLE I. Implementation Results and Comparison
+                Security Level   Cycles1 (×103 )      Freq. (MHz)    Latency1 (μs)      LUTs       FFs     BRAMs       DSPs     Area2 (×103 )     ATP3 (×106 )
+                      2            4.2/31.6/4.4                       43.3/326/45.4                                                                    5.0
+      [2]
+                      3            5.9/49.5/6.1          96.9         60.9/511/63.0     29998     10366       11         10          12.0              7.6
+    Artix-7
+                      5            8.8/55.3/9.0                       90.1/571/92.9                                                                    9.0
+                      2            4.4/30.1/5.0                       33.9/231/38.5                                                                    4.4
+      [3]
+                      3            7.3/49.5/8.0          130          56.1/381/61.6     32320     9734        14         24          14.5              7.2
+    Artix-7
+                      5           10.9/55.2/12.7                      83.8/425/97.6                                                                    8.8
+                      2            5.3/33.5/4.9          114.6       46.2/292.3/42.8    20621     8104        16                     10.2              3.9
+      [4]
+                      3            7.8/53.6/7.6           109        71.6/491.7/69.7    23378     9079        20         8           11.8              7.5
+    Artix-7
+                      5           12.5/72.2/11.8         114.3      109.4/631.7/103.2   28791     11338       24                     14.2              12.0
+                      2            2.6/16.2/3.4                      24.9/157.2/33.3                                                                   3.7
+   This Work
+                      3            4.1/27.0/5.0          103         39.7/262.5/49.0    33799     14033       16         40          17.3              6.1
+    Artix-7
+                      5            6.5/32.1/7.8                      63.2/312.0/75.5                                                                   7.8
+                      2            4.4/30.1/5.0                       14.7/100/16.7                                                                    1.9
+      [3]
+                      3            7.3/49.5/8.0          300          24.3/165/26.7     32035     9707        14         24          14.4              3.1
+  UltraScale+
+                      5           10.9/55.2/12.7                      36.3/184/42.3                                                                    3.8
+                      2            2.6/16.2/3.4                       10.2/64.5/13.7                                                                   1.6
+  This Work
+                      3            4.1/27.0/5.0          251         16.3/107.7/20.1    34536     13952       16         40          17.6              2.5
+  UltraScale+
+                      5            6.5/32.1/7.8                      25.9/128.0/31.0                                                                   3.3
+1 The three numbers in the Clock and Latency columns represent the average results of 50 tests of Key Generation, Signing, and Verifying deﬁned by ML-DSA [1]
+2 Area = LU T /4 + F F/8 + BRAM × 200 + DSP × 100 [6] 3 ATP: Area-Time Product, AT P = Area×
+                                                                                                               
+                                                                                                                  Latency
+
+
+                                                                                 resource consumption of PALS to compare with related works
+                                                                                 on the same platforms. The three numbers in the Cycles and
+                                                                                 Latency columns represent the average results for Key Generation,
+                                                                                 Signing, and Verifying. Area and Time are computed using a
+                                                                                 commonly used formula [6] and the sum of the three functions’
+                                                                                 latencies, respectively, with ATP being their product.
+                                                                                    Although some submodules designed to support our FSM and
+                                                                                 pipeline result in a larger Area, PALS achieves the best Cycles and
+                                                                                 Latency results, saving around 40% and 25%, respectively. Our
+                                                                                 FSM and pipeline designs bring the effect introduced in Section
+                                                                                 II and address the data reordering bottleneck in previous works
+                                                                                 [2], [3] by concealing clock cycles and enabling concurrent NTT
+                                                                                 and polynomial operations. The effect is especially signiﬁcant
+                                                                                 in Signing due to repeatively call. This approach also ensures
+                                                                                 efﬁcient resource sharing across all security levels, unlike some
+                                                                                 designs that only pipeline within modules [4]. As a result,
+                                                                                 our implementation achieves a signiﬁcant reduction in latency,
+                                                                                 ultimately outperforming the best previous work in ATP by
+Fig. 3: High-Level Architecture.                                                 approximately 10% reduction.
+Addition (MULADD) upstream of NTT, and a Polynomial Ad-                                                            R EFERENCES
+dition (ADD) downstream of NTT to manage coefﬁcient-wise
+                                                                                 [1] NIST, “Module-Lattice-Based Digital Signature Standard,” 2024. [Online].
+multiplication/addition/subtraction between polynomial matrices                      Available: https://csrc.nist.gov/pubs/ﬁps/204/ﬁnal
+and vectors operations. The additional modules enable concurrent                 [2] C. Zhao et al., “A compact and high-performance hardware architecture for
+execution of NTT-domain computations alongside NTT/INTT                              CRYSTALS-Dilithium,” IACR Trans. Cryptogr. Hardw. Embed. Syst., vol.
+                                                                                     2022, no. 1, pp. 270–295, 2022, doi: 10.46586/tches.v2022.i1.270-295.
+operations, thereby supporting our pipeline and FSM design.                      [3] X. Li et al., “A high speed post-quantum crypto-processor for Crystals-
+SHAKE128/256 and Sampler complete the hashing and sampling                           Dilithium,” IEEE Trans. Circuits Syst. II, Express Briefs, vol. 71, no. 1, pp.
+operations deﬁned in [1]. Reordering Unit1&2 are designed to                         435–439, Jan. 2024, doi: 10.1109/TCSII.2023.3304416.
+                                                                                 [4] Z. Wu et al., “An efﬁcient hardware implementation of Crystal-Dilithium on
+support pipelined data transfer between modules without the need                     FPGA,” in Information Security and Privacy-ACISP 2024, Singapore, 2024,
+for writing to Memory. PALS optimizes resource consumption by                        pp. 64–83, doi: 10.1007/978-981-97-5028-3 4.
+replacing the 1800+ registers in the Reordering Unit1 from [5]                   [5] P. Sun et al., “Fully pipelined number theoretic transform and reordering
+                                                                                     solution for CRYSTALS-Dilithium,” in Proc. IEEE Int. Conf. Integr. Cir-
+with a simple 92x128 dual-port RAM, with a carefully designed                        cuits, Technol. Appl. (ICTA), Hangzhou, China, 2024, pp. 100–101, doi:
+address transition logic.                                                            10.1109/ICTA64028.2024.10860673.
+                                                                                 [6] M. Li et al., “Reconﬁgurable and high-efﬁciency polynomial multiplication
+      IV. I MPLEMENTATION R ESULTS A ND C OMPARISON                                  accelerator for CRYSTALS-Kyber,” IEEE Trans. Comput.-Aided Design
+                                                                                     Integr. Circuits Syst., vol. 42, no. 8, pp. 2540–2551, Aug. 2023, doi:
+  PALS is implemented on FPGA Artix-7 and Virtex Ultra-                              10.1109/TCAD.2022.3230359.
+Scale+. Table I shows the post place-and-route performance and
+
+
+
+
+                                                                             142
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 21,2026 at 22:34:46 UTC from IEEE Xplore. Restrictions apply.
+

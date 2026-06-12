@@ -1,0 +1,311 @@
+                                              A Unified Hardware Accelerator for Fast Fourier
+                                               Transform and Number Theoretic Transform
+                                                           Rishabh Shrivastava, Chaitanya Prasad Ratnala, Durga Manasa Puli and Utsav Banerjee
+                                                                    Electronic Systems Engineering, Indian Institute of Science, Bengaluru, India
+                                                        Email: rishabhs@iisc.ac.in, chaitanyar@alum.iisc.ac.in, durgamanasa@alum.iisc.ac.in, utsav@iisc.ac.in
+
+
+                                            Abstract—The Number Theoretic Transform (NTT) is an                                Both ML-KEM (Kyber) and ML-DSA (Dilithium) are
+                                         indispensable tool for computing efficient polynomial multiplica-                  lattice-based cryptographic algorithms based on the hardness
+                                         tions in post-quantum lattice-based cryptography. It has strong                    of the Module-LWE (Learning With Errors) problem [10].
+arXiv:2504.11124v1 [cs.CR] 15 Apr 2025
+
+
+
+
+                                         resemblance with the Fast Fourier Transform (FFT), which is
+                                         the most widely used algorithm in digital signal processing.                       They involve the computation of several polynomial multipli-
+                                         In this work, we demonstrate a unified hardware accelerator                        cations which can be efficiently implemented using the Num-
+                                         supporting both 512-point complex FFT as well as 256-point                         ber Theoretic Transform (NTT). The NTT is a generalization
+                                         NTT for the recently standardized NIST post-quantum key en-                        of the widely used Fast Fourier Transform (FFT) [11]. All
+                                         capsulation and digital signature algorithms ML-KEM and ML-                        arithmetic in NTT is performed with integers in a finite field,
+                                         DSA respectively. Our proposed architecture effectively utilizes
+                                         the arithmetic circuitry required for complex FFT, and the only                    while FFT requires the use of complex numbers.
+                                         additional circuits required are for modular reduction along with                     Previous work has presented hardware implementations of
+                                         modifications in the control logic. Our implementation achieves                    NTT using custom accelerators as well as re-purposing ex-
+                                         performance comparable to state-of-the-art ML-KEM / ML-DSA                         isting cryptographic co-processors [12]–[21]. However, there
+                                         NTT accelerators on FPGA, thus demonstrating how an FFT                            has been little work in exploring how FFT hardware can be
+                                         accelerator can be augmented to support NTT and the unified
+                                         hardware can be used for both digital signal processing and post-                  enhanced to implement NTT. Recently, [22] has proposed a
+                                         quantum lattice-based cryptography applications.                                   high-level synthesis framework for polynomial multiplication
+                                            Index Terms—post-quantum cryptography, Number Theoretic                         using pipelined FFT architectures.
+                                         Transform (NTT), Fast Fourier Transform (FFT), FPGA.                                  In this work, we present the FPGA-based implementation of
+                                                                                                                            a unified hardware accelerator supporting fixed-point complex
+                                                                    I. I NTRODUCTION                                        FFT along with NTT for ML-KEM and ML-DSA parameters.
+                                                                                                                            We leverage the similarity between FFT and NTT butterfly op-
+                                            Modern public key cryptography, based on the intractability                     erations to demonstrate that a traditional fixed-point complex
+                                         of integer factorization and discrete logarithms, is vulnerable                    FFT hardware accelerator can be augmented to achieve ML-
+                                         to future quantum adversaries capable of realizing Shor’s                          KEM and ML-DSA NTT performance comparable to state-of-
+                                         algorithm [1] in large-scale fault-tolerant quantum comput-                        the-art custom NTT accelerators at the cost of ≈ 62% more
+                                         ers. Therefore, recent advances in quantum computing tech-                         LUTs, ≈ 26% more FFs, and no additional DSPs and BRAMs
+                                         nologies have motivated the design and implementation of                           compared to the baseline FFT. Our proposed unified architec-
+                                         new quantum-secure cryptographic algorithms, also known                            ture will enable digital communication systems, e.g., wireless
+                                         as post-quantum cryptography. The U.S. National Institute                          sensor nodes, which use FFT accelerators for data processing,
+                                         of Standards and Technology (NIST) has been driving the                            to efficiently upgrade their hardware and also support PQC
+                                         standardization of post-quantum cryptography (PQC) since                           NTT for quantum-secure cryptographic protocols such as key
+                                         2016 [2]. After several rounds of theoretical analysis, security                   encapsulation and digital signature-based authentication.
+                                         evaluation and optimized implementation [3]–[5], NIST has
+                                         selected CRYSTALS-Kyber [6] and CRYSTALS-Dilithium [7]                                                     II. BACKGROUND
+                                         as its primary recommendations for quantum-secure key en-                             The FFT is an efficient algorithm used to compute the
+                                         capsulation mechanism (KEM) and digital signature algorithm                        discrete Fourier Transform of sequences in digital signal
+                                         (DSA) respectively. These algorithms have also been included                       processing, e.g., conversion from time domain to frequency
+                                         in the recently announced NIST PQC standards ML-KEM [8]                            domain. Given an N -length sequence of complex numbers
+                                         and ML-DSA [9] respectively.                                                       { x0 , x1 , · · · , xN −1 }, its FFT is given by another N -length
+                                                                                                                            sequence of complex numbers { X0 , X1 , · · · , XN −1 } where
+                                            © 2025 IEEE. Personal use of this material is permitted. Permission from
+                                         IEEE must be obtained for all other uses, in any current or future media,                        N −1
+                                         including reprinting/republishing this material for advertising or promotional
+                                                                                                                                          X
+                                                                                                                                                     mk
+                                         purposes, creating new collective works, for resale or redistribution to servers
+                                                                                                                                   Xk =          xm ωN  for k ∈ { 0, 1, · · · , N − 1 }
+                                         or lists, or reuse of any copyrighted component of this work in other works.                     m=0
+                                            A revised version of this paper was published in the proceedings of the 2025
+                                         IEEE International Conference on Acoustics, Speech and Signal Processing           Here,√ωN = exp(−2πj/N ) is the N -th complex root of unity
+                                                                                                                                                      mk
+                                         (ICASSP) - DOI: 10.1109/ICASSP49660.2025.10889132                                  (j = −1), and its powers ωN  are known as twiddle factors.
+Similarly, given a polynomial a(x) ∈ Zq [x]/(xN + 1) with
+coefficients a(x) = (a0 , a1 , · · · , an−1 ), its NTT representation
+is given by â(x) = (â0 , â1 , · · · , âN −1 ) where
+            N
+            X −1
+                       mk
+    âk =          am ζN  mod q for k ∈ { 0, 1, · · · , N − 1 }
+            m=0
+
+Here, ζN is the N -th primitive root of unity in the ring Zq , that
+     N                  k
+is, ζN  = 1 mod q and ζN   ̸= 1 mod q for k ̸= N , and its powers
+  mk
+ζN are also known as twiddle factors. The modulus q must
+be chosen to be a prime such that q ≡ 1 mod N in order to
+have elements of order N . Furthermore, to support negative-
+wrapped convolution [12] for polynomial multiplication, the
+modulus must also satisfy q ≡ 1 mod 2N so that both the
+N -th and 2N -th primitive roots of unity modulo q exist.
+   Both FFT and NTT algorithms exploit the cyclic properties
+of ωN and ζN respectively to efficiently compute the transform
+using a series of butterfly operations. There are two butterfly
+configurations – Cooley-Tukey (or Decimation-in-Time) and
+Gentleman-Sande (or Decimation-in-Frequency). In this work,             Fig. 1. Overview of butterfly computations in (a) FFT, (b) ML-KEM
+we implement the former which computes (a ± ω × b) and                  (CRYSTALS-Kyber) NTT and (c) ML-DSA (CRYSTALS-Dilithium) NTT.
+(a ± ζ × b) mod q for FFT and NTT respectively, where
+a and b are inputs to the butterfly, and ω and ζ denote the
+twiddle factors. The overall FFT or NTT computation requires
+N
+ 2 log2 N butterflies equally distributed across log2 N stages.
+   For ML-DSA (Dilithium), the NTT parameters are N = 256
+and q = 8380417 = 223 − 213 + 1. Therefore, it involves NTT
+computation with 256 23-bit polynomial coefficients and ζN =
+3073009. For ML-KEM (Kyber), the NTT parameters are N =
+256 and q = 3329 = 13 · 28 + 1. However, q ̸≡ 1 mod 2N
+in this case, so the input polynomial is interpreted as 128
+pairs of coefficients. Therefore, it involves NTT computation             Fig. 2. Design of 32-bit Karatsuba multiplier using 16-bit multipliers.
+with 128 pairs of 12-bit polynomial coefficients and ζN = 17.
+Further mathematical details of Dilithium and Kyber NTTs are
+available in [7], [9] and [6], [8] respectively.
+               III. H ARDWARE A RCHITECTURE
+   To implement our unified accelerator, we begin with the
+FFT hardware as baseline and then include additional logic
+to add support for ML-KEM and ML-DSA NTTs. In this
+                                                                            Fig. 3. Top-level architecture of the proposed unified accelerator.
+work, we consider 512-point complex FFT with signed inputs
+in 32-bit fixed-point Q16.15 format, that is, each of real and
+imaginary parts has 1 sign bit, 16 integer bits and 15 fractional
+                                                                        complete 512-point FFT computation involves 9 stages with
+bits. The complex twiddle factors ω (where | ω | ≤ 1) are
+                                                                        256 butterflies per stage. Due the cyclic properties of twiddle
+represented in 32-bit fixed-point Q1.30 format, that is each of
+                                                                        factors, 512 complex signed 32-bit twiddle factors are required
+real and imaginary parts has 1 sign bit, 1 integer bit and 30
+                                                                        for the 512-point FFT computation.
+fractional bits. All negative quantities are assumed to be stored
+                                                                           Next, we analyze the computational requirements of ML-
+in standard two’s complement format. Now, the complex FFT
+                                                                        KEM and ML-DSA NTT butterfly operations. For ML-KEM
+butterfly expression can be expanded as:
+                                                                        butterfly (a±ζ ×b) mod q, all inputs and outputs are unsigned
+ a ± ω × b = (aR + jaI ) ± (ωR + jωI ) × (bR + jbI )                    12-bit integers with arithmetic modulo q = 3329, as shown in
+             = (aR ± ωR bR ∓ ωI bI ) + j(aI ± ωR bI ± ωI bR )           Fig. 1b. Each ML-KEM NTT involves 7 stages with 64 pairs
+                                                                        of identical butterflies per stage. Total 128 unsigned 12-bit
+where aR , bR and ωR are the real parts of a, b and ω                   integer twiddle factors are required for the NTT. For ML-DSA
+respectively, and aI , bI and ωI are their complex parts re-            butterfly (a±ζ ×b) mod q, all inputs and outputs are unsigned
+spectively. This requires four 32-bit fixed-point multiplications       23-bit integers with arithmetic modulo q = 8380417, as
+and several additions / subtractions, as shown in Fig. 1a. The          shown in Fig. 1c. Each ML-DSA NTT involves 8 stages with
+Fig. 4. Detailed architecture of the proposed unified butterfly unit and memory organization for FFT and ML-KEM (Kyber) + ML-DSA (Dilithium) NTT.
+The pipeline stages are shown as green dashed lines. The sub-modules of the unified butterfly unit used for FFT only, FFT + ML-DSA NTT, ML-DSA NTT
+only, ML-KEM NTT only and all NTT + FFT are shown in yellow, green, blue, red and white respectively.
+
+
+
+128 butterflies per stage. Total 256 unsigned 23-bit integer              The butterfly inputs and outputs follow an in-place data flow.
+twiddle factors are required for the NTT. We observe that                 The data RAM bank is implemented as a set of eight 256
+ML-KEM NTT requires 12-bit multiplications while ML-DSA                   × 16-bit true-dual-port memories. The twiddle factor ROM is
+NTT requires 23-bit multiplications. Therefore, we effectively            implemented as a 1024 × 32-bit dual-port read-only memory.
+utilize the arithmetic circuits in the 32-bit fixed-point complex         The unified butterfly unit is implemented with a 9-stage
+FFT by implementing its 32-bit multipliers in Karatsuba                   internal pipeline for improved performance. It consists of four
+configuration [23] with several 16-bit multipliers, as shown              instances of the 32-bit unsigned Karatsuba multiplier described
+in Fig. 2. Similarly, 32-bit additions / subtractions are split           earlier. For signed multiplication in FFT, we include 32-bit and
+into pairs of 16-bit additions / subtractions with appropriate            64-bit two’s complement converter circuits respectively before
+carry / borrow propagation logic. Butterfly inputs in ML-                 and after each 32-bit unsigned multiplier. Overall, our unified
+KEM and ML-DSA NTT are zero-padded to 16-bit and 32-                      accelerator can execute either 1 FFT butterfly or 2 parallel ML-
+bit respectively for the arithmetic operations. This approach             DSA NTT butterflies or 4 parallel ML-KEM NTT butterflies.
+requires no additional arithmetic modules except the modular                 Detailed architecture of the accelerator with internal cir-
+reduction circuits specific to NTT. While Barrett reduction [24]          cuitry of the unified butterfly is shown in Fig. 4. It has
+is used to reduce the multiplication outputs, simple conditional          three operating modes (indicated by a 2-bit external input):
+subtraction / addition can be used to reduce the addition /               512-point FFT, NTT for ML-KEM (CRYSTALS-Kyber) and
+subtraction outputs.                                                      NTT for ML-DSA (CRYSTALS-Dilithium). The 9-stage-
+   Finally, we analyze the memory organization required by                pipelined unified butterfly arithmetic unit has twelve 16-
+the FFT and the two types of NTT. The FFT inputs are 512                  bit inputs and eight 16-bit outputs. The mod kyber mul
+complex numbers stored as 1024 elements of 32 bits each.                  and mod dilithium mul units are used to perform Bar-
+The ML-KEM NTT inputs are 256 integers stored as 256                      rett reduction after multiplication in the NTT modes. The
+elements of 12 bits each. The ML-DSA inputs are 256 integers              mod kyber add/sub and mod dilithium add/sub are used to
+stored as 256 elements of 23 bits each. Therefore, ML-DSA                 reduce the addition/subtraction outputs in the NTT modes.
+elements can be accommodated in the same word size as FFT                 Clearly, apart from modular reduction circuits and multiplex-
+elements after zero padding to 32 bits, while pairs of ML-                ors, all other circuitry in the unified FFT + NTT butterfly unit
+KEM elements can be accommodated in the same word size                    are those already required for FFT, thus highlighting efficient
+as single FFT elements after zero padding to pairs of 16 bits.            hardware resource sharing in our proposed architecture.
+Similar approach can also be followed for storing the FFT and
+NTT twiddle factors. Again, no additional memory is required                               IV. I MPLEMENTATION R ESULTS
+to support NTT beyond the requirements of FFT.                               The proposed unified accelerator is implemented on a Xilinx
+   The top-level architecture of the unified accelerator is shown         Zynq UltraScale+ MPSoC ZCU104 Evaluation Board with an
+in Fig. 3. Apart from the unified butterfly unit, it contains a           XCZU7EV-2FFVC1156E device [25] and our experimental
+data RAM bank, a twiddle factor ROM and control circuitry.                setup is shown in Fig. 5. Verilog HDL (Hardware Description
+                                                                         remains unchanged. It is noteworthy that our careful design
+                                                                         of the pipeline stages in the unified butterfly unit ensures that
+                                                                         there is no reduction in the operating frequency (400 MHz
+                                                                         for all the variants) due to the additional modular reduction
+                                                                         circuitry. This shows the trade-off between additional NTT
+                                                                         functionality and resource utilization. Compared to Design V
+                                                                         (ML-KEM + ML-DSA), Design I requires 6 additional DSPs
+                                                                         to accommodate two more 32-bit Karatsuba multipliers for
+                                                                         FFT along with ≈ 23% more LUTs and ≈ 31% more FFs.
+Fig. 5. Experimental validation setup with AMD Xilinx Zynq UltraScale+      Table II compares our unified FFT + ML-KEM / ML-DSA
+ZCU104 MPSoC FPGA board and PYNQ interface.                              NTT accelerator (Design I) with state-of-the-art FPGA-based
+                                                                         NTT hardware accelerators for ML-KEM and/or ML-DSA.
+                               TABLE I                                   Despite supporting additional functionality, our implementa-
+       ACCELERATOR I MPLEMENTATION R ESULTS FROM ZCU104                  tion clearly achieves performance comparable to prior work
+     (Z YNQ U LTRA S CALE + AT O PERATING F REQUENCY 400 MH Z )
+                                                                         in similar UltraScale+ FPGA platforms. The overheads in
+                                                  Cycle    Latency       terms of LUTs, FFs, DSPs and BRAMs are primarily due
+   Design    Mode      LUT / FF / DSP / BRAM
+                                                  Count     (µs)         to the additional circuitry for 512-point complex FFT which
+      I     ML-KEM        3716 / 2400 / 12 / 5     322      0.80         is not supported by any of the previous implementations. In
+      I     ML-DSA        3716 / 2400 / 12 / 5     624      1.56         particular, our unified accelerator requires 12 DSPs in order
+      I      FFT          3716 / 2400 / 12 / 5     2430     6.08         to support the fixed-point complex arithmetic for FFT and 5
+      II     FFT          2300 / 1898 / 12 / 5     2430     6.08
+                                                                         BRAMs in order to store the complex inputs / outputs and
+     III    ML-DSA         2287 / 1924 / 6 / 5     624      1.56
+     IV     ML-KEM        1973 / 1246 / 4 / 4.5    322      0.80
+                                                                         twiddle factors for FFT. Our implementation demonstrates the
+     V      ML-KEM         3013 / 1828 / 6 / 5     322      0.80         efficiency and flexibility of the proposed unified FFT + NTT
+     V      ML-DSA         3013 / 1828 / 6 / 5     624      1.56         architecture which allows the same hardware to be used for
+                                                                         both digital signal processing as well as post-quantum lattice-
+                                                                         based cryptography applications.
+Language) is used to design the hardware accelerator, and
+Xilinx Vivado Design Suite version ML 2022.2 is utilized                            V. C ONCLUSIONS AND F UTURE W ORK
+for FPGA synthesis, implementation and simulation. Our                      The Number Theoretic Transform (NTT) is an indispensable
+experimental validation framework interfaces the proposed                tool for computing efficient polynomial multiplications in post-
+accelerator with an additional bank of ROMs populated with               quantum lattice-based cryptography. It has strong resemblance
+test vectors corresponding to expected outputs at the end of all         with the Fast Fourier Transform (FFT) which is the most
+stages of the FFT or NTT computations. These test vectors are            widely used algorithm for frequency-domain analysis of se-
+generated using a Python script based on the twiddle factors             quences in digital signal processing. Following this observa-
+and random input sequences / polynomials. The validation                 tion, we demonstrate a unified hardware accelerator supporting
+framework also includes additional test logic to compare the             both 512-point complex FFT as well as 256-point NTT for
+data stored in the data RAM bank row-wise with the golden                NIST post-quantum cryptography standards ML-KEM and
+data stored in the ROMs. Five variants of the accelerator                ML-DSA. Our proposed architecture effectively utilizes the
+design are implemented: (I) FFT + ML-DSA NTT + ML-KEM                    arithmetic circuitry and memory organization required for
+NTT, (II) baseline FFT, (III) baseline ML-DSA, (IV) baseline             FFT and re-purposes them for ML-KEM and ML-DSA NTT
+ML-KEM, and (V) ML-DSA + ML-KEM. These are used to                       computations. Our FPGA-based implementations achieve per-
+study the trade-offs associated with different levels of func-           formance comparable to state-of-the-art ML-KEM / ML-DSA
+tional unification in the same underlying architecture. FPGA             NTT accelerators, thus demonstrating the efficiency of our
+implementation results (resource utilization and performance             design. Extension of our proposed architecture to support NTT
+metrics) for all five variants are shown in Table I.                     for emerging applications of lattice-based cryptography such
+   Design II (our baseline FFT) follows the architectural                as homomorphic encryption [27] as well as efficient ASIC
+blueprint of the Xilinx FFT IP [26]. Their primary difference is         implementations will be explored in future work.
+that Design II stores the inputs / outputs (4 KB) in 4 BRAMs
+compared to 2 BRAMs in [26], allowing multiple simultaneous                                   ACKNOWLEDGMENT
+reads / writes per cycle. We leverage this flexibility to get               This work was supported in part by a seed grant from the
+better performance metrics for our FFT baseline, as well                 Indian Institute of Science, in part by the Centre of Excellence
+as better architectural consistency with our NTT baselines,              in Cyber Security (CySecK), Government of Karnataka and in
+enabling fair comparison across design variants at the cost of           part by the Ministry of Education, Government of India. The
+higher BRAM usage. Compared to Design II, Design I (FFT +                authors would like to thank the anonymous reviewers for their
+ML-DSA NTT + ML-KEM NTT) requires ≈ 62% more LUTs                        valuable feedback and Dr. Shantharam Kalipatnapu for helping
+and ≈ 26% more FFs. The number of DSPs and BRAMs                         with the FPGA setup.
+                                                                  TABLE II
+           C OMPARISON WITH S TATE - OF - THE -A RT FPGA-BASED FFT, ML-KEM NTT AND ML-DSA NTT H ARDWARE I MPLEMENTATIONS
+
+                                                                FPGA            FPGA Resource Utilization                     Freq.   Cycle     Latency
+           Design            Supported Algorithms                                                                 Mode
+                                                               Platform         LUT / FF / DSP / BRAM                        (MHz)    Count      (µs)
+      ISCAS ’21 [15]           ML-KEM NTT only                 Artix-7                609 / 640 / 2 / 2         ML-KEM         257     490         1.9
+     ARITH ’21 [16]            ML-KEM NTT only                 Artix-7                801 / 717 / 4 / 2         ML-KEM         222     324        1.46
+     CARDIS ’22 [17]           ML-DSA NTT only                 Artix-7               524 / 759 / 17 / 1         ML-DSA         311     533        1.71
+     TCAS-I ’23 [18]           ML-DSA NTT only             Zynq UltraScale+         2759 / 2037 / 4 / 7         ML-DSA         391      −          −
+                                                                                                                ML-KEM                  −          −
+      TCAS-I ’23 [19]       ML-KEM / ML-DSA NTT            Zynq UltraScale+         3487 / 1918 / 4 / 1                        270
+                                                                                                                ML-DSA                  −          −
+                               ML-KEM NTT only                                      1914 / 2249 / 3 / 3         ML-KEM         275      −          −
+      TVLSI ’24 [20]                                       Kintex UltraScale
+                               ML-DSA NTT only                                      5478 / 4955 / 12 / 6        ML-DSA         250     284        1.14
+                                                                                                                ML-KEM                 224        0.65
+      VLSID ’24 [21]        ML-KEM / ML-DSA NTT            Zynq UltraScale+        2893 / 2356 / 4 / 4.5                       342
+                                                                                                                ML-DSA                 512        1.50
+     Xilinx FFT IP [26]    512-point Complex FFT only      Zynq UltraScale+         1462 / 2269 / 12 / 3          FFT          456     3548       7.78
+                                                                                                                ML-KEM                 322        0.80
+         This Work         512-point Complex FFT +
+         (Design I)                                        Zynq UltraScale+         3716 / 2400 / 12 / 5        ML-DSA         400     624        1.56
+                           ML-KEM / ML-DSA NTT
+                                                                                                                 FFT                   2430       6.08
+
+
+
+                             R EFERENCES                                        [18] N. Gupta, A. Jati, A. Chattopadhyay, and G. Jha, “Lightweight Hardware
+                                                                                     Accelerator for Post-Quantum Digital Signature CRYSTALS-Dilithium,”
+ [1] P. W. Shor, “Polynomial-Time Algorithms for Prime Factorization                 IEEE Transactions on Circuits and Systems I: Regular Papers, vol. 70,
+     and Discrete Logarithms on a Quantum Computer,” SIAM Journal of                 no. 8, pp. 3234–3243, 2023.
+     Computing, vol. 26, no. 5, pp. 1484–1509, Oct. 1997.                       [19] A. Aikata, A. C. Mert, M. Imran, S. Pagliarini, and S. S. Roy, “KaLi: A
+ [2] NIST, “Report on Post-Quantum Cryptography,” IR 8105, 2016.                     Crystal for Post-Quantum Security Using Kyber and Dilithium,” IEEE
+ [3] ——, “Status Report on the First Round of the NIST Post-Quantum                  Transactions on Circuits and Systems I: Regular Papers, vol. 70, no. 2,
+     Cryptography Standardization Process,” IR 8240, 2019.                           pp. 747–758, 2023.
+ [4] ——, “Status Report on the Second Round of the NIST Post-Quantum            [20] B. Li, Y. Yan, Y. Wei, and H. Han, “Scalable and Parallel Optimization of
+     Cryptography Standardization Process,” IR 8309, 2020.                           the Number Theoretic Transform Based on FPGA,” IEEE Transactions
+ [5] ——, “Status Report on the Third Round of the NIST Post-Quantum                  on Very Large Scale Integration (VLSI) Systems, vol. 32, no. 2, pp.
+     Cryptography Standardization Process,” IR 8413, 2022.                           291–304, 2024.
+ [6] R. Avanzi et al., “CRYSTALS-Kyber – Algorithm Specifications and           [21] S. Mandal and D. B. Roy, “KiD: A Hardware Design Framework
+     Supporting Documentation,” NIST, Tech. Rep., 2021.                              Targeting Unified NTT Multiplication for CRYSTALS-Kyber and
+ [7] S. Bai et al., “CRYSTALS-Dilithium – Algorithm Specifications and               CRYSTALS-Dilithium on FPGA,” in International Conference on VLSI
+     Supporting Documentation,” NIST, Tech. Rep., 2021.                              Design (VLSID), 2024, pp. 455–460.
+ [8] NIST, “Module-Lattice-Based Key-Encapsulation Mechanism Stan-              [22] N. Thanawala, H. Nejatollahi, and N. Dutt, “Accelerating Polynomial
+     dard,” FIPS 203, Aug. 2024.                                                     Multiplication for RLWE using Pipelined FFT,” Cryptology ePrint
+ [9] ——, “Module-Lattice-Based Digital Signature Standard,” FIPS 204,                Archive, Report 2023/1815, 2023.
+     Aug. 2024.                                                                 [23] A. Karatsuba and Y. Ofman, “Multiplication of Many-Digital Numbers
+[10] C. Peikert, “A Decade of Lattice Cryptography,” Foundations and Trends          by Automatic Computers,” Proceedings of USSR Academy of Sciences,
+     in Theoretical Computer Science, vol. 10, no. 4, pp. 283–424, Mar. 2016.        vol. 145, no. 7, pp. 293–294, 1962.
+[11] T. H. Cormen, C. E. Leiserson, R. L. Rivest, and C. Stein, Introduction    [24] P. Barrett, “Implementing the Rivest Shamir and Adleman Public Key
+     to Algorithms, 3rd ed. The MIT Press, 2009.                                     Encryption Algorithm on a Standard Digital Signal Processor,” in
+[12] U. Banerjee, T. S. Ukyab, and A. P. Chandrakasan, “Sapphire: A Con-             Advances in Cryptology (CRYPTO ’86’), Aug. 1986, pp. 311–323.
+     figurable Crypto-Processor for Post-Quantum Lattice-based Protocols,”      [25] Xilinx Inc., “UltraScale Architecture: Staying a Generation Ahead with
+     IACR Transactions on Cryptographic Hardware and Embedded Systems,               an Extra Node of Value,” https://www.xilinx.com/products/technology/
+     vol. 2019, no. 4, pp. 17–61, Aug. 2019.                                         ultrascale.html.
+[13] U. Banerjee, S. Das, and A. P. Chandrakasan, “Accelerating Post-           [26] ——, “LogiCORE IP - Fast Fourier Transform v9.1,” https://www.xilinx.
+     Quantum Cryptography using an Energy-Efficient TLS Crypto-                      com/products/intellectual-property/fft.html.
+     Processor,” in 2020 IEEE International Symposium on Circuits and           [27] A. Acar, H. Aksu, A. S. Uluagac, and M. Conti, “A Survey on
+     Systems (ISCAS), Oct. 2020, pp. 1–5.                                            Homomorphic Encryption Schemes: Theory and Implementation,” ACM
+[14] J. W. Bos, J. Renes, and C. van Vredendaal, “Post-Quantum Cryptogra-            Computing Surveys, vol. 51, no. 4, pp. 1–35, 2018.
+     phy with Contemporary Co-Processors: Beyond Kronecker, Schönhage-
+     Strassen & Nussbaumer,” in 2022 USENIX Security Symposium, 2022,
+     pp. 3683–3697.
+[15] C. Zhang, D. Liu, X. Liu, X. Zou, G. Niu, B. Liu, and Q. Jiang, “Towards
+     Efficient Hardware Implementation of NTT for Kyber on FPGAs,” in
+     2021 IEEE International Symposium on Circuits and Systems (ISCAS),
+     2021, pp. 1–5.
+[16] M. Bisheh-Niasar, R. Azarderakhsh, and M. Mozaffari-Kermani, “High-
+     Speed NTT-based Polynomial Multiplication Accelerator for Post-
+     Quantum Cryptography,” in 2021 IEEE Symposium on Computer Arith-
+     metic (ARITH), 2021, pp. 94–101.
+[17] G. Land, P. Sasdrich, and T. Güneysu, “A Hard Crystal - Implementing
+     Dilithium on Reconfigurable Hardware,” in International Conference on
+     Smart Card Research and Advanced Applications (CARDIS), 2022, pp.
+     210–230.
+

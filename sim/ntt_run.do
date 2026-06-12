@@ -13,9 +13,9 @@
 
 # ---- clean rebuild ----------------------------------------------------------
 quietly set NTT_WORK ntt_work
-if {[file exists $NTT_WORK]} { vdel -all -lib $NTT_WORK }
+#if {[file exists $NTT_WORK]} { vdel -all -lib $NTT_WORK }
 vlib $NTT_WORK
-vmap work $NTT_WORK
+#vmap work $NTT_WORK
 
 # ---- source paths -----------------------------------------------------------
 quietly set RTL ../src/ntt_engine

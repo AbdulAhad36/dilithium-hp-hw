@@ -1,0 +1,276 @@
+                                                                                                                                                                                          2025 IEEE International Conference on Consumer Electronics (ICCE)
+
+
+
+
+                                                                                                                                                          A GPU-Accelerated High-Performance Design for
+                                                                                                                                                              CRYSTALS-Dilithium Digital Signature
+                                                                                                                                                                                             Hien Nguyen, Bertrand Cambou, and Tuy Tan Nguyen∗
+                                                                                                                                                                            School of Informatics, Computing, and Cyber Systems, Northern Arizona University, USA
+                                                                                                                                                                                                {tn598, bertrand.cambou, tuy.nguyen}@nau.edu
+
+
+                                                                                                                                                          Abstract—Our approach leverages the massive parallelism                  Graphics Processing Unit (GPU) present a promising platform
+                                                                                                                                                       and computational power of a modern Graphics Processing                     for accelerating cryptographic operations. GPU acceleration
+                                                                                                                                                       Unit (GPU) to accelerate CRYSTALS-Dilithium’s key operations.               has the potential to significantly enhance the performance of
+                                                                                                                                                       While post-quantum cryptographic algorithms like Dilithium
+                                                                                                                                                       offer robust security, they face computational challenges in                Dilithium; rendering it more viable for real-world applications
+2025 IEEE International Conference on Consumer Electronics (ICCE) | 979-8-3315-2116-5/25/$31.00 ©2025 IEEE | DOI: 10.1109/ICCE63647.2025.10929968
+
+
+
+
+                                                                                                                                                       high-throughput scenarios. Dilithium’s performance bottlenecks,             that require high-speed signature generation and verification.
+                                                                                                                                                       particularly in polynomial arithmetic and random sampling, have                Dilithium has gained significant traction across various
+                                                                                                                                                       limited its practical deployment. To address these challenges, we           platforms in recent years. While previous software implemen-
+                                                                                                                                                       leverage GPU acceleration as a promising solution to enhance                tations [4]–[6] made notable progress in optimizing Dilithium,
+                                                                                                                                                       efficiency. Our approach develops novel GPU-centric algorithms
+                                                                                                                                                       and data structures tailored to Dilithium’s requirements. We                they were often hindered by limitations such as suboptimal
+                                                                                                                                                       focus on optimizing Number Theoretic Transforms (NTT), poly-                parallelism, memory management or platform-specific con-
+                                                                                                                                                       nomial arithmetic, and random sampling, with an emphasis on                 straints. Our GPU-based implementation addresses these chal-
+                                                                                                                                                       batch processing and efficient memory management to maximize                lenges by fully exploiting GPU parallelism; thus employing
+                                                                                                                                                       throughput. Experimental results demonstrate significant perfor-            advanced memory management techniques and optimizing
+                                                                                                                                                       mance improvements over existing implementations. Our GPU-
+                                                                                                                                                       accelerated version consistently outperforms reference implemen-            polynomial arithmetic for enhanced performance across di-
+                                                                                                                                                       tations, achieving speed-ups ranging from 53.7% to 59.9% for                verse environments. This approach offers a compelling alterna-
+                                                                                                                                                       signature generation and 20.0% to 63.8% for verification across             tive to dedicated hardware or Field Programmable Gate Array
+                                                                                                                                                       various security levels. These results highlight the potential of           (FPGA) implementations [7]–[9]; which can be constrained by
+                                                                                                                                                       our approach in enabling efficient post-quantum cryptography                scalability, flexibility, or resource utilization. By leveraging the
+                                                                                                                                                       for high-performance applications.
+                                                                                                                                                          Index Terms—CRYSTALS-Dilithium, digital signatures, post-
+                                                                                                                                                                                                                                   scalability and adaptability of modern GPU architectures, our
+                                                                                                                                                       quantum cryptography, NTT, GPU, parallel processing                         solution is well-suited for large-scale and high-performance
+                                                                                                                                                                                                                                   applications such as blockchain systems and quantum-resistant
+                                                                                                                                                                                I. I NTRODUCTION                                   communication protocols.
+                                                                                                                                                                                                                                      The remaining parts of the paper are structured as follows:
+                                                                                                                                                          The emergence of quantum computing poses a significant                   Section II covers preliminary knowledge of Dilithium and
+                                                                                                                                                       threat to existing cryptographic systems; particularly those                computational challenges. Section III outlines our proposed
+                                                                                                                                                       relying on the hardness of integer factorization and discrete               developments and implementations. In Section IV, we describe
+                                                                                                                                                       logarithm problems [1], [2]. In response to this challenge the              the result of this proposal and compare it with related work.
+                                                                                                                                                       field of post-quantum cryptography has emerged, where cryp-                 Lastly, the paper concludes in Section V.
+                                                                                                                                                       tographic systems that can withstand attacks from both clas-
+                                                                                                                                                       sical and quantum computers have been developed. Lattice-                                            II. BACKGROUND
+                                                                                                                                                       based cryptography, with its robust security properties and                 A. Dilithium
+                                                                                                                                                       relatively efficient implementations, has emerged as a leading                 Dilithium is a lattice-based digital signature scheme that
+                                                                                                                                                       contender among various post-quantum schemes.                               bases its security on the difficulty level of problems in module
+                                                                                                                                                          CRYSTALS-Dilithium (Dilithium) [3], a lattice-based dig-                 lattices. It is designed to provide post-quantum security while
+                                                                                                                                                       ital signature scheme, has recently been selected by the Na-                maintaining efficiency in terms of key and signature sizes.
+                                                                                                                                                       tional Institute of Standards and Technology (NIST) as a stan-              The scheme consists of three main algorithms: key genera-
+                                                                                                                                                       dard for post-quantum digital signatures. This selection under-             tion, signing and verification. Dilithium’s operations primarily
+                                                                                                                                                       scores its importance in the future of secure communications.               involve polynomial arithmetic in a ring Rq = Zq [X]/(X n +1)
+                                                                                                                                                       However, as is typical for post-quantum algorithms, Dilithium               where q is a prime modulus and n is a power of 2. Table I lists
+                                                                                                                                                       faces challenges in terms of computational efficiency and                   the parameters of Dilithium for three NIST security levels.
+                                                                                                                                                       practical deployment; especially in high-throughput scenar-
+                                                                                                                                                       ios. The increasing demand for secure digital transactions,                 B. Computational Challenges
+                                                                                                                                                       coupled with the computational intensity of post-quantum                       Dilithium offers strong security in post-quantum cryptog-
+                                                                                                                                                       algorithms, necessitates innovative approaches to implemen-                 raphy but faces notable computational challenges. A primary
+                                                                                                                                                       tation. The massive parallel processing capabilities of the                 issue is the high cost of polynomial multiplication, which is
+
+
+
+
+                                                                                                                                                    Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:13:52 UTC from IEEE Xplore. Restrictions apply.
+                                                                                                                                                              979-8-3315-2116-5/25/$31.00 ©2025 IEEE                                                                     979-8-3315-2116-5
+                                                                     TABLE I
+                                             D ILITHIUM PARAMETERS FOR T HREE NIST S ECURITY L EVELS [1]
+
+                           Security level    n        q       (k, ℓ)    d    τ      γ1       γ2      η     β     ω     L1     L2
+                                 2          256    8380417     (4,4)   13    39     217    95232     2     78    80    256    512
+                                 3          256    8380417     (6,5)   13    49     219   261888     4    196    55    256    512
+                                 5          256    8380417     (8,7)   13    60     219   261888     2    120    75    256    512
+
+
+
+
+   essential to the scheme. While the number theoretic transforms
+   (NTT) speed up this process, it remains resource-intensive;
+   especially at higher security levels. Additional polynomial op-
+   erations also contribute to this computational overhead which
+   extends processing times [6].
+      Managing large matrices and vectors of polynomials in
+   three main algorithms leads to substantial memory usage
+   which can be problematic in constrained environments [5],
+   [10]. The signing process may require multiple attempts
+   due to rejection sampling which introduces unpredictability                       Fig. 1. Parallel signature operation design in a GPU environment.
+   in signing times (particularly in real-time applications) [4].
+   In high-traffic server environments, the large size of keys
+   and signatures may cause input/output bottlenecks thereby                     faster execution times and better scalability. In our GPU im-
+   necessitating optimizations to handle this overhead [1], [2].                 plementation of Dilithium, we adopt a hybrid approach. Each
+      GPUs significantly accelerate cryptographic tasks; particu-                GPU block comprises a group of threads that independently
+   larly polynomial multiplication, due to their parallel processing             executes a single signing and verification process. Within
+   capabilities and higher memory bandwidth [1], [11]. They                      each block, the threads work together to efficiently complete
+   also feature specialized arithmetic units for modular operations              these tasks. This process is illustrated in Fig. 1 which shows
+   which enhances performance for post-quantum algorithms [7],                   our batch processing method for signing operations. Signing
+   [8]. However effective GPU utilization presents challenges that               tasks are divided into batches of b tasks; with each block in
+   include efficient memory management and data transfer over-                   the thread block processing one task. This approach allows
+   head between the Central Processing Unit (CPU) and GPU.                       for simultaneous execution of multiple signing tasks across
+   Poor management limits performance gains while optimizing                     different blocks in the GPU grid which effectively utilizes
+   data transfers is crucial for improving the efficiency of GPU-                GPU resources and minimizes thread idle time.
+   accelerated cryptographic operations [1], [4]. By addressing                     By implementing this batch processing strategy we sig-
+   these challenges and leveraging the strengths of GPU architec-                nificantly enhance the performance of Dilithium in a GPU
+   ture it is possible to create a high-performance implementation               environment. This approach enables faster cryptographic op-
+   of Dilithium that significantly accelerates post-quantum digital              erations and improved scalability (particularly for applications
+   signature operations.                                                         requiring high throughput). The batch size, (b), may be tuned
+                                                                                 to optimize performance based on the specific GPU architec-
+              III. GPU ACCELERATION OF D ILITHIUM                                ture and the requirements of the application.
+      Our GPU implementation of Dilithium utilizes the substan-
+   tial parallel processing capabilities of modern GPUs. This sec-               B. Optimizations
+   tion details the proposed parallelization strategy, key optimiza-                Our implementation incorporates several optimizations
+   tions, and the implementation of core Dilithium operations.                   across different aspects of the algorithm. We have developed
+                                                                                 a highly optimized implementation of the NTT that is specif-
+   A. Parallelization Strategy                                                   ically tailored for execution on a GPU. The NTT is a key
+      GPUs are specialized hardware designed for parallel pro-                   component in many cryptographic algorithms; optimizing its
+   cessing tasks. In our implementation, we leverage the power                   performance leads to significant improvements in the overall
+   of GPUs to perform multiple signing and verification processes                system efficiency. We focus on two primary areas of optimiza-
+   simultaneously which significantly enhances performance.                      tion. First, we utilize butterfly operations which are essential
+      To optimize our implementation we employ a fine-grain                      for the NTT. These operations have been specifically optimized
+   technique that allows multiple threads to collaborate on a                    to align with the architecture of modern GPUs. Each butterfly
+   single task. This approach takes advantage of the vast number                 operation transforms a pair of elements (u, v) using the twid-
+   of threads available in a GPU which leads to a more efficient                 dle factor, (w), represented mathematically as u = (u + wv)
+   resource utilization and improved overall throughput. By dis-                 mod Q and v = (u − wv) mod Q where Q is a large prime
+   tributing smaller sub-tasks among several threads we achieve                  modulus and w is a primitive N -th root of unity. By optimizing
+
+
+
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:13:52 UTC from IEEE Xplore. Restrictions apply.
+   these operations for the GPU’s parallel processing capabilities             operations, rendering it suitable for high-performance, post-
+   we ensure that multiple butterfly operations may be executed                quantum-secure applications.
+   simultaneously, thus maximizing throughput.
+      The second area of optimization involves the pre-                                          IV. E XPERIMENTAL R ESULTS
+   computation and caching of twiddle factors in constant mem-                    Our approach to accelerating Dilithium utilized Python to
+   ory. This is crucial since the twiddle factors, (w), are used               leverage its extensive libraries and GPU acceleration capabil-
+   repeatedly throughout the NTT stages. Fig. 2 illustrates the                ities. We employed CUDA Python bindings to interface with
+   representation of the NTT stages execution in a GPU block.                  the NVIDIA GPU thereby harnessing the full potential of the
+   This flowchart effectively demonstrates the parallel execution              RTX 3090 Ti for our cryptographic operations.
+   of butterfly operations by multiple threads in a GPU block,                    Table II offers a comprehensive comparison between our
+   highlighting their access to shared memory and the twiddle                  approach and a reference implementation of Dilithium across
+   factors stored in constant memory. Algorithm 1 provides an                  three security levels; presenting average execution times mea-
+   in-depth overview of the kernel function’s structure. By pre-               sured in microseconds (µs) for three critical operations: key
+   computing these factors and storing them in constant memory                 gen, signature, and verification. The comparison spans three
+   we eliminate the need for recalculating them during the trans-              distinct security levels: 2, 3, and 5; with each higher level
+   form; which not only reduces computational overhead but also                representing increased security, computational complexity, and
+   enhances memory access speed. This results in a more efficient              data size requirements. To ensure statistical reliability these re-
+   execution of the NTT thus allowing for faster processing of                 sults are derived from 10,000 iterations of each operation; thus
+   polynomial multiplications and other related operations.                    providing a robust and accurate assessment of the algorithm’s
+      By combining these design elements and optimizations                     performance across different security configurations. For sig-
+   our GPU implementation significantly accelerates Dilithium                  nature performance, our approach consistently outperforms
+                                                                               the reference (with improvements ranging from approximately
+                                                                               53.7% to 59.9% faster across security levels). For verification,
+                                                                               similar efficiencies are observed (with performance enhance-
+                                                                               ments between 20.0% and 63.8% faster than the reference).
+                                                                               Overall the proposed algorithms exhibit notable efficiency in
+                                                                               both signature generation and verification rendering them suit-
+                                                                               able for applications requiring rapid cryptographic operations.
+                                                                                  Table III compares the performance of various Dilithium
+                                                                               implementations across three security levels. Lower Clock
+                                                                               Cycle Counts (CCC) indicate better performance. Our method
+                                                                               demonstrates consistently strong performance across all se-
+                                                                               curity levels and operations; excelling particularly in key gen
+                                                                               and signature. In key gen our implementation achieves superior
+         Fig. 2. Example flowchart of 1-stage NTT in a block of GPUs.          efficiency with CCC ranging from 4.1 thousand CCC (KCCC)
+                                                                               to 4.7 KCCC across all security levels (significantly outper-
+   Algorithm 1 NTT Kernel and Calling Function                                 forming most related methods). For instance, at security level
+    1: function NTT KERNEL (a, twiddles)
+                                                                               5, our approach (4.5 KCCC) is dramatically faster than [11]
+    2:    Calculate thread and block indices                                   (108 KCCC) and [8] (124.8 KCCC). For signature generation,
+    3:    if index < a.size then                                               our method maintains consistent efficiency with CCC between
+    4:         for each stage in NTT do                                        24.1 KCCC and 26.5 KCCC across all security levels. This
+    5:             Calculate butterfly indices                                 performance surpasses most competitors (especially at higher
+    6:             Perform butterfly operation:                                security levels). For example, at security level 3, our imple-
+    7:                 u ← a[u index]                                          mentation (26.5 KCCC) outperforms [11] (49.5 KCCC) and
+    8:                 v ← a[v index]                                          [8] (230.2 KCCC). In verification, our implementation shows
+    9:                 u ← (u + twiddle · v) mod Q                             consistent performance across all security levels (14.5 KCCC
+   10:                 v ← (u − twiddle · v) mod Q
+   11:             Synchronize threads
+                                                                                                          TABLE II
+   12:         end for                                                             P ERFORMANCE C OMPARISON BETWEEN O UR R ESULTS AND [12]
+   13:    end if
+   14: end function                                                             Security     Key Gen [µs]        Signature [µs]      Verification [µs]
+   15: function NTT (a, twiddles)                                                 Level    Our Results [12]     Our Results [12] Our Results [12]
+   16:    Calculate grid and block dimensions                                       2          24           -       82        178        44        55
+   17:    Call ntt kernel with calculated dimensions                                3          39           -      115        287        47        90
+   18: end function                                                                 5          69           -      170        371        53        144
+
+
+
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:13:52 UTC from IEEE Xplore. Restrictions apply.
+                                                                       TABLE III
+                                     P ERFORMANCE C OMPARISON OF D ILITHIUM I MPLEMENTATIONS : CCC ( IN T HOUSANDS )
+
+          Security Level                       2                                      3                                            5
+               Work         Key Gen       Signature   Verification   Key Gen    Signature     Verification   Key Gen      Signature     Verification
+            Our Results        4.1           24.1        14.5          4.7         26.5           15            4.5          25.8           15.7
+               [11]            4.3           30.1         4.9          7.3         49.5           7.9           108          55.2           12.6
+                [9]           18.2           22.5        33.2         22.9         24.5          44.9             -            -              -
+                [8]           41.7          143.5        19.5         72.5        230.2          26.5          124.8         274.7          40.3
+               [13]            165           345          165          225         465            240           330           675           345
+
+
+
+
+   to 15.7 KCCC). While not always the fastest for verification                                              R EFERENCES
+   our method offers balanced performance and outperforms most
+   competitors at higher security levels. For instance, at security             [1] S. Shen, H. Yang, W. Dai, H. Zhang, Z. Liu, and Y. Zhao, “High-
+                                                                                    throughput GPU implementation of dilithium post-quantum digital sig-
+   level 5, our implementation (15.7 KCCC) is more efficient                        nature,” IEEE Transactions on Parallel and Distributed Systems, vol. 35,
+   than [8] (40.3 KCCC) and [13] (345 KCCC). Note that our                          no. 11, pp. 1964–1976, Nov. 2024.
+   method significantly outperforms [8] across all operations and               [2] L. Beckwith, D. T. Nguyen, and K. Gaj, “High-Performance Hardware
+                                                                                    Implementation of CRYSTALS-Dilithium,” in 2021 International Con-
+   security levels. We also show substantial improvements over                      ference on Field-Programmable Technology (ICFPT), Auckland, New
+   [13] (especially in key generation and signature generation                      Zealand, 06–10 Dec. 2021, pp. 1–10.
+   at higher security levels). The implementation by [11] shows                 [3] NIST, “Module-lattice-based digital signature standard,” Federal
+   competitive performance in verification; particularly at lower                   Information Processing Standards Publication – FIPS 204, Aug. 2024.
+                                                                                    [Online]. Available: https://doi.org/10.6028/NIST.FIPS.204
+   security levels. However, our implementation maintains more                  [4] P. V. Ravi, S. S. Gupta, A. Chattopadhyay, and S. Bhasin, “Improving
+   consistent performance across all operations and security lev-                   speed of Dilithium’s signing procedure,” in Smart Card Research and
+   els. The result in [9] shows competitive performance at lower                    Advanced Applications, Prague, Czech Republic, 11–13 Nov. 2019, pp.
+                                                                                    57–73.
+   security levels; particularly in signature generation. These                 [5] D. O. C. Greconici, M. J. Kannwischer, and A. Sprenkels, “Compact
+   results indicate that our implementation is well-optimized;                      Dilithium implementations on Cortex-M3 and Cortex-M4,” IACR Trans-
+   thereby offering a good balance of performance across various                    actions on Cryptographic Hardware and Embedded Systems, vol. 2021,
+                                                                                    no. 3, pp. 1–24, Dec. 2020.
+   cryptographic operations and security levels. This consistent                [6] H. Becker, V. Hwang, M. Kannwischer, B.-Y. Yang, and S.-Y. Yang,
+   performance across all aspects makes our implementation                          “Neon NTT: Faster Dilithium, Kyber, and Saber on Cortex-A72 and
+   particularly suitable for applications requiring high efficiency                 Apple M1,” IACR Transactions on Cryptographic Hardware and Em-
+                                                                                    bedded Systems, vol. 2022, pp. 221–244, Nov. 2021.
+   in post-quantum cryptography on GPU platforms.
+                                                                                [7] A. P. C. Utsav Banerjee, Tenzin S. Ukyab, “Sapphire: A configurable
+                         V. C ONCLUSION                                             crypto-processor for post-quantum lattice-based protocols,” IACR Trans-
+                                                                                    actions on Cryptographic Hardware and Embedded Systems, no. 4, pp.
+      We highlighted the potential of GPU acceleration to signifi-                  17–61, Aug. 2019.
+   cantly enhance the performance of Dilithium digital signatures,              [8] G. Land, P. Sasdrich, and T. Güneysu, “A Hard Crystal - Implementing
+                                                                                    dilithium on reconfigurable hardware,” in Smart Card Research and
+   a critical step towards efficient post-quantum cryptography.                     Advanced Applications: 20th International Conference, CARDIS 2021,
+   Our evaluation results demonstrate that our GPU-accelerated                      Lübeck, Germany, vol. 13173, no. 21, Lübeck, Germany, 11–12 Nov.
+   Dilithium implementation achieves a better performance com-                      2021, pp. 210–230.
+                                                                                [9] S. Ricci, L. Malina, P. Jedlicka, D. Smekal, J. Hajny, P. Cibik, and
+   pared to existing CPU-based methods. This improved per-                          P. Dobias, “Implementing CRYSTALS-Dilithium signature scheme on
+   formance could be beneficial in high-throughput applications                     FPGAs,” in Proceedings of the 16th International Conference on Avail-
+   such as IoT devices, cloud computing, and blockchain sys-                        ability, Reliability and Security, no. 1, Vienna, Austria, 17–20 Aug.
+                                                                                    2021, pp. 1–11.
+   tems. Future efforts will focus on optimizing verification
+                                                                               [10] C. Zhao, N. Zhang, H. Wang, B. Yang, W. Zhu, Z. Li, M. Zhu,
+   processes and assessing their application in real-world and                      S. Yin, S. Wei, and L. Liu, “A compact and high-performance hardware
+   high-throughput systems.                                                         architecture for CRYSTALS-Dilithium,” IACR Transactions on Crypto-
+                                                                                    graphic Hardware and Embedded Systems, vol. 2022, no. 1, pp. 270–
+                      ACKNOWLEDGMENT                                                295, Nov. 2021.
+                                                                               [11] X. Li, J. Lu, D. Liu, A. Li, S. Yang, and T. Huang, “A high speed post-
+      Research was sponsored by the Army Research Laboratory                        quantum crypto-processor for Crystals-Dilithium,” IEEE Transactions
+   and was accomplished under Cooperative Agreement Number                          on Circuits and Systems II: Express Briefs, vol. 71, no. 1, pp. 435–439,
+   W911NF-23-2-0014. The views and conclusions contained                            Jan. 2024.
+   in this document are those of the authors and should not                    [12] S. Kudo, Y. Nogami, S. Huda, and Y. Kodera, “Optimizing CRYSTALS-
+                                                                                    Dilithium in Rust: Radix-4 NTT and assembly-level comparison with
+   be interpreted as representing the official policies, either                     official C implementation,” in 2024 International Conference on Con-
+   expressed or implied, of the Army Research Laboratory or                         sumer Electronics, Taichung, Taiwan, 09–11 Jul. 2024, pp. 395–396.
+   the U.S. Government. The U.S. Government is authorized                      [13] G. Mao, D. Chen, G. Li, W. Dai, A. I. Sanka, C. K. Koç, and
+                                                                                    R. C. C. Cheung, “High-performance and configurable SW/HW co-
+   to reproduce and distribute reprints for Government purposes                     design of post-quantum signature CRYSTALS-Dilithium,” ACM Trans.
+   notwithstanding any copyright notation herein.                                   Reconfigurable Technol. Syst., vol. 16, no. 44, pp. 1–28, Jun. 2023.
+
+
+
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:13:52 UTC from IEEE Xplore. Restrictions apply.
+

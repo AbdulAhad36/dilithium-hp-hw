@@ -1,0 +1,497 @@
+         ML-DSA-OSH: An Efficient, Open-Source
+         Hardware Implementation of ML-DSA (Full
+                        Version)
+              Quinten Norga                          Suparna Kundu                            Ingrid Verbauwhede
+                  COSIC                                 COSIC                                      COSIC
+                KU Leuven                              KU Leuven                                  KU Leuven
+             Leuven, Belgium                        Leuven, Belgium                            Leuven, Belgium
+      quinten.norga@esat.kuleuven.be         suparna.kundu@esat.kuleuven.be          ingrid.verbauwhede@esat.kuleuven.be
+
+
+
+
+   Abstract—ML-DSA is a post-quantum lattice-based digital         Processing Standard (FIPS) specifications for CRYSTALS-
+signature algorithm (DSA) that the National Institute of Stan-     Dilithium (FIPS 204) and CRYSTALS-Kyber (FIPS 203) and
+dards and Technology (NIST) recently standardized as FIPS          renamed them ML-DSA [9] and ML-KEM [10], respectively.
+204. Remarkably, there are only a handful of published hard-
+ware designs and no open-source hardware implementations of        Although ML-DSA and Dilithium v3 share most of the prim-
+complete ML-DSA. In this work, we present an efficient open-       itive components, there are some differences between them.
+source hardware (OSH) design of ML-DSA, based on a Dilithium       This is also the case for ML-KEM and Kyber. However,
+implementation by Beckwith et al. (FPT 2021). We discuss           compared to ML-KEM, significantly less research has been
+the required modifications for migrating existing CRYSTALS-        performed on the implementation aspects of ML-DSA.
+Dilithium implementations to match FIPS 204. In addition,
+we evaluate and compare the performance of our design with
+the prior art. Through optimized instruction scheduling in the        As the standard has been selected, the industry is encour-
+ML-DSA rejection loop, which enables the pre-computation of        aged to migrate rapidly towards quantum-resistant cryptog-
+critical variables, the average signing latency is improved by     raphy. The real-world applications of digital signature algo-
+16 − 36%. Finally, we extensively discuss potential applications   rithms are enormous. It is used in all applications where the
+and directions of research, further enabled through ML-DSA-
+OSH.                                                               authenticity and integrity of service providers, users, or data
+   Index Terms—PQC, ML-DSA, FPGA, Open-Source Hardware             are necessary. It is deployed in Transport Layer Security (TLS)
+                                                                   to verify the identity of the server, in blockchain to attain
+                                                                   integrity of the transaction and non-repudiation, in the finan-
+                      I. I NTRODUCTION                             cial/ banking sector for security, in the government and public
+                                                                   sector to provide trust and maintain integrity, in software
+   Most of the widely deployed public-key cryptographic al-        libraries, firmware, or software operating systems to secure
+gorithms are based on RSA [1] and elliptic-curve cryptogra-        integrity, in secure emailing for authentication, in health care
+phy (ECC) [2]. However, classical public-key cryptographic         for providing privacy and integrity, and many more [11]. These
+schemes are vulnerable against an adversary with large-scale       applications have different requirements; some have execu-
+quantum computers due to Shor’s algorithm [3]. Therefore, the      tion time constraints, some have limited hardware resources,
+National Institute of Standards and Technology (NIST) orga-        and some have limited bandwidth. Although several software
+nized the Post-Quantum Cryptography (PQC) standardization          implementations of ML-DSA are available and made open-
+procedure in 2016. After several rounds, NIST’s first PQC          source, only a handful of the Field Programmable Gate Array
+standardization effort officially concluded recently with three    (FPGA) designs of ML-DSA are published, and almost no
+Digital Signature Algorithms (DSAs): CRYSTALS-Dilithium            FPGA (RTL) implementations of complete ML-DSA are open-
+(Dilithium v3) [4], Falcon [5], and Sphincs+ [6], and two Key-     source. Open-source FPGA implementations will be beneficial
+Encapsulation Mechanisms (KEMs): CRYSTALS-Kyber [7]                in prototyping or optimizing the implementation of ML-DSA
+and HQC [8]. CRYSTALS-Dilithium and CRYSTALS-Kyber                 for specific cryptographic applications. Additionally, side-
+are lattice-based schemes and are based on the Module              channel attacks and fault-injection attacks are potential threats
+Learning with Errors (MLWE) hard problem. They provide a           for an implementation of ML-DSA when it is implemented on
+nice balance between performance, key sizes, and bandwidth         a resource-constrained device and if that device is physically
+requirements. Therefore, CRYSTALS-Dilithium is selected as         accessible by an adversary. An open-source hardware imple-
+the primary standard for post-quantum DSA, and CRYSTALS-           mentation aids in research on side-channel attack analysis and
+Kyber is selected as the primary standard for post-quantum         allows for the direct integration countermeasures to prevent
+KEM. Very recently, NIST published Federal Information             them.
+A. Related Work                                                    X 256 + 1 is represented by Rm . All vectors and matrices with
+   Open-source hardware implementations of Dilithium were          elements in R or Rm are denoted by bold lowercase letters
+presented by Beckwith et al. [12] and Land et al. [13].            (e.g., v) and bold upper case letters (e.g., A), respectively.
+The first one proposes a high-performance design, whereas          The amount of elements L in a vector/matrix are indicated in
+the latter presents a low-area design, at the cost of reduced      superscript (e.g., vL ). In pseudocode, s ← x denotes a variable
+performance. Additionally, the CHIPS Alliance project has          s is assigned the value of x. The sampling of l random bytes is
+released their PQC IP core (Adam’s Bridge), containing an          represented by s ← Bl . Following the notation in FIPS 204, a
+ML-DSA implementation [14] which suffers from a high               temporary value that stores the output of a computation f (x) is
+memory (BRAM + FF) and area footprint. Alternatively,              written as ≪ f (x) ≫. The symbol ⊥ indicates the execution
+several designs were proposed for which the source code is not     of an algorithm failed or there is no output. Additionally, a
+made available. A unified, low-area design was presented by        variable in its NTT form is denoted by a circumflex (e.g., Â.
+Zhao et al. [15]. A lightweight HW implementation supporting       Computing the infinity norm of an integer is represented by
+only NIST-V was proposed by Gupta et al. [16]. More recently,      ||·||∞ and a comparison operator inside double square brackets
+an implementation balancing performance and area utilization       means the expression should be evaluated as a Boolean (T rue
+was proposed by Wu et al. [17]. A masked ML-DSA hardware           or F alse). The use of symmetric primitive SHAKE256 is
+design was proposed in [18], but the source-code is not made       represented by the function H(str, l), with input str and l-
+publicly available.                                                byte output.
+                                                                      All three parameter sets of ML-DSA are given in Table I.
+B. Contribution
+   We propose an efficient hardware implementation of the                                   TABLE I
+                                                                    ML-DSA PARAMETER SETS FOR NIST SECURITY LEVELS II, III AND V
+NIST DSA standard: ML-DSA (FIPS 204). First, carefully
+analyze its algorithms and parameters and show how and                       Parameters              ML-DSA-44    ML-DSA-65    ML-DSA-87
+where they differ from its Round 3 version (CRYSTALS-                        q - modulus              8380417      8380417      8380417
+                                                                         η - private key range             2            4            2
+Dilithium). Our analysis serves as a guide for anyone im-             (k, l) - dimensions of A          (4, 4)       (6, 5)       (8, 7)
+plementing/upgrading an existing Dilithium implementation to          d - # dropped bits from t           13           13           13
+                                                                          τ - # of ±1′ s in c             39           49           60
+align with FIPS 204. We present a ‘combined’ implementation,          λ - collision strength of c̃       128          192          256
+which supports all ML-DSA operations (KeyGen, SigGen                 γ1 - coefficient range of y         217          219          219
+                                                                    γ2 - low-order rounding range    (q − 1)/88   (q − 1)/32   (q − 1)/32
+and SigVer) for all parameter sets (NIST II, III & V).                         β =τ ·η                    78          196          120
+                                                                          ω - max # 1’s in h              80           55           75
+The total utilization of our design is 54,942/29,309/29/16
+LUTs/FFs/BRAMs/DSPs. Our source code (RTL) is available
+open-source1 . We reduce the latency (clock cycles, average)       B. ML-DSA Key Generation
+for signature generation (NIST II, III & V) by 16% - 36%
+                                                                      The (internal) key generation algorithm (Alg. 1) generates
+compared to prior work through optimized operation schedul-
+                                                                   a public-private keypair (pk, sk) from a 32-byte random seed
+ing. Finally, we lay out a wide range of directions for future
+                                                                   (ξ). The external algorithm checks the validity of the random
+work, including proto-typing and evaluation of (side-channel)
+                                                                   seed, before calling the internal algorithm and performing the
+countermeasures & attacks and performance optimizations.
+                                                                   actual key generation. The seed is first extended using a XOF
+                     II. P RELIMINARIES                            (SHAKE256) to (ρ, ρ′ , K), a public random seed, and two
+                                                                   private random seeds, respectively. ρ is used to sample the
+   This section gives an overview of the three main functions in
+                                                                   (polynomial) matrix Â (in NTT form), ρ′ is used to sample
+ML-DSA: key generation, signature generation and signature
+                                                                   polynomials s1 and s2 , and K is part of the secret key and
+verification. For a description of all subfunctions, we refer to
+                                                                   used during signing. Further, the public value t is computed
+FIPS 204 [9]. Additionally, we highlight the main differences
+                                                                   as
+between the CRYSTALS-Dilithium Round 3 (v3.1) [4] speci-
+                                                                                            t = A s1 + s2
+fication and ML-DSA (FIPS 204) [9].
+                                                                   which is part of the public key in its compressed form t1 . The
+A. Notation and Parameters                                         d least significant bits, which are dropped here, are included
+   q denotes the ML-DSA prime 223 − 213 + 1 = 8380417.             (encoded form) in the secret key as t0 .
+A byte, representing the set of integers {0, 1, ..., 255} is
+                                                                   C. ML-DSA Signature Generation
+represented by B. The ring of integers modulo m whose set of
+elements  is {0, 1, ..., m − 1} is represented by Zm . The ring       The signature generation algorithm (Alg. 2 & 3) generates
+Q255                                                               a signature σ from a secret key sk, message M and optional
+   j=0 q is denoted by Tq and a multiplication of a, b ∈ Tq
+      Z
+is denoted by a ◦ b. The ring of single-variable polynomials       context string ctx. The message is first formatted to M ′ , before
+over the ring of integers Z modulo X 256 + 1 is represented by     the actual signing procedure commences.
+R. The ring of single-variable polynomials over Zm modulo             NIST specifies both a hedged (default) and deterministic
+                                                                   variant of the signing: either a 32-byte random value rnd
+  1 https://github.com/KULeuven-COSIC/ML-DSA-OSH                   is generated and used during signing or it is kept zero,
+Algorithm 1 ML-DSA.KeyGen internal(ξ)                             σ, which is released when it is valid. On average, the signing
+                                                                  algorithm will require 4.25, 5.1 and 3.85 loop iterations for all
+Generates a public-private key pair from a seed.
+                                                                  three variants, respectively.
+Input: Seed ξ ∈ B32
+Output: Public key pk ∈ B32+32k(bitlen(q−1)−d)                    Algorithm 3 ML-DSA.Sign internal(sk, M ′ , rnd)
+Output: Private key sk ∈ B32+32+64+32((l+k)bitlen(2η)+dk)
+ 1: (ρ, ρ′ , K)     ∈       B32 × B64 × B32               ←       Deterministic algorithm to generate a signature for a format-
+    H(ξ||IntegerToBytes(k, 1)||IntegerToBytes(l, 1), 128)         ted message M ′ .
+ 2: Â ← ExpandA(ρ)                                               Input: Private key sk ∈ B32+32+64+32((l+k)bitlen(2η)+dk)
+ 3: (s1 , s2 ) ← ExpandS(ρ′ )                                     Input: Formatted message M ′ ∈ {0, 1}∗
+ 4: t ← NTT−1 (Â ◦ NTT(s1 )) + s2                                Input: Random (or dummy) string rnd ∈ B32
+ 5: (t1 , t0 ) ← Power2Round(t)                                   Output: Signature σ ∈ Bλ/4+32l(1+bitlen(γ1 −1))+ω+k
+ 6: pk ← pkEncode(ρ, t1 )                                           1: (ρ, K, tr, s1 , s2 , t0 ) ← skDecode(sk)
+ 7: tr ← H(pk, 64)                                                  2: ŝ1 ← NTT(s1 )
+ 8: sk ← skEncode(ρ, K, tr, s1 , s2 , t0 )                          3: ŝ2 ← NTT(s2 )
+ 9: return (pk, sk)                                                 4: t̂0 ← NTT(t0 )
+                                                                    5: Â ← ExpandA(ρ)
+                                                                    6: µ ← H(BytesToBits(tr)||M ′ , 64)
+respectively [9, Section 3.4]. This fresh randomness can be         7: ρ′′ ← H(K||rnd||µ, 64)
+used during signing, and helps ensure a signer’s commitment         8: κ ← 0
+value y is not used to sign more than one message and cannot        9: (z, h) ← ⊥
+be easily guessed. The lack of randomness in the deterministic     10: while (z, h) = ⊥ do
+variant increases the risk of active side-channel attacks and      11:     y ∈ Rql ← ExpandMask(ρ′′ , κ)
+thus this scenario prefers the hedged variant. Interestingly, a    12:     w ← NTT−1 (Â ◦ NTT(y)))
+message signed by either the hedged or deterministic signing       13:     w1 ← HighBits(w)
+procedure can be verified using the same verification algo-        14:     c̃ ← H(µ||w1Encode(w1 ), λ/4)
+rithm.                                                             15:     c ∈ Rq ← SampleInBall(c̃)
+                                                                   16:     ĉ ← NTT(c)
+Algorithm 2 ML-DSA.Sign(sk, M, ctx)                                17:     ≪ cs1 ≫← NTT−1 (ĉ ◦ ŝ1 )
+                                                                   18:     ≪ cs2 ≫← NTT−1 (ĉ ◦ ŝ2 )
+Generates an ML-DSA signature.
+                                                                   19:     z ← y+ ≪ cs1 ≫
+Input: Private key sk ∈ B32+32+64+32((l+k)bitlen(2η)+dk)           20:     r0 ← LowBits(w− ≪ cs2 ≫)
+Input: Message M ∈ {0, 1}∗                                         21:     if ||z||∞ ≥ γ1 − β or ||r0 ||∞ ≥ γ2 − β then
+Input: Context string ctx ∈ Bx with 1 ≤ x ≤ 255                    22:          (z, h) ← ⊥
+Output: Signature σ ∈ Bλ/4+32l(1+bitlen(γ1 −1))+ω+k                23:     else
+ 1: if |ctx| > 255 then                                            24:          ≪ ct0 ≫← NTT−1 (ĉ ◦ t̂0 )
+ 2:      return ⊥                                                  25:          h ← MakeHint(− ≪ ct0 ≫, w− ≪ cs2 ≫ + ≪
+ 3: end if                                                             ct0 ≫)
+ 4: rnd ← B32 or {0}32                                             26:          if || ≪ ct0 ≫ ||∞ ≥ γ2 or #1’s in h > ω then
+ 5: if rnd =NULL then                                              27:               (z, h) ← ⊥
+ 6:      return ⊥                                                  28:          end if
+ 7: end if                                                         29:     end if
+ 8: M ′ ← BytesToBits(IntegerToBytes(0, 1)||                       30:     κ←κ+l
+              IntegerToBytes(|ctx|, 1)||ctx)||M                    31: end while
+ 9: σ ← ML-DSA.Sign internal(sk, M ′ , rnd)                        32: σ ← sigEncode(c̃, z mod q, h)
+                                                                                                      ±
+10: return σ                                                       33: return σ
+
+
+   We now describe the signing algorithm in more detail              Additionally, FIPS 204 specifies a Pre-Hash sign (and
+(Alg. 3). Before the (formatted) message M ′ is signed, the       verification) variant in case the message M to be signed is
+message representative µ is computed by hashing the public        large. Instead of signing the message itself, a digest of the
+key hash tr and the message. Additionally, a private random       message is computed and signed, improving performance.
+seed ρ′′ is computed using the random (or constant) value
+rnd, µ and secret K. A valid signature is generated through       D. ML-DSA Signature Verification
+rejection sampling: a commitment w1 is computed, a pseudo-           The signature verification algorithm in FIPS 204 consists
+random challenge c is derived, and a response z is computed.      of an external and internal function (Alg. 4 & 5). The algo-
+Together with a hint h, they are used to compose a signature      rithm checks if the provided signature σ of message M was
+generated using the secret key corresponding to pk. Similarly               a) Seed Expansion (KeyGen): To ensure no misuse when
+to signing, the message is formatted with a provided context           keys for different parameter sets are expanded from the same
+string ctx.                                                            seed, the seed expansion includes domain separation (old: [4,
+                                                                       Fig. 4 (Line 2)], new: [9, Alg. 6 (Line 1)]):
+Algorithm 4 ML-DSA.Verify(pk, M, σ, ctx)                                 (ρ, ρ′ , K) ∈ B32 × B64 × B32 ← H(ξ∥IntegerToBytes(k, 1)∥
+Verifies a signature σ for a message M .                                                                  IntegerToBytes(l, 1), 128)
+Input: Public key pk ∈ B32+32k(bitlen(q−1)−d)                          As a result, the hash function H (SHAKE256) has to absorb a string
+Input: Message M ∈ {0, 1}∗                                             of 34 bytes, instead of 32 bytes previously.
+Input: Signature σ ∈ Bλ/4+32l(1+bitlen(γ1 −1))+ω+k                          b) Context String ctx & Formatted Message M ′ (Sign):
+                                                                       NIST specifies the signing algorithm can include a context string,
+Input: Context string ctx ∈ Bx with 1 ≤ x ≤ 255                        which is empty by default but may be used in some applications as
+Output: T rue or F alse                                                a domain separator in the used hash functions [9, Alg. 2 (Line 1-3)].
+ 1: if |ctx| > 255 then                                                As a result, the internal signing procedure uses a formatted message
+ 2:      return ⊥                                                      M ′ instead of the message M directly [9, Alg. 2 (Line 10)], as was
+                                                                       the case in Dilithium 3.1.
+ 3: end if
+ 4: M ′ ← BytesToBits(IntegerToBytes(0, 1)||                           M ′ ← IntegerToBytes(0, 1)∥IntegerToBytes(|ctx|, 1)∥ctx)∥M
+              IntegerToBytes(|ctx|, 1)||ctx)||M
+                                                                          2) Parameters and Variables: The length (and naming) of
+ 5: return ML-DSA.Verify internal(pk, M ′ , σ)
+                                                                       several parameters were changed between the release of Dilithium
+                                                                       3.1 and ML-DSA. Below, we list those that impact the functionality
+   In the internal verification algorithm, the verifier extracts all   of the implementation.
+components from pk and σ. They attempt to reconstruct the                    a) Public Key Hash tr (KeyGen, Sign & Verify): To ensure
+signer’s commitment w1 from the public key and signature, by           the properties beyond strong unforgeability [19], a 64-byte hash of
+                                                                       the public key (tr) [9, Alg. 6 (Line 9)] is added to the secret key sk
+rounding w = A y. Only if the signer’s hint h is valid and the         (instead of 32-byte [4, Fig. 4 (Line 9)]). This message representative
+commitment hashes c̃ and c̃′ match, the verification algorithm         is used during signing, instead of directly signing the message.
+returns true.
+                                                                                                   tr ← H(pk, 64)
+Algorithm 5 ML-DSA.Verify internal(pk, M ′ , σ)
+                                                                            b) Commitment hash c̃ (Sign & Verify): The message
+Internal function to verify a signature σ for a formatted              representative µ and commitment w1 are concatenated and hashed to
+                                                                       obtain the commitment hash. For ML-DSA-65 and ML-DSA-87, the
+message M ′ .                                                          length of c̃ is increased to 384 and 512 bits, respectively [9, Alg.7
+Input: Public key pk ∈ B32+32k(bitlen(q−1)−d)                          (Line 15)]. In the Dilithium specification, this value was fixed for all
+Input: Formatted message M ′ ∈ {0, 1}∗                                 parameter sets at 256 bits [4, Fig. 4 (Line 17)].
+Input: Signature σ ∈ Bλ/4+32l(1+bitlen(γ1 −1))+ω+k                                         c̃ ← H(µ, w1Encode(w1 ), λ/4)
+Output: T rue or F alse
+  1: (ρ, t1 ) ← pkDecode(pk)                                             3) Hedged and Deterministic Signing: FIPS 204 specifies a
+                                                                       hedged and deterministic variant of the signing procedure [9, Alg.
+  2: (c̃, z, h) ← SigDecode(σ)
+                                                                       2 (Line 5)] (see Section II-C). The hedged variant requires the
+  3: if h = ⊥ then                                                     generation of a 32-byte random string during signing:
+  4:       return F alse
+  5: end if                                                                                          rnd ← B32
+  6: Â ← ExpandA(ρ)                                                   Alternatively, it is set to a constant (zero) string for the deterministic
+  7: tr ← H(pk, 64)                                                    variant:
+  8: µ ← H(BytesToBits(tr)||M ′ , 64)                                                                 rnd ← {0}32
+  9: c ∈ Rq ← SampleInBall(c̃)
+         ′
+ 10: wApprox   ← NTT−1 (Â ◦ NTT(z) − NTT(c) ◦ NTT(t1 · 2d ))                a) Private Random Seed ρ′′ (Sign): This private seed is
+         ′                 ′
+ 11: w1 ← UseHint(h, wApprox    )                                      used in the generation of y, which is used by the signer to generate
+ 12: c̃ ← H(µ||w1Encode(w1′ ), λ/4)
+       ′                                                               the commitment w1 and must not be used to sign more than one
+ 13: return [[ ||z||∞ ≤ γ1 − β ]] and [[ c̃ = c̃′ ]]                   message. In order to ensure it cannot be guessed easy by an adversary
+                                                                       (exploiting side-channels), ρ′′ is generated from the secret K, the
+                                                                       message representation µ and a random string rnd. This value
+                                                                       is either randomly generated or zero (constant), for hedged and
+E. Differences with CRYSTALS-Dilithium                                 deterministic signing, respectively.
+   This following list could serve as a starting point when up-
+grading an implementation of Dilithium to align with the NIST                                ρ′′ ← H(K ∥ rnd ∥ µ, 64)
+standardized ML-DSA. All changes are explicitly highlighted               III. P ROPOSED A RCHITECTURE AND O PTIMIZATIONS
+in the colour red.
+                                                                          The following section covers the hardware architecture and design
+   1) Domain Separation: To ensure independence between                of all main sub-modules of our implementation. They are combined to
+difference instantiations of some functions, domain separation         construct a unified architecture that supports key generation, signature
+was added to several algorithms in FIPS 204.                           generation, and signature verification at all three NIST levels.
+                                                                           state machine. The operations are scheduled such that the arithmetic
+                                                                           units are maximally occupied (minimal stalling) and consume the
+                                                                           data (inputs) as soon as possible.
+                                                                              1) Key Generation: The generation of t requires the sampling
+                                                                           of matrix A, s1 & s2 , as well as an NTT, multiplication, INTT
+                                                                           and addition (Section II-B). The sampling is immediate, followed by
+                                                                           the polynomial arithmetic and subsequently the encoding and hash
+                                                                           operation to generate tr.
+                                                                              2) Signature Generation: The authors of [12] propose to
+                                                                           split the signature generation into three stages: a pre-computation
+                                                                           phase (stage 1) and two rejection loop stages (stage 2-3). The pre-
+                                                                           computation phase decodes the secret key components and transforms
+                                                                           them to the NTT domain, the first rejection loop stage generates the
+                                                                           commitment w, and the second computes the response z and hint
+Fig. 1. High-level architecture for ML-DSA, based on [12]. The main        h. The pre-computation stage runs in parallel with the first rejection
+arithmetic units and storage elements (BRAM) are shown.
+                                                                           loop stage, after which that result is used in the final rejection loop
+                                                                           stage. Simultaneously, the first rejection loop stage starts computing
+                                                                           a new commitment early, in case not all conditions are met in the
+A. High-level Architecture                                                 final stage (reject). This corresponds to the while loop in Section II-C
+   Our implementation is modified from the high-speed CRYSTALS-            skipping to the next iteration. We optimize the total latency of the
+Dilithium design proposed by Beckwith et al. [12]. We integrate            signature generation by ensuring the the polynomial multiplication
+all modifications presented in Section II-E, as well as increase the       between public matrix A and y (stage 2) starts as soon as both
+robustness of the design to support the signing of a wider range of        components have been generated in the first stage. Previously, for
+message lengths. A high-level overview of the architecture is shown        the medium and high-security version of Dilithium, the architecture
+in Figure 1.                                                               would unnecessarily stall when the NTT computation of y exceeded
+   The authors optimize performance by: (1) optimizing polynomial          the sampling of A.
+arithmetic operators and (2) splitting the rejection sampling loop
+in the signature generation operation into a two-stage pipeline. To                       IV. P ERFORMANCE E VALUATION
+store intermediate results, the authors propose to use (true dual port)       We now present the performance results of our ML-DSA hardware
+BRAM units, which can access four polynomial samples per cycle             (FPGA) implementation which support key generation, signature
+(4 × 24 = 96 bits), ensuring all arithmetic units are not stalled.         generation and signature verification for all three NIST security cat-
+                                                                           egories. We verify the functional correctness of our implementation
+B. Arithmetic Operators                                                    using the NIST ACVP testvectors and deterministic signing variant
+   The arithmetic operator modules are used to compute all polyno-         (see Section II-C). This allows for a fair comparison with prior art and
+mial arithmetic: addition, subtraction, and Number Theoretic Trans-        only minor modifications are required to support the hedged variant.
+form (NTT)-based multiplication. The modular multiplier uses Barrett
+reduction, requiring only shifts and additions in hardware. The            A. Area Results
+butterfly units support both Cooley-Tukey and Gentlemen-Sande                 All results are generated using the Xilinx Vivado 2021.1 tool,
+operations for NTT and INTT operations. The authors rely on a              targeting the ZCU102 Ultrascale+ platform. We present the results for
+2 × 2 butterfly arrangement, which can process four coefficients in        our combined design, which supports all parameter sets at runtime.
+parallel, per clock cycle. Such a configuration was proposed in [20]       As shown in Table II, the Keccak cores and NTT modules are the
+and provides a trade-off between memory access stalls by processing        largest components (50% of total utilization). As they contribute
+two NTT layers at once, on the one hand. On the other hand not             most to total latency, the operations can be sped up by parallelizing
+instantiating 16 butterfly units in a 4 × 4 configuration would come       them and investing in hardware resources. Our combined, high-speed
+with a large penalty in area overhead. In the proposed design, the total   implementation requires 54,942 LUTs and 29,309 FFs. To store
+latency is reduced by minimizing the number of write-back conflicts        intermediate results, 29 BRAMs (36 Kb) are used, and the arithmetic
+and appropriately ordering the coefficients. The butterfly units are       units use 16 DSP blocks.
+implemented on the FPGA using DSP units to ensure a sufficiently
+high operating clock frequency. We refer to the original work [12]                                    TABLE II
+for an in-depth description of the coefficient ordering, using a custom    R ESOURCE UTILIZATION OF ML-DSA AND ITS SUB - MODULES ON FPGA.
+address resolver, and memory architecture.
+                                                                                      Sub-module           LUTs       FFs     DSPs     BRAMs
+C. Polynomial Sampler
+   Being a costly operation in lattice-based schemes, the authors             Samplers {A, s, y,c}          8,241     3,230       0           0
+                                                                              MakeHint & UseHint            8,837     3,772       0           0
+in [12] propose to instantiate three Keccak (SHAKE256) cores for
+                                                                              PolyArith (NTT)               8,794     5,889      16           0
+the polynomial sampling and hashing. Two units are dedicated to               Keccak                       18,678    13,394       0           0
+sampling the public matrix A, and the third one is for all other              (D)e(n)code & Decompose       6,889     1,368       0           0
+sampling and hashing operations. Sufficient memory (BRAM) is                  Data Memory                   2,317         0       0          29
+instantiated to ensure the public matrix can be fully stored, minimiz-        Control & Other               1,186     1,656       0           0
+ing stalling during the signing procedure. We modify the design to
+                                                                              Total                        54,942    29,309      16          29
+follow ML-DSA specs, and include domain separators where needed.
+Additionally, we ensure the random string rnd is used during the
+generation of the private random seed ρ′′ during signing.
+                                                                           B. Performance Comparison
+D. Operation Scheduling                                                       Table III provides the area and performance results of our de-
+  ML-DSA-OSH follows a centralized processor architecture, in              signs and prior work. We note that different works target different
+which most of the operation scheduling is controlled through a single      optimization goals (low-area, high-performance, ...) and use different
+                                                                TABLE III
+                                      OVERVIEW AND COMPARISON OF PQC DSA HARDWARE IMPLEMENTATIONS .
+
+                                                                                        Latency [cc & µs]                                 Area
+                         Scheme          Works      Platform                                                                       [LUT/FF/DSP/BRAM]
+                                                                      KeyGen                SigGen                SigVer
+                                                                                                                                    (or mm2 for ASIC)
+                                                                       18,761                76,613                19,687
+                                          [13]   A7 @ 163 MHz                                                                      27,433/10,681/45/15
+                                                                         115                  470                    121
+                Dilithium-II (v3.1)
+                                                                        5,251                33,503                 4,936
+                                          [17]   A7 @ 114.6 MHz                                                                     20,621/8,104/16/8
+                                                                         46                   293                    43
+                                                                       33,102                123,218               32,050
+                                          [13]   A7 @ 145 MHz                                                                      30,900/11,372/45/21
+                                                                         228                   850                   221
+                Dilithium-III (v3.1)
+                                                                        7,871                 53,577                7,610
+                                          [17]   A7 @ 109 MHz                                                                       23,378/9,079/8/20
+                                                                         72                    491                   70
+                                                                       50,982                145,192               52,712
+                                          [13]   A7 @ 140 MHz                                                                      44,653/13,814/45/31
+                                                                        363                    1,042                377
+                                                                       12,483                 72,179               11,825
+                Dilithium-V (v3.1)        [17]   A7 @ 114.3 MHz                                                                     28,791/11,338/24/8
+                                                                        109                     632                 103
+                                                                       63,200                113,900               67,900
+                                          [16]   US+ @ 391 MHz                                                                      13,975/6,845/35/4
+                                                                        161                     291                 173
+                                                                       15,600                106,400               18,800
+                ML-DSA-87                 [14]   5nm @ 600 MHz                                                                           0.0366
+                                                                         26                     177                  31
+
+                                                                  4,875/8,291/14,037   29,876/49,437/55,070   6,582/9,724/13,642
+                                          [12]   US+ @ 256 MHz                                                                     53,907/28,435/16/29
+                                                                       19/32/55            117/193/215             26/38/53
+                Dilithium (v3.1)
+                                                                   4,172/5,851/8,765   28,091/44,706/48,996    4,422/6,181/9,039
+                                          [15]   A7 @ 96.9 MHz                                                                     29,998/10,366/11/10
+                                                                       43/60/90            290/461/506             46/64/93
+                                                                  4,872/8,291/14,033   24,283/32,800/37,592   6,637/9,730/14,642
+                ML-DSA                   Ours    US+ @ 230 MHz                                                                     54,942/29,309/16/29
+                                                                       21/36/61            106/143/160             29/42/64
+
+
+
+
+target platforms when reporting performance. As a result, a direct               levels and digital signature routines. Our improved signature genera-
+and fair comparison between different hardware implementations is                tion instruction scheduling results in signature generation latency of
+not always possible.                                                             106/143/160 µs for NIST II, III and V variants.
+   We list the performance of designs supporting the different NIST                 ML-DSA-OSH, an open-source (RTL) hardware implementation
+security levels at compile time. Land et al. [13] propose designs                of NIST standardized ML-DSA, directly enables different avenues
+for all NIST security levels, which our design outperforms for all               of future research. While optimized designs of (stand-alone) sub-
+operations with only minor area overhead, supporting all security                modules have been proposed in literature, their implementations are
+levels at runtime. The lightweight design by Gupta et al. [16] only              rarely open-sourced. This limited access for the wider community
+supports the highest security version (V) at low area cost. Our                  reduces the opportunity for follow-up work and hinders the explo-
+design has lower latency for key generation, signature generation,               ration of optimal ML-DSA HW architectures. Our implementation
+and signature verification. The Adam’s Bridge IP core [14], which                allows for the direct integration (and cost evaluation) of optimized
+supports the highest ML-DSA security variant, is a high-performance              sub-modules, such as: NTT, Sampler and Lightweight Hash/PRNG.
+design for ASIC and has a high area utilization and worse latency for            Additionally, different high-level architectures can be explored, start-
+all operations compared to ours. However, this is due to high levels             ing from ML-DSA-OSH, which could suit different use-cases for
+of pipelining, ensuring the design can run at upwards of 600 MHz                 real-world deployment. This includes extremely high-throughput de-
+when synthesized in 5nm technology. As a result, their execution                 signs (streaming architectures) or implementations targeting resource-
+time is significantly lower for all operations.                                  constrained environments/platforms (low-power, low-area).
+   Additionally, we compare all combined designs, which support                     In addition, many side-channel and fault-injection attacks on
+all parameter sets at runtime. As expected, the modifications pre-               Dilithium have been proposed on the Cortex-M4 implementation due
+sented in Section II-E results in a minor (±1%) increase in area                 to the lack of open-source hardware implementations [21]–[23]. This
+overhead, compared to the Dilithium (v3.1) version [12]. Compared                work enables extending this work to the hardware domain and real-
+to the low-area design by Zhao et al. [15], our designs require                  world implementations.
+1.83/2.82/1.45/2.9× more LUT/FF/DSP/BRAM. We also present                           Finally, shuffling and masking are well-known countermeasures
+the timing results (latency) of all three signature algorithm routines,          for protecting against power analysis attacks, whereas duplication and
+for security levels II, III, and V. All our results are obtained when set-       repetition can be used to prevent the exploitation of fault attacks. A
+ting the clock constraint to 230 MHz, whereas [12] reports a maximal             necessary (next) step is the hardening of hardware implementations.
+clock frequency of 256 MHz. For medium security parameters, our                  In the context of Dilithium & ML-DSA, (optimized) masked gadgets
+design requires 36.05/142.61/63.66 µs for key generation, signature              have been proposed by Coron et al. [24], [25] and prototyped
+generation (avg.), and signature verification, respectively. Interest-           through software implementations. Compared to ML-KEM/Kyber, for
+ingly, our modifications and improvements result in a reduction of               which several optimized hardware countermeasures have been pro-
+16% - 36% in (average) clock cycles for the signature generation                 posed [26], [27], this is not the case for ML-DSA. Similarly, several
+(NIST II, III and V) operation. A contributing factor is ensuring the            fault attack countermeasures have been proposed and implemented
+multiplication Â ◦ NTT(y) starts as soon as both multiplicands are              on Cortex-M4 [28], [29]. An open-question is how well these protect
+computed.                                                                        against fault attacks when implemented hardware and how costly
+                                                                                 their overhead is on these platforms.
+             V. C ONCLUSION AND F UTURE W ORK
+                                                                                                              ACKNOWLEDGMENT
+  In this work, we presented an efficient, open-source hardware
+implementation (ML-DSA-OSH) of the new NIST PQC standard                            This work was partially supported by Horizon 2020 ERC Ad-
+ML-DSA. We achieved this through a thorough analysis of FIPS 204                 vanced Grant (101020005 Belfort), Cybersecurity Research Program
+and by comparing it to the Round 3 specification of CRYSTALS-                    Flanders (CRPF) with reference number VOEWICS02, Belgian-QCI
+Dilithium. Our design is highly flexible, supporting all three security          (3E230370) (see beqci.eu) and Intel Corporation.
+                              R EFERENCES                                             Cryptology ePrint Archive, Paper 2024/1817, 2024. [Online]. Available:
+                                                                                      https://eprint.iacr.org/2024/1817
+ [1] R. L. Rivest, A. Shamir, and L. M. Adleman, “A method for obtain-           [19] C. Cremers, S. Düzlü, R. Fiedler, M. Fischlin, and C. Janson, “Buffing
+     ing digital signatures and public-key cryptosystems,” Commun. ACM,               signature schemes beyond unforgeability and the case of post-quantum
+     vol. 21, no. 2, pp. 120–126, 1978.                                               signatures,” in 2021 IEEE Symposium on Security and Privacy (SP),
+ [2] V. S. Miller, “Use of elliptic curves in cryptography,” in Advances in           2021, pp. 1696–1714.
+     Cryptology — CRYPTO ’85 Proceedings, H. C. Williams, Ed. Berlin,            [20] D. T. Nguyen, V. B. Dang, and K. Gaj, “A high-level synthesis
+     Heidelberg: Springer Berlin Heidelberg, 1986, pp. 417–426.                       approach to the software/hardware codesign of ntt-based post-quantum
+ [3] P. W. Shor, “Algorithms for quantum computation: Discrete logarithms             cryptography algorithms,” in 2019 International Conference on Field-
+     and factoring,” in 35th Annual Symposium on Foundations of Computer              Programmable Technology (ICFPT), 2019, pp. 371–374.
+     Science, Santa Fe, New Mexico, USA, 20-22 November 1994.                    [21] Z. Chen, E. Karabulut, A. Aysu, Y. Ma, and J. Jing, “An
+     IEEE Computer Society, 1994, pp. 124–134. [Online]. Available:                   efficient non-profiled side-channel attack on the crystals-dilithium
+     https://doi.org/10.1109/SFCS.1994.365700                                         post-quantum signature,” in 39th IEEE International Conference
+ [4] S. Bai, L. Ducas, E. Kiltz, T. Lepoint, V. Lyubashevsky,                         on Computer Design, ICCD 2021, Storrs, CT, USA, October
+     P. Schwabe, G. Seiler, and D. Stehle, “CRYSTALS-Dilithium:                       24-27, 2021. IEEE, 2021, pp. 583–590. [Online]. Available:
+     Algorithm Specifications and Supporting Documentation (Version 3.1),”            https://doi.org/10.1109/ICCD53106.2021.00094
+     Online. Accessed 10th February, 2025, 2021. [Online]. Available:            [22] Z. Qiao, Y. Liu, Y. Zhou, J. Ming, C. Jin, and H. Li, “Practical
+     https://pq-crystals.org/dilithium/data/dilithium-specification-round3-2          public template attack attacks on crystals-dilithium with randomness
+     0210208.pdf                                                                      leakages,” IEEE Trans. Inf. Forensics Secur., vol. 18, pp. 1–14, 2023.
+                                                                                      [Online]. Available: https://doi.org/10.1109/TIFS.2022.3215913
+ [5] P.-A. Fouque, J. Hoffstein, P. Kirchner, V. Lyubashevsky, T. Pornin,
+                                                                                 [23] E. Krahmer, P. Pessl, G. Land, and T. Güneysu, “Correction fault
+     T. Prest, T. Ricosset, G. Seiler, W. Whyte, and Z. Zhang, “Falcon: Fast-
+                                                                                      attacks on randomized crystals-dilithium,” IACR Trans. Cryptogr.
+     Fourier Lattice-based Compact Signatures over NTRU,” 2018, https:
+                                                                                      Hardw. Embed. Syst., vol. 2024, no. 3, pp. 174–199, 2024. [Online].
+     //falcon-sign.info/.
+                                                                                      Available: https://doi.org/10.46586/tches.v2024.i3.174-199
+ [6] J.-P. Aumasson, D. J. Bernstein, W. Beullens, C. Dobraunig,                 [24] J.-S. Coron, F. Gérard, M. Trannoy, and R. Zeitoun, “Improved
+     M. Eichlseder, S. Fluhrer, S.-L. Gazdag, A. Hülsing, P. Kampanakis,             gadgets for the high-order masking of dilithium,” IACR Transactions
+     S. Kölbl, T. Lange, M. M. Lauridsen, F. Mendel, R. Niederha-                    on Cryptographic Hardware and Embedded Systems, vol. 2023, no. 4,
+     gen, C. Rechberger, J. Rijneveld, P. Schwabe, and B. Westerbaan,                 p. 110–145, Aug. 2023. [Online]. Available: https://tches.iacr.org/index
+     “SPHINCS+ Submission to the NIST post-quantum project, v.3.1,” 2018,             .php/TCHES/article/view/11160
+     https://sphincs.org/data/sphincs+-r3.1-specification.pdf.                   [25] J.-S. Coron, F. Gérard, T. Lepoint, M. Trannoy, and R. Zeitoun,
+ [7] R. Avanzi, J. Bos, L. Ducas, E. Kiltz, T. Lepoint, V. Lyubashevsky, J. M.        “Improved high-order masked generation of masking vector and
+     Schanck, P. Schwabe, G. Seiler, and D. Stehle, “CRYSTALS-Kyber Al-               rejection sampling in dilithium,” IACR Transactions on Cryptographic
+     gorithm Specifications And Supporting Documentation (version 3.02),”             Hardware and Embedded Systems, vol. 2024, no. 4, p. 335–354, Sep.
+     2021, https://pq-crystals.org/kyber/data/kyber-specification-round3-202          2024. [Online]. Available: https://tches.iacr.org/index.php/TCHES/artic
+     10804.pdf.                                                                       le/view/11795
+ [8] C. A. Melchor, N. Aragon, S. Bettaieb, and O. Blazy, “Hamming quasi-        [26] Q. Norga, J.-P. D’Anvers, S. Kundu, and I. Verbauwhede, “X2X:
+     cyclic (HQC),” 2018, https://pqc-hqc.org/doc/hqc-specification 2023-0            Low-randomness and high-throughput A2B and B2A conversions for
+     4-30.pdf.                                                                        d + 1 shares in hardware,” Cryptology ePrint Archive, Paper 2024/114,
+ [9] NIST, “FIPS 204 Module-Lattice-Based Digital Signature Standard,”                2024. [Online]. Available: https://eprint.iacr.org/2024/114
+     Online. Accessed 10th February, 2025, 2024. [Online]. Available:            [27] R. C. Rodriguez, E. Valea, F. Bruguier, and P. Benoit, “Hardware
+     https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.204.pdf                         implementation and security analysis of local-masked NTT for
+[10] ——, “Module-Lattice-Based Key-Encapsulation Mechanism Standard,”                 CRYSTALS-kyber,” Cryptology ePrint Archive, Paper 2024/1194,
+     Online. Accessed 10th April, 2025, 2024. [Online]. Available:                    2024. [Online]. Available: https://eprint.iacr.org/2024/1194
+     https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.203.pdf                    [28] S. Bauer, F. D. Santis, K. Koleci, and A. Aghaie, “A fault-
+[11] T. G. Tan, P. Szalachowski, and J. Zhou, “Challenges of post-                    resistant NTT by polynomial evaluation and interpolation,” Cryptology
+     quantum digital signing in real-world applications: a survey,” Int. J.           ePrint Archive, Paper 2024/788, 2024. [Online]. Available: https:
+     Inf. Sec., vol. 21, no. 4, pp. 937–952, 2022. [Online]. Available:               //eprint.iacr.org/2024/788
+     https://doi.org/10.1007/s10207-022-00587-6                                  [29] M. Duparc and M. Taha, “Improved NTT and CRT-based RNR
+[12] L. Beckwith, D. T. Nguyen, and K. Gaj, “High-performance hardware                blinding for side-channel and fault resistant kyber,” Cryptology
+     implementation of crystals-dilithium,” in 2021 International Conference          ePrint Archive, Paper 2025/181, 2025. [Online]. Available: https:
+     on Field-Programmable Technology (ICFPT), 2021, pp. 1–10.                        //eprint.iacr.org/2025/181
+[13] G. Land, P. Sasdrich, and T. Güneysu, “A hard crystal - implementing
+     dilithium on reconfigurable hardware,” in Smart Card Research and
+     Advanced Applications, V. Grosso and T. Pöppelmann, Eds. Cham:
+     Springer International Publishing, 2022, pp. 210–230.
+[14] CHIPS Alliance, “Adam’s bridge,” Online. Accessed 18th February,
+     2025. [Online]. Available: https://github.com/chipsalliance/adams-bridg
+     e
+[15] C. Zhao, N. Zhang, H. Wang, B. Yang, W. Zhu, Z. Li, M. Zhu,
+     S. Yin, S. Wei, and L. Liu, “A compact and high-performance
+     hardware architecture for crystals-dilithium,” IACR Transactions on
+     Cryptographic Hardware and Embedded Systems, vol. 2022, no. 1, p.
+     270–295, Nov. 2021. [Online]. Available: https://tches.iacr.org/index.p
+     hp/TCHES/article/view/9297
+[16] N. Gupta, A. Jati, A. Chattopadhyay, and G. Jha, “Lightweight hardware
+     accelerator for post-quantum digital signature crystals-dilithium,” IEEE
+     Transactions on Circuits and Systems I: Regular Papers, vol. 70, no. 8,
+     pp. 3234–3243, 2023.
+[17] Z. Wu, R. Chen, Y. Wang, Q. Wang, and W. Peng, “An efficient hardware
+     implementation of crystal-dilithium on fpga,” in Information Security
+     and Privacy, T. Zhu and Y. Li, Eds.          Singapore: Springer Nature
+     Singapore, 2024, pp. 64–83.
+[18] K. Raj, P. Ravi, T. K. Chia, and A. Chattopadhyay, “Improved ML-DSA
+     hardware implementation with first order masking countermeasure,”
+

@@ -1,0 +1,2643 @@
+      RISQrypt - Fast, Secure and Agile
+Hardware-Software Co-Design for Post-Quantum
+                Cryptography
+    Tolun Tosun1 , Atıl Utku Ay1 , Quinten Norga2 , Suparna Kundu2 , Melik
+              Yazıcı1 , Erkay Savaş1 and Ingrid Verbauwhede2
+                            1
+                                Sabanci University, Istanbul, Türkiye
+                            2
+                                COSIC, KU Leuven, Leuven, Belgium
+
+
+
+      Abstract. In this paper, we present RISQrypt, the first unified architecture in the
+      literature that implements Kyber (ML-KEM) and Dilithium (ML-DSA), standard-
+      ized lattice-based Post-Quantum Cryptography (PQC) algorithms, with masking.
+      RISQrypt is a hardware–software co-design framework that integrates dedicated
+      cryptographic accelerators to speed up polynomial arithmetic, hashing, and mask-
+      conversion operations, the latter being one of the primary bottlenecks in masked
+      implementations of lattice-based PQC. Our design achieves low latency while pro-
+      viding both theoretical and practical side-channel security, as validated through
+      experimental evaluation. Specifically, the masked decapsulation of Kyber768 requires
+      109K clock cycles, while masked signing of Dilithium3 requires 1230K clock cycles
+      on average. These results demonstrate 11.3× time-performance improvement over
+      existing masked implementations. Our time performance results for unprotected func-
+      tions also outperform the existing work; achieving speed-ups of 10.64× and 8.94×
+      for Kyber’s encapsulation and decapsulation algorithms, respectively, and 1.14× and
+      2.23× or Dilithium’s signature generation and verification algorithms, respectively,
+      when compared to existing designs with similar resource usage. In addition, prior
+      designs are more limited in scope, generally supporting only a single scheme and
+      lacking either the side-channel protection or the unified, crypto-agile framework that
+      enables support for both Kyber and Dilithium as in our architecture. Leveraging the
+      HW/SW co-design approach, our proposed architecture can be readily extended to
+      support other PQC standards such as Falcon and SPHINCS+, as well as algorithms
+      sharing similar computational building blocks, through firmware reprogramming.
+      Keywords: Masking · Kyber · Dilithium · Side-Channel Analysis · Hardware
+      Acceleration · Lattice-Based Cryptography · RISC-V
+
+
+1     Introduction
+The security of currently deployed public-key cryptosystems depends on the computa-
+tional hardness of number theory-based problems, such as the (elliptic curve) discrete
+logarithm problem used in the Diffie-Hellman key exchange [DH76, Kob87] and digital
+signatures [Sch90], as well as the integer factorization problem underlying RSA [RSA78].
+Although they are conjectured to be resistant to all currently known cryptanalytic methods
+on classical computers, research has demonstrated that Shor’s algorithm [Sho94] could
+efficiently solve them in polynomial time if a sufficiently powerful quantum computer were
+available.
+     To address the emerging security challenges posed by quantum computing, the National
+Institute of Standards and Technology (NIST) initiated a standardization process for
+2                        RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+post-quantum public-key cryptographic (PQC) algorithms in 2016. This initiative aims to
+establish quantum-resistant cryptographic standards, including digital signature algorithms
+(DSAs) and key encapsulation mechanisms (KEMs).
+    As of now, NIST has selected two KEMs: CRYSTALS-Kyber (lattice-based) and
+HQC (code-based), alongside three DSAs: CRYSTALS-Dilithium (lattice-based), Falcon
+(lattice-based), and SPHINCS+ (hash-based). Lattice-based cryptographic (LBC) con-
+structions [Reg05, Ajt96], relying on the computational hardness of lattice problems, have
+emerged as leading candidates for post-quantum security, offering an exceptional balance
+between efficiency, scalability, and provable robustness against quantum adversaries.
+    Within this category, CRYSTALS-Kyber relies on the Module Learning With Errors
+(MLWE) problem, while CRYSTALS-Dilithium is based on both MLWE and the Mod-
+ule Short Integer Solution (MSIS) problems. As members of the CRYSTALS family,
+Kyber and Dilithium share core structural similarities and employ closely related computa-
+tional primitives, which enable their seamless integration within a unified implementation
+framework.
+    As noted in both the CRYSTALS-Kyber and CRYSTALS-Dilithium submissions, the
+main sources of performance bottlenecks arise from hash computations and multiplication
+operations in polynomial rings. A widely adopted approach to alleviating these bottle-
+necks is hardware acceleration, in which dedicated and optimized hardware units offload
+computationally intensive tasks from the host general-purpose processor.
+    Keccak [BDPA12] is a cryptographic algorithm that serves as the foundation of the
+SHA-3 (Secure Hash Algorithm 3) standard, introduced by NIST. Its flexible sponge
+construction allows Keccak to support both fixed-length hash functions and extendable-
+output functions (XOFs), which can produce outputs of arbitrary length. This versatility
+makes it particularly well-suited for a broad range of cryptographic applications, including
+lattice-based schemes. Hardware acceleration of Keccak is a mature research area, with
+numerous well-established designs reported in the literature such as [GSM17, ZSS+ 21].
+    To enhance the efficiency of polynomial multiplication in lattice-based cryptographic
+algorithms, the Number Theoretic Transform (NTT) [AB75], an integer variant of the
+Discrete Fourier Transform (DFT), is commonly employed to improve computational
+performance. In the literature, a multitude of studies have proposed hardware accelerators
+for the NTT operation [FVR+ 22,MBB+ 23,NDMZ+ 21,MCL+ 23,WZZ+ 24,WWL+ 24,XL21,
+HHLW20, GLK21, DMMM23, JGCS24, KNAH22, ZZW+ 22, BNG21, WZCG22, CKRG+ 24].
+While several of these works integrate support directly into the processor data-path using a
+tightly coupled approach [MBB+ 23, NDMZ+ 21, WWL+ 24], others adopt a loosely coupled
+design in which the accelerator operates as an independent unit connected to the processor
+core [FVR+ 22, WZZ+ 24, MCL+ 23]. Although the NTT constitutes the primary bottleneck
+in polynomial arithmetic, accelerating the remaining operations, including polynomial
+additions and subtractions, point-wise multiplications, divisions, pseudo-random sampling,
+and encoding/decoding, is also essential to achieve state-of-the-art performance.
+    Side-channel attacks (SCAs) pose significant security threats to the implementation
+of cryptographic algorithms, with masking serving as the primary countermeasure. As
+PQC algorithms have only recently been standardized, their resistance to side-channel
+attacks has been investigated in a relatively limited number of studies. For example,
+in [FVR+ 22], dedicated operations required for masked implementations were integrated
+into the instruction set architecture (ISA) to enhance resilience against SCAs.
+    There are two main masking types: arithmetic masking and Boolean masking. Many
+cryptographic schemes, especially the lattice-based PQC, require the use of both methods
+simultaneously, necessitating frequent and secure conversions between them (A2B &
+B2A). These conversions, however, are computationally intensive and resource consuming,
+underscoring the importance of accelerating masking conversions to maintain both security
+and efficiency. Consequently, A2B & B2A conversions emerge as a third major bottleneck
+Tosun et al.                                                                              3
+
+
+ Table 1: Overview of efficient implementations of lattice-based PQC in the literature.
+               Work                Supported     Class      SCA       Hardware Agility
+                                   Scheme                  Protec-    Acceler-
+                                                            tion       ation
+     RISQrypt (This Work)             K, D     HW/SW          ✓           ✓         ✓
+          [FVR+ 22]                    K       HW/SW          ✓           ✓         ✓
+          [WZZ+ 24]                   K, D     HW/SW          ✢           ✓
+           [KSFS24]                    D       HW/SW                      ✓         ✓
+      [MBB+ 23, NDMZ+ 21]             K, D     HW/SW                      ✓
+      [DMMM23, WWL+ 24]                K       HW/SW                      ✓
+          [MCL+ 23]                    D       HW/SW                      ✓
+          [AOP+ 25]                   K, D     HW/SW                      ✓         ✓
+       [JGCS24, KNAH22]                K          HW          ✓           ✓
+            [BAA23]                   K, D        HW          ❖           ✓
+    [XL21, HHLW20, GLK21]              K          HW                      ✓
+  [ZZW+ 22, BNG21, WZCG22]             D          HW                      ✓
+      [CKRG+ 24, AMI+ 23]             K, D        HW                      ✓
+    [BC22, HKL+ 22, CGMZ23]            K          SW          ✓                     ✓
+       [CGL+ 24, CGTZ23]               D          SW          ✓                     ✓
+
+✢ SCA protection limited to polynomial arithmetic. ❖ SCA protection limited to Kyber.
+K: Kyber, D: Dilithium
+
+
+
+in masked implementations of lattice-based PQC, alongside polynomial arithmetic and
+hashing.
+    RISC-V is an open and extensible ISA developed at UC Berkeley. Its modular RISC de-
+sign supports a wide range of platforms, from simple embedded systems to high-performance
+and energy-efficient computing. Owing to its open-source and extensible nature, many
+cryptographic acceleration works build on RISC-V cores [FVR+ 22, MBB+ 23, NDMZ+ 21,
+WZZ+ 24, MCL+ 23]. In the loosely coupled approach in hardware acceleration, the hard-
+ware unit operates as an independent module connected to the processor via a data bus.
+In this configuration, the unit typically includes its own cache memory or register file,
+as well as a dedicated control unit. This approach preserves the original ISA, ensuring
+software compatibility and simplifies integration into existing toolchains and hardware
+platforms. On the other hand, in the tightly coupled approach in hardware acceleration,
+a specialized hardware unit is integrated directly into the processor’s datapath and is
+accessed through custom instruction(s). While this approach achieves low communication
+latency and minimal control overhead, it requires modifications to the original ISA and
+typically provides more limited acceleration gains compared to loosely coupled accelerators,
+unless vector instructions with significant area overhead are used as in [AOP+ 25]. Our
+proposed solution, RISQrypt, is based on a HW/SW co-design framework and relies on
+dedicated, loosely coupled hardware accelerators for hashing, polynomial arithmetic, and
+mask conversions.
+
+Related Work. Several studies have investigated the efficient implementation of lattice-
+based PQC schemes, some of which are summarized in Table 1. These works can be
+broadly categorized into three groups: (i) software-only (SW), (ii) hardware-only (HW),
+and (iii) hardware–software co-design (HW/SW) solutions. SW solutions are agile, as
+the software can be re-compiled and re-programmed, but they inherently lack hardware
+acceleration and therefore cannot achieve high performance. Here, we use the term agility
+4                         RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+to refer ability of a design to support different parameter sets (e.g., moduli or polynomial
+degrees) either at run time or at software compile time, without requiring changes on the
+hardware at design time, where modifications are costly due to tape-out. HW solutions, on
+the other hand, offer high performance but are typically not agile, since algorithmic steps
+and parameters are hard-coded for Kyber or Dilithium. HW/SW co-design approaches
+enable the combination of agility and high performance; however, some existing works
+still fix their implementations to Kyber, Dilithium, or both. Overall, existing solutions
+either lack a unified architecture supporting both Kyber and Dilithium, do not address
+side-channel security, or provide only limited protection.
+
+Contributions. In this work, we address all these challenges and close the existing gap in
+the literature. In summary:
+
+    • For the first time in the literature, we present a unified architecture that implements
+      both Kyber and Dilithium with integrated side-channel protection, fully covering
+      all sensitive functions. The proposed design is unique in that it is agile: it can be
+      reprogrammed to support Kyber or Dilithium with different side-channel countermea-
+      sures, or even to implement other algorithms built from similar computational blocks.
+      We provide an in-depth security and performance analysis of the architecture. The
+      results show that our solution achieves superior performance, flexibility, and security.
+      Although no prior work provides the same set of qualitative features, our design still
+      outperforms existing implementations that support significantly fewer functionalities
+      by up to an order of magnitude in both time performance and area–time product.
+
+    • We propose an efficient and fully programmable polynomial arithmetic accelerator,
+      NTT-Lite, designed to support the core operations of Kyber and Dilithium, as
+      well as a wide range of cryptographic schemes based on modular and polynomial
+      arithmetic. We show that the accelerator’s configurable architecture not only enables
+      extensibility beyond Kyber and Dilithium, but is also essential for implementing
+      side-channel countermeasures, particularly so-called gadgets. The accelerator features
+      a dual-mode operation that efficiently supports both full- and half-word modes, as
+      required by Dilithium and Kyber, respectively.
+
+    • We propose a general-purpose, efficient, and high-throughput mask conversion accel-
+      erator (A2B & B2A), which can be used to implement protected versions of Kyber
+      and Dilithium as well as other algorithms. We show that the required gadgets for
+      masked Kyber and Dilithium can be implemented exclusively using the proposed
+      mask conversion accelerator, together with NTT-Lite, without the need for additional
+      operations at the software level. Our study presents the design decisions associated
+      with the masked implementations of the non-linear operations in both schemes,
+      given a high-throughput mask conversion accelerator. We also show that these
+      design and implementation choices yield efficient masked implementations for Kyber
+      and Dilithium. We provide an in-depth side-channel security analysis for secret
+      key-involved functions in Kyber and Dilithium. The security of our masked gadgets
+      is verified theoretically and practically through the Test Vector Leakage Assessment
+      (TVLA) methodology.
+
+
+2     Preliminaries
+This section briefly introduces the notation and reviews the essential background on the
+CRYSTALS PQC family, namely Kyber and Dilithium schemes, the number-theoretic
+transform, and the fundamentals of boolean masking for side-channel protection. In the
+interest of space, the full algorithmic details of Kyber and Dilithium are provided in
+Tosun et al.                                                                                    5
+
+
+Appendix A. In this section, we briefly highlight the supporting functions of both schemes,
+which play a key role in our design.
+
+
+2.1    Notation
+Throughout the paper, bold letters, such as a are used to denote vectors and matrices. The
+elements of vectors and matrices are referred using square brackets (e.g., a[i] or a[i][j]). B l
+denotes the set of l-byte strings. The i-th bit of integers are accessed using square brackets,
+such as a[i] for a ∈ Z2k and 0 ≤ i < k. The || operator denotes concatenation. The symbol
+← denotes uniform random sampling from the set on the right-hand side, e.g., a ← Z.
+    The polynomial ring Rq = Zq /(xn + 1) consists of polynomials with coefficients in Zq ,
+which form residue class obtained by the division by the cyclotomic polynomial xn + 1,
+where n is a power of two.
+    The notations s{0:d}A and s{0:d}B denote the complete set of shares of a dth -order
+arithmetic- and boolean-masked variable s, respectively. When a single index appears
+in the superscript, such as s{i}A , it refers specifically to share-i. If s{0:d}A (or s{0:d}B ) is
+provided as input or output of a function, the function receives or produces all shares of
+the variable. Likewise, when this notation appears in an arithmetic or boolean operation,
+it indicates that the same operation is applied independently to each share.
+    For A2B & B2A conversions, we use a subscript to indicate the modulus type. For
+example, B2A2k denotes a Boolean-to-arithmetic conversion with a power-of-two modulus,
+whereas B2Aq denotes the conversion modulo an arbitrary modulus, not necessarily a
+power of two.
+
+
+2.2    CRYSTALS-Kyber
+CRYSTALS-Kyber is a lattice-based KEM built upon the hardness of the MLWE problem,
+which offers a favorable balance between security and efficiency. The scheme operates over
+the polynomial ring Rq with n = 256 and modulus q = 3329. By exploiting structured
+module lattices, Kyber achieves compact key sizes and efficient polynomial arithmetic.
+Polynomial multiplications are accelerated using the NTT, and noise terms are sampled
+from centered binomial distributions to ensure both performance and security.
+    Kyber was originally introduced as a Chosen Plaintext Attack (CPA)-secure public-
+key encryption scheme, known as Kyber.CPAPKE. This base encryption scheme provides
+semantic security under the MLWE assumption, and it serves as the foundation for the
+KEM construction. The algorithms used in Kyber.CPAPKE are shown in Figure 11.
+    The functions used in Kyber.CPAPKE can be briefly explained as follows. Parse and
+Decode functions are used to map a sequence of bits (message, key, output of a hash
+function) to polynomial coefficients in Zq [x]. Encode function is the inverse of Decode
+function. G is a hash-based generator that expands a seed into multiple cryptographic
+values, PRF is a keyed pseudorandom function used to deterministically generate secret
+noise polynomials, and XOF is an extendable-output function used to sample uniformly
+random polynomial coefficients from a seed. All these functions are specified in [BDK+ 22]
+and implemented using SHA-3 hash function. CBDη denotes centered binomial distribution
+in range [−η, η], where η is a small integer. Compressq (x, d) and Decompressq (x, d) functions
+are used to reduce the size of the ciphertext and perform LWE error correction in Kyber.
+Compressq (x, d) function (defined in Eq. 1) takes an element x ∈ Zq and output an integer
+in the interval [0, 2d ).
+                                                 d 
+                                                 2
+                             Compressq (x, d) =     · x mod 2d ,                              (1)
+                                                  q
+6                        RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+where ⌈x⌋ denotes rounding x to the nearest integer. Decompressq (x, d) function is simply
+the opposite of Compressq (x, d) function defined as follows
+                                                          lq         k
+                                 Decompressq (x, d) =            · x   .                   (2)
+                                                              2d
+    The CCA-secure variant of CRYSTALS-Kyber, called Kyber.CCAKEM, is obtained
+by applying the Fujisaki–Okamoto (FO) transformation to the Kyber.CPAPKE. This
+conversion provides resistance against adaptive chosen-ciphertext attacks while preserving
+the efficiency of the underlying MLWE-based construction. In this design, a shared secret
+is derived by hashing both the ciphertext and an ephemeral secret, and a verification step
+ensures robustness against ciphertext tampering. The algorithms used in Kyber.CCAKEM
+is shown in Figure 12, where H, G, and KDF are specified in [BDK+ 22] and implemented
+using SHA-3.
+
+2.3    CRYSTALS-Dilithium
+CRYSTALS-Dilithium is a lattice-based digital signature scheme relying on the hardness
+of the MLWE and MSIS problems. It achieves strong security through structured lattices
+and rejection sampling, avoiding the need for complex Gaussian sampling. With multiple
+parameter sets targeting different security levels, Dilithium provides efficient key generation
+and signing while maintaining resistance to classical and quantum attacks. The algorithms
+used in Dilithium is shown in Figure 13. Dilithium employs parameters n = 256 and
+q = 8380417 over the ring Rq .
+    The functions used in Dilithium can be briefly explained as follows. The functions H,
+CRH, ExpandA, and ExpandMask are specified in [DKL+ 22] and implemented using SHA-3.
+Sη denotes uniform sampling in [−η, η], where η is a small integer. Power2Roundq (t, d)
+function returns t1 and t0 , where t ∈ Zq , t = t1 · 2d + t0 , and t0 ∈ (−q/2, q/2].
+    The function Decomposeq (r, α) can be defined as follows. Let r be an integer in Zq ,
+then we can represent r as
+
+                                           r = r 1 α + r0 ,                                (3)
+where q − 1 = m · α, r1 ∈ [0, m], and r0 ∈ (−α/2, α/2]. The function returns r1 , and r0 .
+HighBitsq (r, α) and LowBitsq (r, α) functions invoke Decomposeq (r, α), and return r1 and r0 ,
+respectively. MakeHintq (z, r, α) checks whether z generates a carry bit for HighBitsq (r, α)
+or not. UseHintq (h, r, α) adds the carry to HighBitsq (r, α) depending on h, which denotes
+the hint vector produced by MakeHintq (z, r, α).
+
+2.4    Number Theoretic Transform (NTT)
+NTT is a modular analogue of the DFT, commonly employed in PQC and FHE to
+accelerate polynomial multiplications in Rq . Unlike the DFT, which operates over the
+complex numbers, NTT is performed over a finite field or ring, typically Zq , where q is a
+prime admitting a principal 2n-th root of unity, ψ. For a polynomial a(x) of degree n − 1,
+the NTT maps its coefficient vector to the evaluation domain by computing
+                                 n−1
+                                 X
+                         āk =         aj ψ j(2k+1) mod q,       0 ≤ k < n,                (4)
+                                 j=0
+
+where ψ is a primitive 2n-th root of unity modulo q.
+   In the time domain, multiplying two degree-(n − 1) polynomials directly requires
+O(n2 ) coefficient multiplications and additions. By applying NTT, the polynomials are
+transformed into the frequency domain, where multiplication reduces to element-wise
+Tosun et al.                                                                              7
+
+
+
+
+                                               Algorithm 2 Barrett Reduction Variant 2
+                                               Input: word-size λ
+Algorithm 1 Barrett Reduction Variant 1        Input: a ∈ [0, 22λ )
+Input: word-size λ                             Input: q ∈ [2λ−1 , 2λ ), µ = ⌊22λ /q⌋
+Input: a ∈ [0, 22λ )                           Output: r = a mod q
+Input: q ∈ (0, 2λ ), µ = ⌊22λ /q⌋              Output: a = t1 · q + r
+Output: r = a mod q                             1: a1 = a ≫ λ
+Output: a = t1 · q + r                          2: t0 = (a1 · µ) ≫ λ
+ 1: t0 = (a · µ) ≫ 2λ                           3: t1 = t0 · q mod 2λ+2
+ 2: t1 = t0 · q mod 2λ+1                        4: r = a − t1 mod 2λ+2
+ 3: r = a − t1 mod 2λ+1                         5: if r ≥ q then
+ 4: if r ≥ q then                               6:     r = r − q, t0 = t0 + 1
+ 5:     r = r − q, t0 = t0 + 1                  7: end if
+ 6: end if                                      8: if r ≥ q then
+ 7: return r, t0                                9:     r = r − q, t0 = t0 + 1
+                                               10: end if
+                                               11: return r, t0
+
+
+
+multiplication, which is only O(n). The Fast Fourier Transform (FFT) algorithm, adapted
+to modular arithmetic, enables the efficient computation of the NTT and its inverse
+(INTT) in log n stages, each consisting of n/2 butterfly operations, resulting in an overall
+complexity of O(n log n). Due to the convolution theorem, multiplication in the time
+domain (i.e., multiplication in Rq ) can be performed using element-wise multiplication in
+the NTT domain.
+    The Incomplete NTT is a variant of the standard NTT, which may be used to reduce
+computational overhead and memory usage in lattice-based cryptosystems. Unlike the full
+NTT, which performs all log2 n butterfly stages in both forward and inverse directions,
+the incomplete version omits one or more of the stages when the algorithmic structure
+allows. Subsequent element-wise multiplication, then, becomes more involved and should
+be adapted to operate on this partially transformed data. Incomplete NTT is sometimes
+necessary due to the mathematical structure of Rq , as in Kyber, where a 2n-th root of
+unity does not exist. It may also be preferred for efficiency reasons in Dilithium [AHKS22].
+
+2.5    Barrett Reduction
+Barrett reduction [Bar87b] is an efficient algorithm for computing the remainder r =
+a mod q, where a = q · t0 + r for two integers a and q. The algorithm first computes a
+quotient t0 , and then derives the remainder as a − t0 · q. We use two variants of Barrett
+reduction in Algorithm 1 and Algorithm 2. The first variant incurs higher cost, as it
+requires a 2λ × 2λ-bit multiplication (Line 1), whereas the second variant only involves
+a λ × λ-bit multiplication (Line 2). However, the former supports reduction of inputs of
+arbitrary size given the word size λ. In contrast, the second variant assumes that the input
+a is at most twice the bit-length of the modulus q (i.e., the divisor).
+
+2.6    Arithmetic and Boolean Masking
+Masking is a widely applied countermeasure designed to secure cryptographic hardware
+and software implementations against passive side-channel attacks, such as those exploiting
+electromagnetic (EM) emissions or power consumption. Based on the secret sharing princi-
+ple introduced by Shamir [Sha79], a sensitive variable s is decomposed into d + 1 uniformly
+random shares s{i} , where 0 ≤ i ≤ d, ensuring d-th order probing security [ISW03].
+8                         RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+    In order to prove the probing security of larger gadgets, which are small, composable
+circuits or algorithmic components that operate on masked shares, Barthe et al. [BBD+ 16]
+introduce security notions of (strong-) non-interference (t-(S-)NI) for proving the security
+of smaller gadgets and their composition.
+Definition 1 (t-(Strong) Non-Interference [BBD+ 16,SPOG19]). A gadget with one output
+sharing and m{i} input shares is t-NI (resp. t-SNI) secure if any set of at most t1 probes on
+its internal wires and t2 probes on output sharings such that t1 + t2 ≤ t can be simulated
+with t1 + t2 (resp. t1 ) shares of each of its m{i} input shares.
+    Both of the following masking techniques are employed in lattice-based PQC imple-
+mentations to ensure side-channel resistance: arithmetic masking and boolean masking.
+For arithmetic masking, the sensitive value s ∈ Zq is divided into uniformly random d + 1
+                                                                          Pd
+shares s{i} ∈ Zq , and s is the arithmetic sum of d + 1 shares, i.e., s = i=0 s{i}A mod q.
+For boolean masking, s is the result of the bitwise XOR of d + 1 shares, i.e., s = ⊕di=0 s{i}B .
+In masking, each individual share is statistically independent of the original secret. Conse-
+quently, an attacker must have/gain knowledge of all d + 1 shares to infer any meaningful
+information about the underlying secret s. As both arithmetic and boolean masking are
+used in lattice-based schemes such as digital signature algorithms and key encapsulation
+mechanisms, it becomes necessary to transform shares between these masking domains,
+which incurs significant performance overhead. Arithmetic-to-Boolean (A2B) denotes
+the transformation of arithmetic shares into boolean shares, while Boolean-to-Arithmetic
+(B2A) refers to the inverse operation.
+    Refresh is a frequently used gadget to satisfy specific security requirements (e.g.,
+achieving t-SNI) by re-randomizing the shares of sensitive variables. Intuitively, this
+operation prevents the propagation of dependencies on previously used randomness across
+different gadgets. Formally, Refresh combines its input with a fresh sharing of zero in the
+corresponding domain. That is, s′{0:d}B ← s{0:d}B ⊕ z {0:d}B in the Boolean domain (or
+s′{0:d}A ← s{0:d}A + z {0:d}A in the arithmetic domain), where z {0:d}B (or z {0:d}A ) is freshly
+generated sharing of zero (z = 0).
+
+
+3      Hardware Accelerators
+In this section, we provide an overview of the cryptographic hardware accelerators used
+in RISQrypt. The general architecture is shown in Figure 1. The design comprises three
+cryptographic accelerators, a polynomial arithmetic accelerator referred to as NTT-Lite,
+a Keccak accelerator, and an A2B/B2A mask conversion accelerator referred to as X2X.
+Cryptographic accelerators access the data RAM via a shared Direct Memory Access (DMA)
+interface to improve data read and write efficiency. Memory-Mapped I/O (MMIO) is a
+standard master–slave communication abstraction used to access peripherals. Although
+NTT-Lite also operates on masked data, it performs only linear operations and can therefore
+process each share independently using a single DMA interface. In contrast, Keccak and
+X2X include non-linear operations that require simultaneous access to multiple shares,
+necessitating separate DMA interfaces per share to prevent side-channel leakage that could
+result from multiplexing multiple shares on a single interface. For Keccak and X2X, multiple
+DMA interfaces are never active at the same time. In our implementation, although both
+MMIO interface and the DMA interface are realized using the Wishbone protocol, the
+design is not tied to this choice. For example, these interfaces could alternatively be
+implemented using AXI, also a widely adopted standard. Similarly, although RISC-V is
+used as the main processor in our implementation, this choice is also not mandatory, and
+our work is orthogonal to the specific software core. In this work, we employ the 32-bit
+HORNET RISC-V Core1 presented in [YTO21].
+    1 https://github.com/yavuz650/RISC-V commit id: 6c7af88
+Tosun et al.                                                                                                                                                      9
+
+
+
+
+                                              RISC-V                  Instruction                             Data
+                                               Core                      RAM                                  RAM
+
+
+
+
+                                                            MMIO
+
+
+                                  Other
+                                Peripherals       NTT-Lite            Keccak                    X2X
+
+
+
+
+                                                                            DMA
+
+
+                                                 Figure 1: System Architecture
+
+                                                                                                                            Register File     output data
+                          FSM            FIFO                                                                        16x32            16x32
+                                         50x32
+          control
+                      (Sponge
+                      Function  )                    I/O data                    control
+                                                                                                 FSM
+  MMIO
+
+
+
+
+                                                                         MMIO
+
+
+
+
+                                                                                and status
+                                                                DMA
+
+
+
+
+         and status
+
+
+
+
+                                                                                                                                                            DMA
+          signals
+                                         50x32                                   signals
+                                                                                                                                              input data
+
+                                                                                                PRNG
+                                                                                                                 Mask
+                                                                                modulus      12x LFSR64[64]
+                                                                                                               Refreshing              X2X
+                                                                                             2x LFSR64[48]
+                      Keccak Permutation Core                                                2x LFSR64[32]
+                                                                                                                  Unit
+                                                                                                                (MRU)                  Core
+                                                                                  seed
+
+
+
+
+                           (a) Keccak                                                                         (b) X2X
+
+Figure 2: Keccak and X2X accelerators high-level architecture. Black lines denote data
+paths, red lines denote control and status signals. Internal control signals are omitted for
+clarity.
+
+
+     We highlight that our work combines dedicated cryptographic accelerators (highlighted
+in light blue in Figure 1 with a software layer that leverages these accelerators. Consequently,
+the proposed approach is independent of the overall system architecture, provided that
+the accelerators can be efficiently accessed by the processor and that the processor can
+be programmed to execute our PQC software. Finally, while our approach supports
+arbitrary-order masking, we describe the architecture here for the first-order case to keep
+the presentation simple.
+     As discussed in Section 2, polynomial arithmetic is the fundamental operation in LBC
+algorithms, and its efficient implementation is critical to enhance the performance. We
+present the proposed polynomial arithmetic accelerator NTT-Lite in Section 4. In the
+next subsections, we detail Keccak and X2X accelerators.
+
+3.1         Keccak Accelerator
+Figure 2a presents the simplified architecture of the Keccak Accelerator. We integrated
+the masked Keccak permutation core proposed in [GSM17], based on the so-called domain-
+oriented masking approach, into our architecture. We should note that the integrated
+Keccak core only provides the Keccak permutation. Implementing higher-level hash
+functions such as SHA-3 or SHAKE requires to implement the so-called sponge construc-
+tion [D+ 15]. In our design, the sponge construction is implemented directly within the
+accelerator to minimize software interaction and thereby improve overall performance.
+10                          RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+Furthermore, a FIFO mechanism is incorporated to overlap the Keccak permutation
+and data input and output. The level of parallelism in the Keccak permutation core is
+configurable, and we configured it such that it finishes a Keccak permutation in 4 × 24 = 96
+clock cycles. Masking can be enabled or disabled at run time via control signals, allowing
+improved efficiency for non-sensitive hashing operations.
+
+3.2     X2X Accelerator
+Applying masking countermeasures to lattice-based cryptographic schemes necessitates the
+use of both arithmetic and Boolean masking [MGTF19, ÖY23, KDVB+ 22, CGTZ23]. In
+particular, core operations such as polynomial addition and multiplication are performed
+over arithmetic shares, while bitwise operations—such as those used in the Keccak hash
+function—are more naturally protected using Boolean masking. Consequently, a secure
+implementation must provide an efficient and reliable mechanism to convert between these
+two masking domains, specifically through Arithmetic-to-Boolean (A2B) and Boolean-to-
+Arithmetic (B2A) transformations.
+   To accelerate A2B and B2A conversions, we integrate a dedicated unit into our
+architecture. Specifically, we adopt the X2X core from [NDKV25], which also lends its
+name to our cryptographic accelerator. The X2X core enables mask conversion with
+high-throughput, such as 1 to 2 conversions per cycle, supporting both A2B and B2A
+conversions, for both a power-of-two or prime moduli. We would like to note that X2X
+core was originally designed for a word size of 13-bit in [NDKV25], and it is expanded to
+32-bit for this work. The X2X core employs a 13-stage pipeline to support high-throughput
+A2B and B2A conversions. When the modulus is a power of two, the core supports a dual
+mode in which two conversions can be performed simultaneously, thereby doubling the
+throughput.
+
+                 Table 2: Operations supported by X2X accelerator.
+                              Active Units
+           Opcode     PRNG MRU X2X Core                     Modes
+           OP_PRNG            ✓        ✗          ✗
+           OP_X2X             ✓        ✗          ✓         A2B, B2A, B2A1-bit
+           OP_REF             ✓        ✓          ✗               A, B
+           OP_MASK            ✓        ✓          ✗               A, B
+           OP_REFX2X          ✓        ✓          ✓         A2B, B2A, B2A1-bit
+A: Arithmetic, B: Boolean
+
+
+
+   The simplified architecture of X2X accelerator is given in Figure 2b. As shown, in
+addition to the X2X core, we integrated a pseudo-random number generator (PRNG), and
+a mask refresher unit (MRU).
+
+
+4     NTT-Lite
+In this section, we provide a detailed description of the architecture and sub-modules of
+our polynomial arithmetic accelerator NTT-Lite.
+
+4.1     Scope
+NTT-Lite is designed to accelerate not only the NTT operation but also other polynomial
+arithmetic and supporting functions used in PQC schemes, such as compression, encoding
+and pseudo-random sampling, which cannot be efficiently implemented using software.
+Tosun et al.                                                                                     11
+
+
+Although this work focuses on secure implementations of Kyber and Dilithium, NTT-Lite
+is not restricted to the parameters of these schemes. It supports modulus q sizes up to
+32-bit and polynomial degrees n of up to 256, ensuring an agile design, flexibility and
+reusability across different LBC algorithms.
+    On the other hand, masked implementations of Kyber and Dilithium require configura-
+tions that deviate from the standard parameter sets (e.g., q = 3329 or q = 8380417), such
+as the moduli of these schemes. This flexibility is particularly necessary for implementing
+the arithmetic involved in their non-linear operations. Our configurable NTT design
+satisfies these requirements. Additional discussion on the role of NTT-Lite in masked
+implementations is provided in Section 6.2. We employ unsigned arithmetic over Zq as
+signed arithmetic makes differential SCA attacks significantly easier [TMS24].
+
+4.2     Architecture
+
+
+                                                         RAM 128x32
+                                                         RAM 128x32
+                           control
+                                           FSM                               output data
+                                                         RAM 256x32
+                          and status
+                           signals
+                 MMIO
+
+
+
+
+                                                                                           DMA
+                                                                             input data
+                         auxiliary data
+                        (e.g., modulus)   Butterfly   Encode     Sampling
+                                            Unit       Unit        Unit
+                                           (BU)       (EU)            (SU)
+
+
+
+
+Figure 3: NTT-Lite high-level architecture. Internal control signals are omitted for clarity.
+
+    Figure 3 illustrates the high-level and simplified architecture for NTT-Lite. As shown,
+the NTT-Lite contains of two 128×32 and one 256×32 RAM blocks. The core arithmetic
+unit in NTT-Lite is the Buttefly Unit (BU) as in almost all NTT designs in the literature.
+In addition, an Encode Unit (EU) is integrated into the design to accelerate the encoding
+and decoding operations used in PQC algorithms. Moreover, a Sampling Unit (SU) is
+implemented to perform operations related to pseudo-random number sampling used in
+PQC schemes. FSM performs address calculations and generates control signals for the
+internal memories as well as BU, EU and SU.
+    Since a butterfly circuit in the NTT computation has two inputs and two outputs, we
+use two independent 128 × 32 RAMs. In this manner, NTT-Lite can feed BU with a valid
+pair of inputs at each clock cycle. The 256 × 32 RAM is used for the storage of twiddle
+factors in NTT, as well as one of the operands in certain operations. We detail the internal
+RAM usage in the following sections. In addition to the main data path, an auxiliary
+160-bit data path is employed. This path delivers constant values required by the provided
+functionalities, such as the modulus used in modular arithmetic. Further details on this
+auxiliary constant-data are provided in the next section.
+
+4.2.1   Word Modes
+The architecture provides two main operating modes, single and dual, selectable at run
+time. In single mode, the unit operates with a 32-bit word size, whereas in dual mode it is
+configured for 16-bit words. In dual mode, each 32-bit word stored in RAM is partitioned
+into its upper and lower halves, which are treated as two independent 16-bit words, enabling
+parallel processing and improved throughput. Additionally, poly mode is implemented
+as a variant of dual-mode, with all operations, except modular multiplication, executed
+12                               RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+
+                                         Modular Multiplier             Modular
+                                                                         Adder
+                                              32x32
+                                        Karatsuba Multiplier            Modular
+                                                                       Subtractor
+                                         Barrett Reduction
+                                                                       Arithmetic
+                auxiliary data                                          Shifter
+                                              64x64
+                                        Karatsuba Multiplier
+                                                                        Modular
+                                                                      Divider by 2
+                                              32x32
+                                       (Truncated) Multiplier         Special Case
+                                                                       Checkers
+                      word-
+                      mode
+                                                    Shift Registers
+
+
+
+
+                           Figure 4: High-level architecture of the BU.
+
+
+
+
+                                                                                           Mod_Sub
+
+
+
+                                  -                             -
+                                  +                             +
+
+
+
+Figure 5: Modular subtractor architecture with dual-mode option. Black lines denote data
+paths, and red lines denote control and status signals.
+
+
+identically. In this mode, the multiplication operation is realized as degree-1 polynomial
+multiplication, supporting modulus sizes of up to 16-bit. The poly-mode is beneficial for
+implementing the base multiplication in incomplete NTT, such as the case of Kyber. The
+pseudo-code for modular multiplication in poly mode is given as follows:
+
+                 CH = AL · BH + AL · BH                                                     mod q    (5)
+                 CL′ = AL · BL                                                              mod q    (6)
+                   T = A H · BH                                                      (not reduced)   (7)
+
+   An additional output T is produced, which serves as an intermediate result together
+with CL′ . To complete the base multiplication in incomplete NTT domain, T is multiplied
+by ζ in single mode and accumulated to CL′ , again in single mode:
+
+                  CL = CL′ + T · ζ                                                         mod q     (8)
+                        = AL · BL + AH · BH · ζ                                            mod q     (9)
+
+     Note that ζ is the twiddle factor, a power of the primitive root ψ (see Section 4), and
+it is distinct for the indices of the element-wise multiplication.
+Tosun et al.                                                                               13
+
+
+4.2.2   Butterfly Unit (BU)
+The architecture of the BU is illustrated in Figure 4. The unit comprises several submodules:
+a modular adder, a modular subtractor, a modular multiplier, a module that performs
+modular division by 2, an arithmetic shifter to the right, and shift (delay) registers. All of
+the mentioned submodules are designed such that they support single and dual modes
+(and poly mode for the modular multiplier). BU operates in a pipelined manner. The
+shift registers are used to synchronize the intermediate data for each operation. It takes
+three 32-bit operands, and outputs two 32-bit results. The modulus q, δ, β, and 2−1 are
+auxiliary data (which are not pipelined) used in related operations, as detailed in the
+following paragraphs.
+    The modular adder computes the sum of two operands and, if the result exceeds the
+modulus q, subtracts q to ensure that the output remains within the valid range. The
+modular subtractor operates in an analogous manner, performing subtraction followed by
+addition when necessary. To illustrate dual-mode support, we present the architecture
+of the modular subtractor in Figure 5 as a reference, which is similar to the modular
+adder/subtractor architecture proposed in [AMI+ 23], but extended to support 16- and
+32-bit operands. Other modules are implemented in a similar fashion. The borrow bits
+output, b′ , in the modular subtractor are used as inequality flags in several operations.
+
+Modular Multiplier. The modular multiplier module consists of a 32-bit integer multiplier
+and a modular reduction unit. The modular reduction is implemented using Barrett
+reduction method [Bar87a]. The integer multiplier is responsible for implementing the
+poly mode and is realized using the Karatsuba multiplication algorithm [Kar63]. The
+design rational behind choosing Barrett reduction is to recover the quotient from the
+modular reduction operation as well. In other words, the modular multiplier unit is
+also used as a divider. Computing the quotient is important for supporting functions of
+PQC such as Compress in Kyber and Decompose in Dilithium. Another advantage is that,
+with Barrett reduction, the output of the operation is not multiplied with a factor as in
+Montgomery or Plantard. To support division by arbitrary 32-bit values, rather than
+restricting the dividend to a function of q 2 , we implement the naïve Barrett reduction
+presented in Algorithm 1 (with λ = 32), which involves one 64-bit multiplication and one
+32-bit multiplication. This is particularly needed when implementing a division needed
+in masked implementation of Kyber, as further discussed in Section 6.2. For efficient
+computation, the 64-bit multiplication is also implemented using a recursive Karatsuba
+algorithm. The pre-computed Barrett constant (denoted by δ in Figure 4) is supplied to
+the BU through the auxiliary data path. For the 32-bit multiplication in Barrett reduction,
+only the lower 32 bits of the product are required, resulting in a truncated multiplication.
+For both 32-bit and 64-bit Karatsuba multipliers, the core multiplication size is set to
+16-bit, resulting in 3 and 9 core multiplications, respectively. As the truncated 32-bit
+multiplication is also achieved with 3 core multiplications of 16-bit, the modular multiplier
+requires 15 core multiplications in total. Without considering masking, the more efficient
+Barrett variant in Algorithm 2 could be used (again with λ = 32). Consequently, the
+Barrett reduction could be realized with only two 32-bit multiplications (one Karatsuba
+and one truncated multiplication), reducing the overall cost of modular multiplier to 9
+core multiplications.
+    Next, we detail how related functionality for PQC are implemented by the BU ar-
+chitecture. Giving this unit its name, the butterfly circuits of the NTT and INTT are
+implemented within the BU, utilizing the modular multiplier, modular adder, and modular
+subtractor. Specifically, Cooley–Tukey [CT65] (CT) butterflies are used for NTT and
+Gentleman–Sande [GS66] (GS) butterflies are used for INTT. Note that INTT requires
+post-processing, where both operands must be multiplied by 2−1 after each GS butterfly.
+The post-processing for one operand is embedded into multiplication by ψ −1 performed
+14                        RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+in the GS butterfly. For the other operand, it is handled using the modular divider by
+2 sub-module. This operation does not require multiplication and is implemented as
+(x ≫ 1) + 2−1 mod q using the pre-calculated (2−1 mod q) value.
+     Compress, Decompress (Kyber): As shown in Eq. 1, Compress operation requires both
+multiplication and division with rounding. 2d × x is calculated in modular multiplier.
+Then, q/2 is added to the result using the modular adder, to simplify rounding using the
+adder. Finally, the division operation is done using Barrett Reduction. In Decompress
+(Eq. 2), the divisor 2d is a power-of-two. Therefore, the division is implemented using the
+arithmetic shifter. These primitives are also used for performing left or right shifts, or
+divisions. Rounding can be disabled by a control bit. In particular, by setting q = 1, left
+and right shifts can be realized using Compress and Decompress, respectively. Similarly,
+invoking Compress with d = 0 is equivalent to computing the division x/q.
+     Decompose, UseHint (Dilithium): Similar to Compress, Decompose requires division by
+rounding (see Eq. 3), which is also efficiently done by the Barrett reduction in the modular
+multiplier, r1 = (x′ )/α, r0′ = (x + αh ) mod α, where x′ = (x + αh ) and αh = (α − 1)/2.
+Note that r1 and r0′ are the division and the remainder from dividing x′ to α. The
+added constant is subtracted afterwards using the modular subtractor for computing the
+lower-order term, r0 = (r0′ − (αh )) mod α. Moreover, there is a dedicated logic responsible
+for checking and applying the special case of the Decompose operation, abstracted as
+special case checkers in Figure 4. The corner case required for this check (by re-purposing
+2−1 input), as well as α (setting β = α), is given through the auxiliary data. We should
+note that the Decompose operation flow can be used to perform Power2Round by disabling
+the post-processing. UseHint operation is built on top of the Decompose output. BU
+receives both parts of the output produced by Decompose as its input, namely r1 , r0 , in
+addition to the hint h. The sign check on r1 is reformulated as a norm check, r1 ≤ q/2,
+and performed as described in below paragraph. Based on the outcome of this check, r1
+is either incremented or decremented by 1 using the modular adder. We remark that
+the Decompose operation can be considered as a generic operation that returns both the
+division and remainder.
+     CheckNorm, MakeHint (Dilithium): The infinity norm check ||x||∞ ≥ β over a vector
+requires performing an inequality check for every element in it, x ≥ β. First, β − 1 is added
+to the input data utilizing the modular adder unit, x′ = x + β − 1. As a result, the check
+becomes x′ ≥ (2β − 1). Then, we perform x′′ = (2β − 2) − x′ using the modular subtractor
+(x′′ is the value before modular reduction). x ≥ β if and only if x′′ is negative, so we output
+the borrow bits from the modular subtractor. MakeHint uses the exact same steps, with
+an additional step for checking the special case as in Decompose. The bound β ′ = β − 1 is
+also provided through the auxiliary data, (the same signal used in Decompose), as well as
+the special case for MakeHint. Although these mainly target Dilithium, inequality check is
+a generic feature.
+
+4.2.3   Encode Unit (EU)
+As discussed in Section 2.2, the decode function maps a sequence of bits to polynomial
+coefficients, while the encode function performs the inverse operation. In Kyber, where
+⌈log q⌉ = 12, there is no fixed alignment between the indices of 32-bit words and the 12-bit
+polynomial coefficients. The situation is the same for Dilithium as the modulus is 23 bits.
+As a result, explicit bit shifts are needed to transform between bit strings and polynomial
+coefficients. As in BU, EU operates based on the word mode, which enables it to handle
+the word sizes of both Kyber and Dilitihum efficiently. The internal resources are shared
+between encode and decode modes. EU is implemented as a shift-register. Unlike BU, the
+EU is a stateful unit. It maintains a 64-bit register K, implemented as a shift register, and
+a counter tracking the number of valid bits stored in K. We intentionally sized K to 64
+bits (rather than 32) to provide buffering and prevent stalling in the input/output stream.
+Tosun et al.                                                                                15
+
+
+4.2.4   Sampling Unit (SU)
+The sampling unit is responsible for two main pseudo-random sampling functions, CBDη
+and rejection sampling. The former is used exclusively by Kyber, while the latter is a
+core building block in PQC, employed by both Kyber and Dilithium. For both operation
+modes, NTT-Lite takes a pseudo-random data string (possibly generated by an XOF) as
+input and applies the logic of these functions to that data. As shown in Figure 3, the
+SU takes its input from the EU, where the pseudo-random data is first decoded and split
+into chunks matching the bit-length processed by the SU. The SU contains two modular
+subtractors, and additional dedicated logic for both CBDη and rejection sampling. The
+boundary for rejection sampling is supplied to NTT-Lite via the auxiliary data path. The
+SU also supports the dual-mode, consistent with the other units. We next describe the
+implementation details of these two sampling modes.                        Pη−1
+    CBDη takes 2 × η input bits and outputs (o0 − o1 ) where, o0 = ( i=0 bi ) and o1 =
+ P2η−1
+( i=η bi ) with each bi sampled uniformly from {0, 1}. Intuitively, o0 and o1 are the
+Hamming weights of two η-bit binary strings, and CBDη computes the difference between
+these weights. In our implementation, EU decodes the pseudo-random input to data
+chunks of 2 × η bits, each corresponding to the bits contributing to (o0 ||o1 ), which are then
+processed by SU. In SU, each chunk is further decoded to o0 and o1 and the subtraction
+operation is performed.
+    The rejection sampling uses the first modular subtractor as an inequality checker, to
+decide x < β by looking at the borrow bits. If the test passes, the data is forwarded
+to the output. In dual-mode, performing rejection sampling on 32-bit inputs requires
+a 16-bit buffer to handle scenarios in which only one of the two half-words is rejected.
+In some cases, the output of the rejection sampling must be centered, as in Dilithium’s
+small-coefficient sampler, whose output is uniform in [−η, η]. To achieve this, we compute
+β/2 − x for centralization. The second modular subtractor performs this operation.
+
+
+4.3     High-Level Operations
+In this section, we detail how the NTT-Lite operates on vector inputs leveraging the
+BU, EU, and SU. Table 3 summarizes the set of operations implemented in NTT-Lite.
+Although the table indicates the primary scheme associated with each operation, this
+association is not mandatory; the configuration is never hard-coded, ensuring crypto agility.
+The parameter n′ , which defines the input array length, is not fixed, and log n′ can be
+configured to any positive integer up to 8.
+
+4.3.1   Operation Details and Latencies
+For OP_NTT and OP_INTT, there are log n′ stages and n′ /2 butterfly operations are per-
+formed by BU at each stage, leading to roughly n′ /2 log n′ clock cycles. We note that each
+operation incurs a small additional latency due to the pipelined BU, SU, and EU units, as
+well as from data read and write operations; these latencies are omitted in Table 3 as well
+as the rest of the discussion for clarity. For example, OP_NTT and OP_INTT indeed take
+n/2 · log n + L where L denotes the summation of butterfly and internal memory access
+latency which is 12 in our implementation.
+    OP_SUM computes the sum of all indices in an input of size n′ , utilizing the modular
+addition in BU, taking n′ − 1 clock cycles. OP_ADD, OP_SUB, OP_PWM (point-wise multipli-
+cation), OP_COMPRESS, OP_DECOMPRESS, OP_DECOMPOSE, OP_MAKE_HINT are element-wise
+operations utilizing the corresponding operations from BU. Recall from Section 4.2.1 that
+OP_PWM in poly-mode is handled differently. Since a double pass over the input operands
+is performed to handle the multiplications by twiddle factors (see Eq. 8), the latency is
+approximately 2n′ cycles. OP_MAC is similar to OP_PWM, while it operates in a multiply-
+16                       RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+                    Table 3: Operations supported by NTT-Lite.
+                               Source Used Active           Clock
+               Opcode           Type      By      Units     Cycles
+               OP_NTT                 I       K, D      BU       n′ /2 · log n′
+               OP_INTT                I       K, D      BU       n′ /2 · log n′
+               OP_PWM                II       K, D      BU         n′ / 2n′
+               OP_ADD                II       K, D      BU              n′
+               OP_SUB                II       K, D      BU              n′
+                                                                      ′
+               OP_SUM                III      K, D      BU           n −1
+               OP_MAC                VI       K, D      BU         n′ / 2n′
+               OP_COMPRESS           III        K       BU              n′
+               OP_DECOMPRESS         III      K, D2     BU              n′
+               OP_DECOMPOSE          V          D       BU              n′
+               OP_CHK_NORM           III        D       BU            n′⋆
+               OP_MAKE_HINT          III        D       BU              n′
+               OP_USE_HINT           VI         D       BU              n′
+               OP_ENCODE             III      K, D      EU              n′
+               OP_DECODE             IV       K, D      EU              n′
+               OP_CBD                IV         K      EU, SU           n′
+                                                                       1
+               OP_REJ_SAMP           IV       K, D     EU, SU
+K: Kyber, D: Dilithium.
+n′ denotes the number of 32-bit words in the data array, which is n = 256 for Dilithium
+and n/2 = 128 for Kyber. ⋆ : operation is stopped immediately if operation returns failure,
+takes n′ cycle if operation returns success.
+1
+  : Running time depends on the bound (β) and input data.
+2
+  : Used in masked Dilithium implementation, see Section 6.2.
+
+
+and-accumulate manner, particularly beneficial for matrix multiplications. OP_CHK_NORM
+is also applied element-wise, but terminates early if any element x satisfies |x| ≥ β. This
+variable-time behavior is acceptable for Dilithium, as the input is discarded and the process
+is restarted upon failure.
+    For OP_ENCODE, the n′ input elements are streamed to the EU one-by-one, the operation
+completes once the final 32-bit encoded word is produced. Although the number of output
+words depends on the encoding parameter d, the total latency is determined by the input
+length n′ . OP_DECODE and OP_CBD follow a similar pattern, the number of cycles is fixed
+by the n′ output elements, while the required number of input words depends on d. For
+OP_REJ_SAMP, the user specifies the input length, and execution terminates once n′ valid
+samples are generated; otherwise, all input is consumed. Thus, its runtime depends on the
+modulus, the input size, and the input values themselves.
+
+4.3.2   Data Sources
+The source and destination memories for each operation are classified under the Source
+Type column in Table 3. Type I operations require three input sources: two operands are
+fetched from the 128 × 32 RAMs and the third from the 256 × 32 RAM, such as OP_NTT
+and OP_INTT. In this case, the third operand corresponds to the twiddle factors. This
+class produces two outputs, written to the 128 × 32 RAMs. For the rest of the discussion,
+the concatenation of two 128 × 32 RAM is called RAM0 , and 256 × 32 RAM is called
+RAM1 . Type II operations require two operands, one is read from RAM0 and the other is
+read from RAM1 . Type III operations require only a single input source, which is always
+read from the RAM0 . For Type IV such as OP_DECODE, the input is read from the RAM1
+Tosun et al.                                                                              17
+
+
+to prevent overwriting its data prior to processing. For Types II, III, and IV, the output is
+written to the RAM0 . OP_DECOMPOSE produces two outputs: the primary output is written
+to the RAM0 , whereas the secondary output is stored in the RAM1 . This configuration is
+indicated as Type V. Finally, OP_MAC and OP_USE_HINT operations are classified under
+Type VI, as these have three source operands with a single output. In that case, while
+the first two operands come from RAM0 and RAM1 , the third input source is the fresh
+data that is being transferred to NTT-Lite. That is directly processed without storing it
+internally.
+    In order to perform any of these opcodes provided by NTT-Lite, the input data must be
+transferred to NTT-Lite memory blocks RAM0 and/or RAM1 , depending on the operation.
+While the data transfer seems as a performance drawback, in most operations, transferring
+the input to NTT-Lite memory, either to RAM0 or RAM1 , and the operation is performed
+in parallel. Thanks to this overlapping mechanism, one of the transfer costs for the
+inputs is eliminated. Moreover, input and output data transfers are not always performed,
+enabling efficient chained operations on data already present in NTT-Lite. This means
+that NTT-Lite can be programmed to reuse one of the inputs or the output of a previous
+operation as the input to the next operation. This feature is not hard-coded and fully
+programmed by the user. All operation codes can be chained.
+    NTT-Lite also allows the right-hand operand to be a constant, supplied as auxiliary
+data, which is advantageous in scenarios where one input remains fixed. We leave increasing
+the size of NTT-Lite memory blocks for further optimization as a future work.
+    Lastly, NTT-Lite provides a dedicated flag to clear its internal memory at the end
+of an operation. This is beneficial for avoiding transitional leakage when two shares are
+processed by sequentially NTT-Lite. This cleaning occurs without additional cost, as it is
+overlapped with ongoing operations.
+
+
+5       Algorithms for Masked Implementations
+In order to protect Kyber and Dilithium implementations against differential power
+analysis attacks, all components that process the secret key need to be masked. This
+section describes how fully masked Kyber and Dilithium implementations are realized in
+the proposed HW/SW co-design solution (Section 3). To this end, we first introduce our
+approaches for masking the non-linear operations (CBD, norm checking, decompose, etc.),
+which are tweaked to leverage the existing hardware accelerators (NTT-Lite, Keccak and
+X2X) and maximize overall performance. Then, we provide masked compositions for high-
+level functions, Kyber.CCAKEM.Dec and Dilithium.Sign that build on these components.
+
+
+5.1     Kyber
+Here, we introduce the masked gadgets employed in our masked Kyber implementation
+and present the masked decapsulation algorithm Kyber.CCAKEM.MaskedDec.
+
+5.1.1    Masked Binomial Sampling
+The MaskedCBDη gadget used in our work is presented in Algorithm 3. It follows the
+masked generation of a pseudo-random byte string from the sensitive r value in Lines
+6-8 of Kyber.CCAKEM.Dec in Figure 11, using the Boolean masked PRF (Keccak). The
+MaskedCBDη transforms uniformly distributed byte strings (input s in Algorithm 3)
+into polynomial coefficients (output z in Algorithm 3) that follow the centered binomial
+distribution over [−η, η]. Note that s refers to the 2η-bit substrings of the output of
+PRF, and MaskedCBDη is applied to each substring to generate the required number of
+polynomial coefficients.
+18                       RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+
+Algorithm 3 MaskedCBD(s{0:d}B , η) from [OSPG18, SPOG19]
+Input: CBD parameter η
+Input: Masking order d
+                        {0:d}
+Input: s{0:d}B ∈ Z22·η B
+                          {0:d}
+Output: z {0:d}A ∈ Zq A following CBD distribution
+ 1: for i = 0 to 2 · η − 1 do
+            {0:d}B
+ 2:      s′        [i] = Refresh(s{0:d}B [i])                                 ▷ Using X2X
+          {0:d}A                {0:d}B
+ 3:      t       [i] = B2Aq (s′        [i])                                   ▷ Using X2X
+ 4: end for
+ 5: z {0:d}A = 0
+ 6: for i = 0 to η − 1 do
+ 7:      z {0:d}A = z {0:d}A + t{0:d}A [i] − t{0:d}A [η + i] mod q       ▷ using NTT-Lite
+ 8: end for
+ 9: return z {0:d}A
+
+
+
+    Recall from Section 4.2.4 that CBDη requires computing the differences of Hamming
+Weights of two η-bit strings. A first-order masked binomial sampler was proposed for
+the lattice-based NEWHOPE scheme in [OSPG18], and later extended in [SPOG19] to
+support arbitrary moduli q and masking orders d. In essence, this approach relies on first
+independently transforming each bit of the 2η-bit boolean shared string to arithmetic
+shares (using 2η calls to B2Aq ) to compute the difference between their Hamming weights,
+by subtracting and adding coefficient-wise in the arithmetic domain.
+    Further, the authors of [SPOG19] propose an alternate high-order masked binomial
+sampler, which performs the Hamming weight computation directly in the Boolean domain
+and only requires a single B2A conversion. In order to speed-up the Hamming weight
+computation and addition (in Boolean domain), the authors propose to use explicit
+bitslicing operations. As the proposed hardware architecture (Section 3) supports efficient
+mask conversion through the X2X accelerator, there is no need to include additional
+bitsliced arithmetic in the design (thus avoiding extra area overhead). Instead, we can rely
+on the existing units to perform multiple B2Aq operations efficiently.
+    To satisfy the required security notion, we introduce an explicit Refresh operation for
+the input s (Line 2).
+    We now show Algorithm 3 to be t-SNI secure with t + 1 shares, providing resistance
+against a probing adversary with t probes. Additionally, it allows the gadget to be used in
+larger compositions, such as a full Kyber decapsulation.
+
+Theorem 1. The gadget MaskedCBD, presented in Algorithm 3, is t-SNI with t ≤ d.
+
+Proof. The proof follows directly from the Refresh being t-SNI, as proposed in [SPOG19, Alg.
+20], and the B2Aq being t-NI, as proven in [NDKV25]. Furthermore, the additions in
+Line 7 are performed share-wise, and thus can be modeled as a t-NI gadget. The Refresh
+operation stops the propagation of output/intermediate probes to the input s.
+
+5.1.2   Masked Compression with Subtraction
+The MaskedSubCompress gadget, presented in Algorithm 4, allows to perform the masked
+compression used in Line 11 and Line 13 of Kyber.CPAPKE.Enc and Line 5 of Kyber.CPAPKE.Dec
+in Figure 11, and an optional subtraction. The latter is used to perform the final comparison
+in Line 5 of Kyber.CCAKEM.Dec in Figure 12, where the input b to Algorithm 4 corresponds
+to a compressed polynomial coefficient from the reference ciphertext c (repeated across all
+indices) in Kyber.CCAKEM.Dec in Figure 12. The masked compress operation is computed
+by performing the modulus switching using more precision, denoted by α. The input is
+Tosun et al.                                                                             19
+
+
+arithmetically shared, which enables efficient additions (Lines 2-6) using the NTT-Lite,
+after which the shared data is converted to the Boolean domain using the A2B conversion
+(X2X accelerator), during which an (optional) mask refresh is performed (Line 7). The
+conversion is required to perform the final shift (Line 9) in the Boolean domain.
+
+Algorithm 4 MaskedSubCompress(a{0:d}A , b, δ) from [CGMZ23, DVBV22]
+                    {0:d}
+Input: a{0:d}A ∈ Zq A
+Input: b ∈ Z2δ , subtraction operand which is a compressed polynomial coefficient
+Input: Compression factor δ
+                        {0:d}
+Output: r{0:d}B ∈ Z2δ B such that r = Compressq (a, δ) − b
+ 1: α = ⌈log2 (q · d)⌉
+ 2: for i = 0 to d do
+ 3:      t{i}A = ⌊(a{i}A · 2δ+α + q/2)/q⌋ mod 2δ+α+1                ▷ Using NTT-Lite
+ 4: end for
+ 5: t{0}A = t{0}A + 2α−1 mod 2δ+α+1                                 ▷ Using NTT-Lite
+ 6: t{0}A = t{0}A − 2α · b mod 2δ+α+1                               ▷ Using NTT-Lite
+ 7: t′{0:d}A = Refresh(t{0:d}A )                                         ▷ Using X2X
+ 8: t{0:d}B = A2B2δ+α+1 (t′{0:d}A )                                      ▷ Using X2X
+ 9: r {0:d}B = (t{0:d}B ≫ α) mod 2δ                                 ▷ Using NTT-Lite
+10: return r {0:d}B
+
+
+   Finally, we show that Algorithm 4 is t-SNI secure with t + 1 shares, allowing it to be
+used in a larger composition.
+
+Theorem 2. The gadget MaskedSubCompress, presented in Algorithm 4, is t-SNI secure
+with t ≤ d.
+
+Proof. The t-SNI property follows directly from the Refresh (Line 7) being t-SNI [SPOG19,
+Alg. 20]. Otherwise, the algorithm consist of a series of t-NI operations: all additions and
+the logical shift are performed in a share-wise fashion and the A2B operation is t-NI, as
+proven in [NDKV25].
+
+   We note that, without the t-SNI Refresh in Line 7, the algorithm achieves the t-NI
+notion. During the full Kyber decapsulation, we will use both these variants (and security
+notions) of Algorithm 4.
+
+5.1.3   Masked Non-Zero Testing
+The final step in the Kyber decapsulation is the ciphertext comparison, in which the re-
+computed ciphertext c′ is compared to the original ciphertext c (Line 5 of Kyber.CCAKEM.Dec
+in Figure 12). We present our proposed masked gadget for masked non-zero testing in
+Algorithm 5. Our methodology relies on testing the equality of two integer coefficients
+u and u′ being equivalent to testing if u − u′ being zero or not, which is computed by
+MaskedSubCompress (Algorithm 4). Note that MaskedSubCompress is executed for each
+element of the input vectors u and v, prior to invoking Algorithm 5, and the elements
+of these vectors indeed corresponds to the MaskedSubCompress outputs. The comparison
+is performed in the masked domain, and on all coefficients at once, as it was shown
+in [BDH+ 21] that partial results of the comparison leaks secret information. As such, the
+comparison is condensed into a single bit, which is unmasked (⊤ or ⊥).
+
+Correctness. For the false positive analysis, we consider whether an element of u or
+v can be non-zero while the algorithm outputs ⊥. This scenario can only occur if a
+modular reduction takes place during the summation. However, the carrier modulus q ′ is
+20                        RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+
+Algorithm 5 MaskedZeroTestVec(u{0:d}B , v{0:d}B )
+                      {0:d}B k×n
+Input: u{0:d}B ∈ (Z2δu      )
+                      {0:d}
+Input:    v{0:d}B ∈ (Z2δv B )n
+Input: A carrier prime q that satisfies q ′ > k · n · (2δu − 1) + n · (2δv − 1)
+                            ′
+
+Output: ⊥ if any of the elements of u or v are non-zero. Otherwise, ⊤
+                  {0:d}A
+ 1: t{0:d}A ∈ Zq ′        =0
+ 2: for j = 0 to n − 1 do
+ 3:     for i = 0 to k − 1 do
+ 4:          u{0:d}A [i][j] = B2Aq′ (u{0:d}B [i][j])                              ▷ Using X2X
+ 5:          t{0:d}A = t{0:d}A + u{0:d}A [i][j] mod q ′                      ▷ Using NTT-Lite
+ 6:     end for
+ 7:     v{0:d}A [j] = B2Aq′ (v{0:d}B [j])                                         ▷ Using X2X
+ 8:     t{0:d}A = t{0:d}A + v{0:d}A [j] mod q ′                              ▷ Using NTT-Lite
+ 9: end for
+                                                 ▷ Below lines correspond to [CGMZ23, Alg. 1]
+10: for i = 0 to d do
+11:     r ← Z∗q′                                                                  ▷ Using X2X
+          {0:d}A      {0:d}A           ′
+12:     t         =t         · r mod q                                       ▷ Using NTT-Lite
+13:     t{0:d}A = Refresh(t{0:d}A )                                               ▷ Using X2X
+14: end for
+15: t = t{0} + t{1} + · · · + t{d} mod q ′                       ▷ Unmasking, using NTT-Lite
+16: if t ̸= 0 then return ⊤
+17: else return ⊥
+18: end if
+
+
+
+chosen such that the accumulated sum never reaches the modulus boundary. Specifically,
+q ′ is selected so that even in the worst case, when all elements of u and v attain their
+maximum values, namely (2δu − 1) and (2δv − 1), the total sum remains strictly less than q ′ .
+Furthermore, the multiplication in Line 12 does not introduce a false positive, since r ̸= 0
+and q ′ is a prime, implying that t{0:d}A · r ≡ 0 (mod q ′ ) if and only if t{0:d}A = 0. On
+the other hand, if all elements of u and v are zero, then t{0:d}A = 0, and the algorithm
+correctly outputs ⊥, thereby eliminating false negatives.
+
+Theorem 3. The gadget MaskedZeroTestVec, presented in Algorithm 5, is t-NI secure
+with t ≤ d.
+
+Proof. It is shown in [CGMZ23] that Line 10-14 (without final unmasking) is t-NI secure.
+As the B2Aq (Line 4 & 7) are t-NI and the additions in Line 5 & 8 are performed in each
+share domain, it follows trivially that the entire gadget is t-NI secure.
+
+5.1.4    Masked Decapsulation
+Finally, all proposed gadgets are considered together to construct a fully masked Kyber
+decapsulation, Kyber.CCAKEM.MaskedDec. For this, we consider all relevant steps in the
+algorithm in Figure 12 (and subroutines in Figure 11), except the operations involving
+public values (e.g. public key, ciphertext, etc.), and perform a fine-grained analysis of
+its composed security. A summary of the proposed construction of the masked Kyber
+decapsulation is depicted in Figure 6.
+    First, we analyze Kyber.CPAPKE.Dec, as shown in Figure 11, and map its operations
+to gadgets as follows:
+
+     • G1−4 : Decode12 (Line 2), s̄ ◦ NTT(u) (Line 5), INTT (Line 5), subtraction with v
+Tosun et al.                                                                              21
+
+
+     (Line 5). All are linear (polynomial) operations and are performed on each share
+     separately.
+
+  • G5 : Compressq (Line 5). We use the masked compression gadget in Algorithm 4
+    (t-NI), without the (optional) subtraction (b set to 0). We refer to this instantiation
+    of Algorithm 4 by MaskedPolyToMsg.
+
+    Before the re-encryption in Kyber.CCAKEM.Dec function Figure 12 (Line 4), the
+decrypted message m′ and the hash of the public key are hashed (using G hash function) to
+generate r and K ′ (mapped to gadget G6 ), which are both sensitive. If the final ciphertext
+comparison is successful, the masked K ′ is unmasked to perform the final hash in the clear,
+as proposed in [BGR+ 21, BDK+ 21, KDVB+ 22]. It is critical that the short-term secret
+K ′ is only revealed if the comparison passes, and not in case of failure as then it could
+be used to recover the long-term secret key. The G operation, which relies on Keccak, is
+masked as proposed in prior art [GSM17] and integrated in our accelerator/peripheral.
+    Next, we analyze Kyber.CPAPKE.Enc (Figure 11), focusing on operations involving
+secret data:
+
+  • G7−9 : PRF(r) (Lines 5-8). This operation is also a symmetric primitive and imple-
+    mented using the masked Keccak peripheral.
+
+  • G10−12 : CBD (Lines 5-8) to generate r, e1 , e2 . We utilize our proposed masked
+    binomial sampler (Algorithm 3), which uses the X2X peripheral to accelerate the
+    mask conversion.
+
+  • G13−16 : NTT(r) (Line 9), Ā ◦r̄ (Line 10), INTT (Line 10), addition with e1 (Line 10).
+    All are linear operations and thus are masked by implementing them in a share-wise
+    fashion.
+
+  • G17 : Decompressq (Decode1 ((m′ ), 1)) (Line 12). As before, the decoding operation is
+    trivial to mask. Then, the Boolean shared message m′ is converted to arithmetic
+    shares with a B2Aq using the X2X peripheral, and multiplied with a constant. We
+    refer to this gadget as MaskedPolyFromMsg.
+
+  • G18−21 : t̄ ◦ r̄, INTT, addition with e2 , addition with decompressed message (Line
+    12). All are linear operations and are performed on each share.
+
+  • G22−23 : Compressq (Lines 11 & 13). The re-computed ciphertext components are
+    compressed, and subtracted with the public (input) ciphertext u, v, using the proposed
+    MaskedSubCompress gadget (Algorithm 4). To compute the ciphertext component
+    c2 , the (optional) explicit mask refresh in Algorithm 4 is enabled to ensure the
+    composition is secure.
+
+    Finally, the masked ciphertext comparison is performed on the (masked) compressed
+ciphertext (c1 and c2 ) using the secure zero check in Algorithm 4, mapped to G24 . As
+shown in Section 5.1.3, t is unmasked as a final step to determine if the comparison is
+successful (or not). Note that Figure 6 excludes the unmasking of t as well as short-term
+secret K ′ .
+    We now show that our proposed masking of the Kyber decapsulation is t-NI secure with
+t + 1 shares, and as a result also t-probing secure. In the proof, we iterate over all output
+and intermediate variables and show how each can be simulated using only a limited set of
+input shares, based on the t-(S)NI properties of the individual gadgets.
+
+Theorem 4. The gadgets in Figure 6 (Kyber.CCAKEM.Dec) are t-NI secure with t ≤ d.
+22                                  RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+                                                                               NTT(u)                      v
+
+                                                             G1                    G2          G3          G4            G5
+                                                    sk     Decode12
+                                                                        s̄
+                                                                                   ◦          INTT         −       MaskedPolyToMsg     m′
+
+
+                                                                                                                          G17
+                                                                                                                   MaskedPolyFromMsg
+                                      v
+                                                                                                                                            G6
+                         c2
+                                      G23           G21      G20
+                                                                                                      e2
+                                                                                                                   G10         G7           G    K′
+                               MaskedSubCompress    +        +                                                  MaskedCBD      PRF
+
+
+           G24                                                         G19          G18
+                                                                      INTT           ◦                t̄
+ t   MaskedZeroTestVec
+             ?
+        c − c′ == 0
+                                       G22           G16       G15           G14               G13                 G11         G8
+                          c1                                                            r̄             r                               r′
+                                MaskedSubCompress    +        INTT            ◦                NTT              MaskedCBD      PRF
+
+                                          u                                  Ā                                    G12         G9
+                                                                                                      e1
+                                                                                                                MaskedCBD      PRF
+
+
+
+Figure 6: An abstract diagram of the Kyber.CCAKEM.MaskedDec, consisting of the de-
+cryption (gray) and re-encryption (yellow). The t-NI gadgets are depicted with a single
+border, the t-SNI gadgets with a double border.
+
+
+Proof. All linear operations, in both the decryption and (re-) encryption, are modeled as
+t-NI gadgets as these are performed in a share-wise fashion (e.g. G1−4 , G13−16 , G18−21 ).
+Additionally, all gadgets that perform symmetric key operations (G, PRF) are implemented
+as proposed in [GSM17] using t-NI DOM gates. As a result, the gadgets G6 and G7−9 are
+modeled as t-NI gadgets. The Compressq algorithm is implemented using the proposed
+Algorithm 4, which is proven to be t-SNI secure (G23 ) or t-NI (G5 , G22 ). Similarly,
+the Decompressq operation consist of the t-NI B2A operation (X2X) and share-wise
+multiplication, and thus is modeled as the t-NI gadget G17 . The sampling operation
+(G10−12 ) are implemented as the t-SNI gadget in Algorithm 3. The final comparison
+operation is implemented as proposed in Algorithm 5, and thus G24 is t-NI.
+   An adversary can probe any of these gadgets Gi internally (tGi probes) or their output
+shares (oGi probes), except the final outputs K ′ and t (due to t-NI property). In total, at
+most tGKyber.CCAKEM.Dec internal probes can be placed:
+
+                                                            24
+                                                            X                      5
+                                                                                   X                  23
+                                                                                                      X
+                                 tGKyber.CCAKEM.Dec =              tGi +                     oG i +             oG i
+                                                            i=1                    i=1                i=7
+
+   The proof now consists of showing that any internal and output probes can be perfectly
+simulated with ≤ tGKyber.CCAKEM.Dec shares of the input sk, and that the required set of input
+shares |I| is independent of |O|.
+   To simulate the internal and output probes P     in the gadgets of the decryption operation
+                                                      5
+(G1 − G5 , gray in Figure 6), a total of tgray = i=1 tGi + oGi shares of the input sk are
+required due to the t-NI property of the gadgets.
+    For the encryption, we need to verify that the simulation of tj probes on intermediate
+values does not require more than tj shares of the inputs. Starting from the output and
+working towards the input, without the t-SNI gadget G23 , simulating tG24 intermediate
+probes of G24 would require ≥ 2 · tG24 shares of r̄, which is not secure. But, the t-SNI
+gadget stops the propagation of probes on the output shares (oG23 ) to its input, so that
+tG23 + oG23 + tG24 probes can be simulated with tG23 shares of the output of G21 . In
+summary, to simulate
+               P16                   P22 and output shares of gadgets G14 −G16 , G18 −G24
+                      the internal probes
+require tr̄ = ( i=14 tGi + oGi ) + ( i=18 tGi + oGi ) + tG23 + tG24 shares of r̄. Similarly, we
+can determine the amount of shares of the intermediate values in the encryption (yellow)
+are required for simulation:
+
+                                      te2 = tG20 + oG20 + tG21 + oG21 + tG23
+Tosun et al.                                                                               23
+
+
+                           te1 = tG16 + oG16 + tG22 + oG22 + tG24
+    We now repeat the same technique as before and determine the total amount of shares
+of the inputs (m′ and r′ ) of the yellow zone (encryption) are required to simulate all probes
+in the yellow-shaded zone. We sum all shares, starting from the output and working
+towards the input:
+
+                 tyellow = tG7 + oG7 + tG8 + oG8 + tG9 + oG9 + tG10 + tG11
+                                   +tG12 + tG17 + oG17 + tG21 + oG21 + tG23
+
+As we can see, the t-SNI property of G10 − G12 and G23 stops the propagation of probes.
+   Finally, we sum all share contributions from the yellow and gray zone, to determine
+the set of input shares required for simulating the entire composition:
+
+                                   |I| = tgray + tG6 + tyellow
+
+As |I| ≤ tGKyber.CCAKEM.Dec , the composed gadget satisfies the t-NI notion.
+
+5.2     Dilithium
+Here, we describe the masked gadgets employed in our masked Dilithium implementation
+and present the masked signing algorithm Dilithium.MaskedSign.
+
+5.2.1   Masked Uniform Sampler
+In the masked Dilithium.Sign algorithm, the masked uniform sampler, here referred to as
+MaskedUniform in Algorithm 6, is utilized to mask the function ExpandMask and generate
+y securely (Line 7, Dilithium.Sign algorithm, Figure 13). MaskedUniform takes as input the
+Boolean masked string s and the distribution parameter γ. Note that the string s indeed
+corresponds to substrings of the output of XOF, which takes as input the secret seed ρ′ in
+Line 7 of Dilithium.Sign. Algorithm 6 is then executed across all substrings to generate the
+polynomial coefficients of y. Each share of the input string s is of γ bits. This masked
+algorithm outputs arithmetic masked r, where each coefficient of each share belongs to Zq
+and each coefficient of r follows the uniform distribution in [−2γ−1 + 1, 2γ−1 ].
+
+Algorithm 6 MaskedUniform(s{0:d}B , γ)
+Input: Parameter γ
+                     {0:d}
+Input: s{0:d}B ∈ Z2γ B
+                       {0:d}
+Output: r{0:d}A ∈ Zq A , where r follows uniform distribution in (−2γ−1 , 2γ−1 ]
+      {0:d}B
+ 1: s        = Refresh(s{0:d}B )                                         ▷ Using X2X
+      {0:d}A
+ 2: r        = B2Aq (s{0:d}B )                                           ▷ Using X2X
+ 3: r {0}A = 2γ−1 − r {0}A mod q                                   ▷ Using NTT-Lite
+ 4: for i = 1 to d do
+ 5:      r{i}A = 0 − r{i}A mod q                                   ▷ Using NTT-Lite
+ 6: end for
+ 7: return r {0:d}A
+
+
+
+Theorem 5. The gadget MaskedUniform, presented in Algorithm 6, is t-SNI with t ≤ d.
+
+Proof. It follows an identical approach to the proof of Theorem 1. Refresh is a t-SNI
+gadget and B2Aq is a t-NI gadget. The subtractions in Lines 3 and 5 are performed in a
+share-wise manner, preserving the t-NI security. Therefore, the gadget MaskedUniform, a
+composition of t-SNI and t-NI gadgets, also achieves t-SNI security.
+24                        RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+5.2.2    Masked Norm Check
+The masked norm check algorithm, referred to as MaskedCheckNormw in Algorithm 7,
+is used to securely perform both rejection checks ||z||∞ ≥ γ1 − β and ||r0 ||∞ ≥ γ2 − β
+(Line 14, Dilithium.Sign algorithm, Figure 13). MaskedCheckNormw takes arithmetic shares
+of a, the word size parameter w, and the bound β as input. It returns a masked 1-bit
+output r, which is 0 if the following equation holds: q − β ≥ a ≥ β and otherwise 1. Our
+MaskedCheckNormw is adapted from [ABC+ 23].
+
+Algorithm 7 MaskedCheckNormω (a, β) adapted from [ABC+ 23]
+Input: Bound β
+Input: Word-size parameter ω ≥ ⌈log q⌉ + 1, e.g., ω = 32
+                      {0:d}
+Input: a{0:d}A ∈ Zq A
+                        {0:d}
+Output: r{0:d}B ∈ B1 B such that r = 0 if (q − β ≥ a ≥ β). Otherwise, r = 1
+ 1: a{0}A = a{0}A + β − 1 mod q            ▷ Using NTT-Lite, the check becomes (a ≥ 2β − 1)
+                                                                         ▷ Modulus switching
+ 2: a{0:d}B = A2Bq (a{0:d}A )                                                    ▷ Using X2X
+     {0:d}A     {0:d}A             {0:d}
+ 3: t        ∈ Z2ω      = B2A2ω (a       B
+                                           )                                     ▷ Using X2X
+ 4: t{0}A = t{0}A − (2β − 1) mod 2ω             ▷ Using NTT-Lite, the check becomes (t ≥ 0)
+ 5: t{0:d}B = A2B2ω (t{0:d}A )                                                   ▷ Using X2X
+ 6: r {0:d}B = t{0:d}B [ω − 1]           ▷ Using NTT-Lite, logical shift to right by ω − 1-bit
+ 7: return r {0:d}B
+
+
+     Now, we show that Algorithm 7 is t-NI secure.
+Theorem 6. The gadget MaskedCheckNormw , presented in Algorithm 7, is t-NI with
+t ≤ d.
+Proof. In Algorithm 7, the B2Aq on Line 2, the B2A2w on Line 3, and the A2B2w on
+Line 5 are t-NI. The addition in Line 1, the subtraction in Line 4, and the logical shift
+operation in Line 6 are performed in a share-wise manner, thus preserving the t-NI security.
+Therefore, the gadget MaskedCheckNormw , a composition of t-NI gadgets, also achieves
+t-NI security overall.
+
+5.2.3    Masked Decompose Function
+The masked decompose function, MaskedDecompose in Algorithm 8, is used to extract
+high and low bits of w = (W1 , W0 ) securely (Lines 9 and 13, Dilithium.Sign algorithm,
+Figure 13). MaskedDecompose takes arithmetic shares of a and a decomposition parameter
+γ as input and returns unmasked high bits r1 and arithmetic masked shares of low bits r0 ,
+where unmasked a = r1 · δ + r0 and δ = (q − 1)/γ. Our MaskedDecompose closely follows
+SecDecomposeComp from [ABC+ 23]. As proven in [ABC+ 23], the MaskedDecompose in
+Algorithm 8 is t-NI secure when r1 is the public output.
+
+5.2.4    Masked Signing
+In this section, we describe our masked signing operation for Dilithium, Dilithium.MaskedSign.
+For our masked signing algorithm, we follow the sensitive analysis proposed in [ABC+ 23]
+and mask the same variables. All the gadgets required to mask Dilithium.Sign operation
+(Figure 13) are presented in Figure 7. For the sake of simplicity, we omit the component
+from the figure that only handles public or non-sensitive values, and for which masking is
+unnecessary.
+    Now, we elaborate on the gadgets utilized in Dilithium.MaskedSign and align them with
+Dilithium.Sign operation presented in Figure 13.
+Tosun et al.                                                                                         25
+
+
+
+Algorithm 8 MaskedDecompose(a{0:d}A , γ) from [CGTZ23]
+                    {0:d}
+Input: a{0:d}A ∈ Zq A
+Input: Decomposition parameter γ
+                {0:d}
+Output: r1 , r0 A such that (r1 , r0 ) = Decomposeq (a, γ)
+ 1: δ = (q − 1)/γ
+ 2: t{0:d}A = −a{0:d}A · δ mod q                                     ▷ Using NTT-Lite
+ 3: t{0}A = t{0}A + (q − 1)/2 mod q                                  ▷ Using NTT-Lite
+ 4: t{0:d}B = A2Bq (t{0:d}A )                                              ▷ Using X2X
+ 5: if δ is a power-of-two then
+         {0:d}
+ 6:     r1 B = t{0:d}B [log δ − 1 : 0]
+               {0}       {1}         {d}
+ 7:     r1 = r1 B ⊕ r1 B ⊕ · · · ⊕ r1 B                                    ▷ Unmasking
+ 8: else
+ 9:     t{0:d}B = Refresh(t{0:d}B )                                        ▷ Using X2X
+         {0:d}A             {0:d}B
+10:     r1      = B2Aδ (t          )                                       ▷ Using X2X
+               {0}       {1}         {d}
+11:     r1 = r1 A + r1 A + · · · + r1 A mod δ              ▷ Unmasking, using NTT-Lite
+12: end if
+     {0:d}A
+13: r0       = a{0:d}A − γ · r1 mod q                                ▷ Using NTT-Lite
+                  {0:d}A
+14: return r1 , r0
+
+
+
+
+                                   reject / not reject
+
+
+
+
+                                                                               reject / not reject
+
+
+
+
+Figure 7: An abstract diagram of the Dilithium.MaskedSign. All the gadgets are at least t-NI.
+The t-NI gadgets are depicted with a single border, while the t-SNI gadget MaskedUniform
+is depicted with a double border.
+
+
+  • G1−2 : As part of the ExpandMask function (Line 7), masked Keccak is used as the
+    gadget G1 first, and after that MaskedUniform (Algorithm 6) is used as the gadget
+    G2 to sample y from [−2γ−1 + 1, 2γ−1 ] following the uniform distribution.
+
+  • G3−5 : NTT(y), NTT(y) ◦ A, and INTT(NTT(y) ◦ A) of Line 8 are all linear operations
+    and are performed securely by applying them share-wise. The masked NTT(y),
+    masked NTT(y) ◦ A, and masked INTT(NTT(y) ◦ A) are performed using G3 , G4 ,
+    and G5 gadgets, respectively.
+
+  • G6 : The decomposition function generates unmasked w1 used in HighBitsq (w, 2γ2 )
+    (Line 9) and the arithmetic shares of w0 used in LowBitsq (w − cs2 , 2γ2 ) (Line 13). It
+26                        RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+
+                                          PQC Software
+                                       (Kyber, Dilithium, ..)
+
+                                      SDK (Drivers)
+
+                           NTT-Lite Keccak                 X2X     Core
+                                                                 (RISC-V)
+
+
+
+
+                    Figure 8: Software development stack for RISQrypt.
+
+
+       is performed using the MaskedDecompose function in Algorithm 8 as the gadget G6 .
+     • G7−10 : NTT(s1 ), NTT(c)◦NTT(s1 ), NTT(y)+(NTT(c)◦NTT(s1 )), and INTT(NTT(y)+
+       (NTT(c) ◦ NTT(s1 ))) carried out according to the operations presented in Line 12,
+       which are all linear and can be masked by applying them share-wise. These are
+       implemented using G7 , G8 , G9 , and G10 gadgets, respectively.
+     • G13−16 : Similarly, NTT(s2 ), NTT(c)◦NTT(s2 ), INTT(NTT(c)◦NTT(s2 ), and w−cs2
+       (on low bits) are performed corresponding to the operations specified in Line 13.
+       These are also linear and can be masked by applying them share-wise. These masked
+       operations are carried out with gadgets G13 , G14 , G15 , and G16 , respectively.
+     • G11 and G17 : The gadget MaskedCheckNormω , presented in Algorithm 7 is used
+       as G11 and G17 . G11 and G17 are used to perform the first two rejection checks
+       ||z||∞ ≥ γ1 − β and ||r0 ||∞ ≥ γ2 − β on Line 14 securely.
+     • G12 , G18 , and G19 : These gadgets are used to unmask z, r0 , and w1 securely.
+
+    Similar to the masked signing algorithm of Dilithium presented in [ABC+ 23], all
+gadgets of our masked signing algorithm are at least t-NI, and public variables are securely
+unmasked. Therefore, the masked signing algorithm achieves t-NI security, given the
+signature σ = (z, h, c̄) is a public output.
+
+
+6      Software Layer
+In this section, we describe the software layer of the RISQrypt PQC implementations. The
+overall software stack is illustrated in Figure 8. The SDK denotes the driver layer that
+interfaces with the RISQrypt hardware accelerators, namely NTT-Lite, Keccak, and X2X.
+In our design, the software primarily serves an orchestration role, issuing commands to the
+hardware accelerators and providing memory address pointers for input and output data.
+
+6.1      Unprotected Implementations
+The unprotected implementations cover all high-level APIs of Kyber and Dilithium (see
+Figure 12 and Figure 13). Recall that the integrated hardware accelerators support nearly
+all underlying subroutines: hashing and extendable-output functions are handled by the
+Keccak accelerator, while polynomial arithmetic and related operations are executed
+by NTT-Lite using the operation codes described in Section 4. The only exception is
+the SampleInBall function in Dilithium, which is not computationally intensive and has
+therefore been left for future work.
+
+6.2      Protected Implementations
+We now discuss the implementation of the software layers for the masked functions of
+Kyber decapsulation and Dilithium signature generation, Kyber.CCAKem.MaskedDec and
+Tosun et al.                                                                              27
+
+
+Dilithium.MaskedSign. The polynomial arithmetic in these functions, which is linear under
+arithmetic masking, is implemented in NTT-Lite via share-wise processing. Between the
+processing of different shares, the memory-clearing feature of NTT-Lite is utilized (see
+Section 4.3.2). Similarly, hashing operations such as SHA or SHAKE, with or without
+masking, are executed by the Keccak accelerator, which supports first-order masking.
+The remaining parts of the algorithms consist of non-linear operations, as discussed in
+the previous section. We now discuss how each of these operations maps efficiently to
+NTT-Lite and X2X, enabled by the agile design of the architecture.
+     First, we discuss the non-linear algorithms used in Kyber. In Algorithm 3, Refresh
+and B2Aq in Lines 2 and 3 are performed in a single command by the X2X accelerator
+(OP_REFX2X), thereby avoiding redundant processing in the pipeline. This operation also
+leverages the 1-bit mode of X2X. The arithmetic in Line 7 consists of classical chained
+additions and subtractions implemented in NTT-Lite. For the rest of the non-linear
+algorithms, the constant operand feature of NTT-Lite is applied where relevant, although
+it is not explicitly mentioned in the discussion.
+    In Algorithm 4, a division by q is required in Line 3, which is efficiently performed via
+Barrett reduction in NTT-Lite. It is worth noting that existing implementations using
+reduction mechanisms specific to Kyber’s q cannot compute the quotient. Furthermore,
+this algorithm requires 32-bit (single-mode) processing because the dividend exceeds
+16 bits, despite Kyber’s general dual-mode operation. Switching between single-mode
+and half-mode is handled efficiently using OP_ENCODE and OP_DECODE, without involving
+software-level data processing. The shift in Line 9 is achieved via OP_DECOMPRESS.
+    In Algorithm 5, the summations in Lines 5 and 8 are carried out using OP_ADD or
+array-wise addition, followed by a final OP_SUM to perform accumulation across all indices.
+The carrier prime q ′ is supported by NTT-Lite thanks to its configurability. Similarly,
+X2X allows the use of this modulus because it does not restrict the supported moduli
+to those of Kyber and Dilithium. Random sampling in Line 11 and Refresh in Line 13
+are performed using the X2X accelerator, using OP_PRNG and OP_REF, respectively. The
+MaskedPolyFromMsg algorithm (see G17 in Section 5.1.4) also leverages the 1-bit mode of
+X2X to perform the B2A efficiently on 1-bit input.
+    Next, we discuss the non-linear algorithms used in Dilithium. Algorithm 6 is straight-
+forward to implement using the NTT-Lite and X2X accelerators. Algorithm 7 similarly
+relies on the standard functionality of these units. Notably, this algorithm operates modulo
+232 in NTT-Lite for the subtraction in Line 4. In Line 6, the right-shift is implemented
+using OP_DECOMPRESS, demonstrating the generality of this command, although it was
+originally designed for Kyber. In Algorithm 8, Line 9, it is again worth noting that X2X
+operates using moduli different from the default ones of Kyber and Dilithium. The XOR
+(⊕) operation required by boolean unmasking in Line 7 is currently not implemented in
+NTT-Lite. However, it is trivial to add, and performing it in software does not introduce
+micro-architectural leakage concerns, as the data is no longer security-sensitive.
+
+
+
+
+7    Results
+
+In this section, we evaluate the proposed solution in terms of security and performance, and
+compare it with existing works in the literature. All source code related to the RISQrypt
+project is publicly accessible at https://github.com/cisec-su/RISQrypt . This includes
+the HDL sources regarding the hardware accelerators, the associated SDKs, software layers
+for PQC implementations, and SCA scripts including trace acquisition and testing.
+28                         RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+7.1      Side-channel Leakage Evaluation
+
+
+
+Although we give a formal security proof for our side-channel-protected design, a practical
+evaluation is still necessary to uncover implementation issues such as transitional leakage.
+To this end, we performed a Test Vector Leakage Assessment (TVLA), a standard procedure
+widely used in the side-channel analysis literature [GGJR+ 11]. In TVLA, two sets of
+traces are captured from the evaluated implementation. A trace is a set of power leakages
+recorded during the execution of cryptographic function. One of the sets is captured with a
+random input, while the other is captured with a fixed input. The masked implementation
+is approved if the two trace sets are statistically not different from each other, which
+evidences that the power leakage does not depend on secret data. Welch’s t-test is used as
+the statistical tool to compare the random-input and the fixed-input set, which computes
+a metric called t-value. The greater the t-value, the more different both sets are from each
+other. In the test, the null hypothesis proposes that the fixed-input and random-input
+trace sets follow the same statistics. A typical threshold for t-value is 4.5 in absolute value,
+which provides 99.999% confidence to reject the null hypothesis.
+
+
+    We used the ChipWhisperer framework for the experiments. CW Husky2 is used for
+trace capturing while CW3053 target board, which is equipped with an Artix-7 FPGA
+(XC7A100T), is used as the victim device running our implementation. The core clock of
+the victim device is set to 40 MHz. The trace collector facility is configured to collect four
+samples at each clock cycle. To validate our experimental setup, we also include the t-test
+results where the PRNG in the system is disabled. For this scenario, we collected 1K traces,
+whereas 100K traces were used when PRNG was enabled. We captured the fixed-input and
+random-input sets by randomly interleaving them to mitigate environmental bias [TG16].
+
+
+     We evaluated both Kyber.CCAKem.MaskedDec and Dilithium.MaskedSign. In our analy-
+sis, the input refers to the secret key used by the mentioned functions. For Dilithium.MaskedSign,
+the t-test is complex due to the algorithm being non-constant time (e.g., rejection sam-
+pling). We therefore analyze only a single iteration of the rejection sampling loop and
+ignore rejections within that iteration. Figure 9 demonstrates the t-test results for both
+algorithms. With the randomness disabled (PRNG OFF), leakage is clearly observed after
+acquiring only 1K traces, as t-values are significantly higher than 4.5. On the other hand,
+when the PRNG is on, the t-values remain lower than 4.5, for both algorithms. This result
+proves the practical effectiveness of countermeasures implemented. We note that since our
+t-test analysis is performed using a large number of samples, false positives (Type I error)
+are expected [DZD+ 17, BGG+ 14]. In [BGR+ 21], the authors use a more conservative
+threshold of 6.88 to reduce the probability of Type I error. Instead, we repeated the tests
+over the same intervals and consider effects that were not reproducible as false positives.
+
+
+
+
+     2 https://rtfm.newae.com/Capture/ChipWhisperer-Husky/
+     3 https://rtfm.newae.com/Targets/CW305%20Artix%20FPGA/
+Tosun et al.                                                                              29
+
+
+
+
+(a) Kyber.CCAKEM.MaskedDec – PRNG_OFF             (b) Kyber.CCAKEM.MaskedDec – PRNG_ON
+
+
+
+
+  (c) Dilithium.MaskedSign – PRNG_OFF                (d) Dilithium.MaskedSign – PRNG_ON
+
+        Figure 9: TVLA results under two configurations: PRNG_OFF and PRNG_ON.
+
+
+7.2     Performance Evaluation
+To assess the effectiveness of the proposed hardware–software co-design, we conducted a
+comprehensive performance evaluation and compared it with existing implementations. By
+benchmarking against representative designs, we highlight the advantages of our approach
+in achieving lower latency while maintaining competitive hardware costs.
+
+7.2.1   Hardware Overhead
+In Table 4, we report the resource overhead of cryptographic accelerators in the proposed
+design. We implemented our design on the Artix-7 XC7A100T-1CSG324C FPGA de-
+vice using Xilinx Vivado 2023.2 with the balanced option. In the table, we report the
+FPGA resource consumption of three configurations. The first one is the base proces-
+sor. Cryptographic accelerators are excluded, and the system contains only the RISC-V
+processor, memory, and peripherals. In the second one, cryptographic accelerators are
+included, but masking is disabled as a reference. The X2X accelerator is absent, and
+the Keccak accelerator does not support masking. This configuration serves as a perfor-
+mance and area reference. The third one is our proposed design, where cryptographic
+accelerators are included with full masking support. By comparing configurations with
+cryptographic acceleration, we quantify the overhead introduced by acceleration, both with
+and without masking. The reported results align with our design expectations. Overall,
+the reported hardware overhead represents a reasonable cost for achieving both security
+and high performance. The maximum frequency of the system decreases modestly when
+cryptographic acceleration is enabled. However, timing analysis shows that the critical
+path lies on the Wishbone bus. This is due to the increased overall design size and a
+30                             RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+          Table 4: FPGA resource overhead of cryptographic modules and masking.
+                  Configuration            LUT         FF       DSP       BRAM         Freq.
+                Crypto. Acc.     Mask.                                                 (MHz)
+
+
+                      ✗            NA       5488      2703        0          80          63
+
+
+                      ✓             ✗      15672      8126        9∗        81.5         61
+                   Crypto Overhead         10184      5423        9∗         1.5
+
+
+                      ✓             ✓      30074      21460       15        81.5         60
+                   Crypto Overhead         24586      18757       15         1.5
+∗
+    modular multiplier is not optimized for the unmasked scenario and theoretical number is reported. Maximum
+synthesisable frequencies are reported.
+
+
+
+
+more constrained place-and-route process, rather than within the internal logic of the
+cryptographic accelerators.
+    Table 5 presents a detailed breakdown of resource utilization for individual modules.
+For NTT-Lite, the BU consumes the majority of LUTs and all DSPs, as it implements
+the core polynomial arithmetic. The cost of EU and SU are relatively negligible. For
+Keccak and X2X, the core units also consume the largest portion of resources. In Keccak,
+FIFO and FSM also consume notably. The sponge function logic could be implemented
+in software to reduce FSM cost at the expense of performance (see Section 3.1). For
+reference, Table 6 shows the resource utilization of Keccak when masking is disabled, which
+approximately halves its resource consumption. This accounts for the observed overhead in
+LUT and FF usage. Accordingly, the cost of the modular multiplier in NTT-Lite decreases
+by 6 DSPs when masking is not considered (see Section 4.2.2). In X2X, the PRNG also
+consumes a significant number of LUTs; however, A2B/B2A conversion methods with
+lower randomness requirements could reduce this overhead, which we leave for future work.
+    Next, we present the results of ASIC synthesis for the proposed design in Table 7.
+The design is synthesized using the TSMC 65nm Low-Power (LP) standard cell library.
+We evaluated the design at two target frequencies: 100 MHz and 500 MHz. The latter
+incurs an area overhead of approximately 6% relative to the 100 MHz baseline, resulting
+from the timing-driven optimizations required to meet the stricter timing constraints.
+Notably, NTT-Lite consumes significantly more area than the others, primarily due to its
+memory (BRAM-equivalent) requirements. Further area optimization of NTT-Lite for
+ASIC implementations is left as future work.
+
+7.2.2      Time Performance
+Table 8 presents the time performance of our implementation in comparison with related
+work from the literature. Developed source codes for RISQrypt’s software layer is compiled
+with RISC-V toolchain using -O3 option to speed optimize. Reported numbers are in
+thousands of clock cycles. For our solution, the mean number of clock cycles is reported as
+the average over 1024 experiments with uniformly random inputs. For the existing works,
+the reported figures are taken directly from the corresponding publications. For Kyber,
+the performance of CCAKEM functions are reported. Input message length is set to 32B
+for Dilithium.
+    As can be observed in the table, our design significantly outperforms the literature
+across all functions of Kyber and Dilithium. For Kyber.INDCCA.MaskedDec, there is only
+Tosun et al.                                                                                       31
+
+
+                Table 5: FPGA resource utilization of individual modules
+                         Module           LUT           FF     DSP         BRAM
+                         NTT-Lite         5064      1934           15          1.5
+                            BU            2761      1092            15          0
+                            EU             331          73          0           0
+                            SU             413          99          0           0
+                         FSM + RAM         656          273         0          1.5
+
+                          Keccak          9777      7626            0          0
+                            Core          5512      4022            0           0
+                           FIFO           1024      3200            0           0
+                           FSM            3024          39          0           0
+
+                           X2X            9409      9163            0          0
+                            Core          3804      5084            0           0
+                           PRNG           3341      1090            0           0
+                      FSM + Reg. File     1225      1265            0           0
+
+
+        Table 6: FPGA resource utilization of Keccak when masking is disabled.
+                         Module         LUT       FF          DSP         BRAM
+                          Keccak        4792     3455          0           0
+                            Core        2355      1617         0           0
+                           FIFO         416       1600         0           0
+                           FSM          1900       38          0           0
+
+
+                Table 7: ASIC synthesis results of cryptographic modules.
+           Module         Area (µm2 ) @ 100 MHz                    Area (µm2 ) @ 500 MHz
+          NTT-Lite                    271938                                   304825
+           Keccak                     131513                                   131939
+            X2X                       123122                                   125883
+        Crypto total                  526573                                   562647
+
+                 Table 8: Time performance comparison with prior work.
+    Work                     Kyber768                                        Dilithium3
+                KeyGen      Enc  Dec  MaskedDec                KeyGen      Sign   Verify MaskedSign
+  RISQrypt         23       28      35           109               120      480      126    1230
+  [FVR+ 22]       214      298      313          1235                –        –        –      –
+  [WZZ+ 24]       536      671      639            –               2087     5003     1986     –
+ [DMMM23]         663      856     1083            –                 –        –        –      –
+  [AOP+ 25]        62       72       83            –                234      476      216     –
+ [NDMZ+ 21]       6951     7321    8621            –               2975    10212     2964     –
+  [MCL+ 23]         –        –        –            –               2642     5462     2812     –
+  [MBB+ 23]         –        –        –            –                479     3988      511     –
+   [KSFS24]         –        –        –            –               1068     3253     1127     –
+
+Reported numbers are in thousands of clock cycles. 1 Based on INDCPA timing. 2 Estimated based on the
+reported clock frequency.
+
+
+
+one prior work suitable for comparison, namely [FVR+ 22]. This study is the closest to
+ours in terms of scope and also reports the best performance among existing literature.
+The authors propose instruction set extensions for Keccak and mask conversions and
+32                            RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+a loosely coupled accelerator for polynomial arithmetic. However, since their mask
+conversion engine and Keccak accelerator are implemented as instruction set extensions,
+their flexibility and overall efficiency are inherently limited. As a result, our implementation
+outperforms their reported Kyber.INDCCA.MaskedDec performance by a factor of 11.3×.
+A similar performance advantage is observed for the unmasked functions. In particular, for
+Kyber.INDCCA.Keygen, Kyber.INDCCA.Enc, and Kyber.INDCCA.Dec, our implementation
+achieves speed-ups of 9.3×, 10.64×, and 8.94×, respectively. On the other hand, compared
+to [AOP+ 25], which reports the closest timing results, our implementation still achieves
+speed-ups of 2.69×, 2.57×, and 2.37× for Kyber.INDCCA.Keygen, Kyber.INDCCA.Enc,
+and Kyber.INDCCA.Dec, respectively.
+     For Dilithium.MaskedSign, there is no directly comparable work in the litera-
+ture. Although [WZZ+ 24] also considers masking in their implementation, the applied
+countermeasure is limited to polynomial arithmetic. Therefore, their reported results
+for masked functions are not directly comparable to ours. Nevertheless, we compare
+our performance against unprotected implementations reported in the literature. Com-
+pared to [AOP+ 25], our implementation achieves speedups of 1.95×, and 1.71×, for
+Dilithium.Keygen, and Dilithium.Verify, respectively, while performance of Dilithium.Sign
+remains comparable. Note that the acceleration strategy of [AOP+ 25] differs from ours in
+that they adopt instruction set extensions on a RISC-V–based vector processor with high
+area overhead, which operates as a co-processor loosely coupled to the main processor. In
+the next section, we further show that our design achieves significantly better area efficiency
+than [AOP+ 25], in addition to the improved time performance. Another competitive
+implementation is [MCL+ 23]4 , against which we achieve speedups of 2.19×, 1.14×, and
+2.23×, for Dilithium.Keygen, Dilithium.Sign, and Dilithium.Verify. We note that [MCL+ 23]
+focuses exclusively on Dilithium and does not provide a masked implementation. However,
+despite the narrower scope, their acceleration strategy is conceptually similar to ours, as
+they also employ loosely coupled accelerators for both NTT and Keccak while leaving a
+small portion of the computation to software.
+     In general, the primary reason for the superiority of our work is that, with the exception
+of [AOP+ 25, MCL+ 23], none of the existing studies employ loosely coupled accelerators
+for all required primitives. The works [NDMZ+ 21] and [MBB+ 23] focus on tightly coupled
+accelerators and consequently achieve only a limited level of acceleration. Although
+[WZZ+ 24] does not rely on tightly coupled acceleration, it does not include a hardware
+accelerator for Keccak and instead applies software-level optimizations. In [KSFS24],
+similar to [FVR+ 22], the authors employ a tightly coupled accelerator for Keccak while
+using a loosely coupled accelerator for the NTT. As a result, their performance remains
+below ours. Furthermore, [DMMM23] accelerates only Keccak. Overall, our superior
+performance demonstrates the advantage of employing loosely coupled accelerators for all
+primary operations.
+     In Figure 10, we analyze the time share of each accelerator in the system. Again,
+mean clock cycle values are reported over 1024 experiments with uniformly random inputs.
+Observe that NTT-Lite dominates the running time for all functions. This offers an
+opportunity to further speed-up the design by integrating more computation resources,
+i.e., multiple BUs, into NTT-Lite, which we leave for future work. It also confirms our
+design goal of supporting all arithmetic operations within NTT-Lite, in both masked and
+unmasked functions. The second most time-consuming accelerator for masked functions is
+X2X. In contrast, Keccak accounts for only a small fraction of the total execution time in
+our implementation, unlike the hashing bottlenecks reported in prior software-oriented
+     4 The authors of [MCL+ 23] do not report clock cycle counts directly. Instead, they provide execution
+
+times in milliseconds, the operating frequencies of the target platforms (666 MHz for hardware and 150
+MHz for software) and the ratio of hardware-accelerated subroutines as 0.94. We estimate a combined
+effective frequency as 176 ≈ 666 · (1 − 0.94) + 150 · 0.94 and compute the corresponding clock cycles based
+on the reported timings and this estimated frequency.
+Tosun et al.                                                                                    33
+
+
+
+          CPAPKE.Keygen
+
+               CPAPKE.Enc
+
+               CPAPKE.Dec
+
+       CPAPKE.MaskedDec
+    CPAPKE.MaskedEncCmp
+
+         CCAKEM.Keygen
+
+               CCAKEM.Enc
+
+            CCAKEM.Dec
+
+      CCAKEM.MaskedDec
+
+                            0      0.2    0.4         0.6            0.8       1          1.2
+
+                                                clock cycles                             ·105
+
+                                          (a) Kyber768
+
+                    Keygen
+
+                       Sign
+
+                      Verify
+
+                 MaskedSign
+
+                               0   0.2   0.4        0.6        0.8         1       1.2
+
+                                                    clock cycles                         ·106
+
+                                         (b) Dilithium3
+
+                                    SW   NTT-Lite         Keccak     X2X
+
+
+                   Figure 10: Number of clock cycles spent by accelerators.
+
+
+studies [KRSS19]. The software execution contributes less than 8% of the total cycle
+count across all evaluated functions, highlighting the effectiveness and functional coverage
+of the proposed hardware acceleration. Particularly, it takes roughly 2% of the total
+cycles for Kyber.INDCCA.MaskedDec and 8% of the total cycles for Dilithium.MaskedSign.
+The ratio of mask conversion operations done by X2X in Kyber.INDCCA.MaskedDec is
+greater compared to Dilithium.MaskedSign, amounting to 27% and 16%, respectively. In
+Dilithium.MaskedSign, NTT-Lite accounts for 70% of the operations.
+    To further study the efficiency of our design for masked implementations, we report the
+time performance of the non-linear algorithms in Table 9 for both Kyber and Dilithium.
+Except for MaskedZeroTestVec, the algorithms were presented in single-word form in
+Section 5, while the time performance reported here corresponds to the execution of
+these algorithms on the entire polynomial in Rq . Moreover, we report the time cost of
+pseudo-random sampling performed by Keccak accelerator, denoted by XOF. This applies
+to MaskedCBD and MaskedUniform, as these process the pseudo-random data produced
+(see Figure 6 and Figure 7). Observe that all of the utilized non-linear gadgets are realized
+highly efficiently, spending a few thousand clock cycles. Interestingly, the overhead of XOF
+to MaskedCBD is very small, around %4. We note that in XOF + MaskedCBD, the Keccak
+overhead is limited to the FIFO read operation, as the block permutation is executed in
+parallel with the MaskedCBD logic. For MaskedUniform used in Dilithium, the overhead of
+Keccak is around %30, since Keccak processes multiple blocks in this case and therefore
+must wait for the completion of the block permutation until all the blocks are squeezed.
+Although MaskedSubCompress and MaskedPolyToMsg are based on the same algorithm
+(Algorithm 4), the first takes more time as it requires 32-bit arithmetic.
+34                            RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+            Table 9: Time performance of non-linear algorithms in clock cycles.
+                           Kyber768                                Dilithium3
+                   MaskedCBD                  3733        MaskedUniform                 3639
+                XOF + MaskedCBD               3894      XOF + MaskedUniform             4714
+                MaskedSubCompress             5443       MaskedCheckNormω               6720
+                MaskedPolyFromMsg             1177       MaskedDecompose                7632
+                 MaskedPolyToMsg              2037
+                MaskedZeroTestVec             8765
+
+                        Table 10: Code size comparison with prior work.
+                         Kyber768                                      Dilithium3
+             Work         Masking         Size (B)          Work        Masking          Size (B)
+          RISQrypt              ✓           17612        RISQrypt              ✓           18848
+          [FVR+ 22]             ✓           28554
+          RISQrypt              ✗          10236         RISQrypt              ✗           14324
+          [FVR+ 22]             ✗          13028         [WZZ+ 24]             ✗           32120∗
+          [WZZ+ 24]             ✗          32520∗         [KSFS24]             ✗           20052
+          [AOP+ 25]             ✗          11800         [AOP+ 25]             ✗           21008
+  ∗
+    Reported for Kyber1024 and Dilithium5; no significant difference is expected with respect to the security
+  level.
+
+
+
+    Code size is another crucial consideration in embedded systems. In Table 10, we report
+the code size of our implementation and compare it with existing works from the literature.
+We present the code sizes separately for the masked and unmasked configurations, as
+different source files are compiled depending on the scenario. For example, in the masked
+configuration for Kyber, the compiled implementation includes Kyber.INDCCA.Keygen,
+Kyber.INDCCA.Enc, and Kyber.INDCCA.MaskedDec, whereas the unmasked configuration
+includes Kyber.INDCCA.Keygen, Kyber.INDCCA.Enc, and Kyber.INDCCA.Dec. The same
+approach is followed for Dilithium. The results show that our design is also competitive in
+terms of code size compared to prior work. The primary reason for this advantage is the
+reduced software workload, as also evidenced by the profiling results.
+
+7.2.3   Area-Time Comparison
+In this section, we perform an area-time evaluation of our architecture and demonstrate
+that the area overhead is well justified given the achieved performance improvements.
+Computing the Area–Time Product (ATP) for HW/SW co-designs is non-trivial; therefore,
+we adopt the following methodology. First, we estimate the hardware area overhead using
+AreaHW = LUT + FF/2 + DSP · 309 + BRAM · 564, which expresses all resources in LUT-
+equivalent units. The coefficients 309 and 564 were obtained by forcing Vivado to synthesize
+a 16 × 16-bit multiplier and a 1024 × 32 memory block using LUTs only, as previously
+done [PHGCGP22]. The multiplier size matches the core multiplication width of our
+architecture, while the memory configuration corresponds to the maximum depth of a single
+BRAM in Artix-7 with 32-bit data width. Since we consider HW/SW co-designs, we also
+include the area cost of the processor core for the software stack (e.g., RISC-V). We employ
+the area of the HORNET core used in RISQrypt, as reported in Table 4, excluding BRAM
+usage, for all designs in this section. Specifically, AreaCore = LUTCore + FFCore /2 = 6839.5.
+We then estimate the area overhead of the software by converting the reported code size
+into an equivalent number of BRAM blocks as AreaSW = BRAMCode = Code Size/4096.
+The division by 4096 captures the byte capacity of a single 1024 × 32 BRAM block. The
+total area is then computed as AreaT = AreaHW + AreaCore + AreaSW and the Area–Time
+Tosun et al.                                                                                          35
+
+
+Table 11: Hardware utilization of our work compared to designs from the literature. Only
+the overhead of cryptographic modules are considered.
+    Work       Plat- Archi- LUT/FF/DSP/BRAM AreaHW Sch- AreaSW/T                             ATP
+               form tecture                        eme
+
+                                                 Masked
+                                                                 K    2.42/48.71      11.2/13.63/53.09
+ RISQrypt       ▲      L      24586/18757/15/1.5       39.45
+                                                                 D     2.6/48.88     58.65/601.22/61.58
+  [FVR+ 22]     ▲    L, T     16979/8834/7/20.5        35.12     K    3.97/45.93     98.3/136.88/567.28
+
+                                             Unprotected
+                                                                 K     1.4/24.77        5.7/6.94/8.67
+ RISQrypt       ▲      L       10184/5423/9/1.5        16.52
+                                                                 D    1.97/25.33      30.40/121.6/31.92
+  [FVR+ 22]     ▲    L, T      7687/3515/7/4.5         14.15     K    1.79/22.78      48.75/67.88/71.3
+                                3087/1050/4/3           6.54     K    4.59/17.97 96.33/120.59/114.84
+  [WZZ+ 24]     ▼      L
+                                6639/1660/16/3         14.11     D    4.57/25.52 532.55/1276.63/506.77
+ [DMMM23] ▲            L        7128/3798/0/0           9.02     K    NA/18.42      122.16/157.73/199.56
+                                  178/0/5/0.5           2.01     K    NA/11.4        79.26/83.48/98.31
+ [NDMZ+ 21] ◆          T
+                                 377/0/10/0.5           3.75     D    NA/14.28     424.71/1457.86/423.14
+  [MBB+ 23]     ▼      T           459/0/2/0            1.08     D     NA/11.6        55.58/462.77/59.3
+  [MCL 23]
+        +
+                ▼      L       13128/11556/4/14        28.04     D    NA/37.93      100.13/207.10/106.58
+  [KSFS24]      ■    L, T       7219/3238/7/6          14.43     D    2.76/24.03    256.65/781.71/270.82
+                                                                 K   1.62/99.55   61.72/71.67/82.62
+  [AOP+ 25]     ▲      L      48158/16641/112/0        91.08
+                                                                 D   2.89/100.81 235.91/479.89/217.77
+
+
+HW/SW co-design approaches: (L) Loosely coupled, (T) Tightly coupled. Platforms: (▲) Artix7, (▼) Zynq700,
+(◆) ZCU106, (■) Zynq Ultrascale+. ✢ Limited SCA protection. ATP: KeyGen/Enc/(Masked)Dec (K) or
+KeyGen/(Masked)Sign/Verify (D). AreaSW/T : AreaSW / AreaT .
+
+
+
+
+Product is defined as ATP = (Area × Time). We exclude the clock frequency from the
+comparison, as it strongly depends on the target platform. For example, both our design
+and [FVR+ 22] use a soft RISC-V core on an Artix-7 FPGA, which results in relatively low
+operating frequencies; both implementations report clock frequencies of around 60 MHz.
+On the other hand, platforms such as Zynq-7000, which integrate an ARM processor,
+can reach up to 150 MHz, as reported in [MCL+ 23]. A fully fair comparison would
+require porting all designs to a common platform and re-evaluating them under identical
+conditions; however, such an effort would be engineering-intensive and beyond the scope of
+this work. Moreover, our design can be synthesized at 500 MHz clock frequency in ASIC
+environment (see Table 7), which is sufficient for the clock frequencies typically used in
+low-power microcontrollers. We underline that our goal is not to rank prior works against
+one another, but rather to justify the hardware overhead of our design by demonstrating
+that it achieves superior ATP.
+    For the comparison, certain missing data points had to be estimated, as not all
+components required for the ATP computation are consistently reported in the literature.
+In particular, the studies [NDMZ+ 21, MCL+ 23, MBB+ 23, DMMM23] do not provide
+code size information. For [NDMZ+ 21] and [MBB+ 23], we used the code size of a
+Dilithium implementation compiled with the RISC-V toolchain, as reported in [KSFS24].
+36                       RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+For [MCL+ 23], we computed a code size by taking the average of the reported code sizes of
+works that support Dilithium and employ loosely coupled acceleration approach, namely
+our implementation, [WZZ+ 24], and [KSFS24]. Similarly for [DMMM23] and [NDMZ+ 21],
+we took the average of the Kyber code size reported by us, [FVR+ 22], and [WZZ+ 24].
+These decisions do not affect the conclusions drawn in this section, as our implementation
+has the smallest code size among the works that report it (see Table 10), and code size is
+a minor factor overall.
+    Table 11 presents the computed ATP results of our work compared to the related
+designs from the literature. The results show that RISQrypt provides superior ATP results
+compared to the existing work. Although our design is slightly larger in several cases,
+its high performance compensates for the area overhead, resulting in a favorable overall
+cost. [FVR+ 22] utilizes 31% fewer LUTs and 53% fewer FFs compared to our design.
+However, due to its significantly higher BRAM consumption, the total area estimates
+(AreaT ) of our design are only 1.06× and 1.08× larger for the masked and unprotected
+configurations, respectively. Recall that the authors of [FVR+ 22] propose tightly coupled
+accelerators for Keccak and mask conversion. Despite their slightly lower area estimate,
+our solution achieves approximately 8.22× to 10.68× better ATP results, due to its
+significantly improved time performance. This further underscores the advantage of our
+loosely coupled accelerator architecture across all operations. In the unprotected setting,
+the tightly coupled designs of [MBB+ 23, NDMZ+ 21] also stand out due to their very
+low area overhead. However, despite their smaller area footprint, the performance gains
+achieved by our approach more than compensate, resulting in superior ATP overall.
+    Recall that [AOP+ 25] leverages vector instructions in a loosely coupled co-processor
+for polynomial arithmetic. The high level of parallelism achieved through these vector
+instructions comes at a substantial area cost. Accelerator overhead of their design (AreaHW )
+is 5.52× larger than ours. This area advantage, combined with the time-performance
+improvements discussed in the previous section, results in 3.94× to 10.82× better ATP
+values.
+    The total area results of [WZZ+ 24] for Dilithium are very close to ours, while for Kyber
+their design consumes approximately 0.72× of the total area of our design. However, these
+results correspond to two separate, scheme-specific architectures, whereas our measurements
+are based on a unified architecture supporting both Kyber and Dilithium. When their
+two dedicated designs are deployed together (AreaT columns aggregated for Kyber and
+Dilithium) to provide support for both schemes, the total area cost becomes approximately
+1.44× that of ours. Although the total area overhead of [KSFS24] is slightly lower
+than ours, our design achieves a 6.42× to 8.44× improvement in ATP. Area estimate
+of [MCL+ 23] is 1.5× that of our design, while supporting only Dilithium. Moreover, their
+modular reduction unit is specialized to the specific structure of Dilithium’s modulus q,
+which limits generality. Specifically, our design achieves a 1.7× to 3.33× better ATP
+compared to [MCL+ 23].
+
+
+8    Conclusion
+We presented RISQrypt, a HW/SW co-design framework for secure, fast, and agile
+implementations of PQC. Our architecture integrates three dedicated hardware accelerators:
+NTT-Lite for polynomial arithmetic, Keccak, and X2X for A2B&B2A mask conversions.
+NTT-Lite is an efficient design, which is run-time configurable and optimized for both
+half- and full-word lengths needed by Kyber and Dilithium. We showed that all sub-
+routines in Kyber and Dilithium are supported by the functionality of integrated hardware
+accelerators. Most importantly, we presented efficient implementations for both Kyber’s
+masked decapsulation and Dilithium’s masked signature generation, and demonstrated
+that they are side-channel secure both theoretically and in practice. We also discussed that
+Tosun et al.                                                                            37
+
+
+the required building blocks for the masked implementations are also fully supported by
+X2X and NTT-Lite, avoiding data processing in the software core, which could otherwise
+introduce microarchitectural leakage. We showed that having a dedicated accelerator for
+each major computational primitive is essential to achieving high performance. As a result,
+our implementation achieves an order-of-magnitude speedup over the state of the art while
+also delivering a superior area–time product performance.
+    An additional advantage of employing a programmable polynomial arithmetic accel-
+erator is the resulting agility of the design. Our hardware platform can be extended
+to support other algorithms built on similar primitives, such as Falcon [FHK+ 18] and
+SPHINCS+ [BHH+ 15] from the PQC standards. Moreover, it enables efficient and
+side-channel-secure implementations of client-side functions in Fully Homomorphic En-
+cryption (FHE) schemes, including encryption and decryption for BFV [Bra12, FV12] and
+CKKS [CKKS17], as well as the transciphering algorithm PASTA [DGH+ 23]. We leave the
+detailed implementation and evaluation of these additional algorithms for future work.
+
+
+
+
+9    Acknowledgments
+
+This work is partially supported by the European Union’s Horizon Europe research and
+innovation program under grant agreement No: 101079319, TUBITAK under Grant
+Number 122E222, the Horizon 2020 ERC Advanced Grant (101020005 Belfort) and the
+CyberSecurity Research Flanders with reference number VOEWICS02.
+38                          RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+Appendices
+
+
+A     Kyber and Dilithium Algorithm Definitions
+
+Algorithm specifications of Kyber and Dilithium are presented in Figure 11,Figure 12, and
+Figure 13.
+
+
+
+
+                Kyber.CPAPKE.KeyGen() . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+                   1. d ← B32
+                   2. (ρ, σ) = G(d)
+                   3. For i = 0 to k − 1
+                   4.    For j = 0 to k − 1
+                   5.       Ā[i][j] = Parse(XOF(ρ, j, i))
+                   6. For i = 0 to k − 1
+                   7.    s[i] = CBDη1 (PRF(σ, i))
+                   8.    e[i] = CBDη1 (PRF(σ, i + k))
+                   9. s̄ = NTT(s)
+                  10. ē = NTT(e)
+                  11. t̄ = Ā ◦ s̄ + ē
+                  12. pk = Encode12 (t̄||ρ)
+                  13. sk = Encode12 (s̄)
+                  14. return (pk, sk)
+
+                Kyber.CPAPKE.Enc(pk, m, r) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+                   1. (t̄||ρ) = Decode12 (pk)
+                   2. For i = 0 to k − 1
+                   3.    For j = 0 to k − 1
+                   4.       Ā[i][j] = Parse(XOF(ρ, j, i))
+                   5. For i = 0 to k − 1
+                   6.    r[i] = CBDη1 (PRF(r, i))
+                   7.    e1 [i] = CBDη2 (PRF(r, i + k))
+                   8. e2 [i] = CBDη2 (PRF(r, i + 2k))
+                   9. r̄ = NTT(r)
+                  10. u = INTT(Ā ◦ r̄) + e1
+                  11. c1 = Compressq (u, du )
+                  12. v = INTT(t̄ ◦ r̄) + e2 + Decompressq (Decode1 (m), 1)
+                  13. c2 = Compressq (v, dv )
+                  14. return c = (c1 ||c2 )
+
+                Kyber.CPAPKE.Dec(sk, c) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+                   1. (c1 ||c2 ) = Decode12 (c)
+                   2. s̄ = Decode12 (sk)
+                   3. u = Decompressq (c1 , du )
+                   4. v = Decompressq (c2 , dv )
+                   5. m = Compressq (v − INTT(s̄ ◦ NTT(u)), 1)
+                   6. return m
+
+
+                 Figure 11: Kyber.CPAPKE    algorithms from [BDK+ 22].
+                                    Fig. 1. CPAENC
+Tosun et al.                                                                                               39
+
+
+
+
+               Kyber.CCAKEM.KeyGen . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+                  1. z ← B32
+                  2. (pk, sk′ ) = Kyber.CPAPKE.KeyGen(λ)
+                  3. sk = (sk′ ||z)
+                  4. return (pk, sk)
+
+               Kyber.CCAKEM.Enc(pk) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+                  1. m ← B32
+                  2. m = H(m)
+                  3. (K ′ , r) = G(m||H(pk))
+                  4. c = Kyber.CPAPKE.Enc(pk, m, r)
+                  5. K = KDF(K ′ ||H(c))
+                  6. return (c, K)
+
+               Kyber.CCAKEM.Dec(c, sk, pk) . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+                  1. (sk′ ||z) = sk
+                  2. m′ = Kyber.CPAPKE.Dec(sk′ , c)
+                  3. (K ′ , r) = G(m′ ||H(pk))
+                  4. c′ = Kyber.CPAPKE.Enc(pk, m′ , r)
+                  5. If c = c′
+                  6.    return K = KDF(K ′ ||H(c))
+                  7. Else
+                  8.    return K = KDF(z||H(c))
+
+
+
+               Figure 12: Kyber.CCAKEM     algorithms from [BDK+ 22].
+                                  Fig. 1. CCAKEM
+
+
+
+
+               Kyber.CCAKEM.KeyGen . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+                  1. z ← B32
+                  2. (pk, sk′ ) = Kyber.CPAPKE.KeyGen(λ)
+                  3. sk = (sk′ ||z)
+                  4. return (pk, sk)
+
+               Kyber.CCAKEM.Enc(pk) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+                  1. m ← B32
+                  2. m = H(m)
+                  3. (K ′ , r) = G(m||H(pk))
+                  4. c = Kyber.CPAPKE.Enc(pk, m, r)
+                  5. K = KDF(K ′ ||H(c))
+                  6. return (c, K)
+
+               Kyber.CCAKEM.Dec(c, sk, pk) . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+                  1. (sk′ ||z) = sk
+                  2. m′ = Kyber.CPAPKE.Dec(sk′ , c)
+                  3. (K ′ , r) = G(m′ ||H(pk))
+                  4. c′ = Kyber.CPAPKE.Enc(pk, m′ , r)
+                  5. If c = c′
+                  6.    return K = KDF(K ′ ||H(c))
+                  7. Else
+                  8.    return K = KDF(z||H(c))
+
+
+
+                                               Fig. 2. CPAENC
+40                 RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+
+
+     Dilithium.KeyGen(λ) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         1. ζ ← B32
+         2. (ρ, ς, K) = H(ζ)
+         3. (s1 , s2 ) ∈ Sηℓ × Sηk = H(ς)
+          4. Ā ∈ Rk×ℓq   = ExpandA(ρ)
+          5. t = INTT(Ā ◦ NTT(s1 )) + s2
+          6. (t1 , t0 ) = Power2Roundq (t, d)
+          7. tr = CRH(ρ||t1 )
+          8. pk = (ρ, t1 )
+          9. sk = (ρ, K, tr, s1 , s2 , t0 )
+         10. return (pk, sk)
+
+     Dilithium.Sign(sk, M, rnd) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         1. Ā ∈ Rk×ℓq    = ExpandA(ρ)
+         2. µ = CRH(tr||M )
+         3. ρ′ = CRH(K||rnd||µ)
+         4. κ = 0
+         5. (z, h) =⊥
+         6. While (z, h) =⊥
+         7.    y ∈ S˜γℓ 1 = ExpandMask(ρ′ , κ)
+         8.    w = INTT(Ā ◦ NTT(y))
+         9.    w1 = HighBitsq (w, 2γ2 )
+       10.     c̃ = H(µ, w1 )
+       11.     c ∈ Bτ = SampleInBall(c̃)
+       12.     z = y + cs1
+       13.     r0 = LowBitsq (w − cs2 , 2γ2 )
+       14.     If (||z||∞ ≥ γ1 − β) or (||r0 ||∞ ≥ γ2 − β)
+       15.        (z, h) =⊥
+       16.     Else
+       17.        h = MakeHintq (−ct0 , w − cs2 + ct0 , 2γ2 )
+       18.        If (||ct0 ||∞ ≥ γ2 ) or (# of 1’s in h > ω)
+       19.           (z, h) =⊥
+       20.     κ=κ+ℓ
+       21. Return σ = (z, h, c̃)
+
+     Dilithium.Verify(pk, M, σ) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+         1. Ā ∈ Rk×ℓq  = ExpandA(ρ)
+         2. µ = CRH(CRH(ρ||t1 )||M )
+         3. c = SampleInBall(c̃)
+         4. w′ = INTT(Ā ◦ NTT(z) − NTT(c) ◦ NTT(t1 · 2d ))
+         5. w1 ′ = UseHintq (h, w′ , 2γ2 )
+         6. c̃′ = H(µ, w1 ′ )
+         7. If (||z||∞ < γ1 − β) and (# of 1’s in h < ω) and (c̃ = c̃′ )
+         8.     Return True
+         9. Else
+       10.      Return False
+
+
+           Figure 13: Dilithium      Dilithium from [DKL+ 22].
+                            Fig. 1.algorithms
+Tosun et al.                                                                             41
+
+
+References
+[AB75]         R.C. Agarwal and C.S. Burrus. Number theoretic transforms to implement
+               fast digital convolution. Proceedings of the IEEE, 63(4):550–560, 1975.
+
+[ABC+ 23]      Melissa Azouaoui, Olivier Bronchain, Gaëtan Cassiers, Clément Hoff-
+               mann, Yulia Kuzovkova, Joost Renes, Tobias Schneider, Markus Schö-
+               nauer, François-Xavier Standaert, and Christine van Vredendaal. Protecting
+               dilithium against leakage: Revisited sensitivity analysis and improved imple-
+               mentations. IACR Transactions on Cryptographic Hardware and Embedded
+               Systems, 2023(4):58–79, 2023.
+
+[AHKS22]       Amin Abdulrahman, Vincent Hwang, Matthias J Kannwischer, and Amber
+               Sprenkels. Faster kyber and dilithium on the cortex-m4. In International
+               Conference on Applied Cryptography and Network Security, pages 853–871.
+               Springer, 2022.
+
+[Ajt96]        M. Ajtai. Generating hard instances of lattice problems (extended abstract).
+               In Proceedings of the Twenty-Eighth Annual ACM Symposium on Theory of
+               Computing, STOC ’96, page 99–108, New York, NY, USA, 1996. Association
+               for Computing Machinery.
+
+[AMI+ 23]      Aikata Aikata, Ahmet Can Mert, Malik Imran, Samuel Pagliarini, and
+               Sujoy Sinha Roy. Kali: A crystal for post-quantum security using kyber and
+               dilithium. IEEE Transactions on Circuits and Systems I: Regular Papers,
+               70(2):747–758, 2023.
+
+[AOP+ 25]      Amin Abdulrahman, Felix Oberhansl, Hoang Nguyen Hien Pham, Jade
+               Philipoom, Peter Schwabe, Tobias Stelzer, and Andreas Zankl. Towards
+               ml-kem & ml-dsa on opentitan. In 2025 IEEE Symposium on Security and
+               Privacy (SP), pages 1–19. IEEE, 2025.
+
+[BAA23]        Luke Beckwith, Abubakr Abdulgadir, and Reza Azarderakhsh. A flexible
+               shared hardware accelerator for nist-recommended algorithms crystals-kyber
+               and crystals-dilithium with sca protection. In Cryptographers’ Track at the
+               RSA Conference, pages 469–490. Springer, 2023.
+
+[Bar87a]       Paul Barrett. Implementing the Rivest Shamir and Adleman public key
+               encryption algorithm on a standard digital signal processor. In Andrew M.
+               Odlyzko, editor, CRYPTO’86, volume 263 of LNCS, pages 311–323. Springer,
+               Berlin, Heidelberg, August 1987.
+
+[Bar87b]       Paul Barrett. Implementing the RSA public key encryption algorithm on a
+               standard digital signal processor. In Proceedings on Advances in Cryptology
+               - CRYPTO ’86, volume 263 of Lecture Notes in Computer Science, pages
+               311–323. Springer, 1987.
+
+[BBD+ 16]      Gilles Barthe, Sonia Belaïd, François Dupressoir, Pierre-Alain Fouque,
+               Benjamin Grégoire, Pierre-Yves Strub, and Rébecca Zucchini. Strong non-
+               interference and type-directed higher-order masking. In Proceedings of
+               the 2016 ACM SIGSAC Conference on Computer and Communications
+               Security, CCS ’16, page 116–129, New York, NY, USA, 2016. Association
+               for Computing Machinery.
+
+[BC22]         Olivier Bronchain and Gaëtan Cassiers. Bitslicing arithmetic/boolean mask-
+               ing conversions for fun and profit: with application to lattice-based kems.
+42                   RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+            IACR Transactions on Cryptographic Hardware and Embedded Systems,
+            2022(4):553–588, Aug. 2022.
+
+[BDH+ 21]   Shivam Bhasin, Jan-Pieter D’Anvers, Daniel Heinz, Thomas Pöppelmann,
+            and Michiel Van Beirendonck. Attacking and defending masked polynomial
+            comparison. IACR TCHES, 2021(3):334–359, 2021.
+
+[BDK+ 21]   Michiel Van Beirendonck, Jan-Pieter D’anvers, Angshuman Karmakar,
+            Josep Balasch, and Ingrid Verbauwhede. A side-channel-resistant imple-
+            mentation of saber. J. Emerg. Technol. Comput. Syst., 17(2), apr 2021.
+
+[BDK+ 22]   Joppe W. Bos, Léo Ducas, Eike Kiltz, Tancrède Lepoint, Vadim Lyuba-
+            shevsky, John M. Schanck, Peter Schwabe, Gregor Seiler, and Damien
+            Stehlé. Crystals-kyber algorithm specifications and supporting documen-
+            tation. Technical report, National Institute of Standards and Technology,
+            2022. Round 3 Submission.
+
+[BDPA12]    Guido Bertoni, Joan Daemen, Michaël Peeters, and Gilles Van Assche. The
+            Keccak sha-3 submission. In Proceedings of the Round 3 SHA-3 Workshop,
+            2012. Retrieved: 2025-12-07.
+
+[BGG+ 14]   Josep Balasch, Benedikt Gierlichs, Vincent Grosso, Oscar Reparaz, and
+            François-Xavier Standaert. On the cost of lazy engineering for masked
+            software implementations. In International Conference on Smart Card
+            Research and Advanced Applications, pages 64–81. Springer, 2014.
+
+[BGR+ 21]   Joppe W. Bos, Marc Gourjon, Joost Renes, Tobias Schneider, and Christine
+            van Vredendaal. Masking Kyber: First- and higher-order implementations.
+            IACR TCHES, 2021(4):173–214, 2021.
+
+[BHH+ 15]   Daniel J. Bernstein, Daira Hopwood, Andreas Hülsing, Tanja Lange, Ruben
+            Niederhagen, Louiza Papachristodoulou, Michael Schneider, Peter Schwabe,
+            and Zooko Wilcox-O’Hearn. SPHINCS: Practical stateless hash-based signa-
+            tures. In Elisabeth Oswald and Marc Fischlin, editors, EUROCRYPT 2015,
+            Part I, volume 9056 of LNCS, pages 368–397. Springer, Berlin, Heidelberg,
+            April 2015.
+
+[BNG21]     Luke Beckwith, Duc Tri Nguyen, and Kris Gaj. High-performance hardware
+            implementation of crystals-dilithium. In 2021 International Conference on
+            Field-Programmable Technology (ICFPT), pages 1–10. IEEE, 2021.
+
+[Bra12]     Zvika Brakerski. Fully homomorphic encryption without modulus switching
+            from classical GapSVP. In Reihaneh Safavi-Naini and Ran Canetti, editors,
+            CRYPTO 2012, volume 7417 of LNCS, pages 868–886. Springer, Berlin,
+            Heidelberg, August 2012.
+
+[CGL+ 24]   Jean-Sébastien Coron, François Gérard, Tancrède Lepoint, Matthias Tran-
+            noy, and Rina Zeitoun. Improved high-order masked generation of masking
+            vector and rejection sampling in dilithium. IACR Transactions on Crypto-
+            graphic Hardware and Embedded Systems, 2024(4):335–354, Sep. 2024.
+
+[CGMZ23]    Jean-Sébastien Coron, François Gérard, Simon Montoya, and Rina Zeitoun.
+            High-order polynomial comparison and masking lattice-based encryption.
+            IACR Transactions on Cryptographic Hardware and Embedded Systems,
+            pages 153–192, 2023.
+Tosun et al.                                                                           43
+
+
+[CGTZ23]       Jean-Sébastien Coron, François Gérard, Matthias Trannoy, and Rina
+               Zeitoun. Improved gadgets for the high-order masking of dilithium. IACR
+               Transactions on Cryptographic Hardware and Embedded Systems, 2023(4),
+               2023.
+[CKKS17]       Jung Hee Cheon, Andrey Kim, Miran Kim, and Yong Soo Song. Homomor-
+               phic encryption for arithmetic of approximate numbers. In Tsuyoshi Takagi
+               and Thomas Peyrin, editors, ASIACRYPT 2017, Part I, volume 10624 of
+               LNCS, pages 409–437. Springer, Cham, December 2017.
+[CKRG+ 24]     Xavier Carril, Charalampos Kardaris, Jordi Ribes-GonzáLez, Oriol Farràs,
+               Carles Hernandez, Vatistas Kostalabros, Joel Ulises González-Jiménez,
+               and Miquel Moreto. Hardware acceleration for high-volume operations of
+               crystals-kyber and crystals-dilithium. ACM Transactions on Reconfigurable
+               Technology and Systems, 17(3):1–26, 2024.
+[CT65]         James W. Cooley and John W. Tukey. An algorithm for the machine calcula-
+               tion of complex fourier series. Mathematics of Computation, 19(90):297–301,
+               1965.
+[D+ 15]        Morris J Dworkin et al. Sha-3 standard: Permutation-based hash and
+               extendable-output functions. 2015.
+[DGH+ 23]      Christoph Dobraunig, Lorenzo Grassi, Lukas Helminger, Christian Rech-
+               berger, Markus Schofnegger, and Roman Walch. Pasta: A case for hybrid
+               homomorphic encryption. IACR TCHES, 2023(3):30–73, 2023.
+[DH76]         W. Diffie and M. Hellman. New directions in cryptography. IEEE Transac-
+               tions on Information Theory, 22(6):644–654, 1976.
+[DKL+ 22]      Léo Ducas, Eike Kiltz, Tancrède Lepoint, Vadim Lyubashevsky, Peter
+               Schwabe, Gregor Seiler, and Damien Stehlé. Crystals-dilithium algorithm
+               specifications and supporting documentation. Technical report, National
+               Institute of Standards and Technology, 2022. NIST PQC Selected Algorithm
+               Submission, Version 3.02.
+[DMMM23]       Alessandra Dolmeta, Mattia Mirigaldi, Maurizio Martina, and Guido
+               Masera. Implementation and integration of keccak accelerator on RISC-V
+               for crystals-kyber. In Proceedings of the 20th ACM International Conference
+               on Computing Frontiers, CF ’23, page 381–382, New York, NY, USA, 2023.
+               Association for Computing Machinery.
+[DVBV22]       Jan-Pieter D’Anvers, Michiel Van Beirendonck, and Ingrid Verbauwhede.
+               Revisiting higher-order masked comparison for lattice-based cryptogra-
+               phy: Algorithms and bit-sliced implementations. IEEE Transactions on
+               Computers, 72(2):321–332, 2022.
+[DZD+ 17]      A Adam Ding, Liwei Zhang, François Durvaux, François-Xavier Standaert,
+               and Yunsi Fei. Towards sound and optimal leakage detection procedure. In
+               International Conference on Smart Card Research and Advanced Applica-
+               tions, pages 105–122. Springer, 2017.
+[FHK+ 18]      Pierre-Alain Fouque, Jeffrey Hoffstein, Paul Kirchner, Vadim Lyubashevsky,
+               Thomas Pornin, Thomas Prest, Thomas Ricosset, Gregor Seiler, William
+               Whyte, Zhenfei Zhang, et al. Falcon: Fast-fourier lattice-based compact
+               signatures over ntru. Submission to the NIST’s post-quantum cryptography
+               standardization process, 36(5):1–75, 2018.
+44                    RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+[FV12]       Junfeng Fan and Frederik Vercauteren. Somewhat practical fully homo-
+             morphic encryption. IACR Cryptology ePrint Archive, Report 2012/144,
+             2012.
+
+[FVR+ 22]    Tim Fritzmann, Michiel Van Beirendonck, Debapriya Basu Roy, Patrick
+             Karl, Thomas Schamberger, Ingrid Verbauwhede, and Georg Sigl. Masked
+             accelerators and instruction set extensions for post-quantum cryptography.
+             IACR TCHES, 2022(1):414–460, 2022.
+
+[GGJR+ 11]   Benjamin Jun Gilbert Goodwill, Josh Jaffe, Pankaj Rohatgi, et al. A testing
+             methodology for side-channel resistance validation. In NIST non-invasive
+             attack testing workshop, volume 7, pages 115–136, 2011.
+
+[GLK21]      Wenbo Guo, Shuguo Li, and Liang Kong. An efficient implementation
+             of kyber. IEEE Transactions on Circuits and Systems II: Express Briefs,
+             69(3):1562–1566, 2021.
+
+[GS66]       W. M. Gentleman and G. Sande. Fast fourier transforms: for fun and profit.
+             In Proceedings of the 1966 Fall Joint Computer Conference, 1966.
+
+[GSM17]      Hannes Groß, David Schaffenrath, and Stefan Mangard. Higher-order
+             side-channel protected implementations of keccak, 2017.
+
+[HHLW20]     Yiming Huang, Miaoqing Huang, Zhongkui Lei, and Jiaxuan Wu. A pure
+             hardware implementation of crystals-kyber pqc algorithm through resource
+             reuse. IEICE Electronics Express, 17(17):20200234–20200234, 2020.
+
+[HKL+ 22]    Daniel Heinz, Matthias J Kannwischer, Georg Land, Thomas Pöppelmann,
+             Peter Schwabe, and Daan Sprenkels. First-order masked kyber on arm
+             cortex-m4. Cryptology ePrint Archive, 2022.
+
+[ISW03]      Yuval Ishai, Amit Sahai, and David Wagner. Private circuits: Securing
+             hardware against probing attacks. In Dan Boneh, editor, Advances in Cryp-
+             tology - CRYPTO 2003, pages 463–481, Berlin, Heidelberg, 2003. Springer
+             Berlin Heidelberg.
+
+[JGCS24]     Arpan Jati, Naina Gupta, Anupam Chattopadhyay, and Somitra Kumar
+             Sanadhya. A configurable crystals-kyber hardware implementation with
+             side-channel protection. ACM transactions on embedded computing systems,
+             23(2):1–25, 2024.
+
+[Kar63]      Anatolii Karatsuba. Multiplication of multidigit numbers on automata. In
+             Soviet physics doklady, volume 7, pages 595–596, 1963.
+
+[KDVB+ 22]   Suparna Kundu, Jan-Pieter D’Anvers, Michiel Van Beirendonck, Angshu-
+             man Karmakar, and Ingrid Verbauwhede. Higher-order masked saber. In
+             International Conference on Security and Cryptography for Networks, pages
+             93–116. Springer, 2022.
+
+[KNAH22]     Tendayi Kamucheka, Alexander Nelson, David Andrews, and Miaoqing
+             Huang. A masked pure-hardware implementation of kyber cryptographic
+             algorithm. In 2022 International Conference on Field-Programmable Tech-
+             nology (ICFPT), pages 1–1. IEEE, 2022.
+
+[Kob87]      Neal Koblitz. Elliptic curve cryptosystems. Mathematics of Computation,
+             48(177):203–209, 1987.
+Tosun et al.                                                                             45
+
+
+[KRSS19]       Matthias J Kannwischer, Joost Rijneveld, Peter Schwabe, and Ko Stoffelen.
+               pqm4: Testing and benchmarking nist pqc on arm cortex-m4. 2019.
+
+[KSFS24]       Patrick Karl, Jonas Schupp, Tim Fritzmann, and Georg Sigl. Post-quantum
+               signatures on risc-v with hardware acceleration. ACM Transactions on
+               Embedded Computing Systems, 23(2):1–23, 2024.
+
+[MBB+ 23]      Konstantina Miteloudi, Joppe W Bos, Olivier Bronchain, Björn Fay, and
+               Joost Renes. Pq. v. alu. e: Post-quantum risc-v custom alu extensions on
+               dilithium and kyber. In International Conference on Smart Card Research
+               and Advanced Applications, pages 190–209. Springer, 2023.
+
+[MCL+ 23]      Gaoyu Mao, Donglong Chen, Guangyan Li, Wangchen Dai, Abdur-
+               rashid Ibrahim Sanka, Çetin Kaya Koç, and Ray C. C. Cheung. High-
+               performance and configurable sw/hw co-design of post-quantum signature
+               crystals-dilithium. ACM Trans. Reconfigurable Technol. Syst., 16(3), June
+               2023.
+
+[MGTF19]       Vincent Migliore, Benoît Gérard, Mehdi Tibouchi, and Pierre-Alain Fouque.
+               Masking dilithium: Efficient implementation and side-channel evaluation. In
+               Applied Cryptography and Network Security: 17th International Conference,
+               ACNS 2019, Bogota, Colombia, June 5–7, 2019, Proceedings 17, pages
+               344–362. Springer, 2019.
+
+[NDKV25]       Quinten Norga, Jan-Pieter D’Anvers, Suparna Kundu, and Ingrid Ver-
+               bauwhede. X2X: Low-randomness and high-throughput A2B and B2A
+               conversions for d+1 shares in hardware. In Constructive Approaches for
+               Security Analysis and Design of Embedded Systems: First International
+               Conference, CASCADE 2025, Saint-Etienne, France, April 2–4, 2025, Pro-
+               ceedings, page 119–158, Berlin, Heidelberg, 2025. Springer-Verlag.
+
+[NDMZ+ 21]     Pietro Nannipieri, Stefano Di Matteo, Luca Zulberti, Francesco Albicocchi,
+               Sergio Saponara, and Luca Fanucci. A risc-v post quantum cryptography
+               instruction set extension for number theoretic transform to speed-up crystals
+               algorithms. IEEE Access, 9:150798–150808, 2021.
+
+[OSPG18]       Tobias Oder, Tobias Schneider, Thomas Pöppelmann, and Tim Güneysu.
+               Practical cca2-secure and masked ring-lwe implementation. IACR Transac-
+               tions on Cryptographic Hardware and Embedded Systems, 2018(1):142–174,
+               Feb. 2018.
+
+[ÖY23]         Sıla Özeren and Oğuz Yayla. Methods for masking crystals-kyber against
+               side-channel attacks. In 2023 16th International Conference on Information
+               Security and Cryptology (ISCTürkiye), pages 1–6. IEEE, 2023.
+
+[PHGCGP22] Francisco Pajuelo-Holguera, José M. Granado-Criado, and Juan A. Gómez-
+           Pulido. Fast montgomery modular multiplier using fpgas. IEEE Embedded
+           Systems Letters, 14(1):19–22, 2022.
+
+[Reg05]        Oded Regev. On lattices, learning with errors, random linear codes, and
+               cryptography. In Proceedings of the Thirty-seventh Annual ACM STOC,
+               pages 84–93, Baltimore, MD, USA, 2005.
+
+[RSA78]        R. L. Rivest, A. Shamir, and L. Adleman. A method for obtaining digital
+               signatures and public-key cryptosystems. Commun. ACM, 21(2):120–126,
+               February 1978.
+46                   RISQrypt - Fast, Secure and Agile HW/SW Co-Design for PQC
+
+
+[Sch90]     C. P. Schnorr. Efficient identification and signatures for smart cards. In
+            Gilles Brassard, editor, Advances in Cryptology — CRYPTO’ 89 Proceedings,
+            pages 239–252, New York, NY, 1990. Springer New York.
+
+[Sha79]     Adi Shamir. How to share a secret. Commun. ACM, 22(11):612–613,
+            November 1979.
+[Sho94]     P.W. Shor. Algorithms for quantum computation: discrete logarithms
+            and factoring. In Proceedings 35th Annual Symposium on Foundations of
+            Computer Science, pages 124–134, 1994.
+[SPOG19]    Tobias Schneider, Clara Paglialonga, Tobias Oder, and Tim Güneysu. Ef-
+            ficiently masking binomial sampling at arbitrary orders for lattice-based
+            crypto. In Public-Key Cryptography – PKC 2019: 22nd IACR International
+            Conference on Practice and Theory of Public-Key Cryptography, Beijing,
+            China, April 14-17, 2019, Proceedings, Part II, page 534–564, Berlin, Hei-
+            delberg, 2019. Springer-Verlag.
+[TG16]      Michael Tunstall and Gilbert Goodwill. Applying tvla to public key crypto-
+            graphic algorithms. Cryptology ePrint Archive, 2016.
+[TMS24]     Tolun Tosun, Amir Moradi, and Erkay Savas. Exploiting the central
+            reduction in lattice-based cryptography. IEEE Access, 12:166814–166833,
+            2024.
+[WWL+ 24]   Nuo Wang, Liji Wu, Lei Li, Munkhbaatar Chinbat, and Xiangmin Zhang.
+            Design and implementation of a ntt accelerator based on RISC-V for pqc
+            kyber. In 2024 IEEE 18th International Conference on Anti-counterfeiting,
+            Security, and Identification (ASID), pages 24–27, 2024.
+
+[WZCG22]    Tengfei Wang, Chi Zhang, Pei Cao, and Dawu Gu. Efficient implementation
+            of dilithium signature scheme on fpga soc platform. IEEE Transactions on
+            Very Large Scale Integration (VLSI) Systems, 30(9):1158–1171, 2022.
+[WZZ+ 24]   Tengfei Wang, Chi Zhang, Xiaolin Zhang, Dawu Gu, and Pei Cao. Optimized
+            hardware-software co-design for kyber and dilithium on risc-v soc fpga.
+            IACR Transactions on Cryptographic Hardware and Embedded Systems,
+            2024(3):99–135, 2024.
+[XL21]      Yufei Xing and Shuguo Li. A compact hardware implementation of cca-
+            secure key exchange mechanism crystals-kyber on fpga. IACR Transactions
+            on Cryptographic Hardware and Embedded Systems, pages 328–356, 2021.
+
+[YTO21]     Yasin Yilmaz, Yavuz Selim Tozlu, and Berna Örs. Design and implementa-
+            tion of a 32-bit RISC-V core. page 460 – 464, 2021.
+[ZSS+ 21]   Sara Zarei, Aein Rezaei Shahmirzadi, Hadi Soleimany, Raziyeh Salarifard,
+            and Amir Moradi. Low-latency Keccak at any arbitrary order. IACR
+            TCHES, 2021(4):388–411, 2021.
+[ZZW+ 22]   Cankun Zhao, Neng Zhang, Hanning Wang, Bohan Yang, Wenping Zhu,
+            Zhengdong Li, Min Zhu, Shouyi Yin, Shaojun Wei, and Leibo Liu. A
+            compact and high-performance hardware architecture for crystals-dilithium.
+            IACR Transactions on Cryptographic Hardware and Embedded Systems,
+            pages 270–295, 2022.
+

@@ -1,0 +1,61 @@
+                            Thesis Progress Report
+Student: Muhammad Abdul Ahad
+
+Thesis Title: Hardware Design and Verification of Dilithium – Post-Quantum DSA
+
+Reporting Period: __________________
+
+
+Objective
+
+The objective of this thesis is to design a hardware implementation of the Dilithium post-quantum
+digital signature algorithm and perform its functional verification using a UVM-based verification
+environment.
+
+
+Work Completed
+
+• Conducted initial literature review and identified relevant reference implementations.
+
+• Developed a basic understanding of the Dilithium algorithm and its stages.
+
+• Tested the reference software model for use as a golden model.
+
+• Set up GitHub repository and project structure.
+
+• Modified software model to allow custom seed input for controlled testing.
+
+• Uploaded modified software model to repository.
+
+• Configured simulation environment (QuestaSim) and UVM verification framework.
+
+
+Current Work
+
+• Studying UVM testbench architecture and workflow.
+
+• Compiling and analyzing a reference implementation for hardware design guidance.
+
+
+Challenges
+
+• Difficulty in fully understanding the Dilithium algorithm.
+
+• Compiler errors while compiling reference implementation.
+
+
+Planned Work (Next Phase)
+
+• Strengthen understanding of UVM using examples and reference implementation.
+
+• Resolve compilation issues and simulate reference implementation.
+
+• Begin hardware development starting with hashing module.
+• Further study hashing and overall algorithm.
+
+
+Remarks
+
+The project is currently in the foundation and setup phase. Resolving current challenges will enable
+transition into the hardware design and implementation phase.
+

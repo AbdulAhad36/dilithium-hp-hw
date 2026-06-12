@@ -1,0 +1,1005 @@
+                                                                                                                                            1
+
+
+
+
+                        NIST Post-Quantum Cryptography-
+                          A Hardware Evaluation Study
+                               Kanad Basu, Deepraj Soni, Mohammed Nabeel, and Ramesh Karri
+
+
+
+
+   Abstract—Experts forecast that quantum computers can break                   1) Developed systematic FPGA and ASIC design flows for
+classical cryptographic algorithms. Scientists are developing post-                PQC evaluation starting from a C specification.
+quantum cryptographic (PQC) algorithms, that are invulnerable
+to quantum computer attacks. The National Institute of Stan-                    2) Studied performance vs area trade-offs for 11 PQC al-
+dards and Technology (NIST) started a public evaluation process                    gorithms, including lattice, code, hash, and multivariate
+to standardize quantum-resistant public key algorithms. The                        based KEM and Signature algorithms.
+objective of our study is to provide a hardware-based comparison                3) Improved the latency of PQC implementations using
+of the NIST PQC candidates. For this, we use a High-Level
+Synthesis (HLS)-based hardware design methodology to map                           optimizations such as loop unrolling and loop pipelining.
+high-level C specifications of round 2 PQC candidates into both                 4) Performed a detailed study of three signature algorithms
+FPGA and ASIC implementations.                                                     to explore area vs performance vs security trade-offs.
+                                                                                The paper is organized as follows. Section II gives a back-
+                       I. I NTRODUCTION                                      ground on Post-Quantum Cryptography. Section III describes
+   Public key cryptography is a fundamental security protocol                the design flow and Section IV presents experimental results.
+for all forms of digital communication, wired or wireless. Pub-              Section V describes case studies using three signature-based
+lic key cryptography has three main cryptographic functions,                 algorithms and Section VI enumerates the key takeaways.
+namely (a) public key encryption, (b) digital signatures, and
+                                                                                          II. P OST-Q UANTUM C RYPTOGRAPHY
+(c) key exchange [1]. RSA and Elliptic Curve-based public
+key cryptography algorithms provide security guarantees based                   Researchers are developing cryptographic algorithms to
+on the difficulty of solving the integer factorization and dis-              resist attacks by classical and quantum computers. The major
+crete logarithm problems. Peter Shor from Bell Labs showed                   classes of post quantum cryptography algorithms are:
+that quantum computers can factorize integers in polynomial                     • Lattice-based cryptography algorithms offer the best
+time rendering traditional public key cryptography algorithms                      performance, but are the least conservative among all [5].
+ineffective [2]. Hence, researchers are investigating robust                       Lattice cryptography builds on the hardness of the short-
+alternatives such as lattice and code cryptography algorithms.                     est vector problem (SVP) which entails approximating the
+   We conduct a hardware assessment of post-quantum cryp-                          minimal Euclidian length of a lattice vector. Even with
+tographic (PQC) algorithms that were submitted to the NIST                         a quantum computer SVP is shown to be polynomial in
+evaluation. As a historical perspective, in 1997 NIST sought                       n [1]. Other lattice cryptography algorithms are based
+guidance from the public to identify a replacement for the                         on Short Integer Solutions (SIS). These are secure in the
+Data Encryption Standard (DES), Advanced Encryption Stan-                          average case if the SVP is hard in the worst-case [6].
+dard (AES) [3]. Since then, open cryptographic assessments                      • Code-based cryptography uses error correcting codes
+have become the way to selecting cryptographic standards.                          and offers a conservative approach for public key encryp-
+For example, NESSIE (2000-2002), eSTREAM (2004-2008),                              tion/key encapsulation, as it is based on a well-studied
+CRYPTREC (2000-2002), SHA-3 (2007-2012) and CAESAR                                 problem for over 4 decades [7]. This class of algorithms
+(2013-2019) embraced this approach. In these assessments,                          use large keys and some attempts at reducing their key
+security was the principal yardstick. Performance in software,                     size have made these algorithms vulnerable to attacks [8].
+performance in application specific integrated circuits (ASIC),                    Researchers proposed techniques to reduce the key size
+performance in FPGA, and feasibility of implementation using                       without compromising the security [9], [10].
+limited resources (small microprocessors and low-power hard-                    • Multivariate polynomial cryptography relies on the
+ware) are secondary criteria. In the AES competition, Rijndael                     difficulty of solving the multivariate polynomial (MVP)
+had the fastest ASIC and the second fastest FPGA implemen-                         algorithm over finite fields. Solutions of MVP problems
+tation with identical security guarantees as its competitors [4].                  are NP-hard over any field and NP-complete even if
+   We report a hardware-implementation comparison of NIST                          all equations are quadratic over GF (2) [11]. MVPs are
+round 2 PQC candidates. The contributions of this study are:                       preferred as signature schemes as they offer the shortest
+   K. Basu, D. Soni and R. Karri are with the NYU center for cybersecurity         signatures. However, some schemes are broken [12].
+(http://cyber.nyu.edu), New York University, New York, NY, USA. e-mail:         • Hash-based digital signatures resist quantum-computer
+(kb150@nyu.edu, dss545@nyu.edu, rkarri@nyu.edu).                                   attacks. These schemes are based on the security prop-
+   M.      Nabeel       is   with     NYU,      Abu     Dhabi,      UAE.
+email:(mohammed.nabeel@nyu.edu).                                                   erties of the underlying cryptographic hash functions
+                                                                                   (collision resistance and second pre-image resistance).
+                                                                                                                                                    2
+
+
+
+  •   Other cryptographic methods include evaluating isoge-                  using a symmetric key M . The symmetric key is encrypted by
+      nies on super singular elliptic curves. Shor’s algorithm is            the sender and sent to the receiver along with the encrypted
+      ineffective against evaluating isogenies [13].                         message. The receiver decrypts and recovers the symmetric
+                                                                             key M first and then decrypts the message m using M .
+   PQC            The hard problem               Sign     KEM        Total
+   Lattice        Find shortest vector,          5 (3)    23 (9)   28 (12)
+                                                                             The first challenge with this approach is that an attacker can
+                  closest vector                                             reconstruct a small M . Hence, the sender needs to make M
+   Code           Decode random linear code      3 (0)    17 (7)    20 (7)   large. Second, if the attacker derives M , she can recover m.
+   Multivariate   Solve multivariate             8 (4)     2 (0)    10 (4)
+                  quadratic equations                                        KEM schemes counter these two challenges. In KEM, the
+   Hash           Second pre-image resistance    3 (2)     0 (0)     3 (2)   sender first generates a random number rn and then generates
+                  of hash function
+   Isogeny        Find isogeny map btwn          0 (0)     1 (1)     1 (1)   a symmetric key M = KDF (rn) using the Key Derivation
+                  elliptic curves with                                       Function (KDF). A cryptographic hash is an example KDF.
+                  same number of points
+   Other          -                              2 (0)     5 (0)     7 (0)   KEM obviates padding and this way reduces the key size.
+   Total          -                             21 (9)   48 (17)   69 (26)   Since KDF is one-way, the attacker can not generate rn, even
+                                                                             if she recovers M . KEMs use three functions:
+TABLE I: A summary of PQC digital signature and key en-                         1) crypto kem keypair is used to generate the public and
+capsulation submissions and the underlying hard mathematical                        private keys pk and sk.
+problems. We show the number of algorithms for Round 1 and                      2) crypto kem enc takes in public key pk and outputs key
+Round 2 (within braces) NIST PQC evaluation.                                        k and encapsulated key ck.
+                                                                                3) crypto kem dec takes in secret key sk and encapsu-
+                                                                                    lated key ck and outputs key k.
+A. Digital signatures and key encapsulation                                     Initially, we consider six KEM PQC algorithms:
+   The ongoing NIST PQC standardization process is consoli-                  Newhope, Frodokem, Crystals-KYBER, NTRU-HRSS,
+dating the invulnerable candidates after each successive round.              Classic McEliece, and Saber1 .
+Each candidate in the NIST PQC contest realizes one of three
+functions: public key encryption, digital signature, and key
+                                                                             B. Security classification of PQC algorithms
+encapsulation mechanism (KEM). Table I shows the number of
+PQC round 2 submissions and summarizes their functionality                      NIST specified five security strength categories. Security
+and mathematical complexity.                                                 level 1 =⇒ equivalent to AES-128 key search. Security level
+   NIST expects to standardize more than one algorithm in                    2 =⇒ equivalent to SHA-256/SHA3-256 collision search.
+order to provide different trade-offs depending on the applica-              Security level 3 =⇒ AES-192 key search. Security level 4
+tion (speed vs memory vs power consumption etc.). A direct                   =⇒ SHA-384/SHA3-384 collision search. Security level 5
+comparison of the security guarantees provided by the candi-                 =⇒ AES-256 key search. The security strengths of the NIST
+date PQC algorithms is challenging absent a standard quantum                 round 2 PQC algorithms are in Table II.
+computing platform, differences in the mathematical functions
+that underlie the algorithms, and the sophisticated algorithm                C. Hardware Implementations
+specifications compared to prior cryptographic contests.
+                                                                                There has been sporadic hardware implementations for PQC
+   1) Digital signatures: The PQC digital signatures work on
+                                                                             algorithms. A special session on trends and implementation
+the principle that the sender signs the message with a private
+                                                                             challenges for lattice-based cryptography algorithms was pre-
+key and the receiver verifies the signature using the sender’s
+                                                                             sented by [14]. The authors further developed a survey paper
+public key. These algorithms use three functions.
+                                                                             describing both software and hardware implementation chal-
+   1) crypto sign keypair generates the public key pk and                    lenges for lattice-based cryptography [15]. Stratix V FPGA
+      the secret key sk.                                                     implementation of Classic McEliece was presented in [16].
+   2) crypto sign takes in sk and the message m plus its                     The PQC algorithm Saber was implemented on an ARM
+      length mlen and outputs the signature sm appended to                   Cortex-M micro-controllers in [17] (they used a Cortex-M4
+      the message.                                                           micro-controller to implement a speed-optimized version of
+   3) crypto sign open takes in pk, sm and length smlen,                     Saber and a Cortex-M0 micro-controller to implement an
+      and outputs message m.                                                 area-optimized version). The Signature algorithm SPHINCS+
+   Popular PQC digital signature algorithms that we considered               was implemented on an ARM CORTEX-M3 processor [18].
+are: qTESLA, MQDSS and Crystals-Dilithium.                                   Existing cryptographic co-processors were re-purposed for
+                                                                             KYBER KEM in [19]. Design-space exploration of hardware
+  2) Key Encapsulation: Traditional encryption-decryption                    accelerators for NewHope and BLISS-BI (which is not se-
+protocols encrypt a message using the public key of the sender,              lected in NIST PQC Round 2) have been performed by [20].
+which is then decrypted by the receiver using his private key.
+Classic public-key cryptographic algorithms based on ECC                        1 Why these algorithms?: We started our evaluation with round 1 PQC
+
+and RSA work on this principle. However, they have been                      algorithms based on an informal survey of a few PQC investigators and
+                                                                             their comments informed this shortlist. We considered KEM and Signature
+shown to be vulnerable to quantum attacks [2]. One way to                    algorithms to have a heterogeneous case study. Our initial study had 14
+counter this problem is to encrypt and decrypt a message m                   algorithms. After Round 2 winners were declared, we pared down four more.
+                                                                                                                                     3
+
+
+
+                                                                    A. C compiler optimizations
+                                                                       A typical HLS flow uses GCC or LLVM compilers to parse
+                                                                    the input C code, apply compiler optimizations, and generate
+                                                                    an intermediate representation (IR). HLS uses the Single Static
+                                                                    Assignment form so that the IR can be easily manipulated and
+                                                                    turned into RTL hardware by the HLS steps. One can apply
+                                                                    optimizations such as loop unrolling, constant propagation,
+      Fig. 1: High-Level Synthesis (HLS) design flow.               and function inlining on the IR to permit downstream HLS
+                                                                    optimizations. The call graph representation of the algorithms
+                                                                    describes the relationships between the functions in the algo-
+The other algorithms (see Table II) do not have hardware            rithms and aids the HLS determine the components and the
+implementations. This is the first hardware benchmarking            hierarchical interconnections between them.
+and uses a common evaluation framework to study area
+vs performance vs security trade-offs.
+                                                                    B. HLS
+
+   III. C- BASED S YNTHESIS OF (PQC) ACCELERATORS                      Each function in the IR is transformed into an RTL hardware
+                                                                    module. During HLS allocation step, resources are selected.
+   Dedicated PQC accelerators have vital practical applica-         The HLS scheduling step determines the operations to be
+tions. These accelerators can be either low-area and low-power      executed in each clock cycle and this determines the latency
+crypto cores used in small IoT devices or low-latency imple-        of the circuit. The HLS scheduling step generates the finite-
+mentations used in servers [16]. As described in Section II-C,      state machine (FSM) controller, which implements the control-
+there are no hardware implementations of PQC algorithms.            flow management of the accelerator. Operations scheduled in
+This paper is an early study of hardware implementations of         different clock cycles reuse the same resources. In the HLS
+11 PQCs employing a uniform hardware implementation flow.           binding step, scheduled operations are bound to functional
+   We use HLS-based design space exploration. HLS starts            units and temporary values crossing the clock boundaries are
+from a software specification (e.g., C, C++, and SystemC)           stored in registers. Next, the functional units and registers
+and generates a Register Transfer Level (RTL) description (in       are interconnected using multiplexers. The controller synthesis
+Verilog or VHDL) ready for the backend design flow (i.e.,           step creates the controller from the FSM. Based on the
+logic synthesis and physical design). HLS-based design space        operations to execute on the microarchitecture, the controller
+exploration is popular for two reasons:                             generates signals that route the data in the accelerator data path
+   1) Easy verification: A high-level testbench written in C        through the multiplexers in each clock cycle. We use Xilinx
+       or C++ can be re-used to verify/validate the RTL. There      Vivado HLS as it supports C design [21]. The HLS hardware
+       is no need to synthesize verilog/VHDL testbenches.           design flow can also use Mentor Catapult HLS [24], LegUp
+   2) Extensive design-space exploration: The C/C++ code            HLS [25], and Intel HLS [22].
+       can be re-used to explore multiple design points guided
+       by the constraints such as area and latency.
+                                                                    C. Backend
+   Leading electronic design automation vendors like Mentor
+Graphics, and Cadence, and FPGA vendors like Xilinx [21]               The RTL Verilog/VHDL description is generated, together
+and Intel [22] offer HLS tools and designs flows. HLS               with the library components (e.g., custom operators or memory
+organizes components hierarchically according to the sub-           interfaces) used in the design as outputs of HLS. HLS pro-
+function organization in the C specification to manage design       duces the hardware test bench or an interface for co-simulation
+complexity. Each hardware unit adopts the classical Finite          with the software test bench. A pre-defined set of inputs can
+State Machine with Data path (FSMD) model [23] with                 be used to generate the golden output values, which are then
+two components: controller and data path. The controller            matched with the simulation results. We used an FPGA back-
+orchestrates the operations in each clock cycle. The finite state   end flow (Xilinx FPGA synthesis tools) [21] and the ASIC
+machine (FSM) represents the control flow signals the data          back-end flow (Synopsys Design Compiler [26]).
+path resources based on a set of conditions. The data path
+includes the functional units and registers to hold temporary                    IV. PQC H ARDWARE A SSESSMENT
+values. Multiplexers drive the values based on the control flow.
+   HLS-based accelerator design has three parts, as shown           A. HLS-based Assessment Methodology
+in Figure 1: The compiler phase investigates the input C               Figure 2 shows the HLS design exploration flow for PQC
+description and applies compiler-level transformations. The         algorithms. We modify the original C specification to make
+HLS phase determines the microarchitecture. The back end            it HLS-suitable (e.g., change pointers to fixed dimension
+generates the Verilog/VHDL RTL and test benches. RTL                arrays and remove recursions). Next, we perform HLS on the
+simulation is performed on a set of pre-defined inputs to           synthesizable C code to generate RTL using Xilinx Vivado
+determine if the results match the golden ones obtained from        HLS. Vivado provides a detailed synthesis report identifying
+software execution.                                                 which modules/loops in the design are the cause of the longest
+                                                                                                                                                       4
+
+
+
+                      HLS
+                     tunings      Modiﬁed
+                                                                                         keypair generation algorithms, respectively when synthesized
+    C Design
+                                  C Design
+                                                                                         without any additional constraints (latency). Figure 4 shows
+                                    HLS
+                                                    C/RTL                                how the KEM and Signature encapsulation algorithms can be
+                                                 Co-Simulation
+                                                                                         ordered when ranked on the basis of least latency.
+                               Synthesized RTL
+              Directives
+          for Optimization                                                               E. Critical Functions
+                                                                        No
+                                  Critical
+                               Modules/Loops
+                                                         Optimization
+                                                          Possible?
+                                                                             Final RTL     In this section, we will examine the critical functions and
+                                                                                         loops in them that result in high latency for the PQC KEMs.
+                                                         Yes
+                                                                                         The results are shown in Table V.
+
+  Fig. 2: HLS-based design exploration of PQC algorithms.
+                                                                                         F. Performance Optimizations
+                                                                                            We use loop unrolling for encapsulation/signature and de-
+latency. If there are loops, we optimize them using loop                                 capsulation/verification and report the results in Table VI
+unrolling and pipelining2 .                                                              and Table VII respectively. The ranking of the encapsu-
+                                                                                         lation/signature functions after loop unrolling is shown in
+B. PQC Algorithms in this Study                                                          Figure 5(a). NTRU-HRSS is the fastest KEM and Crystals-
+   We evaluated eleven NIST PQC implementations. The PQC                                 Dilithium is the fastest Signature.
+algorithms and their implementation and security character-                                 The results for encapsulation/signature, using loop pipelin-
+istics are summarized in Table II. In this paper, we focused                             ing, are presented in Table VIII. The ranking of the encryption
+on PQC encapsulation/signature and decapsulation/verification                            functions after pipelining is shown in Figure 5(b). Among
+components of these algorithms. Synthesis of keypair genera-                             the algorithms with security level 1, CRYSTALS-Kyber is the
+tion is left as a future exercise. We used Xilinx Virtex-7 FPGA                          fastest KEM and Crystals-Dilithium is the fastest Signature.
+as target device for our synthesis3
+                                                                                         G. Latency-area product Comparisons
+C. Performance metrics                                                                      In this section, we compare the latency-area product (LAP)
+   The considered performance indicators are: latency, area and                          for the encapsulation algorithms for both the baseline and
+latency-area product. Latency is the time required by system                             the optimization techniques. Similar to [39], we consider the
+to produce the output from the time the input is provided.                               area as the number of FPGA LUTs required to synthesize
+Throughput is the maximum speed at which the outputs can                                 the design. The results are shown in Table IX. A lower LAP
+be provided. The minimum number of clock cycles between                                  corresponds to better performance in terms of latency. From
+two successive inputs is the initiation interval (II) and is a                           Table IX, the number of algorithms for which the lowest
+measure of throughput. A lower II indicates higher throughput.                           LAP is obtained using unrolling is about similar to that of
+Figure 3 shows a system with 3 modules. The latency of the                               pipelining. This is because of the many loop dependencies in
+system is 10 clock cycles as the whole computation should                                some algorithms like CRYSTALS-Dilithium, which restricts
+be completed in each module one after the other. The most                                the speedup due to pipelining. The PQC algorithms are ranked
+time consuming module 1 consumes 5 clock cycles and is the                               in terms of LAP in Figure 6.
+bottleneck. After 5 clock cycles, the next input is given to
+module A. Therefore, the system II is 5 clock cycles. In this
+paper, latency and II are used interchangeably. Therefore, a
+design with lower latency indicates better throughput.
+   We will use latency to measure the performance of the
+designs. We will use Flip-Flops and LUTs for FPGA im-
+plementations and chip area for ASIC implementationsThere
+is a trade-off between speed and area. Reduction in latency
+increases the total area. Hence, the Latency-area product
+(LAP) is used to check the efficiency and resource utilization.
+A lower LAP corresponds to a superior implementation.
+
+D. Baseline hardware implementations
+   Tables III and IV report the hardware and timing overhead
+for implementing the PQC encapsulation, decapsulation and
+  2 Since there are numerous tables and graphs in this study, the position of
+the tables may not be close to the text that discusses them. Hence, we made
+their captions self-contained.
+  3 We started this study before NIST announced Artix-7 as the target
+platform. Our experiments in Section V use Artix-7 board.                                   Fig. 3: Illustration of Latency and Throughput metrics.
+                                                                                                                                                                  5
+
+
+
+                           Algorithm                  Basis                PQC        Supported Security Level (public key size in bytes)
+                                                      hard problem       Primitive       1           2         3           4            5
+                           Classic McEliece [27]      Code                 KEM           -           -          -           -    1047319
+                                                                                                                                 1357824
+                           LEDAcrypt [28]             Code                 KEM       27779      57557     57557       99053         99053
+                           Saber [29]                 Lattice              KEM         672           -      992             -        1312
+                           Crystals-KYBER[30]         Lattice              KEM         736           -     1088             -        1440
+                           NewHope [31]               Lattice              KEM         928           -          -           -        1824
+                           FrodoKEM [32]              Lattice              KEM        9616           -    15632             -            -
+                           NTRU-HRSS [33]             Lattice              KEM        9100           -          -           -            -
+                           Crystals-Dilithim [34]     Lattice            Signature    1184        1472     1760             -            -
+                           SPHINCS+ [35]              Hash               Signature      32           -        48            -          64
+                           MQDSS [36]                 Multivariate       Signature       -          62          -         88             -
+                           qTESLA [37]                Lattice            Signature    1504           -     3104             -            -
+                                                                                     14880                 2976
+                                                                                                          39712
+                           LUOV [38]                  Multivariate       Signature       -     12.1KB           -    34.1KB       75.5KB
+
+
+TABLE II: PQC algorithms used in this study: A high-level analysis of 11 NIST PQC implementations. Of these, seven
+are KEM primitives and four are signature primitives. Of the KEM primitives, two are code and the remaining six are Lattice.
+Two of the PQC signature primitives are lattice, one is hash and one is multivariate . Algorithms not supporting a particular
+security level are indicated with a ‘-’. Classic McEliece has two implementations, both of which are of security level 5. The
+security level of each algorithm used in this paper are shown in bold. Among these, eight are at security level 1, one is ar
+security level 2, one is at security level 3 and one is at the highest security level 5. Algorithms across various security levels
+are chosen for two purposes. First, many algorithms do not support some security levels. Furthermore, we wanted to perform
+a heterogeneous case study across various security levels.
+
+
+      Algorithm   Sec.         FF        LUT        Clock       Latency              implementation, i.e., with no optimizations. Figure 7 plots the
+                  Level                             (nsec)                           hardware overhead of PQC algorithms as flip-flops and LUTs.
+                           KEM algorithms
+      CRYSTALS      1       40720  230540              15            56345           Figure 8 reports the hardware overhead in terms of the number
+      Kyber                                                                          of flip-flops and LUTs, for the PQC decapsulation algorithms.
+      Newhope       1       26257      135689          15        681191
+      FrodoKEM      1       14516       82265          10        469217
+      NTRU-HRSS     1        6633       33845          15       1496914
+      LEDACrypt     1        8774       90308          10         37832
+      Saber         3       38495      214764          15        499812                      Algorithm        Sec.         FF        LUT     Clock      Latency
+      Classic       5       60264      840384          10       5128978                                       Level                          (nsec)
+      McEliece                                                                                                         KEM- algorithms
+                          Signature algorithms                                               CRYSTALS           1       33030   186244          15       53553
+      CRYSTALS      1        25926     133461          10        609828                      Kyber
+      Dilithium                                                                              Newhope            1       19635       92250       15       723027
+      SPHINCS+      1        8641       31147          10    628778326                       FrodoKEM           1       14461       82307       10       220344
+      qTELSA        1       41978      232582          10       125374                       NTRU-HRSS          1        5292       29532       15      1003222
+      MQDSS         2       35263      193320          15     49365597                       LEDACrypt          1        1891        5631       10        45964
+                                                                                             Saber              3       33751      189597       15        89392
+                                                                                             Classic            5       70112      847949       10    146126996
+TABLE III: Description: Security versus area versus the tim-                                 McEliece
+                                                                                                                      Signature algorithms
+ing of PQC encapsulation algorithms, without optimizations                                   CRYSTALS-          1        20865     108878       10        5380
+(i.e., baseline). Analysis: Among the security level 1 KEM                                   Dilithium
+                                                                                             SPHINCS+           1        3335       11438       10       937975
+algorithms, NTRU-HRSS has a latency of over 1 million                                        qTELSA             1       29875      168570       10        71223
+cycles and NTS-KEM is the fastest. LIMA has low-latency                                      MQDSS              2       26423      147359       15     25124450
+and the strongest security level 5. Among the security level 1
+signature algorithms, CRYSTALS-Dilithium and qTESLA has                              TABLE IV: Description: Security versus area versus the
+latencies fewer than a million cycles. Takeaway: CRYSTALS-                           timing of PQC decapsulation algorithms, without optimiza-
+Dilithium (for signature generation), and FrodoKEM (for                              tions (i.e., baseline). Analysis: Among the KEM algo-
+KEM) are good candidates for IoT devices. CRYSTALS-                                  rithms, NTRU-HRSS (security level 1) and Classic McEliece
+Dilithium signature generation algorithm has security level 1                        (security level 5) have latency of more than 1 million
+and is the second fastest and the second smallest among the                          cycles. Among the Signature algorithms, qTESLA and
+Signature algorithms.                                                                CRYSTALS-Dilithium have a latency less than a million
+                                                                                     cycles. CRYSTALS-Dilithium is the fastest among signature
+                                                                                     algorithms. Takeaway: SPHINCS+ (for Signature generation)
+H. Security level vs hardware tradeoffs                                              and LEDACRYPT (for KEM) are good candidates for IoT
+  The PQC algorithms have different implementations de-                              devices. None of the level 5 security decapsulations in this
+pending on the security strength (i.e. the implementations                           study have low latency and hence are not appropriate for
+vary in key sizes). We examine how the hardware overhead                             servers. All the low latency algorithms have level 1 security –
+varies with security strength. We run experiments on a baseline                      LEDACRYPT (KEM) and CRYSTALS-Dilithium (Signature).
+                                                                                                                                         6
+
+
+
+                                                                        Algorithm    Sec.         FF        LUT     Clock      Latency
+                                                                                     Level                          (nsec)
+                                                                                              KEM algorithms
+                                                                        CRYSTALS       1      237182  2414748          15       42823
+                                                                        Kyber
+                                                                        Newhope        1       26257      135689       15      680150
+                                                                        FrodoKEM       1       44284      136998       10      366609
+                                                                        NTRU-HRSS      1        9035       65356       15       22594
+                                                                        LEDACrypt      1      288530      783651       10        6660
+                                                                        Saber          3       93234      376313       15      236812
+                                                                        Classic        5       69795      934492       10     2373772
+                                                                        McEliece
+                                                                                             Signature algorithms
+                                                                        CRYSTALS       1       158313      584742      10       18525
+                                                                        Dilithium
+Fig. 4: We sorted the PQC encapsulation algorithms by latency,          SPHINCS+       1        8931       42604       10    464961626
+normalized for a clock cycle of 10 ns for each security                 qTESLA         1       97235      328106       10        59854
+level. The KEM algorithms are in blue, orange and sky blue,             MQDSS          2       45135      230273       15     49365597
+
+corresponding to security levels 1, 3, and 5. The Signature
+algorithms are in red and gray, corresponding to security levels   TABLE VI: Description: Security versus area versus the
+1 and 2. Among the KEM algorithms, two have latency less           timing of PQC encapsulation algorithms, after loop unrolling.
+than 100,000 cycles and two more have latency less than            Analysis: Compared to Table III, virtually all algorithms
+a million cycles. Two KEM algorithms have latency more             have an improvement in latency, with an ensuing increase in
+than a million cycles. Among the signature algorithms, one         area. CRYSTALS-KYBER incurs the most area among KEM
+security level 1 has a latency less than a million cycles and      algorithms and CRYSTALS-Dilithium among the Signature
+one algorithm of security level 1 has more than a million cycles   algorithms. Among Signature PQC algorithms, loop unrolling
+latency. The one security level 2 signature algorithm has more     doesn’t reduce the latency of MQDSS. NTRU-HRSS has the
+than a million cycles latency.                                     most speedup in terms of latency 66× reduction in latency
+                                                                   compared to baseline (in Table III). Takeaway: Loop unrolling
+                                                                   reduces the latency of all PQC encapsulation algorithms.
+I. ASIC Implementation of PQC decapsulation algorithms.            However, it also results in an increase in area. Among the
+   In this section, we report the ASIC implementations of          other high security algorithms, MQDSS (Signature, security
+PQC decapsulation algorithms. All the designs are synthesized      level 2) can be used for IoT devices, since it provides relatively
+with a 5ns clock period, 65 nm GF LPE library and 2-               low hardware overhead. Among the lower security (level 1)
+stage compilation using Synopsys DC ASIC synthesis tool.           algorithms, NTRU-HRSS (KEM) and SPHINCS+ (Signature)
+The synthesis results, indicating the maximum operational          can be used for IoT devices, since the area overhead is low.
+frequency, the area and power are shown in Table X. The
+ASIC synthesis flow accepts the RTL generated by the HLS
+                                                                   the platform that NIST is considering as the comparison plat-
+tool with some RTL changes done manually before Synopsys
+                                                                   form. The three algorithms are qTESLA, Crystals-Dilithium,
+DC is able to synthesize them.
+                                                                   and MQDSS. Each has been verified using KATs in NIST
+                                                                   submissions.
+      V. D EEP D IVE USING THREE S IGNATURE PQC S
+   In this section, we will look into three Signature-based        A. Comparison across security level 1
+PQC algorithms and analyze the hardware implementations               We will compare the area and performance of the three
+across various security levels. Furthermore, we will explore       algorithms for security level 1. The parameters we analyze
+the impacts of various design optimizations, for both signature    are number of FFs, number of LUTs, the latency and the LAP.
+and verification. In this section, all implementations have        The comparisons for the signature and verification parts are
+been performed on a Xilinx Artix-7 FPGA board. This is             shown in Table XI and XII.
+
+                                                                   B. Comparison across security level 3
+  Algorithm            Critical Functions              # Loops
+                            KEM algorithms                            In this section, we compare the hardware implemen-
+  NTRU-HRSS            poly_Rq_mul                     2           tation cost and performance for both “crypto sign” and
+  Saber                vectormul                       2
+  CRYSTALS-Kyber       gen_matrix                      3           “crypto sign open” for the three Signature-based algorithms
+  Newhope              poly_uniform                    2           at security level 3. The results for signature and verification
+  FrodoKEM             frodo_sample_n, frodo_mul_add   1,1
+  Classic McEliece     syndrome                        1
+                                                                   are shown in Table XIII and XIV respectively.
+  LEDACrypt            KeccakF1600_StatePermute        3
+                         Signature algorithms                      C. Comparison across various security levels
+  CRYSTALS-Dilithium   expand_mat                      2
+  MQDSS                crypto_sign                     2              In this section, we will compare the area overhead and
+  qTESLA               sparse_mul16                    1           performance for the algorithms across various security lev-
+  SPHINCS+             treehash                        5
+                                                                   els. Section V-C1 and Section V-C2 compare the results
+                                                                   for “crypto sign” and “crypto sign open” components of the
+      TABLE V: Critical functions of the PQC KEMs.                 algorithms.
+                                                                                                                                           7
+
+
+
+     Algorithm    Sec.          FF       LUT     Clock     Latency        Algorithm    Sec.         FF        LUT     Clock      Latency
+                  Level                          (nsec)                                Level                          (nsec)
+                           KEM algorithms                                                       KEM algorithms
+     CRYSTALS       1      194126   1977896         15       43018        CRYSTALS      1        11699  1307815          15       31669
+     Kyber                                                                Kyber
+     Newhope        1        28999     164937       15      721986        Newhope       1        25639      136457       15      307847
+     FrodoKEM       1        97355     128031       10      117736        FrodoKEM      1       105875      179290       10      335891
+     NTRU-HRSS      1        11514      97791       15       21996        NTRU-HRSS     1        12225       75141       15      100208
+     LEDACrypt      1       164230     406135       10       18079        LEDACrypt     1        13157      102496       10       11075
+     Saber          3       231549    2350000       15      365015        Saber         3        40824      234171       15      367099
+     Classic        5        79962     870908       10    10659024        Classic       5        60270      840430       10     3787729
+     McEliece                                                             McEliece
+                          Signature algorithms                                                 Signature algorithms
+     CRYSTALS       1        108154     388991      10        5380        CRYSTALS      1        146076     1327355      10      155166
+     Dilithium                                                            Dilithium
+     SPHINCS+       1         3335      11438       10      937975        SPHINCS+      1        20628       66750       10    468789803
+     qTESLA         1        77567     247726       10       36423        qTESLA        1       112657      346020       10        63736
+     MQDSS          2        93945     323734       15    25084906        MQDSS         2        47441      270713       15     25825918
+
+
+TABLE VII: Description: Security versus area versus the              TABLE VIII: Description: Security versus area versus the
+timing of PQC decapsulation algorithms, after loop unrolling.        timing of PQC encapsulation algorithms, after loop pipelining.
+Analysis: Loop unrolling provides significant reduction in           Analysis: Similar to loop unrolling, pipelining also reduces
+latency. Except for Classic McEliece and MQDSS, none of              the overall latency for the PQC encapsulation algorithms.
+them have a latency of over 1 Million cycles. The maximum            Among the KEM algorithms, only Classic McEliece has a
+reduction in latency of 45× is for NTRU-HRSS. Takeaway:              latency of more than 1 million cycles. The major difference
+Similar to encapsulation, loop unrolling reduces latency for         with Table VI is with respect to the signature algorithm,
+PQC decapsulations. This comes with extra hardware. For              MQDSS. While loop unrolling could not modify its latency,
+Saber, the increase in hardware overhead is 12×, in # of             pipelining can reduce the latency by 50%. Takeaway: Loop
+LUTs. If an IoT device requires high security (security level        pipelining reduces the latency of PQC encapsulation algo-
+5), Classic McEliece can be used, since the area overhead            rithms, with an increase of hardware area. The improvement
+is low. For IoT devices where high level of security is not          in latency compared to loop unrolling is not consistent. After
+required, security level 1 algorithm with low area overhead          pipelining, LIMA (KEM, security level 5) emerges as an
+like SPHINCS+ (Signature) can be used. On the other hand,            ideal candidate for both IoT devices and servers, with low
+CRYSTALS-Dilithium (Signature ), providing security of level         area and low latency. For low security IoT devices, security
+1, can be used in servers, owing to its low latency.                 level 1 algorithms with low area overhead like NTRU-HRSS
+                                                                     (KEM) and RLIZARD (Signature) may be used. None of
+                                                                     the Signature algorithms provide low latency after pipelining.
+                                                                     Among the KEM algorithms, BIG QUAKE provides high
+   1) Signature: In this section, we compare the area (in            security (level 3) as well as low latency. Hence it is ideal
+terms of FF and LUT), performance (in terms of latency)              for server applications. CRYSTALS-Kyber also provides low
+and LAP for implementing “crypto sign” portion of the three          latency; however, its security level is only 1. Among the KEM
+algorithms for security levels 1 and 3. The results are shown        algorithms, pipelining generates a faster design compared to
+in Figure 9. For qTESLA and CRYSTALS-Dilithium, the                  loop unrolling for only 3-of-11 algorithms. On the other hand,
+area overhead at security levels 1 and 3 are similar. For            for signature algorithms, pipelining provides better latency for
+MQDSS, the are overhead is 13-16% more in security level             2-of-4 algorithms compared to unrolling.
+3 compared to security level 1. For qTESLA, the latency
+reduces at security level 3, compared to level 1. For the
+other two algorithms, the latency increases drastically at higher    D. Optimization
+security level. Comparing both area and performance, we can             In this section, we will analyze how the various optimization
+observe that only qTESLA has lower LAPs at security level            techniques (Loop unrolling and Loop pipelining) help to
+3 compared to level 1. qTESLA at security level 3 has the            reduce the overall latency of the PQC algorithms. We will
+lowest LAP and provides the highest security among all the           compare the same parameters we used in Section V-C for three
+alternatives discussed in this section. Therefore, we suggest it     types of implementations – baseline, loop unrolling and loop
+as the best algorithm to use among these three.                      pipelining, at security level 1. The results for implementation
+                                                                     of “crypto sign” and “crypto sign open” are shown in Fig-
+   2) Signature Verification: In this section, we compare the        ure 11 and Figure 12, respectively.
+area, performance and LAPs for the signature verification, i.e.,
+“crypto sign open” component of the three algorithms across
+the two security levels. The results are shown in Figure 10. For     E. Implications of hardware-optimized keccak
+all the algorithms, the area overhead remains similar for the           keccak is a family of sponge functions used by the
+two security levels. On the other hand, consistently, the latency    three algorithms and by many NIST round 2 PQCs. Over
+and LAP is higher at security level 3 compared to security level     the years, researchers developed hardware-optimized variants
+1. qTESLA has the least LAP at both the security levels.             of keccak. In this section, we study the effect of one of
+                                                                                                                                        8
+
+
+
+
+                (a)                                     (b)
+
+Fig. 5: Description: PQC encapsulation algorithms sorted by
+latency, normalized for the clock cycle of 10 ns, when (a)
+loop unrolling (b) loop pipelining are performed. The KEM
+algorithms are in blue, orange, and sky blue, corresponding to
+security levels 1, 3, and 5. The signature algorithms are in red
+and gray, corresponding to security levels 1 and 2. Analysis:              Fig. 6: PQC KEMs sorted by LAP, normalized for clock
+(a) Loop unrolling: Five KEM algorithms have latency fewer                 cycle of 10ns. The KEMs are in blue, orange and sky blue,
+than 100,000 cycles – three have security level 1 and one has              corresponding to security levels 1, 3, 5. Signature algorithms
+security level 5. Three KEM algorithms have latency less than              are red and gray, corresponding to security levels 1 and 2.
+a million cycles (one of level 1 and two of level 3) and two               Among the KEMs, one has a LAP of less than 1010 , of
+KEM algorithms have latency over a million cycles (one of                  security level 1. Four are in the range 1010 − −1012 , three
+level 1 and the other of level 5). Two signature algorithms                of security level 1 and one of security level 3. One security
+have latency fewer than a million cycles (both are of level                level 5 algorithm has a LAP of over 1012 . Among signatures,
+1) and two have latency higher than a million cycles (one                  one has LAP < 1010 – of security level 1. Two – one security
+each of levels 1 and 2). (b) Loop pipelining: Four KEMs have               level 1 and another of security level 2 have LAP > 1012 .
+latency less than 100,000 cycles (three of level 1, one of level
+3 and one of level 5). Four KEMs have latency less than a
+million cycles (three of level 1 and one of level 3). Only one
+security level 5 KEM has latency more than a million cycles.
+For signature algorithms, two have latency fewer than a million
+cycles (both of level 1) and two higher than a million cycles
+(one of level 1 and the other of level 2.)
+
+
+these and observe how the area and performance overhead
+
+
+    Algorithm    Sec.       Baseline       Loop                 Loop
+                 Level                   Unrolling             Pipeline
+                           KEM algorithms
+    CRYSTALS          1   1.3 × 1011    1.0 × 1011            4.1 × 1010
+                                                                           Fig. 7: Hardware overhead in terms of number of LUTs
+    Kyber                                                                  and FFs for various implementations of PQC encapsulation
+    Newhope           1   9.2 × 1010      9.2 × 1010          4.2 × 1010   algorithms. FFs are shown in solid colors and LUTs as
+    FrodoKEM          1   3.9 × 1010       5 × 1010            6 × 1010
+    NTRU-HRSS         1   5.1 × 1010      1.5 × 109            7.5 × 109   hashed patterns. Implementations of the same algorithm are
+    LEDACrypt         1    3.4 × 109       5.2 × 109          1.1 × 109    marked with the same color for ease of comparison. KYBER
+    Saber             3   1.1 × 1011      8.9 × 1010          8.6 × 1010   encapsulation is the largest and has the maximum variation
+    Classic           5   1.0 × 1013      2.2 × 1012          3.2 × 1012
+    McEliece                                                               in area relative to security levels. KYBER-768 requires 40%
+                          Signature algorithms                             more hardware over KYBER-512.
+    CRYSTALS          1    8.1 × 1010       1.1 × 109         2.1 × 1011
+    Dilithium
+    SPHINCS+          1   2.0 × 1013      2.0 × 1013          3.1 × 1013
+    qTESLA            1   2.9 × 1010      2.0 × 1010          2.2 × 1010   changes.We use keccak implementation from [40]. They de-
+    MQDSS             2   9.5 × 1012      1.1 × 1013          7.0 × 1012   veloped a KeccakF 1600 StateP ermute function implemen-
+                                                                           tation, with separate functions used for internal operations
+TABLE IX: Description: Security vs. LAP for optimizations                  like θ, ρ, π, χ and ι. Figure 13 compares the parameters for
+on PQC encapsulations. The minimum values for each al-                     implementation of “crypto sign”, while Figure 14 compares
+gorithm are in bold. Analysis: For most KEM algorithms,                    “crypto sign open”. For consistency, all implementations are
+pipelining produces the best latency-area product. Only for two            for security level 1. In Figures 15, 16, we compare overheads
+(NTRU-HRSS and Classic McEliece) loop unrolling provides                   with loop unrolling. For fair comparison, we use the same
+the best LAP. For FrodoKEM and SPHINCS+, the baseline                      directives for both implementations. Similar comparison for
+implementation has the best LAP, i.e., optimizations actually              loop pipelining are shown in Figures 17, 18.
+deteriorate the results. Takeaway: LEDACRYPT (KEM) and
+CRYSTALS-Dilithium (Signature) have low LAPs.
+                                                                                                                                             9
+
+
+
+
+                                                                          Algorithm      FF     LUT    Clock (ns)   Latency          LAP
+                                                                          qTESLA      17780    87067        12.58     80422     7.0 × 109
+                                                                          CRYSTALS-   14712    63863        8.738    149950     9.5 × 109
+                                                                          Dilithium
+                                                                          MQDSS       23072   117097       17.045   25686731    3.0 × 1012
+
+
+                                                                        TABLE XII: Description: Analysis of hardware implementa-
+                                                                        tions of “crypto sign open” components of Signature-based
+                                                                        PQC algorithms. Analysis: CRYSTALS-Dilithium has the
+                                                                        least area, while qTESLA has the least latency shows sig-
+                                                                        nificantly better performance. Takeaway: At security level 1,
+                                                                        qTesla is the best algorithm for “crypto sign open”, since it
+                                                                        occupies the least LAP.
+Fig. 8: # of flip-flops (FF) and LUTs used by PQC decapsu-
+lation algorithms. FFs are shown in solid colors, while LUTs
+as hashed patterns. Implementations of the same algorithm
+have the same color. Except FRODO-KEM, none of the
+decapsulations have noticeable difference in FF/LUT count.
+The variation in LUT and FFs for the two security levels of
+Frodo-KEM is˜40%. Saber uses the most LUTs and FFs.
+                                                                         Algorithm       FF     LUT    Clock (ns)    Latency          LAP
+  Algorithm            Sec.     Clock         Area   K Gates   Power     qTESLA       26011   126311        12.65     347655    4.3 × 1010
+                       Level   (MHz)        (µm2 )              (mW)     CRYSTALS-    27308   123933        8.738     826832    1.0 × 1011
+                            KEM algorithms                               Dilithium
+  CRYSTALS-Kyber         1         200    3378515    1340.68    39.21    MQDSS        24748   123170      16.378    119353597   1.4 × 1013
+  Newhope                1       168.6    3208999      1273     38.02
+  FrodoKEM               1         200       10721      4.25     0.14
+  NTRU-HRSS              1       169.5    1246869       495      14.3   TABLE XIII: Description: Analysis of hardware implemen-
+  Saber                  3      137.75    4774529      1895     54.49
+                         Signature algorithms
+                                                                        tations of “crypto sign” components of Signature-based PQC
+  CRYSTALS-Dilithium     1       157.7    4774529     1602.6    51.24   algorithms at security level 3 Analysis: While area overheads
+  SPHINCS+               1         200     19477.8      7.73     0.28   are more or less the same for all algorithms, similar to Ta-
+  MQDSS                  2         100    9341007      3706       120
+                                                                        ble XI, the overall latency and LAP for MQDSS is extremely
+                                                                        high. Takeaway: At security level 3, qTESLA is the best
+TABLE X: Description: ASIC synthesis of some of the                     algorithm for “crypto sign”, since it occupies the least LAP.
+studied PQC decapsulation algorithms. Analysis: FrodoKEM
+(security level 1, KEM) and SPHINCS+ (security level 1,
+Signature) have small decapsulation modules which consume
+the least power and hence can be used in small IoT devices.
+Takeaway: Big QUAKE (security level 3) is a good compro-
+mise of security, performance, and power for use in servers.
+
+
+                                                                          Algorithm      FF     LUT    Clock (ns)   Latency           LAP
+  Algorithm       FF     LUT      Clock (ns)    Latency          LAP      qTESLA      17754    86142        12.65    201027     1.7 × 1010
+  qTESLA       26299   126732          12.65     537092    6.8 × 1010     CRYSTALS-   14783    63980        8.738    297592     1.9 × 1010
+  CRYSTALS-    27132   123655          8.738     485963    6.0 × 1010     Dilithium
+  Dilithium                                                               MQDSS       23149   117574       17.045   87861777    1.0 × 1013
+  MQDSS        21841   106035          17.05    34502428   3.6 × 1012
+
+                                                                        TABLE XIV: Description: Analysis of hardware implemen-
+TABLE XI: Description: Analysis of hardware implementa-                 tations of “crypto sign open” components of Signature-based
+tions of “crypto sign” components of Signature-based PQC                PQC algorithms. Analysis: CRYSTALS-Dilithium has the
+algorithms. Analysis: While area overheads are more or less             least area, while qTESLA has the least latency. Takeaway:
+the same (MQDSS occupying 83% less area than the oth-                   At security level 3, qTESLA is the best algorithm for
+ers), the overall latency and LAP for MQDSS is extremely                “crypto sign open”, since it occupies the least LAP. On the
+high. MQDSS takes 71 × more latency and 61 ×more                        other hand, MQDSS has the worst LAPs.
+LAP compared to CRYSTALS-Dilithium. Takeaway: At se-
+curity level 1, CRYSTALS-Dilithium is the best algorithm for
+“crypto sign”, since it occupies the least LAP.
+                                                                                                                               10
+
+
+
+
+                (a)                           (b)                           (c)                           (d)
+
+Fig. 9: Comparison of (a) FFs, (b) LUTs, (c) Latency and (d) LAP to implement the “crypto sign” component of the three
+PQC algorithms across different security levels. (a) For qTESLA and CRYSTALS-Dilithium, the difference in FF count is not
+significant, while for MQDSS, there is a 13% increase in number of FFs for implementing at security level 3 compared to
+security level 1. (b) Similar to FFs, for qTESLA and CRYSTALS-Dilithium, the difference in LUT count is not significant,
+while for MQDSS, there is a 16% increase in number of FFs for implementing at security level 3 compared to security level
+1. (c) Since the latency of MQDSS is two orders of magnitude more than either qTESLA or CRYSTALS-Dilithium, this graph
+is plotted in the logarithmic scale. qTESLA at security level 3 and CRYSTALS-Dilithium at security level 1 have the least
+latency. (d) qTESLA at security level 3 has best LAP and MQDSS at both security levels have worst LAP.
+
+
+
+
+                 (a)                            (b)                           (c)                           (d)
+
+Fig. 10: Comparison of (a) FFs, (b) LUTs, (c) Latency and (d) LAP to implement the “crypto sign open” component of
+the three PQC algorithms across different security levels. (a) Compared to signature, the difference in FF count is not
+significant for any algorithm. While in Figure 9, CRYSTALS-Dilithium occupies the highest number of FFs, when implementing
+“crypto sign open”, it requires the least number of FFs. (b) Compared to Figure 9, the difference in LUT count is not significant
+for any algorithm. (c) qTESLA at security level 1 requires the least latency. MQDSS requires the highest latency for both
+“crypto sign” and “crypto sign open”. (d) qTESLA at security level 1 has best LAP and MQDSS at both security levels have
+worst LAP.
+
+
+
+
+                 (a)                            (b)                           (c)                           (d)
+
+Fig. 11: (a) FFs, (b) LUTs, (c) Latency and (d) LAP to implement the “crypto sign” of the three PQC algorithms at security
+level 1 for different optimizations. (a) Loop pipelining yields the least number of FFs across, while loop unrolling requires
+the maximum number of FFs. (b) Loop pipelining yields the least number of LUTs for all designs. Except for CRYSTALS-
+Dilithium, the number of LUTs increases with loop unrolling. (c) Loop unrolling and pipelining reduce the latency compared
+to the baseline. (d) CRYSTALS-Dilithium and qTESLA have least LAP when loop pipelined. For MQDSS, the least LAP is
+obtained when loops are unrolled.
+                                                                                                                            11
+
+
+
+
+                 (a)                           (b)                          (c)                           (d)
+
+Fig. 12: Comparison of (a) FFs, (b) LUTs, (c) Latency and (d) LAP to implement the “crypto sign open” component of the
+three PQC algorithms at security level 1 for different optimizations. Optimization with loop pipelines occupy the least number
+of FFs and LUTs across all designs, while loop unrolling requires the maximum number of FFs and LUTs. Optimization
+with loop unrolling and pipelines reduce the latency compared to baseline implementation. Except for MQDSS, the other two
+algorithms have least LAP when loop pipelining is performed. For MQDSS, the least LAP is obtained when loops are unrolled.
+
+
+
+
+                (a)                           (b)                           (c)                           (d)
+
+Fig. 13: Comparison of (a) FFs, (b) LUTs, (c) Latency and (d) LAP to implement the “crypto sign” component of the three
+PQC algorithms at security level 1 for two versions of keccak. The number of FFs and LUTs reduce considerably compared to
+the original keccak. CRYSTALS-Dilithium has 54% reduction in FF count and 73% reduction in LUTs. On the other hand, the
+latency increases with the modified keccak. The worst affected is qTESLA, which has a 5.8× increase in latency, while MQDSS
+incurs only 1.7× increase in latency. The LAP value, on the other hand, decreases for MQDSS and CRYSTALS-Dilithium
+and increase only for qTESLA. For MQDSS, the LAP is reduced by 21%.
+
+
+
+
+                (a)                           (b)                           (c)                           (d)
+
+Fig. 14: Comparison of (a) FFs, (b) LUTs, (c) Latency and (d) LAP to implement“crypto sign open” component of the three
+algorithms at security level 1 for different versions of keccak. Similar to Figure 13, the number of FFs and LUTs reduce
+considerably compared to the original keccak. MQDSS has a maximum of 56% reduction in FF count and CRYSTALS-
+Dilithium has about 96% reduction in LUTs. The latency increases with the modified keccak. The worst affected is again
+qTESLA, which has a 7× increase in latency while MQDSS has 1.7× increase in latency. The LAP decreases considerably
+for all algorithms except qTESLA. CRYSTALS-Dilithium has 82% reduction in LAP compared to original keccak.
+
+
+
+
+                (a)                           (b)                           (c)                           (d)
+
+Fig. 15: Comparison of (a) FFs, (b) LUTs, (c) Latency and (d) LAP to implement the “crypto sign” component of the three
+PQC algorithms at security level 1 for different versions of keccak, after loop unrolling. The number of FFs and LUTs reduce
+considerably compared to the original keccak version. qTESLA has about 48% reduction in FF count and 64% reduction in
+number of LUTs. On the other hand, the latency increases with the modified keccak implementation. The worst affected is
+qTESLA, which has a 7.15 × increase in latency. In contrast to Figure 13, the LAP values consistently increase for all three
+algorithms. For MQDSS, the increase in LAP is minimum – 20%.
+                                                                                                                          12
+
+
+
+
+                (a)                          (b)                           (c)                          (d)
+
+Fig. 16: Comparison of (a) FFs, (b) LUTs, (c) Latency and (d) LAP to implement “crypto sign open” component of the three
+PQC algorithms at security level 1 for different keccak after loop unrolling. The number of FFs and LUTs reduce considerably
+compared to the original keccak. MQDSS has about 52% reduction in FF count and 61% reduction in number of LUTs. On
+the other hand, the latency increases with the modified keccak. The worst affected is qTESLA, which has a 8.4× increase.
+The LAP increases for qTESLA and CRYSTALS-Dilithium but reduces by 28% for MQDSS.
+
+
+
+
+                (a)                          (b)                           (c)                          (d)
+
+Fig. 17: Comparison of (a) FFs, (b) LUTs, (c) Latency and (d) LAP to implement “crypto sign” component of the three PQC
+algorithms at security level 1 for different versions of keccak, after loop pipelining. The number of FFs and LUTs reduce
+considerably compared to the original keccak. qTESLA has a 50% reduction in FF count and 65% reduction in number of
+LUTs. On the other hand the latency increases with the modified keccak implementation. The worst affected is qTESLA,
+which has a 7.7 × increase in latency. The LAP values increase for qTESLA and CRYSTALS-Dilithium, but reduce by 5%
+for MQDSS. Overall, the relative increase in LAPs is less than when loop unrolling in Figure 15.
+                                                                                                                             13
+
+
+
+
+               (a)                            (b)                             (c)                             (d)
+
+Fig. 18: Comparison of (a) FFs, (b) LUTs, (c) Latency and (d) LAP to implement “crypto sign open” of the three algorithms
+at security level 1 using different versions of keccak, after loop pipelining. The number of FFs and LUTs reduce considerably
+compared to the baseline keccak. MQDSS has 56% reduction in FF count and 70% reduction in number of LUTs. Although
+the latency of MQDSS increases by 67% with the modified keccak, the overall LAP value reduces by 52%.
+
+
+ VI. TAKEAWAYS OF S YSTEMATIZATION OF K NOWLEDGE                       levels as well as for various optimizations like loop
+   In this systematization of knowledge (SOK) study, we im-            unrolling and pipelining.
+plemented PQC algorithms using a common design framework            9) In our deep dive case study, qTESLA and CRYSTALS-
+and a common target FPGA platform. This is an ongoing                  Dilithium had the least LAP when loop pipelined, while
+SOK study. In the end, we expect to assess the hardware                MQDSS had the least LAP when loop unrolled. A
+implementations of all 26 NIST PQC Competition Round                   future exercise will understand which optimization is
+2 KEM and Signature algorithms. Key takeaways of this                  appropriate for which algorithm.
+preliminary SOK study are:                                         10) Different components of the algorithms can be optimized
+   1) Among the KEM algorithms of security level 1, NTRU-              for low-area by rewriting the code and running HLS. As
+       HRSS is superior in terms of latency and LAP.                   shown in Section V-E, using a different implementation
+   2) Among the Signature algorithms of security level 1,              of KeccakF 1600 StateP ermute (from [40]) reduces
+       CRYSTALS-Dilithium is superior for Signature and                the area.
+       qTesla is superior for Signature verification. SPHINCS+     11) Even when the same optimization directives are applied
+       is the costliest in terms of latency and LAP.                   with the two different keccak versions, the modified
+   3) This study has only two implementations each of se-              keccak function (from [40]) reduces the overall area
+       curity levels 3 and 5. We will continue analyzing the           overhead. However, in this case, the LAPs don’t decrease
+       area-performance trade-offs for more high-security al-          as much (in fact, the LAP increases in most cases),
+       gorithms. Saber is ideal for high (level 3) security with       compared to the baseline (without optimization). The
+       low latency for server applications.                            reduction in LAP is more for loop pipelining compared
+   4) In low-power IoT devices, one needs low-area, compact            to loop unrolling.
+       designs. For example, without optimizations, NTRU-          12) PQC hardware implementations are not optimized for
+       HRSS and SPHINCS+ FPGAs are ideal for IoT with                  side-channel resistance. PQC researchers can use our
+       security level 1. Low-latency Crystals-KYBER FPGA               implementations for further hardware-security analysis
+       designs are good for servers with security level 1.             such as timing, power, and fault-attack side-channel
+   5) FrodoKEM and SPHINCS+ ASICs have small decapsu-                  analysis. This study is ongoing with collaborators.
+       lation modules which consume low power and useful in        13) Further optimizations can be done on these designs
+       IoT devices, if security level 1 suffices. NTRU-HRSS            obtained using HLS. The RTL obtained in this study
+       and NewHope (security level 1) are the fastest ASICs            are directly from Xilinx Vivado HLS without any hand-
+       and good for servers.                                           tailored optimizations to reduce area/latency.
+   6) For KEM algorithms with high security level (3 and 5),       14) In this study, we used the same board (either Virtex or
+       loop unrolling is more effective in reducing latency. For       Artix) for implementing both low area and low latency
+       Signature algorithms, loop pipelining is more effective,        variants of the PQC algorithms. As a future exercise,
+       for algorithms of security level 1. We experimented on          we will investigate which FPGA architectures are ideal
+       one signature algorithm of security level 2 for which,          for low area/low latency implementations. This will be
+       loop unrolling was more practical.                              similar to [17] that implemented a low area version on
+   7) For low-security (level 1) KEMs, latency rankings                Cortex-M0 and a faster version on Cortex-M4.
+       change when optimized. When loop unrolling is per-
+       formed, NTRU-HRSS is the fastest. However, pipelining                        VII. ACKNOWLEDGEMENTS
+       directives render CRYSTALS-Kyber the fastest KEM.            • Dr. Gerardo Pelosi (Politecnico di Milano), Dr. Deb-
+   8) We performed specific case studies using three Sig-             deep Mukhopadhyay (IIT Kharagpur) and Dr. Francesco
+       nature algorithms – qTESLA, CRYSTALS-Dilithium                 Regazzoni (ALARI Switzerland) helped with selecting
+       and MQDSS in Section V. We noted the area and                  the top PQC candidates for this study.
+       performance overhead when hardware implementations           • Dr. Marc Manzano and Dr. Najwa Aaraj of DarkMatter
+       of these algorithms are performed for various security         inc. Abu Dhabi, UAE offered timely and insightful feed-
+                                                                                                                                                               14
+
+
+
+     back (especially to explore the security-informed trade-                     [21] Xilinx Inc., “Vivado Design suite user guide - designing
+     offs) on the early drafts of the report.                                          with       ip      (ug896).”       https://www.xilinx.com/products/design-
+                                                                                       tools/vivado/integration/esl-design.html. [Online; accessed 13-January-
+   • Dr. Alessandro Barenghi (Politecnico di Milano) and Dr.                           2019].
+     Xianhui Lu answered our questions while implementing                         [22] R. Domingo, R. Salvador, H. Fabelo, D. Madroñal, S. Ortega, R. Laz-
+                                                                                       cano, E. Juárez, G. Callicó, and C. Sanz, “High-level design using
+     LEDAcrypt and LAC, respectively.                                                  intel FPGA opencl: A hyperspectral imaging spatial-spectral classifier,”
+                                                                                       in IEEE International Symposium on Reconfigurable Communication-
+                              R EFERENCES                                              centric Systems-on-Chip, pp. 1–8, 2017.
+ [1] L. Chen, L. Chen, S. Jordan, Y.-K. Liu, D. Moody, R. Peralta, R. Perlner,    [23] J. Zhu and D. Gajski, “A unified formal model of ISA and FSMD,”
+     and D. Smith-Tone, Report on post-quantum cryptography. US Depart-                in Proceedings of the International Workshop on Hardware/Software
+     ment of Commerce, National Institute of Standards and Technology,                 Codesign, pp. 121–125, 1999.
+     2016.                                                                        [24] “Catapult.”            https://www.mentor.com/hls-lp/catapult-high-level-
+ [2] P. W. Shor, “Polynomial-time algorithms for prime factorization and               synthesis/. [Online; accessed 13-January-2019].
+     discrete logarithms on a quantum computer,” SIAM Review, vol. 41,            [25] A. Canis, J. Choi, M. Aldham, V. Zhang, A. Kammoona, J. H. Anderson,
+     no. 2, pp. 303–332, 1999.                                                         S. Brown, and T. Czajkowski, “Legup: high-level synthesis for fpga-
+ [3] J. Nechvatal, E. Barker, L. Bassham, W. Burr, M. Dworkin, J. Foti,                based processor/accelerator systems,” in Proceedings of ACM/SIGDA
+     and E. Roback, “Report on the development of the advanced encryption              international symposium on Field programmable gate arrays, pp. 33–
+     standard (AES),” 2001. Accessed 31 December 2018.                                 36, 2011.
+ [4] K. Aoki and H. Lipmaa, “Fast implementations of aes candidates.,” in         [26] “Synopsys        DC.”       https://www.synopsys.com/support/training/rtl-
+     AES Candidate Conference, pp. 106–120, 2000.                                      synthesis/design-compiler-rtl-synthesis.html.           [Online; accessed
+ [5] D. Micciancio, “Lattice-based cryptography,” in Encyclopedia of Cryp-             13-January-2019].
+     tography and Security, pp. 713–715, Springer, 2011.                          [27] E. Berlekamp, R. McEliece, and H. Van Tilborg, “On the inherent
+ [6] R. Cramer, L. Ducas, and B. Wesolowski, “Short stickelberger class re-            intractability of certain coding problems,” IEEE Transactions on Infor-
+     lations and application to ideal-svp,” in Annual International Conference         mation Theory, vol. 24, no. 3, pp. 384–386, 1978.
+     on the Theory and Applications of Cryptographic Techniques, pp. 324–         [28] G. Pelosi and P. Santini, “Ledakem: A post-quantum key encapsulation
+     348, Springer, 2017.                                                              mechanism based on qc-ldpc codes,” in Post-Quantum Cryptography:
+ [7] R. J. Mceliece, “A public-key cryptosystem based on algebraic,” Coding            9th International Conference, PQCrypto 2018, Fort Lauderdale, FL,
+     Theory, vol. 4244, pp. 114–116, 1978.                                             USA, April 9-11, 2018, Proceedings, vol. 10786, p. 3, Springer, 2018.
+ [8] D. J. Bernstein, T. Lange, and C. Peters, “Attacking and defending the       [29] J.-P. D’Anvers, A. Karmakar, S. S. Roy, and F. Vercauteren, “Saber:
+     McEliece cryptosystem,” in Workshop on Post-Quantum Cryptography,                 Module-LWR based key exchange, CPA-secure encryption and CCA-
+     pp. 31–46, 2008.                                                                  secure KEM,” in International Conference on Cryptology in Africa,
+ [9] A. S. Al Abdouli, M. Al Ali, E. Bellini, F. Caullery, A. Hasikos,                 pp. 282–305, 2018.
+     M. Manzano, and V. Mateu, “Drankula: a mceliece-like rank metric             [30] J. Bos, L. Ducas, E. Kiltz, T. Lepoint, V. Lyubashevsky, J. M. Schanck,
+     based cryptosystem implementation,” in International Joint Conference             P. Schwabe, G. Seiler, and D. Stehlé, “CRYSTALS-kyber: a CCA-secure
+     on e-Business and Telecommunications, pp. 64–75, 2018.                            module-lattice-based KEM,” in IEEE European Symposium on Security
+[10] P. Loidreau, “A new rank metric codes based encryption scheme,”                   and Privacy, pp. 353–367, 2018.
+     in International Workshop on Post-Quantum Cryptography, pp. 3–17,            [31] E. Alkim, L. Ducas, T. Pöppelmann, and P. Schwabe, “Post-quantum
+     Springer, 2017.                                                                   key exchange-a new hope,” in USENIX Security Symposium, 2016.
+[11] N. Courtois, A. Klimov, J. Patarin, and A. Shamir, “Efficient algorithms     [32] E. Alkim, J. W. Bos, L. Ducas, P. Longa, I. Mironov, M. Naehrig,
+     for solving overdefined systems of multivariate polynomial equations,”            V. Nikolaenko, C. Peikert, A. Raghunathan, D. Stebila,
+     in International Conference on the Theory and Applications of Crypto-             et al., “FrodoKEM–learning with errors key encapsulation.”
+     graphic Techniques, pp. 392–407, 2000.                                            https://frodokem.org/, 2017.
+[12] V. Dubois, P.-A. Fouque, A. Shamir, and J. Stern, “Practical cryptanaly-     [33] A. Hülsing, J. Rijneveld, J. M. Schanck, and P. Schwabe, “NTRU-
+     sis of sflash,” in Annual International Cryptology Conference, pp. 1–12,          HRSS-KEM: algorithm specifications and documentation.” https://ntru-
+     2007.                                                                             hrss.org/, 2017.
+[13] D. Jao and L. De Feo, “Towards quantum-resistant cryptosystems from          [34] L. Ducas, T. Lepoint, V. Lyubashevsky, P. Schwabe, G. Seiler, and
+     supersingular elliptic curve isogenies,” in Workshop on Post-Quantum              D. Stehlé, “Crystals–dilithium: Digital signatures from module lattices.”
+     Cryptography, pp. 19–34, 2011.                                                    https://pq-crystals.org/dilithium/index.shtml, 2018.
+[14] H. Nejatollahi, N. Dutt, and R. Cammarota, “Special session: trends,         [35] S. Kölbl, M. M. Lauridsen, F. Mendel, and C. Rechberger, “Haraka
+     challenges and needs for lattice-based cryptography implementations,”             v2–efficient short-input hashing for post-quantum applications,” IACR
+     in 2017 International Conference on Hardware/Software Codesign and                Transactions on Symmetric Cryptology, pp. 1–29, 2016.
+     System Synthesis (CODES+ ISSS), pp. 1–3, IEEE, 2017.                         [36] A. Hülsing, J. Rijneveld, S. Samardjiska, and P. Schwabe, “From 5-
+[15] H. Nejatollahi, N. Dutt, S. Ray, F. Regazzoni, I. Banerjee, and R. Cam-           pass mq-based identification to mq-based signatures.,” IACR Cryptology
+     marota, “Post-quantum lattice-based cryptography implementations: A               ePrint Archive, p. 708, 2016.
+     survey,” ACM Computing Surveys (CSUR), vol. 51, no. 6, p. 129, 2019.         [37] N. Bindel, S. Akleylek, E. Alkim, P. Barreto, J. Buchmann, E. Eaton,
+[16] W. Wang, J. Szefer, and R. Niederhagen, “FPGA-based niederreiter                  G. Gutoski, L. P. Kramer, Juliane, J. Ricardini, and Z. Gustavo, “qtesla:
+     cryptosystem using binary goppa codes,” in International Conference               Efficient and post-quantum secure lattice-based signature scheme.”
+     on Post-Quantum Cryptography, pp. 77–98, Springer, 2018.                          https://qtesla.org/, year=2019.
+[17] A. Karmakar, J. M. B. Mera, S. S. Roy, and I. Verbauwhede, “Saber on         [38] W.        Beullens,      B.       Preneel,    A.       Szepieniec,      and
+     arm,” IACR Transactions on Cryptographic Hardware and Embedded                    F.     Vercauteren,      “Luov:       An     mq      signature     scheme.”
+     Systems, pp. 243–266, 2018.                                                       https://www.esat.kuleuven.be/cosic/pqcrypto/luov/, year=2019.
+[18] A. Hülsing, J. Rijneveld, and P. Schwabe, “Armed sphincs,” in Public-       [39] E. Homsirikamol and K. Gaj, “Toward a new HLS-based methodology
+     Key Cryptography–PKC 2016, pp. 446–470, Springer, 2016.                           for FPGA benchmarking of candidates in cryptographic competitions:
+[19] M. R. Albrecht, C. Hanser, A. Hoeller, T. Pöppelmann, F. Virdia,                 The CAESAR contest case study,” in IEEE International Conference on
+     and A. Wallner, “Implementing rlwe-based schemes using an rsa co-                 Field Programmable Technology, pp. 120–127, 2017.
+     processor,” IACR Transactions on Cryptographic Hardware and Em-              [40] K. Gaj, E. Homsirikamol, and M. Rogawski, “Comprehensive compari-
+     bedded Systems, pp. 169–208, 2019.                                                son of hardware performance of fourteen round 2 sha-3 candidates with
+[20] H. Nejatollahi, N. D. Dutt, I. Banerjee, and R. Cammarota, “Domain-               512-bit outputs using field programmable gate arrays,” in 2nd SHA-3
+     specific accelerators for ideal lattice-based public key protocols.,” IACR        Candidate Conference, Santa Barbara, August, pp. 23–24, 2010.
+     Cryptology ePrint Archive, vol. 2018, p. 608, 2018.
+                                                                                                                                                                  15
+
+
+
+                                                A PPENDIX                                                    any functions and just iterates over Loop 3 multiple
+A. Two Performance Optimizations                                                                             times. Function keccak_squeezeblocks() has two
+                                                                                                             loops, the first of which calls functions KeccakF1600_
+                                                                                                             StatePermute() and the second store64(). The
+                                                                                                             second loop of Keccak_squeezeblocks() is embedded
+                                                                                                             in the first. Keccak_absorb() has 6 loops, of which
+                                                                                                             loops 1, 4, 5 and 6 are single-line loops. Loop 3 calls
+                                                                                                             function load64() and is embedded inside Loop 2. Loop
+                                                                                                             2 invokes function KeccakF1600_StatePermute().
+                                                                                                             The three functions KeccakF1600_ StatePermute(),
+         Fig. 19: Loop unrolling for a f or loop of count 3.                                                 store64() and load64() have single loops each. The
+                                                                                                             call graph for gen_matrix() is shown in Figure 21.
+   1) Loop unrolling: The latency of a design depends upon
+                                                                                                             void gen_matrix(polyvec *a, const unsigned
+the functions and loops. The loops are executed one iteration
+                                                                                                             char *seed, int transposed) {
+at a time (rolled). Thus, rolled loops increase latency. Fully
+                                                                                                               unsigned int pos=0, ctr, nblocks=4,
+unrolling a loop can minimize the latency, while using more
+                                                                                                               i, j;
+hardware resources. Figure 19 explains loop unrolling. Vivado
+                                                                                                               uint16_t val;
+HLS provides the option to partially unroll the loop to balance
+                                                                                                               uint8_t buf[SHAKE128_RATE*nblocks];
+the performance and area.
+                                                                                                               uint64_t state[25]; // CSHAKE state
+   2) Loop Pipelining: Loop pipelining can be used to im-
+                                                                                                               unsigned char extseed[KYBER_SYMBYTES+2];
+prove latency. Figure 20 explains loop pipelining. This opti-
+                                                                                                               for(i=0;i<KYBER_SYMBYTES;i++)
+mizes both hardware and latency. We synthesize the algorithms
+                                                                                                               /* Loop 1*/
+by adding a directive to pipeline the longer loops.
+                                                                                                                 extseed[i] = seed[i];
+        3 CC                     3 CC                                                                          for(i=0;i<KYBER_K;i++) { /* Loop 2*/
+     Iteration-1            Iteration-2                                                                          for(j=0;j<KYBER_K;j++) { /* Loop 3 */
+                                             Iteration-1      Iteration-2
+                                                                                                                    ctr = pos = 0;
+                                                                                Iteration-1   Iteration-2
+                                                                                                                    if(transposed) {
+                                              Before Pipelining (18CC)
+                                                                                                                       extseed[KYBER_SYMBYTES]    = i;
+                                               3 CC                3 CC
+                                                                                                                       extseed[KYBER_SYMBYTES+1] = j;
+  for(j=0;j<3;j++) {
+  // Process to implement.
+                                             Iteration-1      Iteration-2                                           } else {
+  //The process would be divided into
+  //clock cycle depending upon the
+                                                               Iteration-1      Iteration-2                            extseed[KYBER_SYMBYTES]    = j;
+  //combinational logic needed for that.
+  }                                                                             Iteration-1    Iteration-2             extseed[KYBER_SYMBYTES+1] = i;
+                               Clock Cycle
+                                                                                                                    }
+                                                           After Pipelining (12CC)
+                                                                                                                    shake128_absorb(state,extseed,
+                                                                                                                    KYBER_SYMBYTES+2);
+                         Fig. 20: Example of loop pipelining.                                                       shake128_squeezeblocks(buf,nblocks,
+                                                                                                                    state);
+                                                                                                                    while(ctr < KYBER_N) { /* Loop 4 */
+B. Design Space Exploration of CRYSTALS KYBER                                                                          val = (buf[pos] | ((uint16_t)
+   The HLS-based framework can aid in design exploration for                                                           buf[pos+1] << 8)) & 0x1fff;
+each PQC algorithm. Let us consider CRYSTALS KYBER                                                                     if(val < KYBER_Q)
+as an example. An analysis of (crypto_kem_enc()) re-                                                                        a[i].vec[j].coeffs[ctr++] = val;
+veals that indcpa_enc() limits its latency and shows that                                                              pos += 2;
+gen_matrix() has the highest latency.                                                                                  if(pos > SHAKE128_RATE*nblocks-2) {
+   Table XV summarizes latencies of the functions in                                                                     nblocks = 1;
+crypto_kem_enc() and indcpa_enc() and the                                                                                shake128_squeezeblocks(buf,
+loops in the function gen_matrix(). The function                                                                         nblocks,state);
+gen_matrix() has four loops of which Loop 1 is                                                                           pos = 0;
+a simple loop. Loop 4 is nested within Loop 3, which                                                                   }
+is nested in Loop 2. Loop 4 calls an external function                                                                }
+Keccak_squeezeblocks(), while Loop 3 calls                                                                          }
+two external functions – keccak_absorb() and                                                                       }
+keccak_squeezeblocks(). Loop 2 does not call                                                                     }
+                                                                                                                                                  16
+
+
+
+
+    gen_matrix            keccak_absorb                                                  Function/Loop        Latency (clock cycles)
+                                                   load64                                      Top function: crypto kem enc
+                         Loops 1, 4, 5, 6                                                indcpa enc                           40869
+                                                                                         keccak absorb                         8056
+      Loop1                                        Loop 1
+                             Loop 2
+                                                                                         randombytes                           5895
+                                                                                                  Top function: indcpa enc
+                             Loop 3
+                                             KeccakF1600_StatePermute                    gen matrix                           10835
+      Loop 2
+                                                                                         poly getnoise                         2595
+                                                   Loop 1
+                                                                                         polyvec compress                      2565
+      Loop 3
+                      keccak_squeezeblocks                                                        Top function: gen matrix
+                                                                                         gen matrix loop 1                       64
+                                                   store64
+      Loop 4                  Loop 1                                                     gen matrix loop 2                     8419
+                                                                                         gen matrix loop 3                     2637
+                              Loop 2
+                                                   Loop 1                                gen matrix loop 4                      826
+
+
+              Fig. 21: Call graph of gen_matrix().
+                                                                        TABLE XV: Critical functions and loops that determine the
+                                                                        latency of CRYSTALS-KYBER.
+  1) Loop Unrolling: We unroll loops in the last-level
+functions, store64(), load64() and KeccakF1600_
+StatePermute(). We unroll innermost loops in the top
+                                                                           2) Loop Pipelining: We mark unrolled loops for pipelining.
+functions, i.e., Loop 2 in keccak_squeezeblocks() and
+                                                                        We set the target initiation interval for pipelining to 1, except
+Loop 4 in gen_matrix(). The unrolling factor is set to 1
+                                                                        for the loop in KeccakF1600_StatePermute(). Since
+and inline function calls.
+                                                                        KeccakF1600_StatePermute() is critical, does a lot of
+                                                                        operations in a single loop, we created the fastest possible
+                                                                        pipeline architecture. The Table XVI shows the results. The
+                                                                        last column shows the speedup compared to the baseline. Re-
+                                                                        duction in latency provided by loop pipelining is comparable
+                                                                        to loop unrolling. However, loop pipelining yields a design
+                                                                        with 4% less area overhead.
+
+                                                                             Implementation      FF      LUT      MUX       Latency    Speedup
+                                                                             Baseline          6685     39357       606       10835           -
+                                                                             Loop Unrolling    5415     43955    454779        9513     1.23 ×
+                                                                             Loop Pipelining   5439     42206    435728         904     1.23 ×
+
+
+                                                                        TABLE XVI: Area and timing overhead for different imple-
+                                                                        mentations of gen_matrix().
+
