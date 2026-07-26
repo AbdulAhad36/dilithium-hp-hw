@@ -39,8 +39,8 @@ class keccak_env extends uvm_env;
         super.connect_phase(phase);
         for (int i = 0; i < N_LANES; i++) begin
             agent[i].driver.drv_ap.connect(scoreboard[i].exp_fifo.analysis_export);
-            agent[i].driver.drv_ap.connect(coverage[i].analysis_export);
             agent[i].monitor.mon_ap.connect(scoreboard[i].obs_fifo.analysis_export);
+            scoreboard[i].checked_ap.connect(coverage[i].analysis_export);
         end
     endfunction
 

@@ -1,6 +1,6 @@
 // =========================================================================
 // keccak_coverage.sv  -  TB v2 functional coverage (SHAKE-only)
-// Subscribes to driver's analysis port (expected tx) and samples per-test.
+// Samples monitor-observed transactions only after the scoreboard passes them.
 // =========================================================================
 class keccak_coverage extends uvm_subscriber #(keccak_transaction);
     `uvm_component_utils(keccak_coverage)
@@ -20,7 +20,7 @@ class keccak_coverage extends uvm_subscriber #(keccak_transaction);
             bins bounded_medium = {[33:168]};
             bins bounded_large  = {[169:65535]};
         }
-        cp_msg_len : coverpoint (tx_sampled.msg_hex.len() / 2) {
+        cp_msg_len : coverpoint (tx_sampled.obs_msg_hex.len() / 2) {
             bins empty       = {0};
             bins short_msg   = {[1:71]};
             bins around_576  = {[72:135]};
@@ -40,6 +40,11 @@ class keccak_coverage extends uvm_subscriber #(keccak_transaction);
     endfunction
 
     function void write(keccak_transaction t);
+        if (!t.passed || !t.protocol_ok || !t.data_ok) begin
+            `uvm_error(get_type_name(),
+                       $sformatf("Coverage rejected unchecked transaction %s", t.test_name))
+            return;
+        end
         tx_sampled = t;
         cg_keccak.sample();
     endfunction

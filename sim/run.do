@@ -10,7 +10,9 @@
 # =========================================================================
 
 # 1. Clean previous work
-vdel -all
+if {[file isdirectory work]} {
+    vdel -all
+}
 vlib work
 vmap work work
 
@@ -25,6 +27,9 @@ vlog -sv -cover bcesft +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_kecca
 
 # 4. Start sim with coverage and full visibility
 vsim -coverage -voptargs=+acc work.tb_top
+
+# Register the save before UVM can call $finish in headless mode.
+coverage save -onexit keccak_cov.ucdb
 
 # 5. Open standard GUI views (no-op in -c console mode)
 if {[batch_mode] == 0} {
@@ -73,8 +78,5 @@ if {[batch_mode] == 0} {
 
 # 8. Run to completion
 run -all
-
-# 9. Save coverage database
-coverage save keccak_cov.ucdb
 
 # In headless mode invoke as: vsim -c -do "do run.do; quit -f"

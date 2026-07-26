@@ -1,7 +1,7 @@
 // =========================================================================
 // keccak_transaction.sv  -  UVM sequence item for keccak_core (TB v2)
-// Carries: test_name, mode, msg (hex string), xof_len, expected output (hex),
-//          output_len_bits, and (filled by monitor) observed bytes.
+// Carries expected stimulus plus monitor-observed control, input, output, and
+// protocol status. Coverage is allowed to sample only a scoreboard-passed item.
 // =========================================================================
 class keccak_transaction extends uvm_sequence_item;
     `uvm_object_utils(keccak_transaction)
@@ -17,8 +17,27 @@ class keccak_transaction extends uvm_sequence_item;
     // Monitor skips output collection. Used for FSM reset-transition coverage.
     int                             abort_after_cycles = 0;
 
-    // Filled by monitor
+    // Filled from accepted interface activity by the monitor
+    string                          obs_msg_hex;
     logic [7:0]                     obs_bytes[$];
+    bit                             start_seen = 0;
+    bit                             input_complete = 0;
+    bit                             reset_observed = 0;
+    bit                             stop_issued = 0;
+    bit                             protocol_ok = 1;
+    bit                             data_ok = 0;
+    bit                             passed = 0;
+    int                             protocol_errors = 0;
+    string                          protocol_error_text;
+    string                          failure_reason;
+
+    int                             accepted_input_beats = 0;
+    int                             accepted_input_bytes = 0;
+    int                             input_gap_cycles = 0;
+    int                             accepted_output_beats = 0;
+    int                             output_stall_cycles = 0;
+    int                             final_input_bytes = 0;
+    int                             final_output_bytes = 0;
 
     function new(string name = "keccak_transaction");
         super.new(name);
