@@ -20,10 +20,11 @@ vmap work work
 vlog -sv -cover bcesft ../src/keccak_engine/keccak_pkg.sv
 vlog -sv -cover bcesft ../src/keccak_engine/*.sv
 
-# 3. Compile UVM TB
-vlog -sv -cover bcesft +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/keccak_ref_pkg.sv
-vlog -sv -cover bcesft +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/keccak_if.sv
-vlog -sv -cover bcesft +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/tb_top.sv
+# 3. Compile UVM TB without code coverage. Functional covergroups remain
+# enabled, while structural metrics are restricted to the RTL compiled above.
+vlog -sv +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/keccak_ref_pkg.sv
+vlog -sv +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/keccak_if.sv
+vlog -sv +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/tb_top.sv
 
 # 4. Start sim with coverage and full visibility
 vsim -coverage -voptargs=+acc work.tb_top
