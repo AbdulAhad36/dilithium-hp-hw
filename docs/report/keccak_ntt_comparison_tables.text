@@ -1,0 +1,89 @@
+Keccak and NTT Comparison Tables
+
+These tables are prepared for thesis/report slides. They intentionally separate
+module-only results from full-accelerator/system results. This is important
+because many Dilithium/ML-DSA papers report total accelerator Fmax and area, but
+do not always isolate the Keccak or NTT block.
+
+
+Table 1: Keccak / SHAKE Hardware Comparison
+
+| Ref | Work / Year | Scope | Device | Keccak/SHAKE architecture | Fmax / Frequency | Area reported | Throughput / result | Why it matters |
+|---|---|---|---|---|---|---|---|---|
+| K1 | This work, 2026 | Module-only SHAKE128/256 | Cyclone V 5CGXFC7C7F23C8 | SHAKE-only Keccak-f[1600], 64-bit AXI, 2-stage round pipeline after optimization | 84.31 MHz | ~3,747 ALM, ~3,293 regs, 0 DSP, 0 BRAM | ~0.30 GB/s per lane for SHAKE128 after 2-cycle/round split; 208/208 UVM tests, 100% functional coverage | Direct thesis result; cleanly verified and synthesized on Cyclone V |
+| K2 | Beckwith et al., 2021 | Full Dilithium accelerator | Artix-7 / Xilinx FPGA family | Multiple Keccak/SHAKE cores used for Dilithium hashing and sampling; 1 round/cycle style in the Keccak path | ~250 MHz class reported in Keccak branch notes / full-design literature | Keccak-only area not separated in our extracted notes | High-performance full accelerator baseline | Shows why multiple Keccak lanes are useful for ExpandA and signing |
+| K3 | Zhao et al., 2022 | Full Dilithium accelerator | Artix-7 | KECCAK module supports SHAKE128 and SHAKE256 inside compact segmented-pipeline Dilithium architecture | 96.9 MHz full accelerator | 29,998 LUT, 10,366 FF, 11 BRAM, 10 DSP total design | Full design computes KeyGen/Sign/Verify for all security levels | Good compact full-accelerator reference, but not a clean Keccak-only comparator |
+| K4 | ML-DSA-OSH, 2025 | Full ML-DSA open-source accelerator | UltraScale+ | FIPS-204 ML-DSA design based on prior Dilithium hardware; SHAKE integrated with NTT and sampler flow | 230 MHz clock setting for reported implementation | 54,942 LUT, 29,309 FF, 29 BRAM, 16 DSP total design | Open-source complete ML-DSA RTL; signing latency improved by scheduling | Best open-source full-design reference for future integration |
+| K5 | LightHD, 2026 | Full Dilithium accelerator with Keccak submodule data | Artix-7 | Iterative dual-Keccak SHA-3/SHAKE module; two cores operate with 26-cycle offset; sampler consumes interleaved outputs | 212.8 MHz system-level reported result | Dual-Keccak block: 6,019 LUT, 3,220 FF total; individual cores 3,150 and 2,869 LUT, 1,610 FF each | Improves Keccak/sampler scheduling and reduces area vs prior dual-Keccak style | Most relevant current idea for future Keccak-sampler integration |
+| K6 | Abdulsamad and Repas, 2026 | Module-only SHA-3 accelerator, not Dilithium-specific | Artix-7 | Fully pipelined Keccak-f[1600] core with loop unrolling, clock gating, and pipeline balancing | 210 MHz | Paper reports post-synthesis FPGA implementation; area/power optimized | 1.35 Gbps, 0.94 W, 1.44 Gbps/W | Useful module-level SHA-3 energy-efficiency comparator, but not SHAKE/Dilithium-specific |
+
+Keccak table notes:
+
+- K1 is the cleanest direct comparison for this thesis because it is our actual
+  module-only synthesis result.
+- K2 to K5 are Dilithium/ML-DSA accelerator papers. They are very relevant to
+  architecture, but most do not report a fully isolated Keccak-only Fmax/area
+  table.
+- K6 is included because it is a Keccak/SHA-3 module-level paper, but it targets
+  SHA-3 secure-network applications rather than Dilithium SHAKE/XOF workloads.
+- The strongest thesis comparison sentence is:
+  "Our Keccak engine is not yet the fastest per-core design, but it is
+  SHAKE-specific, verified with UVM, synthesizes without DSP/BRAM, and its
+  multi-lane structure directly matches Dilithium ExpandA parallelism."
+
+
+Table 2: NTT Hardware Comparison
+
+| Ref | Work / Year | Scope | Device | NTT architecture | Fmax | NTT cycles | Latency | Area reported | Why it matters |
+|---|---|---|---|---|---:|---:|---:|---|---|
+| N1 | This work, 2026 | Module-only NTT/INTT/PWM | Cyclone V 5CGXFC7C7F23C8 | Memory-based 2x2 butterfly tile, 4-bank conflict-free M10K memory, CT forward / GS inverse, q-specific shift-add reduction | 75.44 MHz | ~299 | ~3.96 us | 2,313 ALM, 6 DSP, 18 M10K | Direct thesis result; strong DSP efficiency on Cyclone V; fully UVM/golden verified |
+| N2 | Zhao et al., 2022 | Full Dilithium accelerator, NTT module discussed | Artix-7 | 4 BFUs, folding transform, DIT-NTT / DIF-INTT, conflict-free BRAM | 96.9 MHz full accelerator | 533 | ~5.50 us | Module-only area not cleanly separated in our notes | Compact full-Dilithium baseline; our NTT cycle count is much lower |
+| N3 | ML-DSA-OSH, 2025 | Full open-source ML-DSA accelerator | UltraScale+ | 2x2 butterfly, 4 coeff/cycle, 2 layers/cycle, Barrett, CT-NTT / GS-INTT | 230 MHz clock setting | Not isolated in our table | Not isolated | Full design: 54,942 LUT, 29,309 FF, 29 BRAM, 16 DSP | Open-source reference; architecture supports our 2x2 choice |
+| N4 | Area-Time Efficient Dilithium, 2025 | NTT-focused/full design | Versal Premium | 2x2 butterfly, conflict-free memory, address resolver, bit-reversed layout, intra-tile forwarding | 328 MHz | ~256 | ~0.78 us | ATP reported as 5.4 KLUT x ms at level 2 | Best speed/ATP reference; confirms 2-stage-per-cycle tile direction |
+| N5 | EMINEM, 2025 | Module-level NTT for Falcon/Dilithium/HAWK | Kintex UltraScale+ XCKU-060 | Mixed-radix / radix-4 style NTT for Dilithium q=8380417 | 324 MHz | 271 | 0.84 us | 1,552 LUT, 1,867 FF, 6 DSP, 5 BRAM | Best DSP-efficiency comparator; our DSP count ties it, but Cyclone V Fmax is lower |
+| N6 | PQShield NTT, 2024 | Module-level NTT for ML-KEM and ML-DSA | Zynq UltraScale+ | R2MDC streaming NTT/iNTT, shared forward/inverse datapath, single butterfly configuration unit | 322 MHz | 258 for first vector; 128 subsequent | ~0.80 us first vector | 3,821 LUT, 2,970 FF, 20 DSP, 5 BRAM | Strong high-throughput streaming comparator; larger DSP cost than our design |
+| N7 | Cui et al. MDC-NTT, 2025 | Module/full Dilithium NTT-focused design | Artix-7 | Improved fully pipelined radix-2 MDC, GS butterfly, C2 commutators, parallel modular multiplication | 297 MHz | 286 | 0.96 us | 4,187 LUT, 18 DSP, 0 BRAM | Fast streaming NTT; our cycle count is close with much lower DSP use |
+| N8 | Conflict-Free NTT, 2026 dual-BF | Module-level ML-DSA NTT | Zynq UltraScale+ ZCU102 | PTM-code conflict-free architecture using single-port RAMs, dual butterfly | 308 MHz | 563 | 1.83 us | 3,185 LUT, 1,578 FF, 5 BRAM, 8 DSP | Important alternative memory-banking method; our latency/cycles are better but uses dual-port M10K |
+| N9 | Conflict-Free NTT, 2026 single-BF | Module-level ML-DSA NTT | Zynq UltraScale+ ZCU102 | PTM-code single-butterfly design using single-port RAMs | 332 MHz | 1,075 | 3.24 us | 1,423 LUT, 818 FF, 2.5 BRAM, 4 DSP | Compact reference; our latency is similar despite slower Cyclone V fabric |
+| N10 | LightHD, 2026 | Full Dilithium accelerator with NTT submodule data | Artix-7 | Lightweight NTT/PWM module; first NTT stage eliminated for small-bit-width polynomials using regrouping/LUTs | 212.8 MHz system-level | Not given as a clean one-transform row in our notes | Not isolated | NTT core: 2,601 LUT, 2,730 FF, 8 DSP; system memory 12 BRAM | Useful integration reference because it optimizes Keccak, sampler, NTT, and scheduling together |
+
+NTT table notes:
+
+- N1 is the thesis result and should be compared most directly against
+  N5/N6/N7/N8/N9 because those are module-level NTT papers.
+- Raw MHz comparison is not fair across FPGA families. Cyclone V is slower
+  than Artix-7, UltraScale+, and Versal. The fair strengths of our NTT are
+  cycle count, DSP count, deterministic memory-based scheduling, and UVM
+  verification.
+- Our main NTT slide claim should be:
+  "The proposed NTT reaches about 299 cycles with only 6 DSPs on Cyclone V,
+  placing its cycle count near modern fast NTT engines while maintaining very
+  low DSP usage and complete verification."
+- ParaPM is intentionally not included here because it is not a clean
+  Dilithium NTT/full-accelerator comparator for this thesis table. It can be
+  discussed separately as a polynomial-multiplier-related paper if needed.
+
+
+References
+
+[K1/N1] Muhammad Abdul Ahad, "Keccak Engine - Design and Verification Report" and "The NTT Engine - Design and Verification Report," thesis repository, 2026.
+
+[K2] L. Beckwith, D. T. Nguyen, and K. Gaj, "High-Performance Hardware Implementation of CRYSTALS-Dilithium," International Conference on Field-Programmable Technology (ICFPT), pp. 1-10, 2021.
+
+[K3/N2] C. Zhao, N. Zhang, H. Wang, B. Yang, W. Zhu, Z. Li, M. Zhu, S. Yin, S. Wei, and L. Liu, "A Compact and High-Performance Hardware Architecture for CRYSTALS-Dilithium," IACR Transactions on Cryptographic Hardware and Embedded Systems, vol. 2022, no. 1, pp. 270-295, 2022.
+
+[K4/N3] Q. Norga, S. Kundu, and I. Verbauwhede, "ML-DSA-OSH: An Efficient, Open-Source Hardware Implementation of ML-DSA," full version, 2025.
+
+[K5/N10] Z. Ni, A. Khalid, Z. Zhang, Y. Cui, W. Liu, and M. O'Neill, "LightHD: A Lightweight and High-Performance Hardware Accelerator of CRYSTALS-Dilithium," IEEE Transactions on Computers, vol. 75, no. 5, pp. 2007-2019, May 2026.
+
+[K6] A. A. Abdulsamad and S. R. Repas, "Design of an Energy-Efficient SHA-3 Accelerator on Artix-7 FPGA for Secure Network Applications," Computers, vol. 15, no. 1, article 3, 2026.
+
+[N4] H. Nguyen and T. T. Nguyen, "Area-Time Efficient Hardware Design for CRYSTALS-Dilithium," IEEE International Midwest Symposium on Circuits and Systems (MWSCAS), 2025.
+
+[N5] Y. Tu and J. Xie, "EMINEM: Efficient FPGA Implementation of Mixed-RadIx NTT Hardware AccElerators for NIST Post-QuantuM Cryptography Falcon, Dilithium, and HAWK," ACM Transactions on Reconfigurable Technology and Systems, vol. 18, no. 4, article 52, 2025.
+
+[N6] D. E. S. Kundi, J. M. Bermudo Mera, P.-Y. Strub, and M. Hutter, "High-Performance NTT Hardware Accelerator to Support ML-KEM and ML-DSA," Workshop on Attacks and Solutions in Hardware Security (ASHES), pp. 100-105, 2024.
+
+[N7] Y. Cui, J. Zhong, B. Wang, T. Xu, C. Wang, and W. Liu, "High-Performance Hardware Implementation of CRYSTALS-Dilithium Based on Improved MDC-NTT," IEEE Transactions on Computers, vol. 74, no. 9, pp. 2896-2908, September 2025.
+
+[N8/N9] H. S. Ogawa, T. B. Paiva, M. A. Simplicio Jr., S. M. Hafiz, and B. Yildiz, "Efficient Conflict-Free NTT Hardware Architecture with Single-Port RAMs: Applications to ML-DSA," IACR Cryptology ePrint Archive, Paper 2026/621, 2026.
