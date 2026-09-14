@@ -1,0 +1,20 @@
+Fitter Status : Successful - Sat Sep 12 07:37:16 2026
+Quartus Prime Version : 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+Revision Name : keccak_performance
+Top-level Entity Name : keccak_core
+Family : Cyclone V
+Device : 5CGXFC7C7F23C8
+Timing Models : Final
+Logic utilization (in ALMs) : 3,452 / 56,480 ( 6 % )
+Total registers : 3323
+Total pins : 1 / 268 ( < 1 % )
+Total virtual pins : 174
+Total block memory bits : 0 / 7,024,640 ( 0 % )
+Total RAM Blocks : 0 / 686 ( 0 % )
+Total DSP Blocks : 0 / 156 ( 0 % )
+Total HSSI RX PCSs : 0 / 6 ( 0 % )
+Total HSSI PMA RX Deserializers : 0 / 6 ( 0 % )
+Total HSSI TX PCSs : 0 / 6 ( 0 % )
+Total HSSI PMA TX Serializers : 0 / 6 ( 0 % )
+Total PLLs : 0 / 13 ( 0 % )
+Total DLLs : 0 / 4 ( 0 % )

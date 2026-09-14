@@ -4,7 +4,7 @@
 // Hosts N_LANES independent (agent + scoreboard + coverage) bundles, one
 // per lane of keccak_engine_parallel. Lanes are completely independent: no
 // cross-lane arbitration or shared state - the parallel wrapper exposes
-// per-lane AXI ports and we verify each one separately and concurrently.
+// per-lane simple word ports and we verify each one separately and concurrently.
 //
 // Per-agent virtual interfaces are pulled from the config_db at paths
 //   uvm_test_top.env.agent_<i>.*

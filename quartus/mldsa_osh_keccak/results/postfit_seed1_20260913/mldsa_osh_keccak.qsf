@@ -1,0 +1,42 @@
+set_global_assignment -name TOP_LEVEL_ENTITY keccak_top
+set_global_assignment -name FAMILY "Cyclone V"
+
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
+set_global_assignment -name DEVICE 5CGXFC7C7F23C8
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 4
+set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
+set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING ON
+set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
+set_global_assignment -name SEED 1
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/sha3_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/keccak_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/regn.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/countern.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/piso.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/sipo.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/sr_reg.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/keccak_bytepad.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/keccak_cons.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/keccak_round.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/keccak_fsm1.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/keccak_fsm2.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/sha3_fsm3.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/keccak_control.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/keccak_datapath.vhd"
+set_global_assignment -name VHDL_FILE "../../third_party/ML-DSA-OSH/keccak/keccak_top.vhd"
+set_global_assignment -name SDC_FILE mldsa_osh_keccak.sdc
+set_instance_assignment -name VIRTUAL_PIN ON -to rst
+set_instance_assignment -name VIRTUAL_PIN ON -to src_ready
+set_instance_assignment -name VIRTUAL_PIN ON -to src_read
+set_instance_assignment -name VIRTUAL_PIN ON -to dst_ready
+set_instance_assignment -name VIRTUAL_PIN ON -to dst_write
+set_instance_assignment -name VIRTUAL_PIN ON -to din[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to dout[*]

@@ -74,7 +74,77 @@ class keccak_full_test extends keccak_base_test;
             seq[3].start(env.agent[3].sequencer);
         join
 
+        run_concurrency_wave(1);
+        run_concurrency_wave(2);
+        run_concurrency_wave(3);
+        for (int kind = 1; kind <= 3; kind++) begin
+            run_isolation_wave(kind, SHAKE128);
+            run_isolation_wave(kind, SHAKE256);
+        end
+        run_mixed_lane_wave();
+
         #200;
         phase.drop_objection(this);
+    endtask
+
+    task run_isolation_wave(int kind, keccak_mode mode);
+        keccak_lane_isolation_target_seq target;
+        keccak_lane_isolation_peer_seq peer;
+
+        target = keccak_lane_isolation_target_seq::type_id::create(
+            $sformatf("isolation_target_%0d_%s", kind, mode.name()));
+        peer = keccak_lane_isolation_peer_seq::type_id::create(
+            $sformatf("isolation_peer_%0d_%s", kind, mode.name()));
+        target.isolation_kind = kind;
+        target.target_mode = mode;
+        peer.isolation_kind = kind;
+        peer.peer_mode = (mode == SHAKE128) ? SHAKE256 : SHAKE128;
+
+        fork
+            target.start(env.agent[0].sequencer);
+            begin
+                #500;
+                peer.start(env.agent[1].sequencer);
+            end
+        join
+    endtask
+
+    task run_concurrency_wave(int active_lanes);
+        keccak_concurrency_seq seq [keccak_env::N_LANES];
+        foreach (seq[i]) begin
+            seq[i] = keccak_concurrency_seq::type_id::create(
+                $sformatf("concurrency_%0d_seq_%0d", active_lanes, i));
+            seq[i].active_lanes = active_lanes;
+        end
+
+        case (active_lanes)
+            1: seq[0].start(env.agent[0].sequencer);
+            2: fork
+                   seq[0].start(env.agent[0].sequencer);
+                   seq[1].start(env.agent[1].sequencer);
+               join
+            3: fork
+                   seq[0].start(env.agent[0].sequencer);
+                   seq[1].start(env.agent[1].sequencer);
+                   seq[2].start(env.agent[2].sequencer);
+               join
+            default: `uvm_fatal(get_type_name(), "Unsupported lane count")
+        endcase
+    endtask
+
+    task run_mixed_lane_wave();
+        keccak_mixed_lane_seq seq [keccak_env::N_LANES];
+        foreach (seq[i]) begin
+            seq[i] = keccak_mixed_lane_seq::type_id::create(
+                $sformatf("mixed_lane_seq_%0d", i));
+            seq[i].lane_index = i;
+        end
+
+        fork
+            seq[0].start(env.agent[0].sequencer);
+            seq[1].start(env.agent[1].sequencer);
+            seq[2].start(env.agent[2].sequencer);
+            seq[3].start(env.agent[3].sequencer);
+        join
     endtask
 endclass

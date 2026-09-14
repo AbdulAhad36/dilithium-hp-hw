@@ -1,0 +1,207 @@
+{
+    "Started":  "2026-09-14T22:06:42.9498925+05:00",
+    "Seed":  20260909,
+    "Top":  "keccak_synth_top",
+    "Scope":  "One fitted core; only UVM lane 0 driven; 125 port-only transactions",
+    "GitHead":  "5d386c9291e36e316d4671958e01c60ec27709e8",
+    "GitBranch":  "keccak_v2",
+    "GitStatus":  [
+                      "RD docs/POST_MIDYEAR_VERIFICATION_PLAN.md -\u003e docs/post_midyear/POST_MIDYEAR_VERIFICATION_PLAN.md",
+                      "RD docs/verification/KECCAK_VERIFICATION_TESTPLAN.md -\u003e docs/post_midyear/keccak/KECCAK_VERIFICATION_TESTPLAN.md",
+                      "RD docs/keccak_docs/keccak-coverage-baseline.md -\u003e docs/post_midyear/keccak/keccak-coverage-baseline.md",
+                      "RD docs/keccak_docs/keccak-design-and-verification.md -\u003e docs/pre_midyear/keccak/keccak-design-and-verification.md",
+                      "RD docs/keccak_docs/keccak-engine-report.md -\u003e docs/pre_midyear/keccak/keccak-engine-report.md",
+                      "RD docs/keccak_docs/keccak-throughput-improvement.md -\u003e docs/pre_midyear/keccak/keccak-throughput-improvement.md",
+                      " M sim/modelsim.ini",
+                      " M sim/run.do",
+                      " M src/keccak_engine/keccak_absorb_unit.sv",
+                      " M src/keccak_engine/keccak_core.sv",
+                      " M src/keccak_engine/keccak_engine_parallel.sv",
+                      " M src/keccak_engine/keccak_output_unit.sv",
+                      " M src/keccak_engine/keccak_param_unit.sv",
+                      " M src/keccak_engine/keccak_pkg.sv",
+                      " M src/keccak_engine/keccak_step_unit.sv",
+                      " M src/keccak_engine/theta_step.sv",
+                      " D tb_uvm/tb_keccak_engine/keccak_absorb_unit_tb.sv",
+                      " D tb_uvm/tb_keccak_engine/keccak_core_heavy_tb.sv",
+                      " D tb_uvm/tb_keccak_engine/keccak_core_tb.sv",
+                      " D tb_uvm/tb_keccak_engine/keccak_output_unit_tb.sv",
+                      " D tb_uvm/tb_keccak_engine/run_heavy.py",
+                      " M tb_uvm/tb_uvm_keccak_v2/keccak_coverage.sv",
+                      " M tb_uvm/tb_uvm_keccak_v2/keccak_driver.sv",
+                      " M tb_uvm/tb_uvm_keccak_v2/keccak_env.sv",
+                      " M tb_uvm/tb_uvm_keccak_v2/keccak_if.sv",
+                      " M tb_uvm/tb_uvm_keccak_v2/keccak_monitor.sv",
+                      " M tb_uvm/tb_uvm_keccak_v2/keccak_scoreboard.sv",
+                      " M tb_uvm/tb_uvm_keccak_v2/keccak_sequence.sv",
+                      " M tb_uvm/tb_uvm_keccak_v2/keccak_tests.sv",
+                      " M tb_uvm/tb_uvm_keccak_v2/keccak_transaction.sv",
+                      " M tb_uvm/tb_uvm_keccak_v2/tb_top.sv",
+                      "?? docs/keccak_docs/",
+                      "?? docs/report/",
+                      "?? quartus/mldsa_osh_keccak/",
+                      "?? quartus/performance/",
+                      "?? quartus/stage2/",
+                      "?? sim/mldsa_osh_stage1_compare/",
+                      "?? sim/mldsa_osh_stage1_full/",
+                      "?? sim/mldsa_osh_stage2/",
+                      "?? sim/mldsa_osh_stage3/",
+                      "?? sim/ntt_work/",
+                      "?? sim/osh/",
+                      "?? sim/report_keccak_coverage.ps1",
+                      "?? sim/run_mldsa_osh_netlist.do",
+                      "?? sim/run_mldsa_osh_stage1.do",
+                      "?? sim/run_mldsa_osh_stage_suite.do",
+                      "?? sim/run_stage1.ps1",
+                      "?? sim/run_stage2.do",
+                      "?? sim/run_stage2.ps1",
+                      "?? sim/run_stage3.ps1",
+                      "?? sim/stage1_latest.log",
+                      "?? sim/stage2_runs/",
+                      "?? sim/stage3_runs/",
+                      "?? src/keccak_mldsa_osh/",
+                      "?? tb_uvm/tb_uvm_keccak_v2/keccak_assertions.sv",
+                      "?? tb_uvm/tb_uvm_keccak_v2/keccak_stage2_test.sv",
+                      "?? third_party/",
+                      "?? work/"
+                  ],
+    "Inputs":  [
+                   {
+                       "Path":  "quartus\\stage2\\keccak_stage2.qpf",
+                       "SHA256":  "22FBFC136066A5F12D4883ACBFBE2710B53AA18E627CD37EBC48D0946696B2E1"
+                   },
+                   {
+                       "Path":  "quartus\\stage2\\keccak_stage2.qsf",
+                       "SHA256":  "378987DEAEE345317A3A3B2A403CF3382B6FEE4997720340E248FBF70414D26E"
+                   },
+                   {
+                       "Path":  "quartus\\stage2\\keccak_stage2.sdc",
+                       "SHA256":  "32C71891DFBFD0400F75CEDF04487CFC923EA62E68CBAEDC09BD99CA6E73A04A"
+                   },
+                   {
+                       "Path":  "quartus\\stage2\\keccak_synth_top.sv",
+                       "SHA256":  "7AEE0B6E5A4621BBE7DFF23B00247978DA0F1F657A58CEA5415D97C8CA1FC6F5"
+                   },
+                   {
+                       "Path":  "sim\\run_stage2.do",
+                       "SHA256":  "787E74201ABA1704B408956E07307F7FB7191D6B34AACDB71D058BDC3ED95BA6"
+                   },
+                   {
+                       "Path":  "sim\\run_stage3.ps1",
+                       "SHA256":  "1092F373653DA4E2CF12DD8408707DFEE8AB58DFD6B03A71CEA82757F79FFEDB"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\chi_step.sv",
+                       "SHA256":  "13F0DF430C8ED94D521449B41A8489FC6544CA018F2669346EC6623651C76BDC"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\iota_step.sv",
+                       "SHA256":  "A6AAFF80C3924E0A52BB53FD09DC04286F24D594FD12CEAA667FF2F9DE7E1242"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\keccak_absorb_unit.sv",
+                       "SHA256":  "C9BF7D47AE01BAF74136DEF2CF965105B6720680C5E859DBE27466DE5D1DF833"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\keccak_core.sv",
+                       "SHA256":  "A6DAAECC08D9933C537CDA14E9179A3FDA7FEB1E5A7661365B5BAE691EC6992A"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\keccak_engine_parallel.sv",
+                       "SHA256":  "0C9AF00305A75522168780D70C1942EC54E49830F6C171CB460359AC949AE5B1"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\keccak_output_unit.sv",
+                       "SHA256":  "B478F36B7DC43158DCFE89719F02B7E9F59C96D54676ED3B9C1A1E0E5F0E31A0"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\keccak_param_unit.sv",
+                       "SHA256":  "2700E792F69F7A59465CC90D3EEEC010AB305EACBD9F987438656B0BE028A738"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\keccak_pkg.sv",
+                       "SHA256":  "84A7C913991B8FEA1845086259C53DC0F56446C70AB364C34E330CDD2FF1492E"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\keccak_step_unit.sv",
+                       "SHA256":  "EB0B3B6AB809FC7FDF4FAEC5438CC2C466EF96DD0C8C5DCAD19DE7497C9ADF63"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\pi_step.sv",
+                       "SHA256":  "E8068BE6D5478860E82CC0426207928E3089565B6B32F60B4038B94A70A92939"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\rho_step.sv",
+                       "SHA256":  "999C97B9B147A04C2FA37BDD76B556D7A5BE8CE26939BEBA9C79C2FBF38BCA99"
+                   },
+                   {
+                       "Path":  "src\\keccak_engine\\theta_step.sv",
+                       "SHA256":  "897F2D9C8854A4415816E8991DF1DED5D96BC4C39813E25DA798B0D43EAAEFAB"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_agent.sv",
+                       "SHA256":  "6687F9348E4B9E40541487D597E34CA4731904916FFDEE7692CA253553E3598F"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_assertions.sv",
+                       "SHA256":  "BC56669227BC7E018623D4A8103B045132FEFFB9E47DDA7E67706DA605477F34"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_coverage.sv",
+                       "SHA256":  "F8908F99D21DBD5EE3EFDD7A1291DE2EFBDF2C3292C6B53989FA8F379782927E"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_driver.sv",
+                       "SHA256":  "AC1F82D5B3D085DE8A63B9EEC1B46C270173A31CCBCE98C31DC3B1CDBD7D0BCF"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_env.sv",
+                       "SHA256":  "FCDD765AFE9FEA79A31A30304A8BD0A7B6E11CBD251AEDF66B8615FC5167DFF1"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_if.sv",
+                       "SHA256":  "5B62AB4FAE8086B2C5D8632C548E6AF850862AF959B42B95E677ECCA67E5AA24"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_monitor.sv",
+                       "SHA256":  "70B898EE3B58C2F5AE9C2BACA88ACF7BA640046D480AD0D4F0732641FA529DB5"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_ref_pkg.sv",
+                       "SHA256":  "96366268CF390195F502CE554571D01A674ED120A26BD330C5F687C99945CBE5"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_scoreboard.sv",
+                       "SHA256":  "5FB8617381A593F75B69A7C04B095E5C52F6EFB55A00CC20D12ED2EAADFED66C"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_sequence.sv",
+                       "SHA256":  "DE687A2B3B4828ABAE4D1AF4605EA4D9B270D2C947B855FAC815D0BD5E1DC0E4"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_stage2_test.sv",
+                       "SHA256":  "847FD8B1B3208D0530A291E6282149ABD76C18F8C28CD8987C4EFE77A5E4A0CE"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_tests.sv",
+                       "SHA256":  "A61B6E3A350C56BB8FDC34CD5D83B848A43564BF499AEEF14014576E5160EDA9"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\keccak_transaction.sv",
+                       "SHA256":  "A518AB6747A44B5D2BA7A9060462B10AFFFAD8E43BA8E7029624A3BA38C8D2B6"
+                   },
+                   {
+                       "Path":  "tb_uvm\\tb_uvm_keccak_v2\\tb_top.sv",
+                       "SHA256":  "7247585DB23113D5DDC3A2FFEDC97F25045952CFE75EB87467D40B76CCD7DB8B"
+                   }
+               ],
+    "Status":  "POST_FIT_FUNCTIONAL_COMPARISON_PASS",
+    "QuartusRoot":  "F:\\altera\\quartus",
+    "QuestaBin":  "C:\\questasim64_2024.1\\win64",
+    "PostFitTiming":  "MET_50_MHZ",
+    "WorstSlackNs":  0.169,
+    "PostFitNetlistSHA256":  "C08BCB4C40212F60D7C524BB16F70189F2F29436F16107650841BA798451F2A0",
+    "CheckedTransactions":  125,
+    "TransactionRecordSHA256":  "726C5025632F6D3C3CD6C68626CBEAC7669590420EC62D96824257F0852BC54C",
+    "Completed":  "2026-09-14T22:10:22.3402846+05:00"
+}

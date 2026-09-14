@@ -24,6 +24,7 @@ vlog -sv -cover bcesft ../src/keccak_engine/*.sv
 # enabled, while structural metrics are restricted to the RTL compiled above.
 vlog -sv +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/keccak_ref_pkg.sv
 vlog -sv +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/keccak_if.sv
+vlog -sv +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/keccak_assertions.sv
 vlog -sv +incdir+../tb_uvm/tb_uvm_keccak_v2 ../tb_uvm/tb_uvm_keccak_v2/tb_top.sv
 
 # 4. Start sim with coverage and full visibility
@@ -52,21 +53,21 @@ if {[batch_mode] == 0} {
     add wave -radix binary   /tb_top/vif[0]/start
     add wave -radix binary   /tb_top/vif[0]/stop
     add wave -radix unsigned /tb_top/vif[0]/mode
-    add wave -radix unsigned /tb_top/vif[0]/xof_len
+    add wave -radix unsigned /tb_top/vif[0]/message_len
+    add wave -radix unsigned /tb_top/vif[0]/output_len
+    add wave -radix binary   /tb_top/vif[0]/busy
+    add wave -radix binary   /tb_top/vif[0]/done
 
-    add wave -divider "Sink (s_axis, lane 0)"
-    add wave -radix hex      /tb_top/vif[0]/s_axis_tdata
-    add wave -radix binary   /tb_top/vif[0]/s_axis_tvalid
-    add wave -radix binary   /tb_top/vif[0]/s_axis_tlast
-    add wave -radix binary   /tb_top/vif[0]/s_axis_tkeep
-    add wave -radix binary   /tb_top/vif[0]/s_axis_tready
+    add wave -divider "Input words (lane 0)"
+    add wave -radix hex      /tb_top/vif[0]/input_data
+    add wave -radix binary   /tb_top/vif[0]/input_valid
+    add wave -radix binary   /tb_top/vif[0]/input_ready
 
-    add wave -divider "Source (m_axis, lane 0)"
-    add wave -radix hex      /tb_top/vif[0]/m_axis_tdata
-    add wave -radix binary   /tb_top/vif[0]/m_axis_tvalid
-    add wave -radix binary   /tb_top/vif[0]/m_axis_tlast
-    add wave -radix binary   /tb_top/vif[0]/m_axis_tkeep
-    add wave -radix binary   /tb_top/vif[0]/m_axis_tready
+    add wave -divider "Output words (lane 0)"
+    add wave -radix hex      /tb_top/vif[0]/output_data
+    add wave -radix binary   /tb_top/vif[0]/output_valid
+    add wave -radix unsigned /tb_top/vif[0]/output_bytes
+    add wave -radix binary   /tb_top/vif[0]/output_ready
 
     add wave -divider "DUT Internals (lane 0)"
     add wave -radix unsigned /tb_top/dut/g_lane[0]/u_core/state
@@ -74,7 +75,9 @@ if {[batch_mode] == 0} {
     add wave -radix hex      /tb_top/dut/g_lane[0]/u_core/suffix
     add wave -radix unsigned /tb_top/dut/g_lane[0]/u_core/bytes_absorbed
     add wave -radix unsigned /tb_top/dut/g_lane[0]/u_core/round_idx
-    add wave -radix unsigned /tb_top/dut/g_lane[0]/u_core/total_bytes_squeezed
+    add wave -radix unsigned /tb_top/dut/g_lane[0]/u_core/message_bytes_remaining
+    add wave -radix unsigned /tb_top/dut/g_lane[0]/u_core/xof_bytes_remaining
+    add wave -radix binary   /tb_top/dut/g_lane[0]/u_core/absorb_block_full
 }
 
 # 8. Run to completion
