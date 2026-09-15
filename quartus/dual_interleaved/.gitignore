@@ -1,0 +1,13 @@
+/output_files/
+/db/
+/incremental_db/
+/critical_paths/
+/c5_pin_model_dump.txt
+/*.qws
+/*.rpt
+/*.smsg
+/*.summary
+/*.done
+/*.jdi
+/*.sof
+/*.pin

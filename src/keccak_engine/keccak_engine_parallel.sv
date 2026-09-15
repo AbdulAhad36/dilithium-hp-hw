@@ -1,6 +1,9 @@
 /*
  * Module Name: keccak_engine_parallel
  * Description:
+ * DEPRECATED: retained for historical regression compatibility.
+ * The active architecture is keccak_dual_interleaved.
+ *
  * - Wraps N_LANES independent keccak_core instances behind a single module
  *   boundary. Each lane has its own protocol-neutral word input/output and
  *   reset/start/stop control, so all lanes run fully in parallel.

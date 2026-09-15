@@ -1,10 +1,14 @@
 # QuestaSim build artifacts
 sim/work/
+sim/dual_work/
+sim/dual_throughput_work/
+sim/dual_coverage_work/
 sim/transcript
 sim/vsim.wlf
 sim/*.wlf
 sim/wlft*
 sim/*.ucdb
+sim/dual_interleaved_coverage.txt
 transcript
 vsim.wlf
 modelsim.ini

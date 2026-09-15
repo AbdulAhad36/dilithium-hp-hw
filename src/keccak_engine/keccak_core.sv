@@ -32,7 +32,11 @@
 
 import keccak_pkg::*;
 
-module keccak_core (
+module keccak_core #(
+    parameter int OUTPUT_DWIDTH = DWIDTH,
+    parameter int OUTPUT_BYTES = OUTPUT_DWIDTH / 8,
+    parameter int OUTPUT_BYTE_COUNT_WIDTH = $clog2(OUTPUT_BYTES + 1)
+) (
     input   wire                            clk,
     input   wire                            rst,
 
@@ -48,9 +52,9 @@ module keccak_core (
     input   wire                            input_valid_i,
     output  logic                           input_ready_o,
 
-    output  logic [DWIDTH-1:0]              output_data_o,
+    output  logic [OUTPUT_DWIDTH-1:0]       output_data_o,
     output  logic                           output_valid_o,
-    output  logic [BYTE_COUNT_WIDTH-1:0]    output_bytes_o,
+    output  logic [OUTPUT_BYTE_COUNT_WIDTH-1:0] output_bytes_o,
     input   wire                            output_ready_i
 );
     // Dataflow Summary:
@@ -179,8 +183,8 @@ module keccak_core (
     wire                            KOU_IS_XOF_FIXED_LEN_I;
     wire [BYTE_ABSORB_WIDTH-1:0]    KOU_BYTES_SQUEEZED_O;
     wire                            KOU_PERM_NEEDED_O;
-    wire [DWIDTH-1:0]               KOU_DATA_O;
-    wire [BYTE_COUNT_WIDTH-1:0]     KOU_VALID_BYTES_O;
+    wire [OUTPUT_DWIDTH-1:0]        KOU_DATA_O;
+    wire [OUTPUT_BYTE_COUNT_WIDTH-1:0] KOU_VALID_BYTES_O;
     wire                            KOU_FINAL_O;
 
     // 1E. Wire Assignments
@@ -272,7 +276,11 @@ module keccak_core (
 
     // 2E. SQUEEZE OUTPUT UNIT (KOU)
     // ----------------------------------------------------------
-    keccak_output_unit KOU (
+    keccak_output_unit #(
+        .OUTPUT_DWIDTH          (OUTPUT_DWIDTH),
+        .OUTPUT_BYTES           (OUTPUT_BYTES),
+        .OUTPUT_BYTE_COUNT_WIDTH(OUTPUT_BYTE_COUNT_WIDTH)
+    ) KOU (
         .state_array_i          (KOU_STATE_ARRAY_I),
         .rate_i                 (KOU_RATE_I),
         .bytes_squeezed_i       (KOU_BYTES_SQUEEZED_I),
@@ -617,8 +625,12 @@ module keccak_core (
 
             // --- Squeeze Counters ---
             if (squeeze_wr_en) begin
+                // This branch is reached only for a non-final, non-rate-tail
+                // beat, so the accepted beat is always the full output width.
+                // A fixed increment keeps XOF-length comparison logic out of
+                // the squeeze-counter feedback path.
                 bytes_squeezed <= bytes_squeezed +
-                    BYTE_ABSORB_WIDTH'(DATA_BYTE_NUM);
+                    BYTE_ABSORB_WIDTH'(OUTPUT_BYTES);
             end
 
             if (update_xof_remaining_en) begin
@@ -626,7 +638,7 @@ module keccak_core (
                     xof_bytes_remaining <= '0;
                 else
                     xof_bytes_remaining <= xof_bytes_remaining -
-                        XOF_LEN_WIDTH'(DATA_BYTE_NUM);
+                        XOF_LEN_WIDTH'(KOU_VALID_BYTES_O);
             end
         end
     end
