@@ -1,4 +1,4 @@
-create_clock -name clk -period 6.897 [get_ports clk]
+create_clock -name clk -period 6.757 [get_ports clk]
 derive_clock_uncertainty
 
 set_false_path -from [get_ports rst]

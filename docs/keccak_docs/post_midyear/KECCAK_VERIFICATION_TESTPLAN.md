@@ -3,7 +3,7 @@
 **Project:** ML-DSA hardware accelerator  
 **DUT branch:** `1_hashing`  
 **Audited branch head:** local uncommitted state based on `1_hashing`
-**Target DUTs:** `keccak_core` and `keccak_engine_parallel`  
+**Target DUTs:** `keccak_core` and `keccak_dual_interleaved`
 **Target device:** Cyclone V `5CGXFC7C7F23C8`  
 **Status:** One-round source RTL, Stage 2, and one-core Stage 3 gates passing; 147 MHz setup/hold closed; P1 closure remains incomplete
 **Date:** 2026-09-12

@@ -720,7 +720,7 @@ class keccak_mixed_lane_seq extends keccak_base_seq;
                   .mode(mode), .msg_hex(msg), .exp_hex(exp),
                   .output_len_bits(output_bytes * 8),
                   .xof_len_val(output_bytes),
-                  .expected_active_lanes(4),
+                  .expected_active_lanes(2),
                   .mixed_lane_work_request(1));
     endtask
 endclass

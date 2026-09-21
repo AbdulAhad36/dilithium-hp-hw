@@ -5,10 +5,11 @@
 class keccak_coverage extends uvm_subscriber #(keccak_transaction);
     `uvm_component_utils(keccak_coverage)
 
-    localparam int N_LANES = 4;
+    localparam int N_LANES = 2;
 
     keccak_transaction tx_sampled;
     int lane_id = -1;
+    int passed_samples = 0;
     static int total_passed_samples = 0;
 
     // Derived requirement categories. Zero means that the requirement was not
@@ -150,17 +151,10 @@ class keccak_coverage extends uvm_subscriber #(keccak_transaction);
             bins while_stalled    = {5};
         }
 
-        cp_lane_id : coverpoint lane_id {
-            type_option.weight = 4;
-            bins lanes[] = {[0:N_LANES-1]};
-        }
-
         cp_active_lanes : coverpoint sample_active_lanes {
             type_option.weight = 4;
             bins one   = {1};
             bins two   = {2};
-            bins three = {3};
-            bins all   = {4};
         }
 
         cp_latency_class : coverpoint sample_latency_class {
@@ -260,6 +254,36 @@ class keccak_coverage extends uvm_subscriber #(keccak_transaction);
             type_option.weight = 8;
         }
 
+        // Closing independent points is weaker than exercising each flow
+        // behavior in both SHAKE modes.
+        cross_mode_absorb_blocks : cross cp_mode, cp_absorb_blocks {
+            type_option.weight = 8;
+        }
+        cross_mode_squeeze_blocks : cross cp_mode, cp_squeeze_blocks {
+            type_option.weight = 8;
+        }
+        cross_mode_input_gap : cross cp_mode, cp_input_gap {
+            type_option.weight = 8;
+        }
+        cross_mode_output_stall : cross cp_mode, cp_output_stall {
+            type_option.weight = 8;
+        }
+        cross_mode_latency : cross cp_mode, cp_latency_class {
+            type_option.weight = 8;
+        }
+        cross_mode_output_kind : cross cp_mode, cp_output_kind {
+            type_option.weight = 4;
+        }
+        cross_mode_back_to_back : cross cp_mode, cp_back_to_back {
+            type_option.weight = 8;
+        }
+        cross_mode_config_latch : cross cp_mode, cp_config_latch {
+            type_option.weight = 6;
+        }
+        cross_mode_prefix_consistency : cross cp_mode, cp_prefix_consistency {
+            type_option.weight = 6;
+        }
+
         cross_stall_position : cross cp_output_stall, cp_stall_position {
             type_option.weight = 9;
             ignore_bins no_stall = binsof(cp_output_stall) intersect {1};
@@ -267,9 +291,6 @@ class keccak_coverage extends uvm_subscriber #(keccak_transaction);
 
         cross_reset_mode : cross cp_reset_state, cp_mode {
             type_option.weight = 12;
-        }
-        cross_lane_mode : cross cp_lane_id, cp_mode {
-            type_option.weight = 8;
         }
         cross_active_lane_mode : cross cp_active_lanes, cp_mode {
             type_option.weight = 8;
@@ -304,15 +325,20 @@ class keccak_coverage extends uvm_subscriber #(keccak_transaction);
         end
         tx_sampled = t;
         derive_categories(t);
+        passed_samples++;
         total_passed_samples++;
         cg_keccak.sample();
     endfunction
 
     function void report_phase(uvm_phase phase);
         super.report_phase(phase);
+        `uvm_info(get_type_name(),
+                  $sformatf("Core %0d functional coverage: %0.2f%% (%0d passed samples)",
+                            lane_id, cg_keccak.get_inst_coverage(), passed_samples),
+                  UVM_NONE)
         if (lane_id == 0)
             `uvm_info(get_type_name(),
-                      $sformatf("Expanded P1 functional covergroup coverage: %0.2f%% (%0d passed samples)",
+                      $sformatf("Combined two-core functional coverage: %0.2f%% (%0d passed samples)",
                                 cg_keccak.get_coverage(), total_passed_samples),
                       UVM_NONE)
     endfunction
@@ -421,4 +447,206 @@ class keccak_coverage extends uvm_subscriber #(keccak_transaction);
         return 0;
     endfunction
 
+endclass
+
+// Coverage is separate from the dual DUT stimulus and byte checker.
+    covergroup cg_dual_core with function sample(
+        int mode_v,
+        int message_class,
+        int output_class,
+        int stall_class,
+        int final_beat_class,
+        bit rate_tail_seen,
+        bit multi_absorb,
+        bit multi_squeeze
+    );
+        option.per_instance = 1;
+
+        cp_mode : coverpoint mode_v {
+            bins shake128 = {0};
+            bins shake256 = {1};
+        }
+        cp_message : coverpoint message_class {
+            bins empty = {0};
+            bins short_unaligned = {1};
+            bins word_aligned = {2};
+            bins rate_minus_one = {3};
+            bins rate_exact = {4};
+            bins rate_plus_one = {5};
+            bins multi_rate = {6};
+        }
+        cp_output : coverpoint output_class {
+            bins tiny = {0};
+            bins full_beat = {1};
+            bins partial_after_beat = {2};
+            bins rate_minus_one = {3};
+            bins rate_exact = {4};
+            bins rate_plus_one = {5};
+            bins multi_rate = {6};
+        }
+        cp_stall : coverpoint stall_class {
+            bins none = {0};
+            bins periodic = {1};
+            bins burst = {2};
+        }
+        cp_final_beat : coverpoint final_beat_class {
+            bins full = {0};
+            bins eight_bytes = {1};
+            bins other_partial = {2};
+        }
+        cp_rate_tail : coverpoint rate_tail_seen {
+            bins absent = {0};
+            bins observed = {1};
+        }
+        cp_multi_absorb : coverpoint multi_absorb {
+            bins single_block = {0};
+            bins multiple_blocks = {1};
+        }
+        cp_multi_squeeze : coverpoint multi_squeeze {
+            bins single_block = {0};
+            bins multiple_blocks = {1};
+        }
+
+        cross_mode_message : cross cp_mode, cp_message;
+        cross_mode_output : cross cp_mode, cp_output;
+        cross_mode_stall : cross cp_mode, cp_stall;
+        cross_mode_final_beat : cross cp_mode, cp_final_beat;
+        cross_mode_multi_absorb : cross cp_mode, cp_multi_absorb;
+        cross_mode_multi_squeeze : cross cp_mode, cp_multi_squeeze;
+    endgroup
+
+    covergroup cg_dual_interleaved with function sample(
+        int mode_pair,
+        int stall_class,
+        int launch_gap_class,
+        bit output_overlap,
+        bit output_stall_seen,
+        bit simultaneous_stall_seen,
+        int source_switch_class,
+        bit request_wait_seen,
+        int first_core,
+        bit dispatch_fallback_seen,
+        bit wait_offset_seen,
+        bit wait_ingress_seen,
+        bit wait_all_busy_seen,
+        bit output_only_core0_seen,
+        bit output_only_core1_seen,
+        bit both_select_core0_seen,
+        bit both_select_core1_seen,
+        bit locked_stall_core0_seen,
+        bit locked_stall_core1_seen,
+        bit reset_while_busy_seen,
+        bit stop_core0_seen,
+        bit stop_core1_seen
+    );
+        cp_mode_pair : coverpoint mode_pair {
+            bins both_shake128 = {0};
+            bins both_shake256 = {1};
+            bins mixed = {2};
+        }
+        cp_stall : coverpoint stall_class {
+            bins none = {0};
+            bins periodic = {1};
+            bins burst = {2};
+        }
+        cp_launch_gap : coverpoint launch_gap_class {
+            bins exact_offset = {0};
+            bins ingress_delayed = {1};
+        }
+        cp_output_overlap : coverpoint output_overlap {
+            bins absent = {0};
+            bins observed = {1};
+        }
+        cp_output_stall : coverpoint output_stall_seen {
+            bins absent = {0};
+            bins observed = {1};
+        }
+        cp_simultaneous_stall : coverpoint simultaneous_stall_seen {
+            bins absent = {0};
+            bins observed = {1};
+        }
+        cp_source_switches : coverpoint source_switch_class {
+            bins one = {1};
+            bins multiple = {2};
+        }
+        cp_request_wait : coverpoint request_wait_seen {
+            bins immediate = {0};
+            bins backpressured = {1};
+        }
+        cp_first_core : coverpoint first_core {
+            bins core0 = {0};
+            bins core1 = {1};
+        }
+
+        // Wrapper decision coverage. Zero is ignored so each obligation stays
+        // open until the corresponding behavior is actually observed.
+        cp_dispatch_fallback : coverpoint dispatch_fallback_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_wait_offset : coverpoint wait_offset_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_wait_ingress : coverpoint wait_ingress_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_wait_all_busy : coverpoint wait_all_busy_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_output_only_core0 : coverpoint output_only_core0_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_output_only_core1 : coverpoint output_only_core1_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_both_select_core0 : coverpoint both_select_core0_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_both_select_core1 : coverpoint both_select_core1_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_locked_stall_core0 : coverpoint locked_stall_core0_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_locked_stall_core1 : coverpoint locked_stall_core1_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_reset_while_busy : coverpoint reset_while_busy_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_stop_core0 : coverpoint stop_core0_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+        cp_stop_core1 : coverpoint stop_core1_seen {
+            bins observed = {1}; ignore_bins not_observed = {0};
+        }
+
+        cross_mode_stall : cross cp_mode_pair, cp_stall;
+        cross_first_mode_pair : cross cp_first_core, cp_mode_pair;
+    endgroup
+
+class keccak_dual_coverage;
+    cg_dual_core core_cov0;
+    cg_dual_core core_cov1;
+    cg_dual_interleaved dual_cov;
+
+    function new();
+        core_cov0 = new();
+        core_cov1 = new();
+        dual_cov = new();
+    endfunction
+
+    function void sample_core(
+        bit core_id, int mode_v, int message_class, int output_class,
+        int stall_class, int final_beat_class, bit rate_tail_seen,
+        bit multi_absorb, bit multi_squeeze
+    );
+        if (core_id)
+            core_cov1.sample(mode_v, message_class, output_class,
+                             stall_class, final_beat_class, rate_tail_seen,
+                             multi_absorb, multi_squeeze);
+        else
+            core_cov0.sample(mode_v, message_class, output_class,
+                             stall_class, final_beat_class, rate_tail_seen,
+                             multi_absorb, multi_squeeze);
+    endfunction
 endclass

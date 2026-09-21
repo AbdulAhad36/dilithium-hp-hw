@@ -167,7 +167,8 @@ class keccak_scoreboard extends uvm_scoreboard;
         endcase
 
         if (exp_tx.mixed_lane_work_request)
-            relation_match &= (obs_tx.max_active_lanes == 4);
+            relation_match &=
+                (obs_tx.max_active_lanes == exp_tx.expected_active_lanes);
 
         if (exp_tx.reset_state_target > 0) begin
             obs_tx.data_ok = control_match && reset_setup_match &&

@@ -2,15 +2,28 @@
 
 ## Document Status
 
-This document is the authoritative specification of the current Keccak design on the `keccak_v2` branch. The verified single-core RTL is based on commit `35fe8d7`; the active working-tree architecture adds a dual-core interleaved scheduler. The dual-core changes are not committed yet.
+This document is the authoritative specification of the current Keccak design on the `keccak_v2` branch. The verified single-core RTL is based on commit `35fe8d7`; the dual-core interleaved baseline is commit `783b17b`. The working tree contains a reviewable Theta area optimization and tighter timing constraint.
 
-Last reviewed: 16 September 2026.
+Last reviewed: 17 September 2026.
 
 ## 1. Scope
 
 The design implements Keccak-f[1600], SHAKE128 and SHAKE256 for ML-DSA. Two verified one-round-per-clock cores are combined by `keccak_dual_interleaved`, which dispatches jobs with a 26-cycle launch offset and merges their tagged output streams. Each underlying `keccak_core` remains independently usable.
 
 The design does not use AXI. Commands, input and output use protocol-neutral ready/valid handshakes.
+
+### Architecture summary
+
+| Property | Single `keccak_core` | Active `keccak_dual_interleaved` |
+|---|---|---|
+| Keccak cores | 1 | 2 independent cores |
+| Round architecture | Iterative, one round per clock | Same architecture in each core |
+| Permutation latency | 24 round clocks | 24 round clocks per core |
+| Input datapath | 64 bits | Shared 64-bit stream with one elastic beat per core |
+| Output datapath | Parameterized; 64-bit default | Shared, tagged 128-bit stream |
+| Job scheduling | Direct start | Round-robin with minimum 26-clock launch spacing |
+| Parallelism | One active SHAKE context | Two independent SHAKE contexts |
+| Active synthesis top | No | Yes |
 
 ## 2. Algorithm Parameters
 
@@ -29,7 +42,7 @@ The design does not use AXI. Commands, input and output use protocol-neutral rea
 | SHAKE128 | 1344 bits | 256 bits | 168 bytes |
 | SHAKE256 | 1088 bits | 512 bits | 136 bytes |
 
-## 3. Core Architecture
+## 3. Single-Core Architecture
 
 Each `keccak_core` uses an iterative one-round-per-clock architecture. A 1600-bit state register feeds one fully combinational Keccak round and receives the result on the next active clock edge.
 
@@ -61,8 +74,17 @@ The round modules are:
 - `chi_step`: nonlinear row transformation.
 - `iota_step`: round-constant injection into lane `(0,0)`.
 
-The current implementation uses replicated local Theta parity logic. This costs
-additional ALMs but shortens high-fanout routing on the round-feedback path.
+The current implementation generates three forced local copies of the five
+Theta column parities. Destination rows select a copy using `y % 3`. This is a
+physical-architecture choice rather than an algorithmic change: all copies
+compute the same parity, but their reduced fanout gives the fitter more local
+routing options. The earlier dual baseline used five copies, one per destination
+row. Three copies reduce area while retaining timing closure.
+
+The core does not pipeline different messages through the 24 rounds. One state
+occupies one core until its current permutation completes. Consequently, one
+core commits one round each clock but completes only one permutation every 24
+round clocks.
 
 ## 4. Core Control
 
@@ -80,11 +102,38 @@ IDLE -> ABSORB -> SUFFIX_PADDING -> PERMUTE -> SQUEEZE
 
 Multiblock input returns from `PERMUTE` to `ABSORB`. Additional output blocks return from `SQUEEZE` to `PERMUTE`. Completion or an accepted stop returns the core to `IDLE`.
 
+### Cycle model
+
+For a message of `M` bytes, SHAKE rate `R` bytes, and requested output `O`
+bytes:
+
+```text
+input_beats       = ceil(M / 8)
+absorb_blocks     = floor(M / R) + 1
+output_blocks     = ceil(O / R), for bounded O > 0
+permutations      = absorb_blocks + max(output_blocks - 1, 0)
+round_clocks      = 24 * permutations
+dual_output_beats = ceil(O / 16)
+```
+
+`absorb_blocks` includes the block that receives the SHAKE suffix and final
+padding bit. Exact total latency also includes command acceptance, controller
+transitions, input/output handshakes, stalls, and final partial beats. This is
+why measured transfer-inclusive throughput is lower than permutation-only
+throughput.
+
 ## 5. Single-Core Interface
 
 `keccak_core` has a fixed 64-bit input and a parameterized output interface.
 The legacy single-core default remains 64 bits; the active dual-core top uses
 128-bit output beats.
+
+| Parameter | Current meaning |
+|---|---|
+| `OUTPUT_DWIDTH` | Output width; 64-bit default, 128 bits in the active dual top |
+| Input bytes per accepted beat | 8 |
+| Output bytes per dual-top beat | 16 |
+| Message/output length width | 16 bits |
 
 | Input | Width | Meaning |
 |---|---:|---|
@@ -139,13 +188,16 @@ Round-robin dispatcher -- 26-cycle minimum launch spacing
 - One message at a time uses the shared 64-bit input channel, routed to the core selected at command acceptance.
 - Each core has a one-beat elastic input register. This removes the shared core selector from the combinational path into the 1600-bit state update while retaining one accepted input beat per clock after initial fill.
 - Both cores run independently after input dispatch.
+- The 26-clock offset is a scheduling rule, not a connection between the round
+  datapaths. Core 1 never continues or pipelines core 0's state.
 - A fair round-robin arbiter merges their valid output words.
 - `output_core_o` identifies the source core on every valid output beat.
 - Backpressure reaches only the selected source; the other core retains its pending word.
 
 This follows LightHD's published principle: two independent iterative Keccak cores operate with a fixed 26-cycle offset and produce interleaved output. Our scheduler and ready/valid integration are original SystemVerilog around the existing cores; no LightHD RTL was copied.
 
-The old `keccak_engine_parallel` four-lane approach is obsolete for active development. Its source remains only for historical regression compatibility, and it is not the synthesis target.
+The old four-lane parallel wrapper has been removed. The active multi-core
+architecture is `keccak_dual_interleaved`.
 
 ## 8. Dual-Core Interface
 
@@ -161,6 +213,11 @@ The dual-core top accepts one job stream and returns one tagged output stream.
 
 `request_core_o` reports where an accepted request will be dispatched. `input_core_o` reports the destination of the active message transfer. `output_core_o` must accompany output into any downstream sampler so that per-stream partial sampling state remains isolated.
 
+The dual top improves aggregate sustained throughput only when at least two
+independent jobs are available. It does not halve the latency of one SHAKE job.
+The shared input can feed only one message at a time, while execution and output
+from the two accepted contexts may overlap.
+
 ## 9. FPGA Implementation
 
 Both projects target Intel Cyclone V `5CGXFC7C7F23C8` with Standard Fit, High Performance Effort, physical synthesis, register retiming and duplication, maximum router timing optimization, virtual data/control pins and multicorner timing analysis.
@@ -170,28 +227,31 @@ Both projects target Intel Cyclone V `5CGXFC7C7F23C8` with Standard Fit, High Pe
 | Property | Current value |
 |---|---:|
 | Quartus top entity | `keccak_dual_interleaved` |
-| Clock constraint | 6.897 ns / 145.00 MHz |
-| Slow-corner estimated Fmax | 149.25 MHz |
-| Worst setup slack | +0.197 ns |
-| Worst all-corner hold slack | +0.167 ns |
+| Clock constraint | 6.757 ns / 147.99 MHz |
+| Slow-corner estimated Fmax | 149.63 MHz |
+| Worst setup slack | +0.074 ns |
+| Worst all-corner hold slack | +0.166 ns |
 | Setup and hold TNS | 0 ns |
-| ALMs | 8,155 |
-| Registers | 3,505 |
+| ALMs | 7,581 |
+| Registers | 3,501 |
 | DSP blocks | 0 |
 | Block RAM blocks | 0 |
 | Fitter seed | 1 |
 
 The accepted fit has zero setup and hold TNS across all analyzed corners. Its
-145 MHz operating constraint is below the reported 149.25 MHz worst slow-corner
+147.99 MHz operating constraint is below the reported 149.63 MHz worst slow-corner
 Fmax, so the design has real positive margin. Virtual pins make this a
 core-level implementation result rather than board-I/O timing closure.
 
-The final timing recovery came from three RTL changes: local replicated Theta
+The original timing recovery came from three RTL changes: local replicated Theta
 parity logic, removal of a variable XOF-byte arithmetic path from the state
-feedback decision, and one elastic input register per core. Intermediate fits
-that violated setup were diagnostic only and are not accepted checkpoints.
+feedback decision, and one elastic input register per core. The current area
+optimization reduces the Theta parity replicas from five per core to three.
+Compared with commit `783b17b`, it removes 574 ALMs while raising the accepted
+operating clock from 145 MHz to 148 MHz. Intermediate fits that violated setup
+or were dominated in both area and timing were diagnostic only.
 
-### Preserved single-core reference
+### Preserved single-core implementation reference
 
 | Property | Reference value |
 |---|---:|
@@ -204,39 +264,186 @@ that violated setup were diagnostic only and are not accepted checkpoints.
 | Registers | 1,674 |
 | DSP / block RAM | 0 / 0 |
 
-Virtual pins make these internal core measurements, not complete board-level I/O timing results.
+This row is the last separately fitted single-core checkpoint. It predates the
+current three-copy Theta optimization and therefore must not be presented as a
+fresh synthesis of the exact current working-tree RTL. The current RTL remains
+independently instantiable as one `keccak_core`, but the accepted current fit is
+the two-core top described above. A new standalone fit is required before
+claiming current per-core area or Fmax.
+
+Virtual pins make both checkpoints internal core measurements, not complete
+board-level I/O timing results.
+
+### Dual optimization comparison
+
+| Metric | Committed dual baseline `783b17b` | Current optimized dual top |
+|---|---:|---:|
+| Constrained operating clock | 145 MHz | 148 MHz |
+| Estimated slow-corner Fmax | 149.25 MHz | 149.63 MHz |
+| Worst setup slack | +0.197 ns | +0.074 ns |
+| Worst hold slack | +0.167 ns | +0.166 ns |
+| ALMs | 8,155 | 7,581 |
+| Registers | 3,505 | 3,501 |
+
+The optimization saves 574 ALMs, or approximately 7.0 percent, while raising
+the accepted operating clock by 3 MHz. Setup margin is smaller but remains
+positive at every analyzed corner, with zero setup and hold TNS.
 
 ## 10. Throughput
 
+### 10.1 Throughput definitions
+
+Three different metrics are used and must not be interchanged:
+
+1. **Permutation-only throughput** measures rate bytes produced per 24-round
+   permutation. It ignores commands, input transfer, output transfer, control
+   transitions and stalls. This is useful for comparison with publications.
+2. **Transfer-inclusive throughput** measures from the first accepted command
+   through the final accepted output beat. It includes the implemented 64-bit
+   input and 128-bit output interfaces and all controller/permutation cycles.
+3. **Board/application throughput** would additionally include UART, memories,
+   the ML-DSA controller and downstream consumers. It has not been measured.
+
+All `GB/s` values below use decimal gigabytes: `1 GB/s = 10^9 bytes/s`.
+
+### 10.2 Permutation-only throughput
+
+For clock frequency `F` in MHz, rate `R` in bytes, 24 rounds per permutation,
+and `N` continuously occupied cores:
+
+```text
+throughput_GBps = (R * N * F) / (24 * 1000)
+```
+
+At the accepted 148 MHz operating clock, one core provides:
+
+```text
+SHAKE128 = (168 * 1 * 148) / (24 * 1000)
+         = 1.036000 GB/s
+
+SHAKE256 = (136 * 1 * 148) / (24 * 1000)
+         = 0.838667 GB/s
+```
+
+With both cores continuously occupied, aggregate permutation-only throughput is:
+
+```text
+SHAKE128 = (168 * 2 * 148) / (24 * 1000)
+         = 2.072000 GB/s
+
+SHAKE256 = (136 * 2 * 148) / (24 * 1000)
+         = 1.677333 GB/s
+```
+
+The 149.63 MHz TimeQuest Fmax is an estimated ceiling, not the declared
+operating clock. If used only as a projection, it gives 2.094820 GB/s for
+SHAKE128 and 1.695807 GB/s for SHAKE256 across both cores.
+
+| Mode | One core at 148 MHz | Two-core aggregate at 148 MHz | Dual projection at 149.63 MHz |
+|---|---:|---:|---:|
+| SHAKE128 | 1.036000 GB/s | 2.072000 GB/s | 2.094820 GB/s |
+| SHAKE256 | 0.838667 GB/s | 1.677333 GB/s | 1.695807 GB/s |
+
+These figures require continuously available independent work and ignore all
+transfer and control overhead. They are not the primary usable-throughput claim.
+
+### 10.3 Measured dual transfer-inclusive throughput
+
 The accepted 128-bit-output design was measured in source simulation with a
-long byte-exact benchmark. The measurement starts at the first accepted command
-and ends at the final accepted output beat, so it includes command, 64-bit input
-transfer, setup, every permutation, and 128-bit output transfer cycle.
+long byte-exact benchmark. Measurement starts at the first accepted command and
+ends at the final accepted output beat. Output ready remains asserted, so the
+result includes command handling, 64-bit input transfer, setup, every
+permutation, arbitration and 128-bit output transfer, but no artificial output
+stalls.
 
-| Mode | Dual-core sustained throughput | Single-core reference |
-|---|---:|---:|
-| SHAKE128 | 1.313843 GB/s at 145 MHz | Approximately 0.533 GB/s at 142.86 MHz |
-| SHAKE256 | 1.124719 GB/s at 145 MHz | Approximately 0.474 GB/s at 142.86 MHz |
+The calculation is:
 
-The measured workloads produced 131,040 bytes in 14,462 cycles for SHAKE128
-and 130,832 bytes in 16,867 cycles for SHAKE256. Output was always ready; these
-are core-level sustained simulation results, not UART, board, or complete
-ML-DSA throughput.
+```text
+bytes_per_cycle = total_output_bytes / elapsed_cycles
+throughput_GBps = bytes_per_cycle * 148 / 1000
+```
 
-Dual-core interleaving improves aggregate throughput and smooths output availability. A single job still executes on one core and does not become twice as fast.
+For SHAKE128:
+
+```text
+bytes_per_cycle = 131040 / 14462
+                = 9.060987 bytes/cycle
+
+throughput      = 9.060987 * 148 / 1000
+                = 1.341026 GB/s
+```
+
+For SHAKE256:
+
+```text
+bytes_per_cycle = 130832 / 16867
+                = 7.756685 bytes/cycle
+
+throughput      = 7.756685 * 148 / 1000
+                = 1.147989 GB/s
+```
+
+| Mode | Output bytes | Elapsed cycles | Bytes/cycle | Measured throughput |
+|---|---:|---:|---:|---:|
+| SHAKE128 | 131,040 | 14,462 | 9.060987 | 1.341026 GB/s |
+| SHAKE256 | 130,832 | 16,867 | 7.756685 | 1.147989 GB/s |
+
+Relative to the dual permutation-only ceilings at the same clock, the complete
+implemented path sustains approximately 64.7 percent for SHAKE128 and 68.4
+percent for SHAKE256. The difference is real interface and control overhead,
+not failed rounds or incorrect output.
+
+### 10.4 Preserved single-core analytical reference
+
+The earlier single-core report used a 142.86 MHz checkpoint and a simplified
+one-rate-block model that included 64-bit input transfer but did not reproduce
+the current dual benchmark methodology:
+
+```text
+SHAKE128 input beats = 168 / 8 = 21
+estimate             = 168 * 142.86 / (24 + 21) / 1000
+                     = 0.533344 GB/s
+
+SHAKE256 input beats = 136 / 8 = 17
+estimate             = 136 * 142.86 / (24 + 17) / 1000
+                     = 0.473877 GB/s
+```
+
+Its permutation-only values were approximately 1.000020 GB/s for SHAKE128 and
+0.809540 GB/s for SHAKE256. These are retained as historical single-core
+references, not current measured results and not evidence of current per-core
+area or Fmax.
+
+Dual-core interleaving improves aggregate throughput and output availability.
+A single job still executes on one core and does not become twice as fast.
 
 ## 11. Verification Status
 
-The established single-core design has completed all three verification stages:
+An earlier standalone single-core checkpoint completed all three verification stages:
 
 | Evidence | Result |
 |---|---:|
-| Source RTL UVM tests | 888 / 888 passed |
+| Historical source RTL UVM tests | 888 / 888 passed |
 | UVM errors and fatals | 0 |
-| Functional coverage | 281 / 281 bins |
-| Single-lane code coverage | 98.78 percent |
+| Historical functional coverage | 281 / 281 bins |
+| Historical single-lane code coverage | 98.78 percent |
 | Post-synthesis source/netlist comparisons | 125 / 125 passed |
 | Post-fit source/netlist comparisons | 125 / 125 passed |
+
+Those results do not describe the current dual-interleaved wrapper or its
+present source-RTL coverage model. The current `sim/run.do` elaborates only
+`tb_top`. Direct-core UVM and the unified dual regression run inside
+`u_uvm_core`. The three functional covergroups (`cg_keccak`,
+`cg_dual_core`, and `cg_dual_interleaved`) are declared in
+`keccak_coverage.sv`. The direct UVM bench has two independent
+`keccak_core` instances; the dual regression has one separate
+`keccak_dual_interleaved` instance. `tb_top` instantiates only
+`tb_keccak_uvm_core` and `tb_keccak_dual_throughput`, waits for both,
+and checks UVM errors.
+
+The current source-RTL direct-core UVM result is 880/880 passed: 441 on core 0
+and 439 on core 1, with zero UVM errors or fatals. Direct-core functional
+coverage is 97.90 percent per core under the expanded model.
 
 The final dual-core source regressions currently pass:
 
@@ -248,23 +455,34 @@ The final dual-core source regressions currently pass:
 - Final partial output words.
 - Output stability under backpressure, including simultaneous pending outputs from both cores.
 - Long-run byte-exact throughput checks for both SHAKE modes.
-- Thirty-eight coverage jobs spanning empty, unaligned, rate-boundary and multirate messages, full and partial output beats, rate-tail beats, mixed modes, delayed launches and multiple backpressure patterns.
+- Forty dual regression jobs span empty, unaligned, rate-boundary and multirate messages, full and partial output beats, rate-tail beats, mixed modes, delayed launches and multiple backpressure patterns. The final pair retains the focused interleaving and forced-stall checks.
+
+The latest source verification contains two dual regression paths:
+
+| Dual regression | Job executions | Primary purpose |
+|---|---:|---|
+| Long-stream throughput regression | 4 | Two jobs per SHAKE mode with every output byte checked |
+| Unified dual regression | 40 | Boundary, protocol, mode, arbitration, and focused interleaving scenarios |
+| **Total** | **44** | Source-RTL dual-top job executions |
+
+The count is job executions, not 44 independent requirements. Some behaviors
+are intentionally exercised in more than one regression. The throughput jobs
+also validate 261,872 output bytes in total.
 
 Measured functional coverage:
 
 | Scope | Functional coverage |
 |---|---:|
-| Core 0 | 99.35 percent, 61/62 bins |
-| Core 1 | 99.35 percent, 61/62 bins |
-| Dual interleaver | 90.91 percent, 31/35 bins |
-| Aggregate covergroup metric | 95.12 percent |
+| Core 0 through dual wrapper | 99.49 percent |
+| Core 1 through dual wrapper | 99.49 percent |
+| Dual interleaver | 66.67 percent |
 
-Measured structural code coverage for the complete dual regression is 91.33
-percent. Its component metrics are 99.68 percent statements, 99.05 percent
-branches, 77.77 percent conditions, 87.23 percent expressions, 100 percent FSM
-states, 72.72 percent FSM transitions and 99.05 percent toggles. The lower
-condition and transition figures remain visible; no exclusions were used to
-make the total appear higher.
+The complete source-RTL suite's Questa filtered total is 89.23 percent after
+the hierarchy change. It combines RTL metrics with covergroups and assertions;
+it is not a pure code-coverage percentage and is not directly comparable to
+the previous 87.34 percent hierarchy total. The expanded dual model leaves fallback dispatch,
+ingress/all-busy request blocking, core-1 locked output stall, and wrapper
+reset/stop scenarios open. Passing hashes do not close those requirements.
 
 The dual tests are self-checking SystemVerilog regressions with covergroups, not
 a completed dual-top UVM environment. The established single-core evidence is
@@ -291,13 +509,11 @@ functional equivalence.
 - RTL interface and controller: `src/keccak_engine/keccak_core.sv`
 - Algorithm parameters: `src/keccak_engine/keccak_pkg.sv`
 - Round datapath: `src/keccak_engine/keccak_step_unit.sv`
-- Deprecated wrapper: `src/keccak_engine/keccak_engine_parallel.sv`
-- Dual-core source regression: `sim/run_dual_interleaved.do`
-- Dual-core throughput benchmark: `sim/run_dual_throughput.do`
-- Dual-core functional/code coverage regression: `sim/run_dual_coverage.do`
+- Complete dual-core source regression: `sim/run.do`
+- Dual-core post-synthesis simulation: `sim/run_post_synthesis.do`
+- Dual-core post-fit timing simulation: `sim/run_post_fit.do`
 - Dual-core Quartus project: `quartus/dual_interleaved/keccak_dual_interleaved.qsf`
 - Dual-core timing constraints: `quartus/dual_interleaved/keccak_dual_interleaved.sdc`
-- Single-core reference project: `quartus/performance/keccak_performance.qsf`
 - Living engineering record: `keccak-design-and-verification.md`
 - Verification requirements: `KECCAK_VERIFICATION_TESTPLAN.md`
 - LightHD paper: DOI `10.1109/TC.2026.3666457`

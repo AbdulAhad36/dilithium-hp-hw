@@ -82,9 +82,9 @@ These are documentation errors and must be corrected before the next review.
 
 ### 2.4 The Keccak area result is mislabeled
 
-Quartus synthesized `keccak_core`, not `keccak_engine_parallel`. The reported approximately 3,738 ALMs, 3,270 registers, and 84.31 MHz are single-core results. The slide labels approximately 3,747 ALMs as a four-lane result, which is incorrect.
+Quartus synthesized `keccak_core`, not the former four-lane wrapper. The reported approximately 3,738 ALMs, 3,270 registers, and 84.31 MHz are single-core results. The slide labels approximately 3,747 ALMs as a four-lane result, which is incorrect.
 
-The four-lane 3.84x figure is a simulation wall-clock speedup from replicating four cores. It is not a four-lane synthesis result and does not show improved area efficiency. A four-lane hardware claim requires a separate synthesis of `keccak_engine_parallel` and an area/throughput comparison against one lane.
+The four-lane 3.84x figure is a simulation wall-clock speedup from replicating four cores. It is not a four-lane synthesis result and does not show improved area efficiency. That obsolete wrapper has now been removed in favor of the dual-core interleaved architecture.
 
 ### 2.5 The midyear Keccak pipeline was not an effective throughput pipeline
 

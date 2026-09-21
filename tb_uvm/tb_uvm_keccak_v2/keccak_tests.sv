@@ -1,5 +1,5 @@
 // =========================================================================
-// keccak_tests.sv  -  UVM tests (multi-lane)
+// keccak_tests.sv  -  UVM tests for the two physical Keccak cores
 //
 // Each test forks N_LANES copies of a sequence onto the per-lane sequencers
 // and joins before dropping the objection. With N_LANES=1 this behaves like
@@ -43,8 +43,6 @@ class keccak_directed_test extends keccak_base_test;
         fork
             seq[0].start(env.agent[0].sequencer);
             seq[1].start(env.agent[1].sequencer);
-            seq[2].start(env.agent[2].sequencer);
-            seq[3].start(env.agent[3].sequencer);
         join
 
         #200;
@@ -57,26 +55,22 @@ endclass
 class keccak_full_test extends keccak_base_test;
     `uvm_component_utils(keccak_full_test)
 
+    localparam int CORE_REGRESSION_PASSES = 2;
+
     function new(string name = "keccak_full_test", uvm_component parent = null);
         super.new(name, parent);
     endfunction
 
     task run_phase(uvm_phase phase);
-        keccak_full_seq seq [keccak_env::N_LANES];
         phase.raise_objection(this);
 
-        foreach (seq[i]) seq[i] = keccak_full_seq::type_id::create($sformatf("seq_%0d", i));
-
         fork
-            seq[0].start(env.agent[0].sequencer);
-            seq[1].start(env.agent[1].sequencer);
-            seq[2].start(env.agent[2].sequencer);
-            seq[3].start(env.agent[3].sequencer);
+            run_core_regression(0);
+            run_core_regression(1);
         join
 
         run_concurrency_wave(1);
         run_concurrency_wave(2);
-        run_concurrency_wave(3);
         for (int kind = 1; kind <= 3; kind++) begin
             run_isolation_wave(kind, SHAKE128);
             run_isolation_wave(kind, SHAKE256);
@@ -85,6 +79,16 @@ class keccak_full_test extends keccak_base_test;
 
         #200;
         phase.drop_objection(this);
+        uvm_event_pool::get_global("keccak_uvm_suite_done").trigger();
+    endtask
+
+    task run_core_regression(int core_id);
+        for (int pass = 0; pass < CORE_REGRESSION_PASSES; pass++) begin
+            keccak_full_seq seq;
+            seq = keccak_full_seq::type_id::create(
+                $sformatf("core_%0d_pass_%0d", core_id, pass));
+            seq.start(env.agent[core_id].sequencer);
+        end
     endtask
 
     task run_isolation_wave(int kind, keccak_mode mode);
@@ -123,11 +127,6 @@ class keccak_full_test extends keccak_base_test;
                    seq[0].start(env.agent[0].sequencer);
                    seq[1].start(env.agent[1].sequencer);
                join
-            3: fork
-                   seq[0].start(env.agent[0].sequencer);
-                   seq[1].start(env.agent[1].sequencer);
-                   seq[2].start(env.agent[2].sequencer);
-               join
             default: `uvm_fatal(get_type_name(), "Unsupported lane count")
         endcase
     endtask
@@ -143,8 +142,6 @@ class keccak_full_test extends keccak_base_test;
         fork
             seq[0].start(env.agent[0].sequencer);
             seq[1].start(env.agent[1].sequencer);
-            seq[2].start(env.agent[2].sequencer);
-            seq[3].start(env.agent[3].sequencer);
         join
     endtask
 endclass

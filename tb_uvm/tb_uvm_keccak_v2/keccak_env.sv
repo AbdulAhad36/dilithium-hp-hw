@@ -1,22 +1,19 @@
 // =========================================================================
-// keccak_env.sv  -  Multi-lane UVM environment
+// keccak_env.sv  -  Two-core UVM environment
 //
-// Hosts N_LANES independent (agent + scoreboard + coverage) bundles, one
-// per lane of keccak_engine_parallel. Lanes are completely independent: no
-// cross-lane arbitration or shared state - the parallel wrapper exposes
-// per-lane simple word ports and we verify each one separately and concurrently.
+// Hosts one independent agent, scoreboard, and coverage collector for each
+// physical core in the dual-interleaved design.
 //
 // Per-agent virtual interfaces are pulled from the config_db at paths
 //   uvm_test_top.env.agent_<i>.*
 // which tb_top sets up.
 //
-// N_LANES: set to 4 to match tb_top.sv. To run with a different lane count,
-// edit both this localparam and the N_LANES in tb_top.sv.
+// N_LANES must match the two cores instantiated by keccak_dual_interleaved.
 // =========================================================================
 class keccak_env extends uvm_env;
     `uvm_component_utils(keccak_env)
 
-    localparam int N_LANES = 4;
+    localparam int N_LANES = 2;
 
     keccak_agent       agent      [N_LANES];
     keccak_scoreboard  scoreboard [N_LANES];

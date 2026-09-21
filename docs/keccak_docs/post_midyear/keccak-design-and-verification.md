@@ -1,7 +1,7 @@
 # Keccak Design and Verification - Post-Midyear Living Report
 
 **Branch:** `keccak_v2` (created from `1_hashing`)  
-**Last updated:** 2026-09-16
+**Last updated:** 2026-09-17
 
 **Status:** Authoritative post-midyear Keccak progress record
 
@@ -174,11 +174,11 @@ behavior.
 
 - Single-core correctness gate: passing at source RTL, post-synthesis, and post-fit.
 - Dual-core source correctness gate: passing directed, throughput and coverage regressions.
-- Dual-core setup/hold gate: passing at 145 MHz with zero setup and hold TNS.
+- Dual-core setup/hold gate: passing at 148 MHz with zero setup and hold TNS.
 - Dual-core throughput gate: passing above 1 GB/s for SHAKE128 and SHAKE256.
 - Dual-core functional-coverage gate: passing above 80 percent for both cores and the interleaver.
 - LightHD frequency gate: **not passed**; 69.94 MHz remains.
-- Dual-core area: 8,155 Cyclone V ALMs; cross-FPGA LUT comparisons remain approximate.
+- Dual-core area: 7,581 Cyclone V ALMs; cross-FPGA LUT comparisons remain approximate.
 - Stage 2/3 gate for the latest dual RTL: pending. The 125/125 Stage 2/3 result applies to the established single core.
 - Hardware/UART test: pending FPGA board details.
 
@@ -188,7 +188,7 @@ behavior.
    UVM environment while preserving the current measured bins.
 2. Generate the final post-synthesis and post-fit netlists for the dual top and
    run byte-exact Stage 2 and Stage 3 comparisons.
-3. Retain the 145 MHz fit as the accepted floor while investigating further
+3. Retain the 148 MHz fit as the accepted floor while investigating further
    state-feedback placement or area improvements.
 4. Integrate the dual-context downstream consumer only after the three-stage
    dual verification flow is complete.
@@ -196,27 +196,7 @@ behavior.
 Detailed targets and acceptance rules are in
 [KECCAK_LIGHTHD_CHALLENGE_PLAN.md](KECCAK_LIGHTHD_CHALLENGE_PLAN.md).
 
-## 10. ML-DSA-OSH Comparison Branch - 2026-09-13
-
-- Restored the local one-round-per-clock design before creating `keccak_v2`.
-- Preserved the historical 147.21 MHz fit and separately measured a clean
-  rebuild at 141.82 MHz, 3,452 ALMs, and 1,674 registers.
-- Imported all 16 ML-DSA-OSH Keccak VHDL files unchanged from upstream commit
-  `751009199ac081091a9059805e6921453bde0154`.
-- Added a separate protocol adapter so the existing UVM environment can test
-  the upstream core without modifying vendor code.
-- Passed 888/888 source transactions with 99.64% functional and 83.36% total
-  filtered structural coverage.
-- Passed the same 125/125 transactions at source, post-synthesis, and post-fit;
-  all three checked-output records have the same SHA-256 hash.
-- Fitted the native upstream core on Cyclone V at 143.64 MHz, 4,251 ALMs, and
-  4,455 registers. It reaches 1,005.48 MB/s SHAKE128 and 813.96 MB/s SHAKE256
-  permutation-only throughput, but does not meet the 230 MHz test constraint.
-
-Full provenance, commands, coverage, and comparison caveats are in
-[MLDSA_OSH_KECCAK_CYCLONE_V_COMPARISON.md](MLDSA_OSH_KECCAK_CYCLONE_V_COMPARISON.md).
-
-## 11. Dual-Core Interleaved Development - 2026-09-16
+## 10. Dual-Core Interleaved Development - 2026-09-16
 
 LightHD was checked against the paper rather than inferred from its headline. It uses two independent iterative Keccak cores with a fixed 26-cycle offset and interleaved SHA-3 outputs. It is not a cascaded two-round datapath. The paper reports 6,019 LUTs, 3,220 FFs and 212.8 MHz for its complete dual-core SHA-3 block on Artix-7; those numbers are not directly comparable to Cyclone V ALMs.
 
@@ -250,9 +230,9 @@ mixed modes, arbitration and no/periodic/burst backpressure.
 | Interleaved scheduler/protocol | 90.91%, 31/35 bins |
 | Aggregate covergroup metric | 95.12% |
 
-The complete dual regression's structural code coverage is 91.33%. Component
-results are 99.68% statements, 99.05% branches, 77.77% conditions, 87.23%
-expressions, 100% FSM states, 72.72% FSM transitions and 99.05% toggles. No
+The complete dual regression's structural code coverage is 91.32%. Component
+results are 99.66% statements, 99.05% branches, 77.77% conditions, 87.23%
+expressions, 100% FSM states, 72.72% FSM transitions and 99.02% toggles. No
 coverage exclusions were added to manufacture the total. These dual tests are
 self-checking SystemVerilog with functional covergroups; migration into the
 full UVM architecture remains open.
@@ -261,35 +241,38 @@ Accepted Cyclone V timing-clean checkpoint:
 
 | Metric | Dual interleaved | Single-core reference |
 |---|---:|---:|
-| Constraint | 145.00 MHz | 142.86 MHz |
-| Estimated Fmax | 149.25 MHz | 143.47 MHz |
-| Setup slack | +0.197 ns | +0.030 ns |
-| Worst hold slack | +0.167 ns | +0.169 ns |
-| ALMs | 8,155 | 3,441 |
-| Registers | 3,505 | 1,674 |
+| Constraint | 147.99 MHz | 142.86 MHz |
+| Estimated Fmax | 149.63 MHz | 143.47 MHz |
+| Setup slack | +0.074 ns | +0.030 ns |
+| Worst hold slack | +0.166 ns | +0.169 ns |
+| ALMs | 7,581 | 3,441 |
+| Registers | 3,501 | 1,674 |
 | DSP / RAM | 0 / 0 | 0 / 0 |
 
 The final fit has zero setup and hold TNS at every analyzed corner. Timing was
 recovered after widening the output by removing variable XOF-byte arithmetic
 from the feedback decision, using replicated local Theta parity logic and
-registering each core's input independently. Failed intermediate fits are not
-accepted results.
+registering each core's input independently. A follow-up area experiment
+reduced the parity replicas from five per core to three. The accepted result
+saves 574 ALMs (7.0 percent) and raises the constrained clock by 3 MHz without
+changing the interface, cycle counts or SHAKE results. Failed or dominated
+intermediate fits are not accepted results.
 
 The long-run benchmark measures from the first accepted command to the final
 accepted output beat and verifies every output byte against an independent
-model. At the timing-closed 145 MHz operating point it reports:
+model. At the timing-closed 148 MHz operating point it reports:
 
 | Mode | Bytes | Cycles | Actual transfer-inclusive throughput |
 |---|---:|---:|---:|
-| SHAKE128 | 131,040 | 14,462 | 1.313843 GB/s |
-| SHAKE256 | 130,832 | 16,867 | 1.124719 GB/s |
+| SHAKE128 | 131,040 | 14,462 | 1.341026 GB/s |
+| SHAKE256 | 130,832 | 16,867 | 1.147989 GB/s |
 
 These figures include commands, 64-bit input transfers, setup, all permutation
 cycles and 128-bit output transfers with no output stalls. They are sustained
 source-simulation core results at a timing-closed clock, not UART/board or
 complete ML-DSA throughput.
 
-The throughput, 145 MHz timing and greater-than-80-percent functional-coverage
+The throughput, 148 MHz timing and greater-than-80-percent functional-coverage
 targets are met. The next gates are full dual-top UVM integration and byte-exact
 post-synthesis/post-fit functional comparisons. The authoritative current
 interface and limitations are in [SPECIFICATION.md](SPECIFICATION.md).
