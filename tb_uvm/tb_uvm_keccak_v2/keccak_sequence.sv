@@ -614,8 +614,11 @@ class keccak_deep_consistency_seq extends keccak_base_seq;
         send_equivalence_pair(3, SHAKE128, 184);
 
         send_prefix_pair(1, SHAKE128, 16, 64);
+        send_prefix_pair(1, SHAKE256, 16, 64);
+        send_prefix_pair(2, SHAKE128, 128, 176);
         send_prefix_pair(2, SHAKE256, 128, 144);
         send_prefix_pair(3, SHAKE128, 176, 344);
+        send_prefix_pair(3, SHAKE256, 144, 280);
 
         for (int bit_index = 0; bit_index < 8; bit_index++)
             send_byte_order_item(bit_index + 1,

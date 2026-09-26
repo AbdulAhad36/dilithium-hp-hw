@@ -1,5 +1,15 @@
 # Post-Midyear Evaluation: Verification Recovery and FPGA Validation Plan
 
+**Progress review 2026-09-27:** This remains the original Keccak/NTT
+verification methodology and evaluation record. Its dated 888-transaction,
+one-core and NTT snapshots are historical, not current status for
+`keccak_v2`. The active Keccak dual top has a last recorded 904/904
+standalone-core UVM run, 81/81 integrated-wrapper jobs, 87.55% weighted
+functional coverage, 99.06% integrated-DUT code coverage and a timing-clean
+148 MHz Quartus fit using 7,581 ALMs. Dual-core Stage 2/3 netlist
+simulations and FPGA/UART validation remain pending. Current
+Keccak evidence is in [the living report](keccak-design-and-verification.md).
+
 **Project:** Hardware Design and Verification of CRYSTALS-Dilithium / ML-DSA  
 **Date:** 2026-07-20  
 **Status:** Working plan after the midyear evaluation  

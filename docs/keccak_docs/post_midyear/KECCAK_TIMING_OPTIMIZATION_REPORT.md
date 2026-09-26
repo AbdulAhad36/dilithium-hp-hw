@@ -6,6 +6,11 @@ Recorded Git HEAD: `5d386c9291e36e316d4671958e01c60ec27709e8` plus documented lo
 Device: Cyclone V `5CGXFC7C7F23C8`  
 Result: **one round per clock at a timing-closed 142.86 MHz operating point**
 
+**Archive status (2026-09-27):** This is the last separately fitted
+one-core benchmark. The active synthesis top is `keccak_dual_interleaved`;
+its last recorded fit uses 7,581 ALMs and closes the 148 MHz constraint.
+See [SPECIFICATION.md](SPECIFICATION.md) for the active architecture.
+
 ## Scope
 
 This report measures one `keccak_core` as an internal FPGA block. It is separate

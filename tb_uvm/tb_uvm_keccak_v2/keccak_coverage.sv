@@ -276,11 +276,37 @@ class keccak_coverage extends uvm_subscriber #(keccak_transaction);
         }
         cross_mode_back_to_back : cross cp_mode, cp_back_to_back {
             type_option.weight = 8;
+            // The sampled mode is the destination mode of the transition.
+            ignore_bins impossible_shake128_destination =
+                binsof(cp_mode) intersect {SHAKE128} &&
+                binsof(cp_back_to_back) intersect {2, 4};
+            ignore_bins impossible_shake256_destination =
+                binsof(cp_mode) intersect {SHAKE256} &&
+                binsof(cp_back_to_back) intersect {1, 3};
         }
         cross_mode_config_latch : cross cp_mode, cp_config_latch {
             type_option.weight = 6;
         }
         cross_mode_prefix_consistency : cross cp_mode, cp_prefix_consistency {
+            type_option.weight = 6;
+        }
+
+        // Combined flow obligations. Independent coverpoints cannot prove that
+        // these interactions were exercised in the same checked transaction.
+        cross_mode_message_kind :
+            cross cp_mode, cp_msg_boundary, cp_output_kind {
+            type_option.weight = 48;
+        }
+        cross_mode_flow_depth :
+            cross cp_mode, cp_absorb_blocks, cp_squeeze_blocks {
+            type_option.weight = 32;
+        }
+        cross_mode_backpressure :
+            cross cp_mode, cp_input_gap, cp_output_stall {
+            type_option.weight = 32;
+        }
+        cross_mode_stall_equivalence :
+            cross cp_mode, cp_stall_equivalence {
             type_option.weight = 6;
         }
 
@@ -513,6 +539,18 @@ endclass
         cross_mode_final_beat : cross cp_mode, cp_final_beat;
         cross_mode_multi_absorb : cross cp_mode, cp_multi_absorb;
         cross_mode_multi_squeeze : cross cp_mode, cp_multi_squeeze;
+        cross_message_output : cross cp_message, cp_output;
+        cross_mode_message_output :
+            cross cp_mode, cp_message, cp_output;
+        cross_mode_message_stall :
+            cross cp_mode, cp_message, cp_stall;
+        cross_mode_output_stall :
+            cross cp_mode, cp_output, cp_stall;
+        cross_mode_stall_final_beat :
+            cross cp_mode, cp_stall, cp_final_beat;
+        cross_mode_flow_depth :
+            cross cp_mode, cp_multi_absorb, cp_multi_squeeze;
+        cross_mode_rate_tail : cross cp_mode, cp_rate_tail;
     endgroup
 
     covergroup cg_dual_interleaved with function sample(
@@ -622,6 +660,28 @@ endclass
 
         cross_mode_stall : cross cp_mode_pair, cp_stall;
         cross_first_mode_pair : cross cp_first_core, cp_mode_pair;
+        cross_mode_launch_gap : cross cp_mode_pair, cp_launch_gap;
+        cross_mode_request_wait : cross cp_mode_pair, cp_request_wait;
+        cross_mode_output_overlap : cross cp_mode_pair, cp_output_overlap;
+        cross_first_core_stall : cross cp_first_core, cp_stall;
+        cross_mode_first_core_stall :
+            cross cp_mode_pair, cp_first_core, cp_stall;
+
+        // Decision paths must eventually be demonstrated for every mode pair,
+        // not merely observed once in one convenient configuration.
+        cross_mode_dispatch_fallback :
+            cross cp_mode_pair, cp_dispatch_fallback;
+        cross_mode_wait_offset : cross cp_mode_pair, cp_wait_offset;
+        cross_mode_wait_ingress : cross cp_mode_pair, cp_wait_ingress;
+        cross_mode_wait_all_busy : cross cp_mode_pair, cp_wait_all_busy;
+        cross_mode_locked_stall_core0 :
+            cross cp_mode_pair, cp_locked_stall_core0;
+        cross_mode_locked_stall_core1 :
+            cross cp_mode_pair, cp_locked_stall_core1;
+        cross_mode_reset_while_busy :
+            cross cp_mode_pair, cp_reset_while_busy;
+        cross_mode_stop_core0 : cross cp_mode_pair, cp_stop_core0;
+        cross_mode_stop_core1 : cross cp_mode_pair, cp_stop_core1;
     endgroup
 
 class keccak_dual_coverage;

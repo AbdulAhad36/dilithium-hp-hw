@@ -125,6 +125,7 @@ module keccak_absorb_unit (
             for (int i = 0; i < INPUT_LANE_NUM; i = i + 1) begin
                 automatic logic [LANE_INDEX_WIDTH-1:0] current_lane_idx =
                     start_lane_idx + LANE_INDEX_WIDTH'(i);
+                // The explicit physical bound lets Quartus prune the absorb mux.
                 if (current_lane_idx < rate_lane_limit && current_lane_idx < MAX_POSSIBLE_LANES) begin
                     xor_plane[current_lane_idx] = split_lanes[i];
                 end

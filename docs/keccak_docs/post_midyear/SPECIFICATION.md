@@ -2,9 +2,12 @@
 
 ## Document Status
 
-This document is the authoritative specification of the current Keccak design on the `keccak_v2` branch. The verified single-core RTL is based on commit `35fe8d7`; the dual-core interleaved baseline is commit `783b17b`. The working tree contains a reviewable Theta area optimization and tighter timing constraint.
+This document describes the active Keccak design on `keccak_v2`. The single-core
+reference and committed dual baseline are historical checkpoints; the current
+dual-core fit and source-RTL coverage are working-tree results. Use the reports
+and test transcript for the exact revision being discussed.
 
-Last reviewed: 17 September 2026.
+Last reviewed: 27 September 2026.
 
 ## 1. Scope
 
@@ -228,7 +231,7 @@ Both projects target Intel Cyclone V `5CGXFC7C7F23C8` with Standard Fit, High Pe
 |---|---:|
 | Quartus top entity | `keccak_dual_interleaved` |
 | Clock constraint | 6.757 ns / 147.99 MHz |
-| Slow-corner estimated Fmax | 149.63 MHz |
+| Slow-corner estimated Fmax in September 24 TimeQuest report | 149.63 MHz |
 | Worst setup slack | +0.074 ns |
 | Worst all-corner hold slack | +0.166 ns |
 | Setup and hold TNS | 0 ns |
@@ -242,6 +245,9 @@ The accepted fit has zero setup and hold TNS across all analyzed corners. Its
 147.99 MHz operating constraint is below the reported 149.63 MHz worst slow-corner
 Fmax, so the design has real positive margin. Virtual pins make this a
 core-level implementation result rather than board-I/O timing closure.
+An older `critical_paths/fmax_summary.rpt` dated September 16 reports
+149.25 MHz for an earlier fit; the September 24 `output_files/*.sta.rpt`
+is the source for the 149.63 MHz figure above.
 
 The original timing recovery came from three RTL changes: local replicated Theta
 parity logic, removal of a variable XOF-byte arithmetic path from the state
@@ -419,6 +425,40 @@ A single job still executes on one core and does not become twice as fast.
 
 ## 11. Verification Status
 
+The latest recorded source-RTL regression for the active dual-core design
+checked 904/904 standalone-core UVM transactions, 81/81 integrated-wrapper
+jobs, and four long-stream throughput jobs, with zero UVM errors or fatals.
+Ten accepted jobs were intentionally cancelled by reset or stop and checked
+for recovery. These are separate counts, not 989 independent requirements.
+
+The recorded weighted functional-coverage result is 87.55%. The integrated
+dual DUT's recursive structural code coverage is 99.06%, with 94.44%
+condition and 99.04% toggle coverage. The global Questa diagnostic total
+also includes a specialized throughput DUT and must not be used as the
+integrated design's code-coverage figure. See [COVERAGE.md](COVERAGE.md)
+for the bins, tests, scope and remaining holes.
+
+The active `sim/run.do` elaborates one `tb_top`. Its `u_uvm_core` child
+contains two standalone `keccak_core` instances and a separate integrated
+`keccak_dual_interleaved` DUT. The two UVM lanes exercise the standalone
+cores and their isolation. Three covergroups are declared in
+`keccak_coverage.sv`: `cg_keccak` for detailed standalone-core behavior,
+`cg_dual_core` for each core inside the wrapper, and
+`cg_dual_interleaved` for scheduler and protocol behavior. A separate
+`u_dual_throughput` child measures long-stream throughput. The integrated
+wrapper's directed checks are self-checking SystemVerilog, not a full
+dual-top UVM agent/scoreboard environment.
+
+The September 24 Quartus fit passes internal register-to-register setup
+and hold at the 6.757 ns constraint. Its virtual pins and false-pathed
+external I/O do not establish board-level I/O timing. The dual-core
+post-synthesis and post-fit netlist simulations remain **pending** for this
+revision; the netlist and SDF files expected by the current scripts are
+absent. Do not report the earlier 125/125 single-core comparisons as
+dual-core Stage 2 or Stage 3 passes.
+
+### Historical single-core evidence
+
 An earlier standalone single-core checkpoint completed all three verification stages:
 
 | Evidence | Result |
@@ -431,64 +471,11 @@ An earlier standalone single-core checkpoint completed all three verification st
 | Post-fit source/netlist comparisons | 125 / 125 passed |
 
 Those results do not describe the current dual-interleaved wrapper or its
-present source-RTL coverage model. The current `sim/run.do` elaborates only
-`tb_top`. Direct-core UVM and the unified dual regression run inside
-`u_uvm_core`. The three functional covergroups (`cg_keccak`,
-`cg_dual_core`, and `cg_dual_interleaved`) are declared in
-`keccak_coverage.sv`. The direct UVM bench has two independent
-`keccak_core` instances; the dual regression has one separate
-`keccak_dual_interleaved` instance. `tb_top` instantiates only
-`tb_keccak_uvm_core` and `tb_keccak_dual_throughput`, waits for both,
-and checks UVM errors.
+present source-RTL coverage model.
 
-The current source-RTL direct-core UVM result is 880/880 passed: 441 on core 0
-and 439 on core 1, with zero UVM errors or fatals. Direct-core functional
-coverage is 97.90 percent per core under the expanded model.
-
-The final dual-core source regressions currently pass:
-
-- Mixed SHAKE128 and SHAKE256 jobs checked byte-for-byte against the independent golden model.
-- Exact 26-cycle launch offset.
-- Alternating dispatch to both cores.
-- Correct shared-input routing.
-- Tagged output interleaving.
-- Final partial output words.
-- Output stability under backpressure, including simultaneous pending outputs from both cores.
-- Long-run byte-exact throughput checks for both SHAKE modes.
-- Forty dual regression jobs span empty, unaligned, rate-boundary and multirate messages, full and partial output beats, rate-tail beats, mixed modes, delayed launches and multiple backpressure patterns. The final pair retains the focused interleaving and forced-stall checks.
-
-The latest source verification contains two dual regression paths:
-
-| Dual regression | Job executions | Primary purpose |
-|---|---:|---|
-| Long-stream throughput regression | 4 | Two jobs per SHAKE mode with every output byte checked |
-| Unified dual regression | 40 | Boundary, protocol, mode, arbitration, and focused interleaving scenarios |
-| **Total** | **44** | Source-RTL dual-top job executions |
-
-The count is job executions, not 44 independent requirements. Some behaviors
-are intentionally exercised in more than one regression. The throughput jobs
-also validate 261,872 output bytes in total.
-
-Measured functional coverage:
-
-| Scope | Functional coverage |
-|---|---:|
-| Core 0 through dual wrapper | 99.49 percent |
-| Core 1 through dual wrapper | 99.49 percent |
-| Dual interleaver | 66.67 percent |
-
-The complete source-RTL suite's Questa filtered total is 89.23 percent after
-the hierarchy change. It combines RTL metrics with covergroups and assertions;
-it is not a pure code-coverage percentage and is not directly comparable to
-the previous 87.34 percent hierarchy total. The expanded dual model leaves fallback dispatch,
-ingress/all-busy request blocking, core-1 locked output stall, and wrapper
-reset/stop scenarios open. Passing hashes do not close those requirements.
-
-The dual tests are self-checking SystemVerilog regressions with covergroups, not
-a completed dual-top UVM environment. The established single-core evidence is
-UVM-based. Dual-top post-synthesis and post-fit functional comparison also
-remain pending; the timing-clean fit is static-timing evidence, not netlist
-functional equivalence.
+The older 880/880, 44-job, 99.49% per-core and 66.67% interleaver figures
+were intermediate snapshots. They are superseded by the recorded results
+above and in [COVERAGE.md](COVERAGE.md).
 
 ## 12. Current Limitations and Pending Work
 
@@ -499,7 +486,8 @@ functional equivalence.
 - No final board pin assignments or board-level I/O timing closure.
 - No measured hardware throughput.
 - No complete external NIST CAVP and VariableOut regression set.
-- Dual-core functional covergroups exceed 80 percent, but migration into a full UVM environment is not complete.
+- Dual-core functional covergroups exceed 80 percent in the last recorded run;
+  migration of the integrated wrapper into a full UVM environment is incomplete.
 - Dual-core post-synthesis and post-fit equivalence are not complete.
 - The downstream dual-context rejection sampler is not implemented yet.
 

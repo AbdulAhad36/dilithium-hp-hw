@@ -5,6 +5,11 @@ Branch: `1_hashing`
 Recorded Git HEAD: `5d386c9291e36e316d4671958e01c60ec27709e8`  
 Result: **Post-fit functional comparison and 50 MHz timing gate passed**
 
+**Archive status (2026-09-27):** This 50 MHz, 125/125 result is for the
+older one-core verification wrapper. The active dual-core top has a separate
+timing-clean 148 MHz fit, but its post-fit netlist and SDF simulation
+remain pending.
+
 ## Scope
 
 This is the third design representation in the supervisor's flow. Quartus

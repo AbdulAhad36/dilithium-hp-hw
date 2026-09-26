@@ -231,6 +231,7 @@ module tb_keccak_uvm_core #(
     int errors;
     int accepted_jobs;
     int checked_jobs;
+    int cancelled_jobs;
     int stall_profile;
     int pair_start_cycle;
     int launch_cycle [2];
@@ -263,6 +264,7 @@ module tb_keccak_uvm_core #(
     logic [OUTPUT_BYTE_COUNT_WIDTH-1:0] stalled_bytes;
     bit stalled_core;
     bit forced_stall_started;
+    bit assigned_core_scratch;
     int forced_stall_remaining;
 
 
@@ -329,6 +331,12 @@ function automatic int rate_bytes(input keccak_mode job_mode);
         return 2;
     endfunction
 
+    function automatic int coverage_stall_class(input int profile);
+        if (profile == 0) return 0;
+        if (profile == 1) return 1;
+        return 2;
+    endfunction
+
     always @(posedge clk) begin
         cycle_count <= cycle_count + 1;
         if (!dual_rst && stalled_previous_cycle &&
@@ -373,8 +381,6 @@ function automatic int rate_bytes(input keccak_mode job_mode);
             else
                 pair_locked_stall_core0 <= 1'b1;
         end
-        if (dual_rst && busy)
-            pair_reset_while_busy <= 1'b1;
         if (!dual_rst && stop[0])
             pair_stop_core0 <= 1'b1;
         if (!dual_rst && stop[1])
@@ -443,22 +449,34 @@ function automatic int rate_bytes(input keccak_mode job_mode);
                         output_ready <= ((cycle_count % 7) != 3);
                     end
                 end
+                4: begin
+                    if (!forced_stall_started && output_valid &&
+                        output_core == 1'b1) begin
+                        output_ready <= 1'b0;
+                        forced_stall_started <= 1'b1;
+                        forced_stall_remaining <= 12;
+                    end else if (forced_stall_remaining > 0) begin
+                        output_ready <= 1'b0;
+                        forced_stall_remaining <= forced_stall_remaining - 1;
+                    end else begin
+                        output_ready <= 1'b1;
+                    end
+                end
                 default: output_ready <= 1'b1;
             endcase
         end
     end
 
-    task automatic send_job(
+    task automatic accept_job(
         input keccak_mode job_mode,
         input int msg_bytes,
         input int requested_bytes,
         input int pattern_seed,
-        output bit assigned_core
+        output bit assigned_core,
+        output byte unsigned message[],
+        input bit continuous_mode = 1'b0
     );
-        byte unsigned message[];
         byte unsigned golden[$];
-        int sent;
-        int beat_bytes;
         int wait_cycles;
 
         message = new[msg_bytes];
@@ -469,7 +487,7 @@ function automatic int rate_bytes(input keccak_mode job_mode);
         request_valid <= 1'b1;
         mode <= job_mode;
         message_len <= msg_bytes;
-        output_len <= requested_bytes;
+        output_len <= continuous_mode ? '0 : requested_bytes;
         wait_cycles = 0;
         forever begin
             @(posedge clk);
@@ -494,9 +512,18 @@ function automatic int rate_bytes(input keccak_mode job_mode);
 
         @(negedge clk);
         request_valid <= 1'b0;
+    endtask
+
+    task automatic send_payload(
+        input byte unsigned message[],
+        input bit assigned_core
+    );
+        int sent;
+        int beat_bytes;
+
         sent = 0;
-        while (sent < msg_bytes) begin
-            beat_bytes = msg_bytes - sent;
+        while (sent < message.size()) begin
+            beat_bytes = message.size() - sent;
             if (beat_bytes > DATA_BYTE_NUM)
                 beat_bytes = DATA_BYTE_NUM;
             input_data <= '0;
@@ -520,6 +547,82 @@ function automatic int rate_bytes(input keccak_mode job_mode);
         end
     endtask
 
+    task automatic send_job(
+        input keccak_mode job_mode,
+        input int msg_bytes,
+        input int requested_bytes,
+        input int pattern_seed,
+        output bit assigned_core,
+        input bit continuous_mode = 1'b0
+    );
+        byte unsigned message[];
+        accept_job(job_mode, msg_bytes, requested_bytes, pattern_seed,
+                   assigned_core, message, continuous_mode);
+        send_payload(message, assigned_core);
+    endtask
+
+    task automatic clear_pair_observations(input int profile);
+        pair_start_cycle = cycle_count;
+        stall_profile = profile;
+        pair_source_switches = 0;
+        pair_output_overlap = 0;
+        pair_output_stall = 0;
+        pair_simultaneous_stall = 0;
+        pair_request_wait = 0;
+        pair_dispatch_fallback = 0;
+        pair_wait_offset = 0;
+        pair_wait_ingress = 0;
+        pair_wait_all_busy = 0;
+        pair_output_only_core0 = 0;
+        pair_output_only_core1 = 0;
+        pair_both_select_core0 = 0;
+        pair_both_select_core1 = 0;
+        pair_locked_stall_core0 = 0;
+        pair_locked_stall_core1 = 0;
+        pair_reset_while_busy = 0;
+        pair_stop_core0 = 0;
+        pair_stop_core1 = 0;
+        previous_source_valid = 0;
+        forced_stall_started = 0;
+        forced_stall_remaining = 0;
+        stalled_previous_cycle = 0;
+    endtask
+
+    task automatic wait_for_dual_idle(input int limit);
+        int timeout = 0;
+        while ((busy || expected[0].size() != 0 ||
+                expected[1].size() != 0) && timeout < limit) begin
+            @(posedge clk);
+            timeout++;
+        end
+        if (timeout == limit) begin
+            $error;
+            errors++;
+        end
+        @(negedge clk);
+    endtask
+
+    task automatic sample_dual_observation(
+        input int mode_pair,
+        input int profile,
+        input int gap_class,
+        input bit first_core
+    );
+        int switches;
+        switches = (pair_source_switches <= 1) ? 1 : 2;
+        dual_coverage.dual_cov.sample(
+            mode_pair, coverage_stall_class(profile), gap_class,
+            pair_output_overlap, pair_output_stall,
+            pair_simultaneous_stall, switches, pair_request_wait,
+            first_core, pair_dispatch_fallback, pair_wait_offset,
+            pair_wait_ingress, pair_wait_all_busy,
+            pair_output_only_core0, pair_output_only_core1,
+            pair_both_select_core0, pair_both_select_core1,
+            pair_locked_stall_core0, pair_locked_stall_core1,
+            pair_reset_while_busy, pair_stop_core0, pair_stop_core1
+        );
+    endtask
+
     initial begin
         `uvm_info("DUAL_REGRESSION",
                   "Starting dual-interleaved SHAKE128/SHAKE256 regression",
@@ -528,6 +631,7 @@ function automatic int rate_bytes(input keccak_mode job_mode);
         errors = 0;
         accepted_jobs = 0;
         checked_jobs = 0;
+        cancelled_jobs = 0;
         stall_profile = 0;
         pair_start_cycle = 0;
         request_valid = 0;
@@ -572,10 +676,45 @@ function automatic int rate_bytes(input keccak_mode job_mode);
         run_pair(SHAKE128,   9, 600, SHAKE256,   9, 600, 2, 18, 0);
         run_pair(SHAKE128,   8, 199, SHAKE256,  16, 197, 3, 19, 0);
 
+        // Deliberately force core 1 to launch first for every mode pair.
+        ensure_next_core(1);
+        run_pair(SHAKE128, 8, 32, SHAKE128, 9, 33, 0, 20, 0);
+        run_pair(SHAKE256, 8, 32, SHAKE256, 9, 33, 1, 21, 0);
+        run_pair(SHAKE128, 8, 199, SHAKE256, 9, 197, 2, 22, 0);
+        run_pair(SHAKE128, 8, 337, SHAKE256, 8, 273, 4, 23, 0);
+
+        // Exercise backpressure and recovery paths that normal traffic misses.
+        run_ingress_wait_scenario();
+        run_busy_fallback_scenario();
+        run_reset_recovery_scenario();
+        for (int target_core = 0; target_core < 2; target_core++) begin
+            run_targeted_reset_scenario(target_core, 1, SHAKE128);
+            run_targeted_reset_scenario(target_core, 2, SHAKE256);
+            run_targeted_reset_scenario(target_core, 3, SHAKE128);
+        end
+        run_stop_recovery_scenario(0, SHAKE128);
+        run_stop_recovery_scenario(1, SHAKE256);
+        run_continuous_stop_scenario(0, SHAKE128);
+        run_continuous_stop_scenario(1, SHAKE256);
+
+        // Close the SHAKE256 empty-message cross on each physical core.
+        ensure_next_core(0);
+        run_single_checked(SHAKE256, 0, 32, 8'hD0, assigned_core_scratch);
+        if (assigned_core_scratch != 0) begin
+            $error;
+            errors++;
+        end
+        ensure_next_core(1);
+        run_single_checked(SHAKE256, 0, 32, 8'hD1, assigned_core_scratch);
+        if (assigned_core_scratch != 1) begin
+            $error;
+            errors++;
+        end
+
         repeat (3) @(posedge clk);
         // Coverage closure is evaluated from the UCDB; only functional and
         // protocol failures contribute to the regression error count.
-        if (accepted_jobs != checked_jobs) begin
+        if (accepted_jobs != checked_jobs + cancelled_jobs) begin
             $error;
             errors++;
         end
@@ -590,6 +729,35 @@ function automatic int rate_bytes(input keccak_mode job_mode);
                   UVM_LOW)
         dual_done = 1'b1;
 end
+
+    task automatic run_single_checked(
+        input keccak_mode job_mode,
+        input int msg_bytes,
+        input int requested_bytes,
+        input int pattern_seed,
+        output bit assigned_core
+    );
+        wait (!busy);
+        clear_pair_observations(0);
+        send_job(job_mode, msg_bytes, requested_bytes, pattern_seed,
+                 assigned_core);
+        wait_for_dual_idle(10000);
+        sample_core_result(assigned_core, job_mode, msg_bytes,
+                           requested_bytes, 0);
+    endtask
+
+    task automatic ensure_next_core(input bit target_core);
+        bit assigned_core;
+        if (dual_dut.dispatch_preference != target_core) begin
+            run_single_checked(SHAKE128, 8, 17,
+                               8'h60 + accepted_jobs, assigned_core);
+            if (assigned_core == target_core ||
+                dual_dut.dispatch_preference != target_core) begin
+                $error;
+                errors++;
+            end
+        end
+    endtask
 
     task automatic sample_core_result(
         input bit core_id,
@@ -608,13 +776,306 @@ end
                 core_id, int'(job_mode),
                 classify_message(msg_bytes, rate),
                 classify_output(requested_bytes, rate),
-                profile,
+                coverage_stall_class(profile),
                 classify_final_beat(last_output_bytes[core_id]),
                 saw_rate_tail[core_id],
                 (msg_bytes >= rate),
                 (requested_bytes > rate)
             );
             checked_jobs++;
+        end
+    endtask
+
+    task automatic run_ingress_wait_scenario;
+        byte unsigned message0[];
+        byte unsigned message1[];
+        bit assigned0;
+        bit assigned1;
+        int gap;
+
+        wait (!busy);
+        clear_pair_observations(0);
+        accept_job(SHAKE128, 337, 337, 8'h31, assigned0, message0);
+        fork
+            send_payload(message0, assigned0);
+            begin
+                repeat (2) @(posedge clk);
+                accept_job(SHAKE256, 9, 137, 8'h93,
+                           assigned1, message1);
+                send_payload(message1, assigned1);
+            end
+        join
+        wait_for_dual_idle(10000);
+        sample_core_result(assigned0, SHAKE128, 337, 337, 0);
+        sample_core_result(assigned1, SHAKE256, 9, 137, 0);
+        gap = launch_cycle[assigned1] - launch_cycle[assigned0];
+        if (!pair_wait_ingress || !pair_request_wait) begin
+            $error;
+            errors++;
+        end
+        sample_dual_observation(2, 0, (gap == 26) ? 0 : 1, assigned0);
+    endtask
+
+    task automatic run_busy_fallback_scenario;
+        bit assigned0;
+        bit assigned1;
+        bit assigned2;
+        int gap;
+
+        wait (!busy);
+        clear_pair_observations(0);
+        send_job(SHAKE128, 8, 600, 8'h21, assigned0);
+        send_job(SHAKE256, 8, 16, 8'h42, assigned1);
+        send_job(SHAKE128, 9, 64, 8'h84, assigned2);
+        wait_for_dual_idle(15000);
+        sample_core_result(assigned0, SHAKE128, 8, 600, 0);
+        checked_jobs++;
+        sample_core_result(assigned2, SHAKE128, 9, 64, 0);
+        gap = launch_cycle[assigned1] - launch_cycle[assigned0];
+        if (!pair_wait_all_busy || !pair_dispatch_fallback ||
+            assigned2 != assigned1) begin
+            $error;
+            errors++;
+        end
+        sample_dual_observation(2, 0, (gap == 26) ? 0 : 1, assigned0);
+    endtask
+
+    task automatic run_reset_recovery_scenario;
+        bit assigned0;
+        bit assigned1;
+
+        wait (!busy);
+        clear_pair_observations(0);
+        send_job(SHAKE128, 8, 600, 8'h17, assigned0);
+        send_job(SHAKE256, 8, 600, 8'h71, assigned1);
+        if (!(&core_busy)) begin
+            $error;
+            errors++;
+        end
+        @(negedge clk);
+        pair_reset_while_busy = busy;
+        expected[0].delete();
+        expected[1].delete();
+        cancelled_jobs += 2;
+        request_valid = 0;
+        input_valid = 0;
+        stop = '0;
+        dual_rst = 1;
+        repeat (2) @(posedge clk);
+        if (busy || output_valid || dual_dut.ingress_active ||
+            dual_dut.arbiter_locked ||
+            dual_dut.dispatch_preference != 0) begin
+            $error;
+            errors++;
+        end
+        @(negedge clk);
+        dual_rst = 0;
+        sample_dual_observation(2, 0, 0, assigned0);
+        run_pair(SHAKE128, 8, 32, SHAKE256, 8, 32, 0, 30, 0);
+    endtask
+
+    task automatic run_targeted_reset_scenario(
+        input bit target_core,
+        input int target_state,
+        input keccak_mode job_mode
+    );
+        byte unsigned message[];
+        bit assigned_core;
+        bit recovery_core;
+        int timeout;
+
+        ensure_next_core(target_core);
+        wait (!busy);
+        clear_pair_observations(0);
+
+        case (target_state)
+            1: accept_job(job_mode, 24, 32,
+                          8'h30 + target_core, assigned_core, message);
+            2: send_job(job_mode, 0, 32,
+                        8'h40 + target_core, assigned_core);
+            3: send_job(job_mode, 8, 32,
+                        8'h50 + target_core, assigned_core);
+            default: begin
+                $error;
+                errors++;
+                return;
+            end
+        endcase
+
+        if (assigned_core != target_core) begin
+            $error;
+            errors++;
+        end
+
+        timeout = 0;
+        if (target_core == 0) begin
+            while ((int'(dual_dut.g_core[0].u_core.state) != target_state) &&
+                   timeout < 1000) begin
+                @(negedge clk);
+                timeout++;
+            end
+        end else begin
+            while ((int'(dual_dut.g_core[1].u_core.state) != target_state) &&
+                   timeout < 1000) begin
+                @(negedge clk);
+                timeout++;
+            end
+        end
+        if (timeout == 1000) begin
+            $error;
+            errors++;
+        end
+
+        pair_reset_while_busy = busy;
+        expected[0].delete();
+        expected[1].delete();
+        cancelled_jobs++;
+        request_valid = 1'b0;
+        input_valid = 1'b0;
+        input_data = '0;
+        stop = '0;
+        dual_rst = 1'b1;
+        repeat (2) @(posedge clk);
+        if (busy || output_valid || dual_dut.ingress_active ||
+            dual_dut.arbiter_locked ||
+            dual_dut.dispatch_preference != 0) begin
+            $error;
+            errors++;
+        end
+        @(negedge clk);
+        dual_rst = 1'b0;
+
+        ensure_next_core(target_core);
+        run_single_checked(job_mode, 9, 33,
+                           8'h70 + target_core + target_state,
+                           recovery_core);
+        if (recovery_core != target_core) begin
+            $error;
+            errors++;
+        end
+    endtask
+
+    task automatic run_stop_recovery_scenario(
+        input bit target_core,
+        input keccak_mode job_mode
+    );
+        bit assigned_core;
+        bit recovery_core;
+        int timeout;
+
+        ensure_next_core(target_core);
+        wait (!busy);
+        clear_pair_observations(0);
+        send_job(job_mode, 8, 600, 8'hA0 + target_core,
+                 assigned_core);
+        if (assigned_core != target_core) begin
+            $error;
+            errors++;
+        end
+        timeout = 0;
+        while (!dual_dut.core_output_valid[target_core] &&
+               timeout < 1000) begin
+            @(posedge clk);
+            timeout++;
+        end
+        if (timeout == 1000) begin
+            $error;
+            errors++;
+        end
+        @(negedge clk);
+        expected[target_core].delete();
+        cancelled_jobs++;
+        stop[target_core] = 1;
+        if (target_core)
+            pair_stop_core1 = 1;
+        else
+            pair_stop_core0 = 1;
+        @(posedge clk);
+        if (!core_done[target_core]) begin
+            $error;
+            errors++;
+        end
+        @(negedge clk);
+        stop[target_core] = 0;
+        timeout = 0;
+        while (core_busy[target_core] && timeout < 20) begin
+            @(posedge clk);
+            timeout++;
+        end
+        if (core_busy[target_core]) begin
+            $error;
+            errors++;
+        end
+        sample_dual_observation(
+            (job_mode == SHAKE128) ? 0 : 1, 0, 0, target_core);
+        ensure_next_core(target_core);
+        run_single_checked(job_mode, 9, 33,
+                           8'hC0 + target_core, recovery_core);
+        if (recovery_core != target_core) begin
+            $error;
+            errors++;
+        end
+    endtask
+
+    task automatic run_continuous_stop_scenario(
+        input bit target_core,
+        input keccak_mode job_mode
+    );
+        bit assigned_core;
+        bit recovery_core;
+        int timeout;
+
+        ensure_next_core(target_core);
+        wait (!busy);
+        clear_pair_observations(0);
+        send_job(job_mode, 8, 32, 8'hE0 + target_core,
+                 assigned_core, 1'b1);
+        if (assigned_core != target_core) begin
+            $error;
+            errors++;
+        end
+
+        timeout = 0;
+        while ((expected[target_core].size() != 0) &&
+               timeout < 1000) begin
+            @(posedge clk);
+            timeout++;
+        end
+        if (timeout == 1000) begin
+            $error;
+            errors++;
+        end
+
+        stop[target_core] = 1'b1;
+        if (target_core)
+            pair_stop_core1 = 1'b1;
+        else
+            pair_stop_core0 = 1'b1;
+        @(posedge clk);
+        if (!core_done[target_core]) begin
+            $error;
+            errors++;
+        end
+        @(negedge clk);
+        stop[target_core] = 1'b0;
+
+        timeout = 0;
+        while (core_busy[target_core] && timeout < 20) begin
+            @(posedge clk);
+            timeout++;
+        end
+        if (core_busy[target_core]) begin
+            $error;
+            errors++;
+        end
+        sample_core_result(target_core, job_mode, 8, 32, 0);
+
+        ensure_next_core(target_core);
+        run_single_checked(job_mode, 9, 33,
+                           8'hF0 + target_core, recovery_core);
+        if (recovery_core != target_core) begin
+            $error;
+            errors++;
         end
     endtask
 
@@ -634,7 +1095,6 @@ end
         int timeout;
         int gap;
         int mode_pair;
-        int switch_class;
 
         `uvm_info("DUAL_PAIR",
                   $sformatf("pair=%0d mode0=%s msg0=%0d out0=%0d mode1=%s msg1=%0d out1=%0d stall_profile=%0d",
@@ -646,29 +1106,7 @@ end
                   UVM_MEDIUM)
         wait (!busy);
         repeat (2) @(posedge clk);
-        pair_start_cycle = cycle_count;
-        stall_profile = profile;
-        pair_source_switches = 0;
-        pair_output_overlap = 1'b0;
-        pair_output_stall = 1'b0;
-        pair_simultaneous_stall = 1'b0;
-        pair_request_wait = 1'b0;
-        pair_dispatch_fallback = 1'b0;
-        pair_wait_offset = 1'b0;
-        pair_wait_ingress = 1'b0;
-        pair_wait_all_busy = 1'b0;
-        pair_output_only_core0 = 1'b0;
-        pair_output_only_core1 = 1'b0;
-        pair_both_select_core0 = 1'b0;
-        pair_both_select_core1 = 1'b0;
-        pair_locked_stall_core0 = 1'b0;
-        pair_locked_stall_core1 = 1'b0;
-        pair_reset_while_busy = 1'b0;
-        pair_stop_core0 = 1'b0;
-        pair_stop_core1 = 1'b0;
-        previous_source_valid = 1'b0;
-        forced_stall_started = 1'b0;
-        forced_stall_remaining = 0;
+        clear_pair_observations(profile);
 
         send_job(mode0, msg0, out0, pair_id*17 + 1, assigned0);
         repeat (pre_second_delay) @(posedge clk);
@@ -699,33 +1137,18 @@ end
             $error;
             errors++;
         end
+        if ((pair_id >= 20 && pair_id <= 23) && assigned0 != 1) begin
+            $error;
+            errors++;
+        end
+        if (pair_id == 23 && !pair_locked_stall_core1) begin
+            $error;
+            errors++;
+        end
         mode_pair = (mode0 == mode1) ?
                     ((mode0 == SHAKE128) ? 0 : 1) : 2;
-        switch_class = (pair_source_switches <= 1) ? 1 : 2;
-        dual_coverage.dual_cov.sample(
-            mode_pair,
-            profile,
-            (gap == 26) ? 0 : 1,
-            pair_output_overlap,
-            pair_output_stall,
-            pair_simultaneous_stall,
-            switch_class,
-            pair_request_wait,
-            assigned0,
-            pair_dispatch_fallback,
-            pair_wait_offset,
-            pair_wait_ingress,
-            pair_wait_all_busy,
-            pair_output_only_core0,
-            pair_output_only_core1,
-            pair_both_select_core0,
-            pair_both_select_core1,
-            pair_locked_stall_core0,
-            pair_locked_stall_core1,
-            pair_reset_while_busy,
-            pair_stop_core0,
-            pair_stop_core1
-        );
+        sample_dual_observation(
+            mode_pair, profile, (gap == 26) ? 0 : 1, assigned0);
         `uvm_info("DUAL_PAIR",
                   $sformatf("pair=%0d PASS first_core=%0d launch_gap=%0d source_switches=%0d",
                             pair_id, assigned0, gap, pair_source_switches),
@@ -1032,7 +1455,7 @@ module tb_top;
         if ((report_server.get_severity_count(UVM_ERROR) != 0) ||
             (report_server.get_severity_count(UVM_FATAL) != 0))
             $fatal(1, "COMPLETE_KECCAK_SUITE_FAIL: UVM reported errors");
-        $display("COMPLETE_KECCAK_SUITE_PASS: 880 two-core UVM transactions plus all dual-interleaved regressions completed");
+        $display("COMPLETE_KECCAK_SUITE_PASS: 904 two-core UVM transactions plus all dual-interleaved regressions completed");
         $finish;
     end
 `endif

@@ -1,7 +1,7 @@
 # Keccak Design and Verification - Post-Midyear Living Report
 
 **Branch:** `keccak_v2` (created from `1_hashing`)  
-**Last updated:** 2026-09-17
+**Last updated:** 2026-09-27
 
 **Status:** Authoritative post-midyear Keccak progress record
 
@@ -41,24 +41,29 @@ The supervisor's three representations are kept separate:
 
 Coverage is not manipulated to obtain a preferred percentage. Functional
 coverage measures planned scenarios; code coverage measures exercised RTL
-structure; Stage 2/3 comparison shows agreement for the selected test suite.
+structure. The historical Stage 2/3 comparisons establish agreement only
+for their selected one-core suite.
 
 ## 3. Current Verified Evidence
 
 | Evidence | Result |
 |---|---:|
-| Stage 1 checked transactions | **888/888 passed** |
+| Stage 1 UVM transactions | **904/904 passed** |
+| Integrated dual-wrapper jobs | **81/81 passed; 10 reset/stop cancellations handled** |
 | UVM errors / fatals | **0 / 0** |
-| Functional coverage | **281/281 bins (100.00%)** |
-| Complete lane-0 code coverage | **98.78%** |
-| Current Stage 2 comparison | **125/125 source and netlist matched** |
-| Current Stage 3 comparison | **125/125 source and fitted netlist matched** |
+| Weighted functional coverage | **87.55%** |
+| Primary integrated dual-DUT code coverage | **99.06%** |
+| Active dual-core Stage 2 | **Pending; netlist not generated for this revision** |
+| Active dual-core Stage 3 | **Pending; fitted netlist and SDF not generated for this revision** |
 
-The 98.78% code result followed removal of unreachable or redundant control
-conditions. It is not a fabricated target: remaining misses are principally
-constant or difficult toggle cases and a residual condition in the round
-datapath. The current one-round RTL passed all three verification stages on
-2026-09-14.
+The 99.06% code result is scoped recursively to the actual integrated dual-core
+DUT, `/tb_top/u_uvm_core/dual_dut`. Branch, expression, statement, FSM-state,
+and FSM-transition coverage are 100%; condition coverage is 94.44% and toggle
+coverage is 99.04%. The unscoped 91.18% Questa total also includes a specialized throughput-only
+DUT copy and functional coverage, so it is diagnostic rather than the design
+sign-off number. The last recorded source-RTL regression and full Quartus fit
+passed on 2026-09-24; they were not rerun during this documentation audit.
+The 125/125 Stage 2/3 comparisons belong to an earlier one-core benchmark.
 
 ## 4. One-Round Baseline
 
@@ -78,7 +83,7 @@ This result is preserved for comparison. It depended on root-partition
 placement/routing preservation in the project database and is not used as the
 clean implementation baseline for new experiments.
 
-## 5. LightHD Challenge Work
+## 5. LightHD Challenge Work (Historical Single-Core Work)
 
 ### Throughput-first architecture update - 2026-09-13
 
@@ -94,14 +99,14 @@ off at 142.86 MHz with +0.030 ns worst setup slack, +0.169 ns worst all-corner
 hold slack, 3,441 ALMs, and 1,674 registers. Its permutation-only rates are
 1.000 GB/s for SHAKE128 and 0.810 GB/s for SHAKE256.
 
-Development order is now: improve one-round throughput with clean timing,
-verify and synthesize a two-core 26-cycle-offset benchmark, then maximize Fmax
-and reduce area. The detailed numerical gates are maintained in
+The September 14 development order was to improve one-round throughput,
+then build a two-core 26-cycle-offset design. The latter has now been
+implemented. The original numerical gates are maintained in
 [KECCAK_LIGHTHD_CHALLENGE_PLAN.md](KECCAK_LIGHTHD_CHALLENGE_PLAN.md).
 
-The current optimization goal is to exceed 212.8 MHz, then reduce the core
-below 3,150 ALMs, while preserving one round per clock and positive multicorner
-setup/hold slack. The stretch clock target is above 230 MHz.
+The single-core challenge set 212.8 MHz, below 3,150 ALMs and a stretch
+clock above 230 MHz as goals. These have not been demonstrated for the
+current dual-core top.
 
 Changes retained in RTL:
 
@@ -125,7 +130,7 @@ Quartus project changes:
   constraint-directed comparison selected seed 1 because its retained
   placement reached the best timing-closed operating point.
 
-## 6. Experiment Results
+## 6. Experiment Results (Historical Single-Core Fits)
 
 | Experiment | Constraint | Fmax | Setup | Worst hold | ALMs | Outcome |
 |---|---:|---:|---:|---:|---:|---|
@@ -139,14 +144,15 @@ Quartus project changes:
 | Former clean seed-5 checkpoint | 135 MHz | 142.90 MHz | +0.409 ns | +0.168 ns | 3,431 | Superseded |
 | Seed-5 tighter-clock attempt | 140 MHz | 136.48 MHz | -0.184 ns | +0.168 ns | 3,461 | Rejected |
 | Seed-1 aggressive attempt | 141.84 MHz | 140.00 MHz | -0.093 ns | +0.168 ns | 3,450 | Rejected |
-| **Current seed-1 placement** | **142.86 MHz** | **143.47 MHz worst slow corner** | **+0.030 ns** | **+0.169 ns** | **3,441** | **Timing closed** |
+| **Last separately fitted single core** | **142.86 MHz** | **143.47 MHz worst slow corner** | **+0.030 ns** | **+0.169 ns** | **3,441** | **Historical timing-closed checkpoint** |
 
-The active checkpoint is fully constrained with zero setup and hold TNS. Its
+That historical single-core checkpoint was fully constrained with zero
+setup and hold TNS. Its
 declared operating frequency is **142.86 MHz**. The 143.47 MHz value is the
 lower of the two slow-corner Fmax estimates, not the operating constraint.
 
 The 140 MHz experiment was not retained: 15 setup paths violated timing and
-Slow-85 C TNS was -0.873 ns. The active project was restored and fully
+Slow-85 C TNS was -0.873 ns. The single-core project was restored and fully
 recompiled at 135 MHz after archiving that failed result.
 
 At 142.86 MHz, the publication-style permutation-only rates are 1.000 GB/s for
@@ -154,10 +160,10 @@ SHAKE128 and 0.810 GB/s for SHAKE256. Including 64-bit input transfers gives
 0.533 GB/s and 0.474 GB/s respectively. These are calculated core rates, not
 UART or measured board throughput.
 
-## 7. Timing Diagnosis
+## 7. Timing Diagnosis (Historical Single-Core Fit)
 
-The current worst path is state register to state register through the round
-logic. TimeQuest reports:
+The historical single-core fit's worst path was state-register to
+state-register through the round logic. TimeQuest reported:
 
 - 6.728 ns data delay.
 - Five logic levels.
@@ -177,7 +183,8 @@ behavior.
 - Dual-core setup/hold gate: passing at 148 MHz with zero setup and hold TNS.
 - Dual-core throughput gate: passing above 1 GB/s for SHAKE128 and SHAKE256.
 - Dual-core functional-coverage gate: passing above 80 percent for both cores and the interleaver.
-- LightHD frequency gate: **not passed**; 69.94 MHz remains.
+- LightHD frequency gate: **not passed**; the active dual-core TimeQuest
+  report gives 149.63 MHz, below LightHD's 212.8 MHz.
 - Dual-core area: 7,581 Cyclone V ALMs; cross-FPGA LUT comparisons remain approximate.
 - Stage 2/3 gate for the latest dual RTL: pending. The 125/125 Stage 2/3 result applies to the established single core.
 - Hardware/UART test: pending FPGA board details.
@@ -218,24 +225,33 @@ interleaving, partial and rate-tail output beats, deterministic output stalls
 and simultaneous pending outputs while backpressured. All three dual source
 regressions were rerun after the final RTL timing changes.
 
-The expanded coverage regression runs 38 byte-exact jobs across both cores. It
-covers both SHAKE modes, empty and unaligned inputs, rate boundaries,
-multirate messages, full/partial/rate-tail outputs, exact and delayed launches,
-mixed modes, arbitration and no/periodic/burst backpressure.
+The expanded source-RTL suite runs 904 byte-exact UVM transactions plus 81
+checked integrated-wrapper jobs across both cores. Ten additional accepted jobs
+are intentionally cancelled by reset or stop and checked as recovery scenarios.
+It covers both SHAKE modes, empty and unaligned inputs, rate boundaries,
+multirate messages, bounded and continuous output, full/partial/rate-tail
+beats, exact and delayed launches, mixed modes, arbitration, ingress waiting,
+busy fallback, targeted FSM resets, stop recovery, and multiple backpressure
+profiles.
 
 | Functional-coverage scope | Result |
 |---|---:|
-| Core 0 | 99.35%, 61/62 bins |
-| Core 1 | 99.35%, 61/62 bins |
-| Interleaved scheduler/protocol | 90.91%, 31/35 bins |
-| Aggregate covergroup metric | 95.12% |
+| Detailed single-core model, core 0 | 88.47% |
+| Detailed single-core model, core 1 | 88.47% |
+| Integrated dual per-core model, core 0 | 86.87% |
+| Integrated dual per-core model, core 1 | 87.24% |
+| Interleaved scheduler/protocol | 87.13% |
+| Aggregate weighted covergroup metric | 87.55% |
 
-The complete dual regression's structural code coverage is 91.32%. Component
-results are 99.66% statements, 99.05% branches, 77.77% conditions, 87.23%
-expressions, 100% FSM states, 72.72% FSM transitions and 99.02% toggles. No
-coverage exclusions were added to manufacture the total. These dual tests are
-self-checking SystemVerilog with functional covergroups; migration into the
-full UVM architecture remains open.
+The primary integrated dual DUT's recursive structural code coverage is
+99.06%: 100% statements, branches, expressions, FSM states, and FSM
+transitions, 94.44% conditions, and 99.04% toggles. No coverage exclusions were
+added to manufacture the result. The two missed condition bins belong to a
+defensive absorb-lane bound that legal SHAKE modes cannot violate. Removing the
+bound increased the fit from 7,581 to 7,973 ALMs and caused -0.035 ns setup
+slack, so it is retained and the unreachable outcome is documented. Full
+metric definitions, test inventory, scope details, and raw-bin evidence are
+maintained in `COVERAGE.md`.
 
 Accepted Cyclone V timing-clean checkpoint:
 

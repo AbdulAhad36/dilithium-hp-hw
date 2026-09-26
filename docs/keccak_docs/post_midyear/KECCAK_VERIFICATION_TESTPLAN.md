@@ -1,12 +1,23 @@
 # Keccak/SHAKE Requirements-to-Verification Testplan
 
+**Status reviewed 2026-09-27:** This is the requirements contract and
+historical single-core closure record. The active branch is `keccak_v2`,
+with a two-core `keccak_dual_interleaved` synthesis top. The last
+recorded source-RTL suite checked 904/904 standalone-core UVM transactions
+and 81/81 integrated-wrapper jobs; weighted functional coverage was
+87.55% and integrated-DUT code coverage was 99.06%. The earlier 125/125
+Stage 2/3 comparisons are for one core. Active dual-core netlist
+simulations and board validation remain open. See
+[the living report](keccak-design-and-verification.md) and
+[COVERAGE.md](COVERAGE.md) for current evidence.
+
 **Project:** ML-DSA hardware accelerator  
-**DUT branch:** `1_hashing`  
-**Audited branch head:** local uncommitted state based on `1_hashing`
+**Original DUT branch:** `1_hashing` (historical baseline)
+**Active DUT branch:** `keccak_v2`
 **Target DUTs:** `keccak_core` and `keccak_dual_interleaved`
 **Target device:** Cyclone V `5CGXFC7C7F23C8`  
-**Status:** One-round source RTL, Stage 2, and one-core Stage 3 gates passing; 147 MHz setup/hold closed; P1 closure remains incomplete
-**Date:** 2026-09-12
+**Historical status:** One-round source RTL, Stage 2, and one-core Stage 3 gates passing; 147 MHz setup/hold closed; P1 closure remains incomplete
+**Original date:** 2026-09-12
 
 ## 1. Purpose
 

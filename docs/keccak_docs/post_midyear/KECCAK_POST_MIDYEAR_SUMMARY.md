@@ -4,8 +4,15 @@ Date: 2026-09-14
 Branch: `keccak_v2`  
 Scope: Meaningful Keccak design, verification, synthesis, and timing work completed after the midyear evaluation
 
-Current accepted architecture: **one complete Keccak-f[1600] round per clock**.
-The latest clean direct-core Cyclone V checkpoint closes a **142.86 MHz**
+**Archive status (2026-09-27):** This dated summary describes the earlier
+standalone core. The 142.86 MHz, 3,441 ALMs, 888 transactions, four-lane
+discussion and 125/125 one-core netlist comparisons are historical.
+The active design is the dual-core interleaved top. Its last recorded fit
+uses 7,581 ALMs and closes a 148 MHz constraint; dual Stage 2/3 netlist
+simulations remain pending. See [the living report](keccak-design-and-verification.md).
+
+Architecture at this historical checkpoint: **one complete Keccak-f[1600] round per clock**.
+The last separately fitted direct-core Cyclone V checkpoint closes a **142.86 MHz**
 constraint with +0.030 ns worst setup slack and +0.169 ns worst all-corner
 hold slack. It uses 3,441 ALMs. The archived 147 MHz build used preserved
 placement and 4,265 ALMs; the 198.57 MHz figure belongs to the superseded

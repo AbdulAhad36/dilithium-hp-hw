@@ -1,8 +1,36 @@
 # AGENTS.md — AI Agent Onboarding
 
-This file is the entry point for any AI coding agent (Codex, Claude Code, etc.)
-working on this repository. Read this first, then read the living design document
-at `docs/ntt-design-and-verification.md` for full context.
+This file is the entry point for AI coding agents. Check the actual branch and
+working tree first. On `keccak_v2`, read the living Keccak report at
+`docs/keccak_docs/post_midyear/keccak-design-and-verification.md` and the
+current `SPECIFICATION.md`, `COVERAGE.md`, and `THROUGHPUT.md` beside it.
+The NTT material below is an older branch snapshot, not live Keccak status.
+
+## Active branch: `keccak_v2`
+
+- Synthesis top: `src/keccak_engine/keccak_dual_interleaved.sv`.
+  Two independent one-round-per-clock `keccak_core` instances process
+  SHAKE128/SHAKE256 jobs with a minimum 26-cycle launch offset.
+- External datapaths: one shared 64-bit input and one tagged 128-bit output.
+  The two internal core inputs are not separate top-level buses.
+- Source simulation: from `sim/`, run
+  `C:\questasim64_2024.1\win64\vsim.exe -do run.do`.
+  The `tb_top` suite contains two standalone-core UVM lanes, an integrated
+  wrapper regression and a separate byte-exact throughput benchmark.
+- Last recorded source result: 904/904 standalone-core UVM transactions,
+  81/81 wrapper jobs, 87.55% weighted functional coverage and 99.06%
+  structural code coverage scoped to the integrated dual DUT. These
+  results were not rerun during the 2026-09-27 documentation audit.
+- Last recorded Quartus fit: Cyclone V `5CGXFC7C7F23C8`, 7,581 ALMs,
+  3,501 registers, +0.074 ns setup and +0.166 ns worst hold slack at the
+  6.757 ns clock constraint. The fitter uses virtual data/control pins;
+  this is not FPGA board timing closure.
+- The dual-core Stage 2 post-synthesis and Stage 3 post-fit simulation
+  netlists are not present yet. Earlier 125/125 results belong to the
+  one-core `keccak_synth_top` benchmark. FPGA/UART testing is also pending.
+- Keep source-RTL code and functional coverage, fitted timing, netlist
+  checking, source-simulation throughput and board throughput separate.
+  Do not carry an earlier checkpoint's pass claim to modified RTL.
 
 ## What this repo is
 
@@ -12,10 +40,11 @@ FIPS-204)** in SystemVerilog, synthesised on Cyclone V FPGA. One module per bran
 | Branch | Module | Status |
 |---|---|---|
 | `main` | Software reference model + shared docs | stable |
-| `1_hashing` | Keccak/SHAKE-128/256 engine | complete, 84 MHz on Cyclone V |
-| `2_ntt` | **NTT engine (current active branch)** | complete + optimised |
+| `1_hashing` | Historical Keccak/SHAKE-128/256 engine | older checkpoint |
+| `2_ntt` | NTT engine | older branch snapshot below |
+| `keccak_v2` | Dual-core interleaved Keccak/SHAKE | active in this checkout |
 
-## Current branch: `2_ntt` — NTT/INTT/PWM engine
+## Historical branch: `2_ntt` — NTT/INTT/PWM engine
 
 Polynomial multiplication over `Z_q[x]/(x^256+1)`, q=8380417, n=256.
 
@@ -77,7 +106,7 @@ Reports land in `quartus/output_files/`.
 - **2026-05-24** — 2×2 butterfly tile + intra-tile forwarding (~297 NTT cycles).
 - **2026-05-23** — Full UVM environment, ntt_core+engine verified end-to-end.
 
-## What is next
+## Historical NTT next steps
 
 **Remaining Fmax headroom (optional, this branch):**
 Register `mod_mul` inputs to isolate the surviving `a·b` multiply → ~110–120 MHz.
@@ -101,9 +130,9 @@ Register `mod_mul` inputs to isolate the surviving `a·b` multiply → ~110–12
    If the sim library gets stale, prepend `vlib ntt_work; vmap work ntt_work;`
    or restore those lines.
 
-## Living design document
+## Historical NTT design document
 
-`docs/ntt-design-and-verification.md` — the canonical reference. Covers the
+`docs/ntt-design-and-verification.md` was the NTT branch reference. It covers the
 NTT mathematics, all architecture decisions + rationale, the full verification
 plan, synthesis results progression (§7.1), and honest ATP comparison vs
 published designs (§7.2). Read §4.2 for the shift-add reduction, §7.1 for the

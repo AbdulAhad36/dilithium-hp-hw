@@ -5,6 +5,10 @@ Branch: `1_hashing`
 Recorded Git HEAD: `5d386c9291e36e316d4671958e01c60ec27709e8`  
 Result: **Stage 2 functional comparison and mapping audit passed**
 
+**Archive status (2026-09-27):** The 125/125 comparison is for the older
+one-core `keccak_synth_top` benchmark. Active dual-core post-synthesis
+netlist simulation remains pending.
+
 ## Purpose and Scope
 
 This report records the second representation in the supervisor's verification

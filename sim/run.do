@@ -56,7 +56,6 @@ vlog -work work -sv +incdir+$tb [file join $tb tb_top.sv]
 
 # 4. Elaborate once with coverage and full debug visibility.
 vsim -coverage -voptargs=+acc work.tb_top
-coverage save -onexit [file join $script_dir keccak_dual_coverage.ucdb]
 onfinish stop
 
 # 5. Restore the old GUI experience.
@@ -127,7 +126,11 @@ if {[batch_mode] == 0} {
 
 # 6. Run once and keep the completed design loaded for inspection.
 run -all
+coverage save [file join $script_dir keccak_dual_coverage.ucdb]
 coverage report -summary
+echo ""
+echo "=== PRIMARY INTEGRATED DUAL-CORE RTL CODE COVERAGE ==="
+coverage report -instance=/tb_top/u_uvm_core/dual_dut -recursive -code bcesft
 if {[batch_mode] == 0} {
     wave zoom full
 }

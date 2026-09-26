@@ -8,6 +8,10 @@ Simulator: QuestaSim-64 2024.1 (`C:\questasim64_2024.1\win64`)
 
 Status: local working tree, not committed
 
+**Archive status (2026-09-27):** This is the September 12 single-core
+coverage model. For the active dual-core regression and latest recorded
+results, see [COVERAGE.md](COVERAGE.md).
+
 ## Why the Old 100% Was Wrong
 
 The old functional model contained only 32 broad bins. A single value could
