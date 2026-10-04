@@ -98,7 +98,7 @@ module tb_ntt_vectors;
 
   initial begin
     if (!$value$plusargs("NTT_INPUT_FILE=%s", input_path))
-      input_path = "../NIST/ntt_inputs.txt";
+      input_path = "../FIPS204_NTT/ntt_inputs.txt";
     if (!$value$plusargs("NTT_OUTPUT_FILE=%s", output_path))
       output_path = "ntt_dut_outputs.txt";
     input_fd = $fopen(input_path, "r");
