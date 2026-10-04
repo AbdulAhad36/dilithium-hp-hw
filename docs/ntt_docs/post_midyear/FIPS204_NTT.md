@@ -1,6 +1,6 @@
 # NTT vector flow and Stage 1 result
 
-**Recorded on:** 2026-10-05, `ntt_v2` starting RTL inherited from `2_ntt`. These are source-RTL simulation results, not synthesis, post-fit, timing, or board results.
+**Recorded on:** 2026-10-05, `ntt_v2` Stage 1 baseline and current Stage 2 source RTL. The vector comparisons are source-RTL simulation results, not post-synthesis, post-fit, timing, or board results.
 
 ## What the vectors are
 
@@ -42,12 +42,12 @@ On 2026-10-05, QuestaSim 2024.1 compiled the dedicated test with zero compile er
 
 The capture transcript measured the following at a 10 ns *simulation* clock with continuous input `valid` and output `ready`. `core_start` to `core_done` is counted separately from the external start request to the final output beat. These are clock counts; the simulation clock does not establish FPGA Fmax.
 
-| Operation | Core start to done | External launch to final output |
-|---|---:|---:|
-| Forward NTT | 302 cycles | 1,071 cycles |
-| Inverse NTT | 377 cycles | 1,146 cycles |
-| Pointwise multiply | 77 cycles | 1,102 cycles |
+| Operation | Core start to done | Stage 1 external cycles | Current Stage 2 external cycles |
+|---|---:|---:|---:|
+| Forward NTT | 302 | 1,071 | 816 |
+| Inverse NTT | 377 | 1,146 | 891 |
+| Pointwise multiply | 77 | 1,102 | 847 |
 
-The difference is dominated by the 256 input beats for NTT/INTT, 512 input beats for PWM, and a 256-coefficient output emitted every two clocks. Composite `ROUNDTRIP` and `MUL` cases chain separate external operations; the table lists each constituent operation. The historical approximately 299/372/74 compute figures use a different counting boundary and should not be silently substituted for these measured start-to-done counts.
+The Stage 1 output interface used two clocks per coefficient. The current Stage 2 `ntt_engine` prefetches the next coefficient when the current output is accepted, so a continuously ready receiver gets one output per clock. The current separate capture/compare rerun still passed **18/18 cases and 4,608/4,608 coefficients**. A directed engine test also checked stalls, stable data, and `m_tlast`. Composite `ROUNDTRIP` and `MUL` cases chain separate external operations; the table lists each constituent operation. The historical approximately 299/372/74 compute figures use a different counting boundary and should not be silently substituted for these measured start-to-done counts.
 
 The unmodified baseline also reran successfully: `ntt_ref_check.do` **208/208**, `ntt_core_check.do` **33/33**, `ntt_engine_check.do` **23/23**, and `ntt_run.do` **53/53 UVM** with zero UVM errors/fatals. The current UVM functional coverage reports 100% of its narrow 19-bin model. That covergroup samples requested input transactions, so it is not a requirements-complete coverage claim. RTL code coverage was not compiled in the baseline run (`vsim-8634`). A broader output-qualified coverage plan is Stage 4.

@@ -1,6 +1,6 @@
 # NTT v2 Post-Midyear Plan
 
-**Status:** Stage 1 complete. Stage 2 is in progress: the first retained address-generation change reduces fitted DSPs and slightly improves worst-corner Fmax, but the 5 ns timing constraint and cycle-count goals remain open. Later stages remain proposed work.
+**Status:** Stage 1 complete. Stage 2 is in progress: address generation uses fewer DSPs, and one-beat-per-clock output improves complete-transaction throughput. The 5 ns timing constraint and compute-cycle goals remain open. Later stages remain proposed work.
 
 This is the staged plan for the `ntt_v2` development branch. The starting RTL is the historical `2_ntt` branch. Its recorded checks and Quartus results are a baseline to rerun, not evidence for future modified RTL. The active Keccak counterpart is `keccak_v2`; its dual-core SHAKE design has one shared 64-bit input, one tagged 128-bit output, and a minimum 26-cycle offset between job launches. Keccak FPGA/UART validation and the rejection sampler remain pending.
 
@@ -30,15 +30,17 @@ For every comparison, state the DUT revision, FPGA/device, operation, input/outp
 
 **Rejected pipeline experiment:** Registering `mod_mul` inputs passed the same functional checks but increased core cycles to 310 NTT, 387 INTT, and 79 PWM and ALMs to 2,334. Its worst-corner Fmax was only 74.98 MHz. This change was reverted before the retained address optimization.
 
-**Where the no-stall cycles go:** The standalone capture's measured external totals decompose as follows. The interface takes one coefficient per input beat and emits one coefficient every two output clocks; the final column is the measured residual after subtracting transfer and core cycles, not a separately timed RTL block. SHAKE waiting and sampler acceptance cannot be measured until those blocks are connected.
+**Second retained change (2026-10-05):** `ntt_engine.sv` now prefetches the next synchronous-memory read when an output beat is accepted. The output remains stable during backpressure; a new directed stall case checks that behavior and final `m_tlast`. The 208/208 reference, 33/33 core, 24/24 engine, and 53/53 UVM checks passed, as did the separate 18/18 FIPS-derived cases and 4,608/4,608 output coefficients. Core cycles remained 302 NTT, 377 INTT, and 77 PWM. Complete no-stall transactions changed from **1,071 to 816 NTT**, **1,146 to 891 INTT**, and **1,102 to 847 PWM** cycles. The fit changed from the address-only checkpoint's 2,294 ALMs, 953 registers, 4 DSPs, 18 M10Ks to **2,313 ALMs, 967 registers, 4 DSPs, 18 M10Ks**. Slow 0°C Fmax decreased from 75.37 to **70.97 MHz** and worst setup slack at 5 ns from −8.267 to **−9.090 ns**; worst hold slack is **+0.126 ns**. At each fit's estimated Fmax, no-stall forward output rate increased from 75.37 million / 1,071 = 70,373 to 70.97 million / 816 = **86,973 polynomials/s** (+23.6%). This is an NTT-only estimate, not integrated Dilithium throughput. Evidence: `quartus/output_files/ntt_stage2_stream_fit.summary`, `ntt_stage2_stream_sta.rpt`, `ntt_stage2_stream_paths.log`, and `sim/ntt_stage2_stream_*.log` (generated locally, ignored by Git). The 5 ns constraint still fails; the next slow 85°C critical path goes from a core shift-register RAM through `u_bf3|u_mul` to `prod_s1`.
+
+**Where the no-stall cycles go now:** The standalone capture's measured external totals decompose as follows. The interface takes one coefficient per input beat and now emits one coefficient per output clock; the residual is the measured difference after subtracting transfer and core cycles, not a separately timed RTL block. SHAKE waiting and sampler acceptance cannot be measured until those blocks are connected.
 
 | Operation | Input beats | Core start-to-done | Output clocks | Residual | External total |
 |---|---:|---:|---:|---:|---:|
-| NTT | 256 | 302 | 512 | 1 | 1,071 |
-| INTT | 256 | 377 | 512 | 1 | 1,146 |
-| PWM | 512 | 77 | 512 | 1 | 1,102 |
+| NTT | 256 | 302 | 256 | 2 | 816 |
+| INTT | 256 | 377 | 256 | 2 | 891 |
+| PWM | 512 | 77 | 256 | 2 | 847 |
 
-The 512-clock output transfer is therefore a larger complete-transaction cost than the forward NTT's 302 compute cycles. This makes output-interface throughput and safe load/compute overlap high-priority Stage 2 measurements alongside core cycle reduction.
+PWM input transfer now dominates its 77-cycle computation, while NTT/INTT input and output transfers remain comparable to core computation. This makes wider loading and safe load/compute overlap high-priority Stage 2 measurements alongside core cycle reduction and timing repair.
 
 1. Rerun Quartus synthesis, fitting, and TimeQuest on the frozen functional baseline. Record the true worst setup/hold paths and account for each DSP and M10K. Investigate the two DSPs inferred by address-generation multiplication; replace power-of-two multiplies with shifts or small decoded cases if the measured implementation improves.
 2. Instrument the complete path: request/input transfer, SHAKE waiting, sampler output rate when a sampler exists, NTT loading, core computation, pipeline drains, result transfer, and backpressure. Until the sampler exists, measure the NTT portions with a representative producer model and label those results as estimates. Measure compute latency and complete transaction latency separately.

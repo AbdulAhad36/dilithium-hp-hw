@@ -57,7 +57,11 @@ module tb_ntt_engine;
 
   // ---- drive one operation through the engine -----------------------------
   task automatic run_engine(input ntt_op_e o, input poly_t din,
-                            output poly_t dout);
+                            output poly_t dout, input bit stall_output = 0);
+    int got, cycles;
+    bit stalled;
+    logic [COEFF_W-1:0] held_data;
+    logic held_last;
     // wait for the engine to be idle, then issue the request.
     // (start is only sampled in E_IDLE -- pulsing it during the 1-cycle
     //  E_DONE state would be missed.)
@@ -81,20 +85,41 @@ module tb_ntt_engine;
     s_tvalid = 1'b0;
     s_tlast  = 1'b0;
 
-    // collect 256 coefficients from the source.
-    // m_tready is held high for the whole test (set in the init block) so the
-    // engine always accepts a beat at the clock edge after we sample it --
-    // dropping m_tready here would strand the final beat in TX_VALID.
-    for (int i = 0; i < N; i++) begin
-      do @(negedge clk); while (!m_tvalid);
-      dout[i] = m_tdata;
+    // Collect accepted beats. The optional stall pattern checks that the
+    // current output remains stable until ready rises again.
+    got = 0;
+    cycles = 0;
+    stalled = 0;
+    while (got < N) begin
+      @(negedge clk);
+      if (stalled && (!m_tvalid || m_tdata !== held_data || m_tlast !== held_last)) begin
+        errors++;
+        $display("  [FAIL] output changed while stalled at coefficient %0d", got);
+      end
+      m_tready = !stall_output || ((cycles % 7) >= 2);
+      stalled = m_tvalid && !m_tready;
+      if (stalled) begin
+        held_data = m_tdata;
+        held_last = m_tlast;
+      end
+      if (m_tvalid && m_tready) begin
+        if (m_tlast !== (got == N-1)) begin
+          errors++;
+          $display("  [FAIL] wrong m_tlast at coefficient %0d", got);
+        end
+        dout[got] = m_tdata;
+        got++;
+      end
+      cycles++;
     end
+    m_tready = 1'b1;
   endtask
 
   // ---- check a single transform against the golden model ------------------
-  task automatic check_op(input ntt_op_e o, input poly_t din, input string tag);
+  task automatic check_op(input ntt_op_e o, input poly_t din, input string tag,
+                          input bit stall_output = 0);
     poly_t dut_out, ref_out;
-    run_engine(o, din, dut_out);
+    run_engine(o, din, dut_out, stall_output);
     ref_out = (o == OP_NTT) ? ntt_fwd(din) : ntt_inv(din);
     tests++;
     if (poly_eq(dut_out, ref_out)) begin
@@ -168,6 +193,7 @@ module tb_ntt_engine;
     fill_const(a, coeff_t'(0));  a[0] = coeff_t'(1);
     check_op(OP_NTT,  a, "delta @0");
     check_roundtrip(a, "delta @0");
+    check_op(OP_NTT, a, "delta @0 with output stalls", 1);
 
     // random stress
     for (int it = 0; it < N_RANDOM; it++) begin

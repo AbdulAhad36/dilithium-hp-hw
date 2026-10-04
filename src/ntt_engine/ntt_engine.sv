@@ -4,6 +4,8 @@
 // Wraps the verified ntt_core with an AXI4-Stream-style I/O front-end. One
 // 23-bit coefficient per beat enters over the sink, the requested operation
 // runs on the core, and the result polynomial streams back out the source.
+// After the initial synchronous read, a ready receiver gets one output
+// coefficient per clock; stalls hold the current coefficient.
 //
 //   start_i pulse ->
 //     OP_NTT  / OP_INTT : RX A (256)         -> RUN -> TX (256)
@@ -121,6 +123,13 @@ module ntt_engine (
       E_TX_VALID: begin
         m_tvalid = 1'b1;
         m_tlast  = (tx_idx == N-1);
+        // Prefetch only when the current beat is accepted. The synchronous
+        // read port then supplies the next coefficient on the next clock;
+        // a stalled beat holds its data and address.
+        if (m_tready && tx_idx != N-1) begin
+          core_rd_en   = 1'b1;
+          core_rd_addr = LOGN'(tx_idx + 1'b1);
+        end
       end
       default: ;
     endcase
@@ -187,7 +196,7 @@ module ntt_engine (
             if (tx_idx == N-1) state  <= E_DONE;
             else begin
               tx_idx <= tx_idx + 1'b1;
-              state  <= E_TX_RD;
+              state  <= E_TX_VALID;
             end
           end
         end
