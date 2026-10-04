@@ -240,20 +240,22 @@ module ntt_core (
       k_a    = '0; k_b = '0; k_c = '0;   // twiddles unused in SCALE/PWM
       base_b = '0;
     end else if (fwd) begin
-      base_b = (9'(g_outer_r) * (L << 1)) + 9'(off_r);
+      // 2L is a power of two. Group and offset occupy disjoint bit fields.
+      base_b = (9'(g_outer_r) << (4'd8 - sh2p)) | 9'(off_r);
       a0_idx = base_b;
-      a1_idx = base_b + (L >> 1);
-      a2_idx = base_b + L;
-      a3_idx = base_b + L + (L >> 1);
+      a1_idx = base_b | (L >> 1);
+      a2_idx = base_b | L;
+      a3_idx = base_b | L | (L >> 1);
       k_a    = LOGN'((9'd1 << sh2p)  + 9'(g_outer_r));
       k_b    = LOGN'((9'd1 << sh2p1) + (9'(g_outer_r) << 1));
       k_c    = k_b + LOGN'(1);
     end else begin
-      base_b = (9'(g_outer_r) * (L << 2)) + 9'(off_r);
+      // 4L is a power of two. These address bits cannot overlap the offset.
+      base_b = (9'(g_outer_r) << (sh2p + 4'd2)) | 9'(off_r);
       a0_idx = base_b;
-      a1_idx = base_b + L;
-      a2_idx = base_b + (L << 1);
-      a3_idx = base_b + (L << 1) + L;
+      a1_idx = base_b | L;
+      a2_idx = base_b | (L << 1);
+      a3_idx = base_b | (L << 1) | L;
       k_b    = LOGN'((9'd256 >> sh2p)  - 9'd1 - (9'(g_outer_r) << 1));
       k_c    = k_b - LOGN'(1);
       k_a    = LOGN'((9'd256 >> sh2p1) - 9'd1 - 9'(g_outer_r));
@@ -263,7 +265,7 @@ module ntt_core (
 
   // ===========================================================================
   // A1: REGISTERED address generation  (Fmax fix)
-  // The combinational cone  counters -> (g_outer*2L multiply + adder chain)
+  // The combinational cone  counters -> group/offset address arithmetic
   // -> a*_idx -> bank() XOR -> read crossbar -> BRAM read-address port  was the
   // Fmax-limiting path (~17 ns). Insert one pipeline register here so the deep
   // address arithmetic is decoupled from the bank-routing / RAM stage.

@@ -8,6 +8,7 @@ sim/wlft*
 sim/*.ucdb
 sim/ntt_dut_outputs.txt
 sim/ntt_stage1_*.log
+sim/ntt_stage2_*.log
 __pycache__/
 sim/*.vcd
 *.vcd
