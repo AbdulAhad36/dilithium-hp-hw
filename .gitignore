@@ -6,6 +6,7 @@ sim/dual_coverage_work/
 sim/transcript
 sim/vsim.wlf
 sim/*.wlf
+wlft*
 sim/wlft*
 sim/*.ucdb
 sim/dual_interleaved_coverage.txt
@@ -42,3 +43,4 @@ quartus/*.bak
 Thumbs.db
 *.swp
 *.swo
+~$*.docx

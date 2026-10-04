@@ -5,7 +5,9 @@ standalone-core checkpoint. The dual-core architecture has since been
 implemented: its last recorded fit is 7,581 ALMs, timing-clean at 148 MHz,
 with 149.63 MHz reported by TimeQuest. Its source-simulation throughput is
 1.341026 GB/s for SHAKE128 and 1.147989 GB/s for SHAKE256 across two jobs.
-The 212.8 MHz target and dual-core netlist simulations remain open.
+The 212.8 MHz frequency target remains unmet. On 2026-09-27 the dual-core
+post-synthesis and post-fit functional netlists each passed four byte-exact
+jobs; FPGA/UART testing remains open.
 See [the living report](keccak-design-and-verification.md).
 
 ## Throughput-First Correction - 2026-09-14

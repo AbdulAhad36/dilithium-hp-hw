@@ -28,6 +28,8 @@ class keccak_env extends uvm_env;
         for (int i = 0; i < N_LANES; i++) begin
             uvm_config_db#(int)::set(this, $sformatf("coverage_%0d", i),
                                     "lane_id", i);
+            uvm_config_db#(int)::set(this, $sformatf("scoreboard_%0d", i),
+                                    "lane_id", i);
             agent[i]      = keccak_agent     ::type_id::create($sformatf("agent_%0d",      i), this);
             scoreboard[i] = keccak_scoreboard::type_id::create($sformatf("scoreboard_%0d", i), this);
             coverage[i]   = keccak_coverage  ::type_id::create($sformatf("coverage_%0d",   i), this);

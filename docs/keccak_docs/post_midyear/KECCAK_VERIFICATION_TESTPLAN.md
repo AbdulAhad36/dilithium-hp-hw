@@ -1,15 +1,17 @@
 # Keccak/SHAKE Requirements-to-Verification Testplan
 
-**Status reviewed 2026-09-27:** This is the requirements contract and
+**Status reviewed 2026-09-30:** This is the requirements contract and
 historical single-core closure record. The active branch is `keccak_v2`,
 with a two-core `keccak_dual_interleaved` synthesis top. The last
 recorded source-RTL suite checked 904/904 standalone-core UVM transactions
 and 81/81 integrated-wrapper jobs; weighted functional coverage was
 87.55% and integrated-DUT code coverage was 99.06%. The earlier 125/125
-Stage 2/3 comparisons are for one core. Active dual-core netlist
-simulations and board validation remain open. See
-[the living report](keccak-design-and-verification.md) and
-[COVERAGE.md](COVERAGE.md) for current evidence.
+Stage 2/3 comparisons are for one core. The active dual-core post-synthesis
+and post-fit functional netlists each passed four byte-exact jobs on
+2026-09-27. See [the living report](keccak-design-and-verification.md) for
+overall status and [NIST_KECCAK.md](NIST_KECCAK.md) for the standalone NIST
+flow, run commands, and evidence. Monte Carlo, NIST-file testing through the
+wrapper, and board validation remain open.
 
 **Project:** ML-DSA hardware accelerator  
 **Original DUT branch:** `1_hashing` (historical baseline)

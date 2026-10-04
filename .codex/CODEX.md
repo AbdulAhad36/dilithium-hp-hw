@@ -25,12 +25,13 @@ Branch model:
 - Last recorded source-RTL result: 904/904 standalone-core UVM
   transactions, 81/81 integrated-wrapper jobs, 87.55% weighted
   functional coverage and 99.06% structural code coverage scoped to
-  the integrated dual DUT. These were not rerun during the September 27
-  documentation audit.
+  the integrated dual DUT. These were reproduced by the September 27
+  source-RTL regression.
 - Last recorded Quartus fit: Cyclone V `5CGXFC7C7F23C8`,
   7,581 ALMs, 3,501 registers, positive setup/hold slack at the
-  148 MHz target. Dual-core Stage 2/3 netlist simulations and
-  FPGA/UART testing are pending.
+  148 MHz target. Dual-core Stage 2/3 functional netlists each passed four
+  byte-exact jobs on 2026-09-27; FPGA/UART testing is pending. Cyclone V
+  did not provide an SDF timing netlist.
 - The older four-lane, 208-test, 100%-covergroup and 84.31 MHz
   descriptions belong to historical Keccak checkpoints.
 

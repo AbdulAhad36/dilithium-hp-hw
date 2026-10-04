@@ -20,7 +20,8 @@ if {[file exists [file join $launch_dir run.do]]} {
 set repo [file normalize [file join $script_dir ..]]
 set rtl [file join $repo src keccak_engine]
 set tb [file join $repo tb_uvm tb_uvm_keccak_v2]
-set worklib [file join $script_dir work]
+set nist_mode [expr {[info exists ::keccak_nist_mode] && $::keccak_nist_mode}]
+set worklib [file join $script_dir [expr {$nist_mode ? "nist_work" : "work"}]]
 
 # 1. Clean and recreate the work library.
 catch {quit -sim}
@@ -30,7 +31,7 @@ if {[file isdirectory $worklib]} {
 vlib $worklib
 vmap work $worklib
 
-# 2. Compile the active dual-core RTL with structural coverage enabled.
+# 2. Compile the RTL. Structural coverage belongs to the full regression.
 foreach source {
     keccak_pkg.sv
     keccak_param_unit.sv
@@ -45,7 +46,11 @@ foreach source {
     keccak_core.sv
     keccak_dual_interleaved.sv
 } {
-    vlog -work work -sv -cover bcesft [file join $rtl $source]
+    if {$nist_mode} {
+        vlog -work work -sv [file join $rtl $source]
+    } else {
+        vlog -work work -sv -cover bcesft [file join $rtl $source]
+    }
 }
 
 # 3. Compile the UVM core regression and all dual tests from one top file.
@@ -54,8 +59,17 @@ vlog -work work -sv +incdir+$tb [file join $tb keccak_if.sv]
 vlog -work work -sv +incdir+$tb [file join $tb keccak_assertions.sv]
 vlog -work work -sv +incdir+$tb [file join $tb tb_top.sv]
 
-# 4. Elaborate once with coverage and full debug visibility.
-vsim -coverage -voptargs=+acc work.tb_top
+# 4. Elaborate the requested simulation top.
+# run_nist.do selects only the standalone-core file-driven test.
+if {$nist_mode} {
+    set nist_output_file [file join $script_dir nist_shake_dut_outputs.txt]
+    file delete -force $nist_output_file
+    file delete -force [file join $script_dir nist_shake_coverage.ucdb]
+    vsim +KECCAK_NIST +NIST_OUTPUTS=$nist_output_file work.tb_nist_top
+} else {
+    vsim -coverage -voptargs=+acc work.tb_top
+    set coverage_file keccak_dual_coverage.ucdb
+}
 onfinish stop
 
 # 5. Restore the old GUI experience.
@@ -65,9 +79,11 @@ if {[batch_mode] == 0} {
     view structure
     view signals
 }
-log -r /*
+if {!$nist_mode} {
+    log -r /*
+}
 
-if {[batch_mode] == 0} {
+if {[batch_mode] == 0 && !$nist_mode} {
     add wave -divider "Clock and Reset"
     add wave -radix binary /tb_top/u_uvm_core/clk
     add wave -radix binary /tb_top/u_uvm_core/rst
@@ -126,11 +142,13 @@ if {[batch_mode] == 0} {
 
 # 6. Run once and keep the completed design loaded for inspection.
 run -all
-coverage save [file join $script_dir keccak_dual_coverage.ucdb]
-coverage report -summary
-echo ""
-echo "=== PRIMARY INTEGRATED DUAL-CORE RTL CODE COVERAGE ==="
-coverage report -instance=/tb_top/u_uvm_core/dual_dut -recursive -code bcesft
+if {!$nist_mode} {
+    coverage save [file join $script_dir $coverage_file]
+    coverage report -summary
+    echo ""
+    echo "=== PRIMARY INTEGRATED DUAL-CORE RTL CODE COVERAGE ==="
+    coverage report -instance=/tb_top/u_uvm_core/dual_dut -recursive -code bcesft
+}
 if {[batch_mode] == 0} {
     wave zoom full
 }

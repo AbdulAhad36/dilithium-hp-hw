@@ -1,9 +1,15 @@
 # Keccak Design and Verification - Post-Midyear Living Report
 
 **Branch:** `keccak_v2` (created from `1_hashing`)  
-**Last updated:** 2026-09-27
+**Last updated:** 2026-10-01
 
 **Status:** Authoritative post-midyear Keccak progress record
+
+**Project handoff decision (2026-09-27):** Keccak design and the current
+three-stage module verification milestone are complete for the selected tests;
+active development moves to NTT. FPGA/UART testing remains to be done. The
+dual-core netlist checks are focused four-job functional simulations, not
+repeats of the full source-RTL UVM suite.
 
 This document records the current design, evidence, accepted checkpoints, and
 open work after the midyear evaluation. The earlier AXI design and historical
@@ -41,8 +47,8 @@ The supervisor's three representations are kept separate:
 
 Coverage is not manipulated to obtain a preferred percentage. Functional
 coverage measures planned scenarios; code coverage measures exercised RTL
-structure. The historical Stage 2/3 comparisons establish agreement only
-for their selected one-core suite.
+structure. The current dual-core Stage 2/3 comparisons cover their selected
+four-job suite; the historical 125/125 comparisons belong to a one-core suite.
 
 ## 3. Current Verified Evidence
 
@@ -53,17 +59,88 @@ for their selected one-core suite.
 | UVM errors / fatals | **0 / 0** |
 | Weighted functional coverage | **87.55%** |
 | Primary integrated dual-DUT code coverage | **99.06%** |
-| Active dual-core Stage 2 | **Pending; netlist not generated for this revision** |
-| Active dual-core Stage 3 | **Pending; fitted netlist and SDF not generated for this revision** |
+| Active dual-core Stage 2 | **4/4 byte-exact jobs passed; 0 simulator errors** |
+| Active dual-core Stage 3 | **4/4 byte-exact jobs passed on the post-fit functional netlist; 0 simulator errors** |
+| Separate NIST file-based source-RTL campaign | **3,182/3,182 NIST outputs matched per standalone core; 6,364/6,364 total Python comparisons; 0 UVM errors** |
 
 The 99.06% code result is scoped recursively to the actual integrated dual-core
 DUT, `/tb_top/u_uvm_core/dual_dut`. Branch, expression, statement, FSM-state,
 and FSM-transition coverage are 100%; condition coverage is 94.44% and toggle
 coverage is 99.04%. The unscoped 91.18% Questa total also includes a specialized throughput-only
 DUT copy and functional coverage, so it is diagnostic rather than the design
-sign-off number. The last recorded source-RTL regression and full Quartus fit
-passed on 2026-09-24; they were not rerun during this documentation audit.
-The 125/125 Stage 2/3 comparisons belong to an earlier one-core benchmark.
+sign-off number. The full source-RTL regression was rerun on October 1
+after the testbench update and reproduced 904/904 UVM
+transactions, 81/81 wrapper jobs, 87.55% functional and 99.06% integrated
+DUT code coverage with zero UVM errors. The September 24 Quartus fit supplied both netlist
+snapshots; the dual-core netlist simulations ran on September 27. Each stage checked two
+concurrent SHAKE128 jobs and two concurrent SHAKE256 jobs, including output
+beyond the rate boundary. Quartus supports only a functional post-fit netlist
+for this Cyclone V device, so no SDF timing simulation is claimed. TimeQuest
+remains the setup/hold authority. The 125/125 Stage 2/3 comparisons belong to
+an earlier one-core benchmark.
+
+The separate NIST campaign is summarized in the table above. Its complete
+vector sources, generated files, commands, checks, and per-family results are
+in [NIST_KECCAK.md](NIST_KECCAK.md). The NIST-only run does not alter the full
+regression's coverage result or the SystemVerilog golden model. NIST Monte
+Carlo and FPGA testing remain open.
+
+### Dual-core Stage 2/3 implementation check - 2026-09-27
+
+Quartus Prime Lite 25.1std generated a post-synthesis functional Verilog
+netlist from the `synthesized` snapshot and a post-fit functional Verilog
+netlist from the `final` snapshot of the September 24 fitted project. No RTL
+or fitter rerun was performed. The fit is based on commit `089a1c7`, with no
+RTL source changes in this run. The netlists are in
+`quartus/dual_interleaved/simulation_postsynth/` and `simulation_postfit/`.
+
+| Focused check | Source RTL | Post-synthesis | Post-fit |
+|---|---:|---:|---:|
+| SHAKE128: two concurrent 32-byte messages, 184 output bytes each | 2/2 passed; 368 bytes | 2/2 passed; 368 bytes | 2/2 passed; 368 bytes |
+| SHAKE256: two concurrent 32-byte messages, 152 output bytes each | 2/2 passed; 304 bytes | 2/2 passed; 304 bytes | 2/2 passed; 304 bytes |
+| SHAKE128 / SHAKE256 elapsed cycles | 95 / 93 | 95 / 93 | 95 / 93 |
+| Simulator errors | 0 | 0 | 0 |
+
+Every accepted output byte was checked against `keccak_ref_pkg`, and the
+testbench checked tagged core routing and empty expected-output queues. Both
+output lengths cross their SHAKE rate boundary. All three runs printed
+`COMPLETE_KECCAK_NETLIST_PASS`. This is a four-job implementation smoke test,
+not the complete 904-transaction UVM suite or a sustained-throughput result.
+The netlist scripts use `-novopt`: optimized elaboration stalled with the
+installed QuestaSim 2024.1 setup; direct elaboration passed with a deprecation
+warning.
+
+The post-synthesis `.vo` SHA-256 is
+`58f9d23a507500772d7942e1366429bf187a9773e54fd03cd3f8f665f397d503`;
+the post-fit `.vo` SHA-256 is
+`39b0c51a2bbe07787cb657083ea8bfb0e169a7487409e8794637c13079c6ef80`.
+Quartus Warning 10905 says Cyclone V supports only a functional netlist in
+this flow. No SDF was generated; the September 24 TimeQuest report supplies
+the +0.074 ns setup and +0.166 ns hold timing evidence at the 6.757 ns
+constraint.
+
+To reproduce, run these commands from `quartus/dual_interleaved/` with
+`F:\altera\quartus\bin64\quartus_eda.exe`:
+
+```text
+quartus_eda keccak_dual_interleaved -c keccak_dual_interleaved --simulation --tool=modelsim --format=verilog --functional=on --snapshot=synthesized --output_directory=simulation_postsynth
+quartus_eda keccak_dual_interleaved -c keccak_dual_interleaved --simulation --tool=modelsim --format=verilog --functional=off --snapshot=final --output_directory=simulation_postfit
+```
+
+Then, from `sim/`, use QuestaSim 2024.1:
+
+```text
+C:\questasim64_2024.1\win64\vsim.exe -c -do "do run_netlist_reference.do; quit -f"
+C:\questasim64_2024.1\win64\vsim.exe -c -do "do run_post_synthesis.do; quit -f"
+C:\questasim64_2024.1\win64\vsim.exe -c -do "do run_post_fit.do; quit -f"
+```
+
+The scripts compile the Cyclone V libraries on first use. The local run logs
+are `sim/netlist_reference_transcript.log`, `sim/post_synthesis_transcript.log`,
+and `sim/post_fit_transcript.log`. The full source regression was also rerun
+with `sim/run.do`: 904/904 standalone-core UVM transactions and 81/81
+integrated-wrapper jobs passed with zero UVM errors/fatals. FPGA/UART
+validation remains pending.
 
 ## 4. One-Round Baseline
 
@@ -186,19 +263,17 @@ behavior.
 - LightHD frequency gate: **not passed**; the active dual-core TimeQuest
   report gives 149.63 MHz, below LightHD's 212.8 MHz.
 - Dual-core area: 7,581 Cyclone V ALMs; cross-FPGA LUT comparisons remain approximate.
-- Stage 2/3 gate for the latest dual RTL: pending. The 125/125 Stage 2/3 result applies to the established single core.
+- Stage 2/3 gate for the latest dual RTL: passing for the focused four-job
+  byte-exact functional suite at each netlist stage. No SDF simulation is
+  available for this Cyclone V flow.
 - Hardware/UART test: pending FPGA board details.
 
 ## 9. Next Work
 
-1. Move the dual-top self-checking regression and covergroups into a complete
-   UVM environment while preserving the current measured bins.
-2. Generate the final post-synthesis and post-fit netlists for the dual top and
-   run byte-exact Stage 2 and Stage 3 comparisons.
-3. Retain the 148 MHz fit as the accepted floor while investigating further
-   state-feedback placement or area improvements.
-4. Integrate the dual-context downstream consumer only after the three-stage
-   dual verification flow is complete.
+1. Move active module development to the NTT audit and closure plan.
+2. Perform FPGA/UART Keccak validation when board integration is available.
+3. Retain the 148 MHz fit as the accepted Keccak floor if later integration
+   calls for more timing or area work.
 
 Detailed targets and acceptance rules are in
 [KECCAK_LIGHTHD_CHALLENGE_PLAN.md](KECCAK_LIGHTHD_CHALLENGE_PLAN.md).
@@ -288,7 +363,7 @@ cycles and 128-bit output transfers with no output stalls. They are sustained
 source-simulation core results at a timing-closed clock, not UART/board or
 complete ML-DSA throughput.
 
-The throughput, 148 MHz timing and greater-than-80-percent functional-coverage
-targets are met. The next gates are full dual-top UVM integration and byte-exact
-post-synthesis/post-fit functional comparisons. The authoritative current
-interface and limitations are in [SPECIFICATION.md](SPECIFICATION.md).
+The throughput, 148 MHz timing, greater-than-80-percent functional-coverage,
+and focused dual-core Stage 2/3 functional gates are met. FPGA/UART testing
+remains. The authoritative current interface and limitations are in
+[SPECIFICATION.md](SPECIFICATION.md).

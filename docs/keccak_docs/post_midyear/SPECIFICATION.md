@@ -451,11 +451,15 @@ dual-top UVM agent/scoreboard environment.
 
 The September 24 Quartus fit passes internal register-to-register setup
 and hold at the 6.757 ns constraint. Its virtual pins and false-pathed
-external I/O do not establish board-level I/O timing. The dual-core
-post-synthesis and post-fit netlist simulations remain **pending** for this
-revision; the netlist and SDF files expected by the current scripts are
-absent. Do not report the earlier 125/125 single-core comparisons as
-dual-core Stage 2 or Stage 3 passes.
+external I/O do not establish board-level I/O timing. On September 27,
+the active dual-core post-synthesis and post-fit functional netlists each
+passed four byte-exact jobs (two per SHAKE mode) with zero simulator errors.
+SHAKE128 checked 368 output bytes and SHAKE256 checked 304 output bytes at
+each stage. This focused check is described in the
+[living Keccak report](keccak-design-and-verification.md).
+Quartus Warning 10905 says this Cyclone V flow supports only a functional
+post-fit netlist, so there is no SDF timing simulation. The earlier 125/125
+single-core comparisons are separate historical evidence.
 
 ### Historical single-core evidence
 
@@ -484,11 +488,16 @@ above and in [COVERAGE.md](COVERAGE.md).
 - Only one message can use the shared input channel at a time.
 - No UART or FPGA-board integration.
 - No final board pin assignments or board-level I/O timing closure.
+- The current synthesis port and virtual-pin table is in
+  [KECCAK_VIRTUAL_PIN_CONFIG.md](KECCAK_VIRTUAL_PIN_CONFIG.md).
 - No measured hardware throughput.
-- No complete external NIST CAVP and VariableOut regression set.
+- NIST Monte Carlo and NIST-file testing through the integrated wrapper
+  remain open; the standalone-core ShortMsg, LongMsg, and VariableOut
+  file-based flow is described in [NIST_KECCAK.md](NIST_KECCAK.md).
 - Dual-core functional covergroups exceed 80 percent in the last recorded run;
   migration of the integrated wrapper into a full UVM environment is incomplete.
-- Dual-core post-synthesis and post-fit equivalence are not complete.
+- Dual-core post-synthesis and post-fit functional checks cover four selected
+  byte-exact jobs per stage; they are not exhaustive equivalence proofs.
 - The downstream dual-context rejection sampler is not implemented yet.
 
 ## 13. Authoritative Sources
@@ -499,7 +508,7 @@ above and in [COVERAGE.md](COVERAGE.md).
 - Round datapath: `src/keccak_engine/keccak_step_unit.sv`
 - Complete dual-core source regression: `sim/run.do`
 - Dual-core post-synthesis simulation: `sim/run_post_synthesis.do`
-- Dual-core post-fit timing simulation: `sim/run_post_fit.do`
+- Dual-core post-fit functional simulation: `sim/run_post_fit.do`
 - Dual-core Quartus project: `quartus/dual_interleaved/keccak_dual_interleaved.qsf`
 - Dual-core timing constraints: `quartus/dual_interleaved/keccak_dual_interleaved.sdc`
 - Living engineering record: `keccak-design-and-verification.md`

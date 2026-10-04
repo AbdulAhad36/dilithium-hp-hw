@@ -183,7 +183,10 @@ module tb_keccak_uvm_core #(
         uvm_config_db#(virtual keccak_if)::set(null, "uvm_test_top.env.agent_1.*", "keccak_vif", vif[1]);
         uvm_top.finish_on_completion = AUTO_FINISH;
         fork
-            run_test("keccak_full_test");
+            if ($test$plusargs("KECCAK_NIST"))
+                run_test("keccak_nist_test");
+            else
+                run_test("keccak_full_test");
         join_none
     end
 
@@ -624,6 +627,10 @@ function automatic int rate_bytes(input keccak_mode job_mode);
     endtask
 
     initial begin
+        if ($test$plusargs("KECCAK_NIST")) begin
+            // NIST capture runs only the two standalone UVM cores.
+            dual_done = 1'b1;
+        end else begin
         `uvm_info("DUAL_REGRESSION",
                   "Starting dual-interleaved SHAKE128/SHAKE256 regression",
                   UVM_LOW)
@@ -728,6 +735,7 @@ function automatic int rate_bytes(input keccak_mode job_mode);
                             dual_coverage.dual_cov.get_inst_coverage()),
                   UVM_LOW)
         dual_done = 1'b1;
+        end
 end
 
     task automatic run_single_checked(
@@ -1156,6 +1164,26 @@ end
     endtask
 
 endmodule
+
+// File-driven NIST capture top: no wrapper regression or throughput bench.
+module tb_nist_top;
+    wire nist_done;
+    tb_keccak_uvm_core #(.AUTO_FINISH(1'b0)) u_uvm_core (
+        .test_done(nist_done)
+    );
+
+    initial begin
+        uvm_report_server report_server;
+        wait (nist_done);
+        #1ns;
+        report_server = uvm_report_server::get_server();
+        if ((report_server.get_severity_count(UVM_ERROR) != 0) ||
+            (report_server.get_severity_count(UVM_FATAL) != 0))
+            $fatal(1, "KECCAK_NIST_CAPTURE_FAIL: UVM reported errors");
+        $display("COMPLETE_KECCAK_NIST_CAPTURE: standalone-core DUT outputs recorded; run python nist_shake.py compare for the NIST verdict");
+        $finish;
+    end
+endmodule
 `endif
 
 module tb_keccak_dual_throughput #(
@@ -1198,10 +1226,14 @@ module tb_keccak_dual_throughput #(
     int expected_total_bytes;
     int errors;
 
+`ifdef KECCAK_DUAL_NETLIST
+    keccak_dual_interleaved dut (
+`else
     keccak_dual_interleaved #(
         .START_OFFSET_CYCLES(26),
         .OUTPUT_DWIDTH(OUTPUT_DWIDTH)
     ) dut (
+`endif
         .clk(clk),
         .rst(rst),
         .request_valid_i(request_valid),
@@ -1393,14 +1425,21 @@ module tb_keccak_dual_throughput #(
         elapsed_cycles = final_output_cycle - first_accept_cycle + 1;
         bytes_per_cycle = real'(expected_total_bytes) / real'(elapsed_cycles);
         throughput_gbps = bytes_per_cycle * TARGET_CLOCK_MHZ / 1000.0;
+`ifdef KECCAK_DUAL_NETLIST
+        $display("NETLIST_RESULT mode=%s checked_bytes=%0d elapsed_cycles=%0d",
+                 mode_name, expected_total_bytes, elapsed_cycles);
+`else
         $display("THROUGHPUT_RESULT mode=%s bytes=%0d cycles=%0d bytes_per_cycle=%0.6f GBps_at_%0.2fMHz=%0.6f",
                  mode_name, expected_total_bytes, elapsed_cycles,
                  bytes_per_cycle, TARGET_CLOCK_MHZ, throughput_gbps);
+`endif
+`ifndef KECCAK_DUAL_NETLIST
         if (throughput_gbps < 1.0) begin
             $error("%s throughput target missed: %0.6f GB/s", mode_name,
                    throughput_gbps);
             errors++;
         end
+`endif
     endtask
 
     initial begin
@@ -1409,13 +1448,24 @@ module tb_keccak_dual_throughput #(
         rst = 1'b1;
         initialize_signals();
 
+`ifdef KECCAK_DUAL_NETLIST
+        // Focused gate check: two concurrent jobs per mode, each squeezing
+        // beyond one SHAKE rate block and checked byte by byte.
+        run_benchmark(SHAKE128, 184, "SHAKE128");
+        run_benchmark(SHAKE256, 152, "SHAKE256");
+`else
         run_benchmark(SHAKE128, 65520, "SHAKE128");
         run_benchmark(SHAKE256, 65416, "SHAKE256");
+`endif
 
-        if (errors == 0)
+        if (errors == 0) begin
+`ifdef KECCAK_DUAL_NETLIST
+            $display("DUAL_NETLIST_CHECK_PASS: four byte-exact jobs across both SHAKE modes");
+`else
             $display("DUAL_THROUGHPUT_PASS: both modes exceed 1 GB/s at %0.2f MHz with byte-exact outputs",
                      TARGET_CLOCK_MHZ);
-        else
+`endif
+        end else
             $fatal(1, "DUAL_THROUGHPUT_FAIL: %0d errors", errors);
         test_done = 1'b1;
         if (AUTO_FINISH)
@@ -1455,7 +1505,10 @@ module tb_top;
         if ((report_server.get_severity_count(UVM_ERROR) != 0) ||
             (report_server.get_severity_count(UVM_FATAL) != 0))
             $fatal(1, "COMPLETE_KECCAK_SUITE_FAIL: UVM reported errors");
-        $display("COMPLETE_KECCAK_SUITE_PASS: 904 two-core UVM transactions plus all dual-interleaved regressions completed");
+        if ($test$plusargs("KECCAK_NIST"))
+            $display("COMPLETE_KECCAK_NIST_CAPTURE: DUT outputs captured on both standalone UVM cores; run python nist_shake.py compare for the NIST verdict");
+        else
+            $display("COMPLETE_KECCAK_SUITE_PASS: 904 two-core UVM transactions plus all dual-interleaved regressions completed");
         $finish;
     end
 `endif

@@ -6,12 +6,19 @@ coverage is sampled only after the corresponding output and protocol behavior
 have passed checking. A hit therefore means that a behavior was observed and
 verified, not merely requested by a sequence.
 
-**Evidence status (2026-09-27):** The percentages and test counts below
-are the last recorded source-RTL regression, not a new run from this
-documentation audit. The integrated dual DUT is the primary code-coverage
-scope. Its Stage 2/3 netlist simulations remain pending.
+**Evidence status (2026-10-01):** The percentages and test counts below
+were reproduced by the full source-RTL regression on 2026-10-01. The
+integrated dual DUT is the primary code-coverage scope. The dual-core Stage
+2 and Stage 3 functional netlists each passed a separate focused four-job
+byte-exact suite on 2026-09-27. Netlist simulation does not contribute to
+the source-RTL functional or code-coverage percentages below.
 
 ## 1. Coverage Model
+
+The standalone NIST vector capture and Python output comparison are documented
+in [NIST_KECCAK.md](NIST_KECCAK.md). That run does not collect functional
+or code coverage; the results in this document come from the full `run.do`
+regression.
 
 ### Coverage flow
 
@@ -257,8 +264,9 @@ throughput. Its purpose and calculations are documented in `THROUGHPUT.md`.
 
 ## Verification Results
 
-These results come from the latest complete source-RTL run recorded in
-`sim/transcript` on September 24, 2026.
+These results were reproduced by the complete source-RTL run recorded in
+`sim/source_after_nist_transcript.log` on September 30, 2026. The earlier
+`sim/source_rerun_transcript.log` records the September 27 checkpoint.
 
 ### Pass results
 

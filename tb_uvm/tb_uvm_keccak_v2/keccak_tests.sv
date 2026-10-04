@@ -26,7 +26,33 @@ class keccak_base_test extends uvm_test;
 endclass
 
 
-// Directed only: 13 NIST vectors per lane, in parallel.
+// Separate NIST-file capture. The normal full test and SV golden model
+// remain unchanged. Each standalone core receives the same input cases;
+// nist_shake.py compare checks the captured bytes afterward.
+class keccak_nist_test extends keccak_base_test;
+    `uvm_component_utils(keccak_nist_test)
+
+    function new(string name = "keccak_nist_test", uvm_component parent = null);
+        super.new(name, parent);
+    endfunction
+
+    task run_phase(uvm_phase phase);
+        keccak_nist_seq seq [keccak_env::N_LANES];
+        phase.raise_objection(this);
+        foreach (seq[i])
+            seq[i] = keccak_nist_seq::type_id::create($sformatf("nist_seq_%0d", i));
+        fork
+            seq[0].start(env.agent[0].sequencer);
+            seq[1].start(env.agent[1].sequencer);
+        join
+        #200;
+        phase.drop_objection(this);
+        uvm_event_pool::get_global("keccak_uvm_suite_done").trigger();
+    endtask
+endclass
+
+
+// Directed only: 12 hardcoded SHAKE cases per lane, in parallel.
 class keccak_directed_test extends keccak_base_test;
     `uvm_component_utils(keccak_directed_test)
 

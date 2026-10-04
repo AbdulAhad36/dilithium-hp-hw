@@ -2,7 +2,7 @@
 // keccak_sequence.sv  -  Directed and random sequences (TB v2, SHAKE-only)
 //
 // All sequence items populate exp_hex with the expected SHAKE output. For
-// the 13 NIST directed vectors exp_hex is the published value. For random
+// the 12 hardcoded directed cases exp_hex is a fixed value. For random
 // stress and coverage-closure items, exp_hex is computed at sim time by the
 // pure-SV reference model in keccak_ref_pkg::shake_hex(). The scoreboard
 // golden-compares every transaction; no [NOCHK] skip path is used.
@@ -66,6 +66,59 @@ class keccak_base_seq extends uvm_sequence #(keccak_transaction);
         tx.reset_state_target = reset_state_target;
         tx.hold_valid_after_message = hold_valid_after_message;
         finish_item(tx);
+    endtask
+endclass
+
+
+// NIST mode reads input stimuli only. The DUT output goes to a file and is
+// compared with the separate NIST output file by nist_shake.py compare.
+class keccak_nist_seq extends keccak_base_seq;
+    `uvm_object_utils(keccak_nist_seq)
+
+    function new(string name = "keccak_nist_seq");
+        super.new(name);
+    endfunction
+
+    task body();
+        string path;
+        string line;
+        string case_id;
+        string msg_hex;
+        int fd;
+        int mode_id;
+        int output_bytes;
+        int fields_read;
+        int case_count = 0;
+
+        if (!$value$plusargs("NIST_CASES=%s", path))
+            path = "nist_shake_inputs.txt";
+        fd = $fopen(path, "r");
+        if (fd == 0)
+            `uvm_fatal(get_type_name(),
+                       $sformatf("Cannot open %s; run nist_shake.py prepare first", path))
+
+        while ($fgets(line, fd)) begin
+            if (line.len() == 0 || line.substr(0, 0) == "#" ||
+                line.substr(0, 0) == "\n")
+                continue;
+            fields_read = $sscanf(line, "%s %d %s %d",
+                                  case_id, mode_id, msg_hex, output_bytes);
+            if (fields_read != 4 || (mode_id != 0 && mode_id != 1) ||
+                output_bytes <= 0)
+                `uvm_fatal(get_type_name(),
+                           $sformatf("Invalid NIST case line: %s", line))
+            if (msg_hex == "-")
+                msg_hex = "";
+            send_item(case_id, keccak_mode'(mode_id), msg_hex, "",
+                      output_bytes * 8, output_bytes);
+            case_count++;
+        end
+        $fclose(fd);
+        if (case_count == 0)
+            `uvm_fatal(get_type_name(), "NIST case file contained no cases")
+        `uvm_info(get_type_name(),
+                  $sformatf("NIST_CASES_SENT: %0d cases", case_count),
+                  UVM_NONE)
     endtask
 endclass
 

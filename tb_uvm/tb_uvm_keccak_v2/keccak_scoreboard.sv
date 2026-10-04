@@ -13,6 +13,9 @@ class keccak_scoreboard extends uvm_scoreboard;
     int total_tests;
     int passed_tests;
     int failed_tests;
+    int lane_id = -1;
+    bit nist_capture_mode;
+    string nist_output_path;
     int pending_reset_state;
     int pending_stop_position;
     bit previous_pass_valid;
@@ -47,6 +50,12 @@ class keccak_scoreboard extends uvm_scoreboard;
         super.build_phase(phase);
         exp_fifo = new("exp_fifo", this);
         obs_fifo = new("obs_fifo", this);
+        if (!uvm_config_db#(int)::get(this, "", "lane_id", lane_id))
+            `uvm_fatal(get_type_name(), "Scoreboard lane_id was not configured")
+        nist_capture_mode = $test$plusargs("KECCAK_NIST");
+        if (nist_capture_mode &&
+            !$value$plusargs("NIST_OUTPUTS=%s", nist_output_path))
+            `uvm_fatal(get_type_name(), "Missing +NIST_OUTPUTS=file")
     endfunction
 
     task run_phase(uvm_phase phase);
@@ -83,11 +92,19 @@ class keccak_scoreboard extends uvm_scoreboard;
         exp_msg   = exp_tx.msg_hex.tolower();
         obs_msg   = obs_tx.obs_msg_hex.tolower();
 
-        for (int i = 0; i < exp_bytes; i++) begin
-            if (i < obs_tx.obs_bytes.size())
-                obs_str = {obs_str, $sformatf("%02x", obs_tx.obs_bytes[i])};
-            else
-                obs_str = {obs_str, "XX"};
+        foreach (obs_tx.obs_bytes[i])
+            obs_str = {obs_str, $sformatf("%02x", obs_tx.obs_bytes[i])};
+
+        // Dump only monitor-observed DUT bytes, including a bad or short
+        // result. Python decides whether they match the published NIST bytes.
+        if (nist_capture_mode) begin
+            int output_fd = $fopen(nist_output_path, "a");
+            if (output_fd == 0)
+                `uvm_fatal(get_type_name(),
+                           $sformatf("Cannot open %s", nist_output_path))
+            $fdisplay(output_fd, "%s %0d %s", exp_tx.test_name, lane_id,
+                      obs_str.len() == 0 ? "-" : obs_str);
+            $fclose(output_fd);
         end
 
         control_match = (obs_tx.mode === exp_tx.mode) &&
@@ -95,7 +112,7 @@ class keccak_scoreboard extends uvm_scoreboard;
                         (obs_tx.message_len_val == (exp_msg.len() / 2));
         input_match   = (obs_msg == exp_msg);
         output_match  = (obs_tx.obs_bytes.size() == exp_bytes) &&
-                        (obs_str == exp_str);
+                        (nist_capture_mode || (obs_str == exp_str));
         stress_match  = ((exp_tx.input_gap_kind == 0) ||
                          (obs_tx.input_gap_cycles > 0)) &&
                         ((exp_tx.output_stall_kind == 0) ||
@@ -256,12 +273,21 @@ class keccak_scoreboard extends uvm_scoreboard;
             previous_pass_mode = obs_tx.mode;
 
             passed_tests++;
-            checked_ap.write(obs_tx);
-            `uvm_info(get_type_name(),
-                      $sformatf("[PASS] %s  (in=%0d bytes, out=%0d bytes, protocol_errors=0)",
-                                exp_tx.test_name, obs_tx.accepted_input_bytes,
-                                obs_tx.obs_bytes.size()),
-                      UVM_LOW)
+            // NIST output correctness is established later by Python, so
+            // these captures must not credit functional coverage yet.
+            if (!nist_capture_mode)
+                checked_ap.write(obs_tx);
+            if (nist_capture_mode)
+                `uvm_info(get_type_name(),
+                          $sformatf("[CAPTURED] %s core=%0d out=%0d bytes; compare with Python",
+                                    exp_tx.test_name, lane_id, obs_tx.obs_bytes.size()),
+                          UVM_LOW)
+            else
+                `uvm_info(get_type_name(),
+                          $sformatf("[PASS] %s  (in=%0d bytes, out=%0d bytes, protocol_errors=0)",
+                                    exp_tx.test_name, obs_tx.accepted_input_bytes,
+                                    obs_tx.obs_bytes.size()),
+                          UVM_LOW)
         end else begin
             pending_reset_state = 0;
             pending_stop_position = 0;

@@ -19,15 +19,17 @@ The NTT material below is an older branch snapshot, not live Keccak status.
   wrapper regression and a separate byte-exact throughput benchmark.
 - Last recorded source result: 904/904 standalone-core UVM transactions,
   81/81 wrapper jobs, 87.55% weighted functional coverage and 99.06%
-  structural code coverage scoped to the integrated dual DUT. These
-  results were not rerun during the 2026-09-27 documentation audit.
+  structural code coverage scoped to the integrated dual DUT. The source
+  regression was rerun successfully on 2026-09-27 after the testbench edit.
 - Last recorded Quartus fit: Cyclone V `5CGXFC7C7F23C8`, 7,581 ALMs,
   3,501 registers, +0.074 ns setup and +0.166 ns worst hold slack at the
   6.757 ns clock constraint. The fitter uses virtual data/control pins;
   this is not FPGA board timing closure.
-- The dual-core Stage 2 post-synthesis and Stage 3 post-fit simulation
-  netlists are not present yet. Earlier 125/125 results belong to the
-  one-core `keccak_synth_top` benchmark. FPGA/UART testing is also pending.
+- Dual-core Stage 2 post-synthesis and Stage 3 post-fit functional netlists
+  each passed four byte-exact jobs on 2026-09-27 with zero simulator errors.
+  Cyclone V emitted no SDF; TimeQuest signs off timing. The earlier 125/125
+  results belong to the one-core `keccak_synth_top` benchmark. FPGA/UART
+  testing is pending.
 - Keep source-RTL code and functional coverage, fitted timing, netlist
   checking, source-simulation throughput and board throughput separate.
   Do not carry an earlier checkpoint's pass claim to modified RTL.

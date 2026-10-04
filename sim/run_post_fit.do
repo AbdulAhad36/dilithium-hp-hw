@@ -1,5 +1,6 @@
-# Dual-core interleaved Keccak post-fit timing simulation.
-# Generate the timing netlist and SDF first with Quartus EDA Netlist Writer.
+# Dual-core interleaved Keccak post-fit functional simulation.
+# Cyclone V EDA Netlist Writer emits a functional netlist only (Warning 10905).
+# TimeQuest, not this simulation, signs off setup and hold timing.
 
 onerror {quit -code 1 -f}
 set launch_dir [file normalize [pwd]]
@@ -14,21 +15,19 @@ set repo [file normalize [file join $script_dir ..]]
 set project [file join $repo quartus dual_interleaved]
 set tb [file join $repo tb_uvm tb_uvm_keccak_v2]
 set netlist [file join $project simulation_postfit keccak_dual_interleaved.vo]
-set sdf [file join $project simulation_postfit keccak_dual_interleaved_v.sdo]
 if {[info exists ::env(KECCAK_NETLIST)]} {
     set netlist [file normalize $::env(KECCAK_NETLIST)]
-}
-if {[info exists ::env(KECCAK_SDF)]} {
-    set sdf [file normalize $::env(KECCAK_SDF)]
 }
 if {![file exists $netlist]} {
     error "Missing post-fit netlist: $netlist"
 }
-if {![file exists $sdf]} {
-    error "Missing post-fit SDF: $sdf"
-}
 
-set worklib [file join $script_dir post_fit_work]
+set sim_tag default
+if {[info exists ::env(KECCAK_SIM_LIB_TAG)]} {
+    set sim_tag $::env(KECCAK_SIM_LIB_TAG)
+}
+set worklib [file join $script_dir post_fit_gate_work_$sim_tag]
+do [file join $script_dir setup_cyclonev_libs.do]
 if {[file isdirectory $worklib]} {
     vdel -lib $worklib -all
 }
@@ -40,10 +39,9 @@ vlog -work post_fit_work $netlist
 vlog -work post_fit_work -sv [file join $tb keccak_ref_pkg.sv]
 vlog -work post_fit_work -sv +define+KECCAK_DUAL_NETLIST [file join $tb tb_top.sv]
 
-vsim -t 1ps -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L cyclonev_ver \
-    -sdfmax /tb_top/u_dual_throughput/dut=$sdf \
+vsim -novopt -suppress 12110 -t 1ps -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L cyclonev_ver \
     post_fit_work.tb_top
 onfinish stop
 run -all
 quit -sim
-echo "PASS: dual-core post-fit timing simulation"
+echo "PASS: dual-core post-fit functional simulation"

@@ -3,6 +3,8 @@
 /incremental_db/
 /critical_paths/
 /c5_pin_model_dump.txt
+/simulation_postsynth/
+/simulation_postfit/
 /*.qws
 /*.rpt
 /*.smsg

@@ -21,7 +21,12 @@ if {![file exists $netlist]} {
     error "Missing post-synthesis netlist: $netlist"
 }
 
-set worklib [file join $script_dir post_synthesis_work]
+set sim_tag default
+if {[info exists ::env(KECCAK_SIM_LIB_TAG)]} {
+    set sim_tag $::env(KECCAK_SIM_LIB_TAG)
+}
+set worklib [file join $script_dir post_synthesis_gate_work_$sim_tag]
+do [file join $script_dir setup_cyclonev_libs.do]
 if {[file isdirectory $worklib]} {
     vdel -lib $worklib -all
 }
@@ -33,7 +38,7 @@ vlog -work post_synthesis_work $netlist
 vlog -work post_synthesis_work -sv [file join $tb keccak_ref_pkg.sv]
 vlog -work post_synthesis_work -sv +define+KECCAK_DUAL_NETLIST [file join $tb tb_top.sv]
 
-vsim -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L cyclonev_ver \
+vsim -novopt -suppress 12110 -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L cyclonev_ver \
     post_synthesis_work.tb_top
 onfinish stop
 run -all

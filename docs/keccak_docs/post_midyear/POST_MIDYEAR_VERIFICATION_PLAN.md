@@ -1,14 +1,24 @@
 # Post-Midyear Evaluation: Verification Recovery and FPGA Validation Plan
 
-**Progress review 2026-09-27:** This remains the original Keccak/NTT
+**Progress review 2026-09-30:** This remains the original Keccak/NTT
 verification methodology and evaluation record. Its dated 888-transaction,
 one-core and NTT snapshots are historical, not current status for
 `keccak_v2`. The active Keccak dual top has a last recorded 904/904
 standalone-core UVM run, 81/81 integrated-wrapper jobs, 87.55% weighted
 functional coverage, 99.06% integrated-DUT code coverage and a timing-clean
-148 MHz Quartus fit using 7,581 ALMs. Dual-core Stage 2/3 netlist
-simulations and FPGA/UART validation remain pending. Current
+148 MHz Quartus fit using 7,581 ALMs. On September 27, the dual-core
+post-synthesis and post-fit functional netlists each passed four byte-exact
+jobs with zero simulator errors. FPGA/UART validation remains pending. Current
 Keccak evidence is in [the living report](keccak-design-and-verification.md).
+The standalone NIST procedure, files, commands, and results are in
+[NIST_KECCAK.md](NIST_KECCAK.md). Monte Carlo and NIST-file testing of the
+integrated wrapper remain open. The older "Open NIST" lines below describe
+the dated historical plan.
+
+**Project handoff decision (2026-09-27):** Keccak's design and selected
+three-stage module verification are complete for now; proceed to the NTT
+audit and closure. FPGA/UART validation remains open. The dual-core Stage
+2/3 passes are focused functional checks, not full UVM or SDF timing runs.
 
 **Project:** Hardware Design and Verification of CRYSTALS-Dilithium / ML-DSA  
 **Date:** 2026-07-20  
@@ -664,6 +674,16 @@ Hardware pass/fail evidence is not a replacement for simulation coverage; it is 
   registers, no DSPs, and no block memory.
 
 **Gate:** Both generated netlists pass, with no unexplained warnings or unconstrained paths.
+
+**Active dual-core update, 2026-09-27:** The `keccak_dual_interleaved`
+post-synthesis and post-fit functional netlists each passed four byte-exact
+jobs with zero simulator errors. The two SHAKE128 jobs checked 368 output
+bytes in total; the two SHAKE256 jobs checked 304. Both selected outputs cross
+their SHAKE rate boundary. This is a focused implementation smoke test, not
+the 125/125 historical one-core suite or the full 904-transaction source UVM
+suite. Quartus emits no Cyclone V SDF in this flow (Warning 10905); the
+September 24 TimeQuest report supplies setup/hold evidence. See
+[the living Keccak report](keccak-design-and-verification.md).
 
 ### Phase 5 - FPGA/UART validation (1-2 weeks after board arrival)
 

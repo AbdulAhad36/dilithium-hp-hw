@@ -4,11 +4,12 @@ This document defines the throughput numbers used for the current dual-core
 interleaved Keccak design. All byte rates use decimal GB/s, where
 `1 GB/s = 1,000,000,000 bytes/s`.
 
-**Evidence status (2026-09-27):** These are the last recorded byte-exact
-source-simulation cycle counts, converted using the timing-clean 148 MHz
-Quartus operating point. This documentation audit did not rerun the test.
-No post-fit timing simulation, FPGA-board throughput or complete ML-DSA
-throughput is claimed.
+**Evidence status (2026-09-27):** The full source regression reproduced these
+byte-exact cycle counts on 2026-09-27, converted using the timing-clean 148 MHz
+Quartus operating point. The short post-synthesis and post-fit functional
+checks on September 27 are verification smoke tests; their cycle counts are
+not sustained-throughput measurements. No SDF timing simulation, FPGA-board
+throughput or complete ML-DSA throughput is claimed.
 
 ## Current Architecture
 
