@@ -6,6 +6,9 @@ sim/vsim.wlf
 sim/*.wlf
 sim/wlft*
 sim/*.ucdb
+sim/ntt_dut_outputs.txt
+sim/ntt_stage1_*.log
+__pycache__/
 sim/*.vcd
 *.vcd
 transcript

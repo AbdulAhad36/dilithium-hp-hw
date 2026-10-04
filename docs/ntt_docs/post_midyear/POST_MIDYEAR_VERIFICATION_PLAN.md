@@ -1,6 +1,6 @@
 # NTT v2 Post-Midyear Plan
 
-**Status:** Stage 0 — plan and branch setup, 2026-10-05. Later stages are proposed work, not completed results.
+**Status:** Stage 1 complete on 2026-10-05 for the inherited `2_ntt` source RTL: baseline checks and the separate FIPS-derived vector flow passed. Stage 2 performance measurement and RTL changes are next. Later stages remain proposed work.
 
 This is the staged plan for the `ntt_v2` development branch. The starting RTL is the historical `2_ntt` branch. Its recorded checks and Quartus results are a baseline to rerun, not evidence for future modified RTL. The active Keccak counterpart is `keccak_v2`; its dual-core SHAKE design has one shared 64-bit input, one tagged 128-bit output, and a minimum 26-cycle offset between job launches. Keccak FPGA/UART validation and the rejection sampler remain pending.
 
@@ -19,6 +19,8 @@ For every comparison, state the DUT revision, FPGA/device, operation, input/outp
 5. Create `docs/ntt_docs/post_midyear/NIST_NTT.md` **when the flow exists**. Explain the actual source of every vector, generated files, commands, comparison logic, case counts, and observed results. Add end-to-end official ML-DSA vectors later when the whole signer/verifier exists.
 
 **Gate:** Every retained independent case matches exactly; the existing regression and existing coverage model are reported with observed numbers and known limitations. Fix functionality failures before optimizing performance.
+
+**Stage 1 evidence:** The fresh baseline passed 208/208 reference, 33/33 core, 23/23 engine, and 53/53 UVM checks. The existing 19-bin input-sampled covergroup reported 100%; RTL code coverage was not compiled. The separate capture/compare flow passed 18/18 cases and 4,608/4,608 exact coefficients. Measured core start-to-done counts are 302 NTT, 377 INTT, and 77 PWM; complete no-stall external transactions are 1,071, 1,146, and 1,102 cycles, respectively. See [NIST_NTT.md](NIST_NTT.md) for files, commands, provenance, and limits. These results apply only to this source RTL.
 
 ## Stage 2 — Measure and improve the current architecture
 
