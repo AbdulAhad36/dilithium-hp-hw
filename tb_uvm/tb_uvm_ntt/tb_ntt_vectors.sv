@@ -162,7 +162,7 @@ module tb_ntt_vectors;
     end
     $fclose(input_fd);
     $fclose(output_fd);
-    $display("NTT VECTOR CAPTURE COMPLETE: %0d cases; run py sim/ntt_vectors.py compare", count);
+    $display("NTT VECTOR CAPTURE COMPLETE: %0d cases; run py FIPS204_NTT/ntt_vectors.py compare", count);
     $finish;
   end
 endmodule

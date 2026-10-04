@@ -6,13 +6,13 @@
 
 The two files under `FIPS204_NTT/` are **FIPS 204-derived reference vectors**. They are not official standalone NIST NTT test files. The public ML-DSA ACVP material we located covers complete KeyGen, Sign, and Verify operations, so we cannot honestly call these inputs and expected outputs downloaded NIST NTT vectors. [FIPS 204](https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.204.pdf) defines the arithmetic; the [NIST ACVP ML-DSA specification](https://pages.nist.gov/ACVP/draft-celi-acvp-ml-dsa.html) describes the available full-operation testing. Complete official ML-DSA vectors belong in the later integrated signer/verifier stage.
 
-The vectors use `q = 8380417`, `n = 256`, `zeta = 1753`, bit-reversed twiddle order, and coefficients in the normal `0..q-1` domain. `sim/ntt_vectors.py` computes expected NTT, INTT, and pointwise outputs independently of the SystemVerilog golden model. Before writing vectors, it checks the staged butterfly formulas against direct evaluation at the odd powers of `zeta`, checks the inverse against the inverse evaluation formula, and checks NTT multiplication against a separate negacyclic schoolbook product. The random seeds are fixed; running `prepare` produces the same files each time. This validates the Python reference's conventions and internal consistency, though it is not a NIST certification of the RTL.
+The vectors use `q = 8380417`, `n = 256`, `zeta = 1753`, bit-reversed twiddle order, and coefficients in the normal `0..q-1` domain. `FIPS204_NTT/ntt_vectors.py` computes expected NTT, INTT, and pointwise outputs independently of the SystemVerilog golden model. Before writing vectors, it checks the staged butterfly formulas against direct evaluation at the odd powers of `zeta`, checks the inverse against the inverse evaluation formula, and checks NTT multiplication against a separate negacyclic schoolbook product. The random seeds are fixed; running `prepare` produces the same files each time. This validates the Python reference's conventions and internal consistency, though it is not a NIST certification of the RTL.
 
 ## Files and data path
 
 | File | Purpose |
 |---|---|
-| `sim/ntt_vectors.py` | The **one Python script**. `prepare` makes inputs and expected outputs; `compare` checks captured DUT outputs. |
+| `FIPS204_NTT/ntt_vectors.py` | The **one Python script**. `prepare` makes inputs and expected outputs; `compare` checks captured DUT outputs. |
 | `FIPS204_NTT/ntt_inputs.txt` | 18 cases, each with a case ID, operation, and one or two 256-coefficient input polynomials. Generated and retained in Git. |
 | `FIPS204_NTT/ntt_expected.txt` | Case ID, operation, and 256 expected coefficients per case. Generated before simulation and retained in Git. |
 | `tb_uvm/tb_uvm_ntt/tb_ntt_vectors.sv` | Reads the input file, drives the actual `ntt_engine` stream interface, and writes only observed outputs. For round trip and polynomial multiplication it chains actual DUT operations. It does not call the SV or Python reference. |
@@ -27,18 +27,18 @@ The simple file format is `COUNT`, followed by `CASE <id> <operation>`, then `A`
 From the repository root in PowerShell:
 
 ```powershell
-py sim/ntt_vectors.py prepare
+py FIPS204_NTT/ntt_vectors.py prepare
 Push-Location sim
 & 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_stage1_vector.log -do 'do run_ntt_vectors.do; quit -f'
 Pop-Location
-py sim/ntt_vectors.py compare
+py FIPS204_NTT/ntt_vectors.py compare
 ```
 
 `prepare` creates the two files in `FIPS204_NTT/`; the Questa command drives the design and creates `sim/ntt_dut_outputs.txt`; `compare` reads the expected and observed files. The simulation's `NTT VECTOR CAPTURE COMPLETE` message only says capture finished. **The final `NTT COMPARE PASS` is the correctness result.** If the capture command fails, stop before comparison so an older output file cannot be mistaken for a new result. The existing SystemVerilog golden model and its full `ntt_run.do` regression remain available separately.
 
 ## Observed results
 
-On 2026-10-05, QuestaSim 2024.1 compiled the dedicated test with zero compile errors and captured 18 cases. `py sim/ntt_vectors.py compare` reported **18/18 matching cases and 4,608/4,608 matching output coefficients**: 7 forward NTT, 4 inverse NTT, 3 pointwise multiply, 2 DUT round trips, and 2 complete two-input polynomial products. The cases include zero, `q-1`, sparse coefficients at positions 0 and 255, ramp, small signed coefficients mapped to residues, and deterministic random polynomials. The result is exact output checking for this retained case set; it is not exhaustive input, handshake, code, or functional coverage.
+On 2026-10-05, QuestaSim 2024.1 compiled the dedicated test with zero compile errors and captured 18 cases. `py FIPS204_NTT/ntt_vectors.py compare` reported **18/18 matching cases and 4,608/4,608 matching output coefficients**: 7 forward NTT, 4 inverse NTT, 3 pointwise multiply, 2 DUT round trips, and 2 complete two-input polynomial products. The cases include zero, `q-1`, sparse coefficients at positions 0 and 255, ramp, small signed coefficients mapped to residues, and deterministic random polynomials. The result is exact output checking for this retained case set; it is not exhaustive input, handshake, code, or functional coverage.
 
 The capture transcript measured the following at a 10 ns *simulation* clock with continuous input `valid` and output `ready`. `core_start` to `core_done` is counted separately from the external start request to the final output beat. These are clock counts; the simulation clock does not establish FPGA Fmax.
 

@@ -1,9 +1,9 @@
 """Prepare FIPS 204-derived NTT cases and compare captured DUT coefficients.
 
 Usage from the repository root:
-    py sim/ntt_vectors.py prepare
+    py FIPS204_NTT/ntt_vectors.py prepare
     # From sim/: vsim -c -do "do run_ntt_vectors.do; quit -f"
-    py sim/ntt_vectors.py compare
+    py FIPS204_NTT/ntt_vectors.py compare
 
 This is an independent normal-domain arithmetic model, not an official NIST
 standalone NTT vector file. The existing SystemVerilog model is left intact.
@@ -20,9 +20,10 @@ Q = 8_380_417
 N = 256
 ZETA = 1753
 N_INV = pow(N, -1, Q)
-ROOT = Path(__file__).resolve().parents[1]
-INPUTS = ROOT / "FIPS204_NTT" / "ntt_inputs.txt"
-EXPECTED = ROOT / "FIPS204_NTT" / "ntt_expected.txt"
+VECTOR_DIR = Path(__file__).resolve().parent
+ROOT = VECTOR_DIR.parent
+INPUTS = VECTOR_DIR / "ntt_inputs.txt"
+EXPECTED = VECTOR_DIR / "ntt_expected.txt"
 OBSERVED = ROOT / "sim" / "ntt_dut_outputs.txt"
 OPS = {"NTT", "INTT", "PWM", "ROUNDTRIP", "MUL"}
 HEX_COEFF = re.compile(r"[0-9a-fA-F]{1,6}\Z")
