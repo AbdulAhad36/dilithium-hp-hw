@@ -22,7 +22,7 @@ class ntt_base_seq extends uvm_sequence #(ntt_transaction);
         tx.op        = o;
         tx.in_kind   = ik;
         tx.in_poly   = pin;
-        tx.exp_poly  = (o == OP_NTT) ? ntt_fwd(pin) : ntt_inv(pin);
+        tx.exp_poly  = (o == OP_INTT) ? ntt_inv(pin) : ntt_fwd(pin);
         finish_item(tx);
     endtask
 
@@ -148,6 +148,42 @@ class ntt_cov_seq extends ntt_base_seq;
 endclass
 
 
+`ifdef NTT_FIFO
+// Candidate-only bounded-secret checks. The ordinary UVM build never names
+// OP_PRE_NTT, which is not present in the saved four-bank package.
+class ntt_pre_seq extends ntt_base_seq;
+    `uvm_object_utils(ntt_pre_seq)
+
+    function new(string name = "ntt_pre_seq");
+        super.new(name);
+    endfunction
+
+    function automatic coeff_t residue(int signed v);
+        return coeff_t'((v < 0) ? (Q + v) : v);
+    endfunction
+
+    task body();
+        poly_t p;
+        for (int signed v = -4; v <= 4; v++) begin
+            for (int i = 0; i < N; i++) p[i] = residue(v);
+            send_item($sformatf("PRE uniform %0d", v), OP_PRE_NTT,
+                      IK_PRE_BOUNDARY, p);
+        end
+        for (int i = 0; i < N; i++) p[i] = residue((i % 5) - 2);
+        send_item("PRE eta2 mixed", OP_PRE_NTT, IK_ETA2, p);
+        for (int i = 0; i < N; i++) p[i] = residue((i % 9) - 4);
+        send_item("PRE eta4 mixed", OP_PRE_NTT, IK_ETA4, p);
+        for (int i = 0; i < N; i++) p[i] = residue(0);
+        p[0] = residue(-4);
+        send_item("PRE negative at first", OP_PRE_NTT, IK_PRE_BOUNDARY, p);
+        p[0] = residue(0);
+        p[N-1] = residue(4);
+        send_item("PRE positive at last", OP_PRE_NTT, IK_PRE_BOUNDARY, p);
+    endtask
+endclass
+`endif
+
+
 // Combined regression: directed + stress + coverage closure.
 class ntt_full_seq extends ntt_base_seq;
     `uvm_object_utils(ntt_full_seq)
@@ -160,11 +196,20 @@ class ntt_full_seq extends ntt_base_seq;
         ntt_directed_seq d_seq;
         ntt_stress_seq   s_seq;
         ntt_cov_seq      c_seq;
+`ifdef NTT_FIFO
+        ntt_pre_seq      p_seq;
+`endif
         d_seq = ntt_directed_seq::type_id::create("d_seq");
         s_seq = ntt_stress_seq  ::type_id::create("s_seq");
         c_seq = ntt_cov_seq     ::type_id::create("c_seq");
+`ifdef NTT_FIFO
+        p_seq = ntt_pre_seq     ::type_id::create("p_seq");
+`endif
         d_seq.start(m_sequencer);
         s_seq.start(m_sequencer);
         c_seq.start(m_sequencer);
+`ifdef NTT_FIFO
+        p_seq.start(m_sequencer);
+`endif
     endtask
 endclass

@@ -1,6 +1,6 @@
-# NTT vector flow and Stage 1 result
+# NTT vector flow and measured results
 
-**Recorded on:** 2026-10-05, `ntt_v2` Stage 1 baseline and current Stage 2 source RTL. The vector comparisons are source-RTL simulation results, not post-synthesis, post-fit, timing, or board results.
+**Recorded on:** 2026-10-06, `ntt_v2` Stage 1 baseline and current Stage 2 source RTL. The vector comparisons are source-RTL simulation results, not post-synthesis, post-fit, timing, or board results.
 
 ## What the vectors are
 
@@ -36,18 +36,20 @@ py FIPS204_NTT/ntt_vectors.py compare
 
 `prepare` creates the two files in `FIPS204_NTT/`; the Questa command drives the design and creates `sim/ntt_dut_outputs.txt`; `compare` reads the expected and observed files. The simulation's `NTT VECTOR CAPTURE COMPLETE` message only says capture finished. **The final `NTT COMPARE PASS` is the correctness result.** If the capture command fails, stop before comparison so an older output file cannot be mistaken for a new result. The existing SystemVerilog golden model and its full `ntt_run.do` regression remain available separately.
 
+For a separate DUT capture file, use the same script with `compare --observed <path-to-output-file>`. The LightHD-inspired NTT has its own fast capture command in `sim/ntt_LightHD/run_vectors.do`, writing `sim/ntt_LightHD/ntt_dut_outputs.txt`; compare it with `py -3 FIPS204_NTT/ntt_vectors.py compare --observed sim/ntt_LightHD/ntt_dut_outputs.txt`. Its run details are in `sim/ntt_LightHD/README.md`, and its architecture metrics are recorded in [POST_MIDYEAR_VERIFICATION_PLAN.md](POST_MIDYEAR_VERIFICATION_PLAN.md).
+
 ## Observed results
 
 On 2026-10-05, QuestaSim 2024.1 compiled the dedicated test with zero compile errors and captured 18 cases. `py FIPS204_NTT/ntt_vectors.py compare` reported **18/18 matching cases and 4,608/4,608 matching output coefficients**: 7 forward NTT, 4 inverse NTT, 3 pointwise multiply, 2 DUT round trips, and 2 complete two-input polynomial products. The cases include zero, `q-1`, sparse coefficients at positions 0 and 255, ramp, small signed coefficients mapped to residues, and deterministic random polynomials. The result is exact output checking for this retained case set; it is not exhaustive input, handshake, code, or functional coverage.
 
 The capture transcript measured the following at a 10 ns *simulation* clock with continuous input `valid` and output `ready`. `core_start` to `core_done` is counted separately from the external start request to the final output beat. These are clock counts; the simulation clock does not establish FPGA Fmax.
 
-| Operation | Core start to done | Stage 1 external cycles | Current Stage 2 external cycles |
-|---|---:|---:|---:|
-| Forward NTT | 302 | 1,071 | 816 |
-| Inverse NTT | 377 | 1,146 | 891 |
-| Pointwise multiply | 77 | 1,102 | 847 |
+| Operation | Stage 1 core | Current core | Stage 1 external | Current external |
+|---|---:|---:|---:|---:|
+| Forward NTT | 302 | 284 | 1,071 | 798 |
+| Inverse NTT | 377 | 288 | 1,146 | 802 |
+| Pointwise multiply | 77 | 74 | 1,102 | 844 |
 
-The Stage 1 output interface used two clocks per coefficient. The current Stage 2 `ntt_engine` prefetches the next coefficient when the current output is accepted, so a continuously ready receiver gets one output per clock. The current separate capture/compare rerun still passed **18/18 cases and 4,608/4,608 coefficients**. A directed engine test also checked stalls, stable data, and `m_tlast`. Composite `ROUNDTRIP` and `MUL` cases chain separate external operations; the table lists each constituent operation. The historical approximately 299/372/74 compute figures use a different counting boundary and should not be silently substituted for these measured start-to-done counts.
+The Stage 1 output interface used two clocks per coefficient. The current Stage 2 `ntt_engine` prefetches the next coefficient when the current output is accepted, so a continuously ready receiver gets one output per clock. The current `ntt_core` overlaps safe inter-pass drains, scales final inverse-pass results in four parallel lanes, and pipelines the butterfly input and modular reduction; it waits for all final writebacks before reporting `done`. The retained output-stall-fix source passed **18/18 cases and 4,608/4,608 coefficients** in `sim/ntt_stage2_stall_fix_vectors.log`; the capture test also checks for pending writeback at `done` and simultaneous writeback sources. Directed engine, core, UVM, and independent-reference checks passed **30/30, 33/33, 53/53, and 208/208** in the corresponding `sim/ntt_stage2_stall_fix_*.log` files. The directed engine test now checks varied-output stability through backpressure, random transformations with stalls, input gaps, final `m_tlast`, and no-stall/paced transaction counts. Composite `ROUNDTRIP` and `MUL` cases chain separate external operations; the table lists each constituent operation. The historical approximately 299/372/74 compute figures use a different counting boundary and should not be silently substituted for these measured start-to-done counts. The Stage 2 fit, timing, and paced measurements are recorded in [the plan](POST_MIDYEAR_VERIFICATION_PLAN.md).
 
-The unmodified baseline also reran successfully: `ntt_ref_check.do` **208/208**, `ntt_core_check.do` **33/33**, `ntt_engine_check.do` **23/23**, and `ntt_run.do` **53/53 UVM** with zero UVM errors/fatals. The current UVM functional coverage reports 100% of its narrow 19-bin model. That covergroup samples requested input transactions, so it is not a requirements-complete coverage claim. RTL code coverage was not compiled in the baseline run (`vsim-8634`). A broader output-qualified coverage plan is Stage 4.
+The unmodified baseline also reran successfully: `ntt_ref_check.do` **208/208**, `ntt_core_check.do` **33/33**, `ntt_engine_check.do` **23/23**, and `ntt_run.do` **53/53 UVM** with zero UVM errors/fatals. At that Stage 1 checkpoint, the narrow 19-bin UVM covergroup sampled requested input transactions, so its 100% was not a requirements-complete coverage claim. The later Stage 4 scoreboard now samples the documented bins only after output comparison and framing pass; see [COVERAGE.md](COVERAGE.md). RTL code coverage was not compiled in the Stage 1 run (`vsim-8634`).

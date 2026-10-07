@@ -1,0 +1,7 @@
+work_vectors/
+work_core/
+work_engine/
+work_uvm/
+*.log
+*.ucdb
+ntt_dut_outputs.txt

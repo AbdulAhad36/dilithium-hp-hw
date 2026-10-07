@@ -51,6 +51,8 @@ class ntt_monitor extends uvm_monitor;
         obs_tx.in_kind   = exp_tx.in_kind;
         obs_tx.in_poly   = exp_tx.in_poly;
         obs_tx.exp_poly  = exp_tx.exp_poly;
+        obs_tx.observed_count = 0;
+        obs_tx.output_framing_ok = 1'b1;
 
         idx     = 0;
         timeout = 0;
@@ -64,10 +66,13 @@ class ntt_monitor extends uvm_monitor;
                 break;
             end
             if (vif.m_tvalid && vif.m_tready) begin
+                if (vif.m_tlast !== (idx == N-1))
+                    obs_tx.output_framing_ok = 1'b0;
                 obs_tx.obs_poly[idx] = vif.m_tdata;
                 idx++;
             end
         end
+        obs_tx.observed_count = idx;
 
         `uvm_info(get_type_name(),
                   $sformatf("[%s] collected %0d/%0d coefficients",

@@ -10,12 +10,12 @@
 //     a'  = a + b               (mod q)
 //     b'  = (a - b) * zeta      (mod q)
 //
-// Both modes share one pipelined modular multiplier. Fixed latency BF_LAT = 4
+// Both modes share one pipelined modular multiplier. Fixed latency BF_LAT = 6
 // cycles, fully pipelined (one butterfly per clock).
 //
-//   cycle 0 : mul fed with  (CT: b) / (GS: a-b)
-//   cycle 3 : mul result `t` ready; combine with the 3-cycle-delayed operand
-//   cycle 4 : a_o / b_o registered out
+//   cycle 1 : registered (CT: b) / (GS: a-b) and zeta feed multiplier
+//   cycle 5 : mul result `t` ready; combine with delayed operand
+//   cycle 6 : a_o / b_o registered out
 // ============================================================================
 import ntt_pkg::*;
 
@@ -30,8 +30,8 @@ module butterfly_unit (
     output logic [COEFF_W-1:0]  b_o
 );
 
-  localparam int unsigned BF_LAT  = 4;
-  localparam int unsigned MUL_LAT = 3;   // mod_mul latency
+  localparam int unsigned BF_LAT  = 6;
+  localparam int unsigned MUL_LAT = 4;   // mod_mul latency
 
   // ---- combinational modular add / sub helpers ----------------------------
   function automatic logic [COEFF_W-1:0] madd(input logic [COEFF_W-1:0] x,
@@ -47,23 +47,46 @@ module butterfly_unit (
   endfunction
 
   // ---- multiplier operand select ------------------------------------------
-  // CT multiplies b by zeta; GS multiplies (a-b) by zeta.
-  logic [COEFF_W-1:0] mul_in;
-  always_comb mul_in = (mode_i == BF_CT) ? b_i : msub(a_i, b_i);
+  // Register CT and GS candidates independently. Select the registered
+  // candidate in the multiplier stage, separating GS subtraction from DSP.
+  logic [COEFF_W-1:0] mul_ct_reg, mul_gs_reg;
+  logic [COEFF_W-1:0] zeta_reg, keep_a_reg, keep_b_reg;
+  logic [COEFF_W-1:0] mul_after_reg;
+  bf_mode_e mode_reg;
+  always_comb mul_after_reg = (mode_reg == BF_CT) ? mul_ct_reg : mul_gs_reg;
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      mul_ct_reg <= '0;
+      mul_gs_reg <= '0;
+      zeta_reg   <= '0;
+      keep_a_reg <= '0;
+      keep_b_reg <= '0;
+      mode_reg   <= BF_CT;
+    end else begin
+      mul_ct_reg <= b_i;
+      mul_gs_reg <= msub(a_i, b_i);
+      zeta_reg   <= zeta_i;
+      keep_a_reg <= a_i;
+      keep_b_reg <= b_i;
+      mode_reg   <= mode_i;
+    end
+  end
 
-  logic [COEFF_W-1:0] t;        // = mul_in * zeta  (mod q), ready after MUL_LAT
+  logic [COEFF_W-1:0] t;        // = selected operand * zeta (mod q)
   mod_mul u_mul (
       .clk (clk),
       .rst (rst),
-      .a_i (mul_in),
-      .b_i (zeta_i),
+      .a_i (mul_after_reg),
+      .b_i (zeta_reg),
       .r_o (t)
   );
 
   // ---- operand to be combined with `t` ------------------------------------
-  // CT keeps `a`; GS keeps `a+b`. Delayed MUL_LAT cycles to align with `t`.
-  logic [COEFF_W-1:0] keep_in;
-  always_comb keep_in = (mode_i == BF_CT) ? a_i : madd(a_i, b_i);
+  // CT keeps `a`; GS keeps `a+b`. Compute the sum after the input register
+  // so upstream mode selection and modular addition do not share one path.
+  logic [COEFF_W-1:0] keep_after_reg;
+  always_comb keep_after_reg = (mode_reg == BF_CT)
+                             ? keep_a_reg : madd(keep_a_reg, keep_b_reg);
 
   logic [COEFF_W-1:0] keep_dly [MUL_LAT];
   bf_mode_e            mode_dly [MUL_LAT];
@@ -75,8 +98,8 @@ module butterfly_unit (
         mode_dly[i] <= BF_CT;
       end
     end else begin
-      keep_dly[0] <= keep_in;
-      mode_dly[0] <= mode_i;
+      keep_dly[0] <= keep_after_reg;
+      mode_dly[0] <= mode_reg;
       for (int i = 1; i < MUL_LAT; i++) begin
         keep_dly[i] <= keep_dly[i-1];
         mode_dly[i] <= mode_dly[i-1];
@@ -84,7 +107,7 @@ module butterfly_unit (
     end
   end
 
-  // ---- final combine (cycle 3 -> registered at cycle 4) -------------------
+  // ---- final combine (cycle 5 -> registered at cycle 6) -------------------
   logic [COEFF_W-1:0] keep_al;
   bf_mode_e            mode_al;
   always_comb begin

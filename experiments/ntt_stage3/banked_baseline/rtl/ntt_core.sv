@@ -1,0 +1,785 @@
+// ============================================================================
+// ntt_core.sv  --  Memory-based NTT / INTT core  (increment 3b-ii: 4 banks)
+// ----------------------------------------------------------------------------
+// 4-butterfly 2x2 tile + intra-tile stage forwarding + conflict-free 4-bank
+// coefficient memory. One TILE issued per clock cycle: 4 coefficients are
+// processed by 4 butterfly units arranged as two ranks of two (rank-s does
+// the coarse stage, rank-t does the fine stage fed directly from rank-s
+// outputs, no mem hop between stages). 8 radix-2 stages collapse to 4
+// memory passes of 64 tiles each.
+//
+// Bank function (conflict-free for EVERY pass of NTT and INTT):
+//   bank(addr)   = addr[1:0] ^ addr[3:2] ^ addr[5:4] ^ addr[7:6]
+//   offset(addr) = addr[7:2]
+//
+// Across every tile in any pass the 4 coefficients differ only in one bit
+// pair (positions 2k, 2k+1 with k chosen by the pass). XORing all four bit
+// pairs of the address makes that pair the only variable contributor to
+// bank(), so the 4 banks come out as a permutation of {0,1,2,3}.
+//
+// Each bank is 64x23 with 1R+1W per cycle -- exactly what Cyclone V M10K
+// dual-port BRAM provides. The 4 tile reads/writes are routed through 4-way
+// crossbars between {logical positions} and {physical banks}.
+//
+// Current measured core cycles: 284 NTT, 288 INTT, 74 PWM. The four NTT
+// passes each issue 64 tiles; the final inverse pass scales on writeback.
+//
+// Pipeline (one tile, T = issue cycle):
+//   T    : address-gen issues (a0..a3, k_a/b/c, sc_flag) combinationally.
+//          Flat mem read combinational; sync twiddle ROMs see addrs.
+//   T+1  : mem regs (m_r0..3) + twiddle ROM outputs (tw_a/b/c) valid.
+//          -> feed rank-s BFUs (BFU0/1) with m_r* and outer/inner twiddles
+//             (NTT: outer tw_a to both; INTT: inner tw_b/c, negated).
+//          -> PWM feeds all four BFUs with operand-A/B coefficients.
+//   T+7  : BFU0/1 outputs (rank-s done). For RUN: feed BFU2/3 with rank-s
+//          outputs + delayed inner twiddles (NTT) / delayed outer twiddle
+//          (INTT, broadcast to both).
+//   RUN  : rank-t outputs write back four coefficients at the issue addresses.
+//          On the final inverse pass, four extra modular multipliers scale
+//          those results by N_INV before their tagged memory writeback.
+//
+// Memory model: four conflict-free banks of 64x23 coefficients with
+// synchronous reads. Each bank has one read and one write port.
+//
+// Verified by tb_ntt_core.sv and the full UVM env (tb_uvm/tb_uvm_ntt/).
+// OP_PWM loads its second operand into a separate four-bank memory.
+// ============================================================================
+import ntt_pkg::*;
+
+module ntt_core (
+    input  logic                  clk,
+    input  logic                  rst,
+
+    input  logic                  start_i,
+    input  ntt_op_e               op_i,
+    output logic                  busy_o,
+    output logic                  done_o,
+
+    input  logic                  wr_en_i,
+    input  logic                  wr_b_sel_i,   // 0 = load operand A, 1 = load operand B (PWM)
+    input  logic [LOGN-1:0]       wr_addr_i,
+    input  logic [COEFF_W-1:0]    wr_data_i,
+    input  logic                  rd_en_i,
+    input  logic [LOGN-1:0]       rd_addr_i,
+    output logic [COEFF_W-1:0]    rd_data_o
+);
+
+  // ===========================================================================
+  // Pipeline / timing constants
+  // ===========================================================================
+  localparam int unsigned BF_LAT     = 6;                // butterfly_unit latency
+  localparam int unsigned MEM_LAT    = 2;                // mem-read reg + D1 datapath-input reg
+  localparam int unsigned RUN_LAT    = MEM_LAT + 2*BF_LAT; // = 14, RUN issue -> writeback
+  localparam int unsigned SCL_LAT    = MEM_LAT + BF_LAT;   // = 8, SCALE issue -> writeback
+  localparam int unsigned WB_DEPTH   = RUN_LAT;          // shift-reg length (deepest path)
+  // Adjacent passes can overlap their tails: the earliest tiles of the next
+  // pass already have their previous-pass values. A three-clock gap fails the
+  // reference vectors. A final NTT/PWM/scale drain must instead clear every
+  // pending writeback before done_o tells the caller the result is complete.
+  localparam logic [4:0] INTERPASS_DRAIN = 5'd4;
+  localparam logic [4:0] FINAL_RUN_DRAIN = 5'(RUN_LAT);
+  localparam logic [4:0] FINAL_MUL_DRAIN = 5'(SCL_LAT);
+  localparam logic [4:0] FINAL_INV_DRAIN = 5'(RUN_LAT + 4);
+
+  // ===========================================================================
+  // Coefficient memory : 4 banks x 64 x 23, conflict-free
+  //   bank_mem    holds operand A (NTT input / INTT input / PWM A; PWM writes
+  //               its product result back here)
+  //   bank_mem_b  holds operand B (PWM second operand, read-only during PWM)
+  // The B-banks share the same read-offset routing as the A-banks since PWM
+  // reads identical addresses from both.
+  // ===========================================================================
+  logic [COEFF_W-1:0] bank_mem   [4] [64];
+  logic [COEFF_W-1:0] bank_mem_b [4] [64];
+
+  // Per-bank ports for A (sync 1R + 1W, infers M10K)
+  logic [5:0]         bank_rd_off    [4];
+  logic [COEFF_W-1:0] bank_rd_data   [4];
+  logic [5:0]         bank_wr_off    [4];
+  logic [COEFF_W-1:0] bank_wr_data   [4];
+  logic               bank_wr_en     [4];
+
+  // Per-bank ports for B (sync 1R + 1W; write only used during external load)
+  logic [COEFF_W-1:0] bank_rd_data_b [4];
+  logic [5:0]         bank_b_wr_off  [4];
+  logic [COEFF_W-1:0] bank_b_wr_data [4];
+  logic               bank_b_wr_en   [4];
+
+  // Bank/offset functions (combinational)
+  function automatic logic [1:0] bank_of(input logic [7:0] a);
+    return a[1:0] ^ a[3:2] ^ a[5:4] ^ a[7:6];
+  endfunction
+  function automatic logic [5:0] off_of(input logic [7:0] a);
+    return a[7:2];
+  endfunction
+
+  // One synchronous BRAM per bank (1R + 1W per port)
+  always_ff @(posedge clk) begin
+    for (int b = 0; b < 4; b++) begin
+      if (bank_wr_en  [b]) bank_mem  [b][bank_wr_off  [b]] <= bank_wr_data  [b];
+      if (bank_b_wr_en[b]) bank_mem_b[b][bank_b_wr_off[b]] <= bank_b_wr_data[b];
+      bank_rd_data  [b] <= bank_mem  [b][bank_rd_off[b]];
+      bank_rd_data_b[b] <= bank_mem_b[b][bank_rd_off[b]];
+    end
+  end
+
+  // ===========================================================================
+  // Three twiddle ROMs (synchronous read, 1-cycle latency)
+  // ===========================================================================
+  logic [LOGN-1:0]    tw_a_addr, tw_b_addr, tw_c_addr;
+  logic [COEFF_W-1:0] tw_a, tw_b, tw_c;
+  twiddle_rom u_tw_a (.clk(clk), .addr_i(tw_a_addr), .tw_o(tw_a));
+  twiddle_rom u_tw_b (.clk(clk), .addr_i(tw_b_addr), .tw_o(tw_b));
+  twiddle_rom u_tw_c (.clk(clk), .addr_i(tw_c_addr), .tw_o(tw_c));
+
+  // ===========================================================================
+  // 4 butterfly units: rank-s (BFU0, BFU1)  ->  rank-t (BFU2, BFU3)
+  // ===========================================================================
+  bf_mode_e            bf0_mode, bf1_mode, bf2_mode, bf3_mode;
+  logic [COEFF_W-1:0]  bf0_a_i, bf0_b_i, bf0_z, bf0_a_o, bf0_b_o;
+  logic [COEFF_W-1:0]  bf1_a_i, bf1_b_i, bf1_z, bf1_a_o, bf1_b_o;
+  logic [COEFF_W-1:0]  bf2_a_i, bf2_b_i, bf2_z, bf2_a_o, bf2_b_o;
+  logic [COEFF_W-1:0]  bf3_a_i, bf3_b_i, bf3_z, bf3_a_o, bf3_b_o;
+
+  butterfly_unit u_bf0 (.clk(clk), .rst(rst), .mode_i(bf0_mode),
+                        .a_i(bf0_a_i), .b_i(bf0_b_i), .zeta_i(bf0_z),
+                        .a_o(bf0_a_o), .b_o(bf0_b_o));
+  butterfly_unit u_bf1 (.clk(clk), .rst(rst), .mode_i(bf1_mode),
+                        .a_i(bf1_a_i), .b_i(bf1_b_i), .zeta_i(bf1_z),
+                        .a_o(bf1_a_o), .b_o(bf1_b_o));
+  butterfly_unit u_bf2 (.clk(clk), .rst(rst), .mode_i(bf2_mode),
+                        .a_i(bf2_a_i), .b_i(bf2_b_i), .zeta_i(bf2_z),
+                        .a_o(bf2_a_o), .b_o(bf2_b_o));
+  butterfly_unit u_bf3 (.clk(clk), .rst(rst), .mode_i(bf3_mode),
+                        .a_i(bf3_a_i), .b_i(bf3_b_i), .zeta_i(bf3_z),
+                        .a_o(bf3_a_o), .b_o(bf3_b_o));
+
+  function automatic logic [COEFF_W-1:0] modneg(input logic [COEFF_W-1:0] x);
+    return (x == '0) ? '0 : (COEFF_W'(Q) - x);
+  endfunction
+
+  // ===========================================================================
+  // FSM
+  //   NTT  :  IDLE -> [RUN -> RDRAIN] x 4 -> DONE
+  //   INTT :  IDLE -> [RUN -> RDRAIN] x 4 -> DONE (final writeback scaled)
+  //   PWM  :  IDLE -> PWM -> PDRAIN -> DONE
+  // The old S_SCALE/S_SDRAIN states remain in the enum as an inactive fallback;
+  // normal transitions no longer enter them.
+  // ===========================================================================
+  typedef enum logic [3:0] {
+    S_IDLE, S_RUN, S_RDRAIN, S_SCALE, S_SDRAIN, S_PWM, S_PDRAIN, S_DONE
+  } state_e;
+  state_e       state;
+  ntt_op_e      op_r;
+  logic         fwd;
+  logic [1:0]   pass_r;        // 0..3
+  logic [6:0]   g_outer_r;     // outer-group counter (0..63)
+  logic [6:0]   off_r;         // intra-group offset
+  logic [6:0]   sc_r;          // SCALE / PWM tile counter (0..63)
+  logic [4:0]   drain_cnt;
+  logic         last_pass;     // marks the final pass before SCALE/DONE
+
+  // Per-pass schedule limits (combinational from pass_r and fwd):
+  //   NTT  pass p: L = 128 >> 2p, off_max = L/2,   g_max = 2^(2p)
+  //   INTT pass p: L = 1   << 2p, off_max = L,     g_max = 64 >> 2p
+  //
+  // NB: pass_r is 2 bits but `pass_r << 1` is taken in 2-bit context too --
+  // for pass_r=2,3 the shift overflows and gives the wrong amount. Widen the
+  // shift amounts explicitly via 4-bit signals.
+  logic [3:0] sh2p;    // 0, 2, 4, 6  (= 2 * pass_r)
+  logic [3:0] sh2p1;   // 1, 3, 5, 7  (= 2 * pass_r + 1)
+  assign sh2p  = {2'b0, pass_r} << 1;
+  assign sh2p1 = sh2p + 4'd1;
+
+  logic [8:0] L;
+  logic [6:0] off_max;
+  logic [6:0] g_max;
+  always_comb begin
+    if (fwd) begin
+      L       = 9'd128 >> sh2p;
+      off_max = 7'(L >> 1);
+      g_max   = 7'((9'd1) << sh2p);
+    end else begin
+      L       = (9'd1) << sh2p;
+      off_max = 7'(L);
+      g_max   = 7'(9'd64 >> sh2p);
+    end
+  end
+
+  // ===========================================================================
+  // Address generation  (combinational from pass_r, g_outer_r, off_r, fwd)
+  //
+  // Tile coverage:
+  //   NTT  tile {b, b+L/2, b+L, b+3L/2}   with b = g_outer*2L + off
+  //   INTT tile {b, b+L,   b+2L, b+3L}    with b = g_outer*4L + off
+  //
+  // Twiddle indices (k):
+  //   NTT  k_outer = 2^(2p) + g_outer  (stage 2p, fed to BFU0/1)
+  //        k_inner_l = 2^(2p+1) + 2*g_outer  (stage 2p+1, fed to BFU2)
+  //        k_inner_r = k_inner_l + 1         (stage 2p+1, fed to BFU3)
+  //   INTT k_outer = 256/(2L) - 1 - g_outer  (stage 2p+1, fed to BFU2/3, broadcast)
+  //        k_inner_l = 256/L    - 1 - 2*g_outer  (stage 2p, fed to BFU0)
+  //        k_inner_r = k_inner_l - 1             (stage 2p, fed to BFU1)
+  // ===========================================================================
+  logic [8:0]  a0_idx, a1_idx, a2_idx, a3_idx;
+  logic [8:0]  base_b;
+  logic [LOGN-1:0] k_a, k_b, k_c;
+  logic        issue_run;
+  logic        issue_scale;
+  logic        issue_pwm;
+
+  always_comb begin
+    issue_run   = (state == S_RUN);
+    issue_scale = (state == S_SCALE);
+    issue_pwm   = (state == S_PWM);
+
+    if (issue_scale || issue_pwm) begin
+      // SCALE / PWM : pack 4 coefficients per cycle at {4*sc_r .. 4*sc_r+3}
+      a0_idx = {sc_r, 2'b00};
+      a1_idx = {sc_r, 2'b01};
+      a2_idx = {sc_r, 2'b10};
+      a3_idx = {sc_r, 2'b11};
+      k_a    = '0; k_b = '0; k_c = '0;   // twiddles unused in SCALE/PWM
+      base_b = '0;
+    end else if (fwd) begin
+      // 2L is a power of two. Group and offset occupy disjoint bit fields.
+      base_b = (9'(g_outer_r) << (4'd8 - sh2p)) | 9'(off_r);
+      a0_idx = base_b;
+      a1_idx = base_b | (L >> 1);
+      a2_idx = base_b | L;
+      a3_idx = base_b | L | (L >> 1);
+      k_a    = LOGN'((9'd1 << sh2p)  + 9'(g_outer_r));
+      k_b    = LOGN'((9'd1 << sh2p1) + (9'(g_outer_r) << 1));
+      k_c    = k_b + LOGN'(1);
+    end else begin
+      // 4L is a power of two. These address bits cannot overlap the offset.
+      base_b = (9'(g_outer_r) << (sh2p + 4'd2)) | 9'(off_r);
+      a0_idx = base_b;
+      a1_idx = base_b | L;
+      a2_idx = base_b | (L << 1);
+      a3_idx = base_b | (L << 1) | L;
+      k_b    = LOGN'((9'd256 >> sh2p)  - 9'd1 - (9'(g_outer_r) << 1));
+      k_c    = k_b - LOGN'(1);
+      k_a    = LOGN'((9'd256 >> sh2p1) - 9'd1 - 9'(g_outer_r));
+    end
+
+  end
+
+  // ===========================================================================
+  // A1: REGISTERED address generation  (Fmax fix)
+  // The combinational cone  counters -> group/offset address arithmetic
+  // -> a*_idx -> bank() XOR -> read crossbar -> BRAM read-address port  was the
+  // Fmax-limiting path (~17 ns). Insert one pipeline register here so the deep
+  // address arithmetic is decoupled from the bank-routing / RAM stage.
+  //
+  // Every downstream consumer (twiddle ROM address, read crossbar, bank-index
+  // delay line, writeback shift register, and the v/sc/pw valid flags) now keys
+  // off these REGISTERED versions, so the entire read/compute pipeline shifts
+  // exactly one cycle later relative to the FSM counters. All *relative*
+  // alignments are preserved -> RUN_LAT / SCL_LAT / WB_DEPTH are
+  // unchanged. The registered issue_*_r flags carry the "valid tile" marker
+  // forward, so a tile issued in the last S_RUN cycle is still processed after
+  // the FSM has moved to S_RDRAIN. Cost: +1 cycle total latency.
+  // ===========================================================================
+  logic [8:0]      a0_idx_r, a1_idx_r, a2_idx_r, a3_idx_r;
+  logic [LOGN-1:0] k_a_r, k_b_r, k_c_r;
+  logic            issue_run_r, issue_scale_r, issue_pwm_r;
+  logic            inv_final_r;
+  logic            fwd_r;
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      a0_idx_r <= '0; a1_idx_r <= '0; a2_idx_r <= '0; a3_idx_r <= '0;
+      k_a_r <= '0; k_b_r <= '0; k_c_r <= '0;
+      issue_run_r <= 1'b0; issue_scale_r <= 1'b0; issue_pwm_r <= 1'b0;
+      inv_final_r <= 1'b0;
+      fwd_r <= 1'b1;
+    end else begin
+      a0_idx_r <= a0_idx; a1_idx_r <= a1_idx; a2_idx_r <= a2_idx; a3_idx_r <= a3_idx;
+      k_a_r <= k_a; k_b_r <= k_b; k_c_r <= k_c;
+      issue_run_r <= issue_run; issue_scale_r <= issue_scale; issue_pwm_r <= issue_pwm;
+      inv_final_r <= issue_run && !fwd && pass_r == 2'd3;
+      fwd_r <= fwd;
+    end
+  end
+
+  // Twiddle ROM addresses come from the registered indices (1-cycle later).
+  assign tw_a_addr = k_a_r;
+  assign tw_b_addr = k_b_r;
+  assign tw_c_addr = k_c_r;
+
+  // ===========================================================================
+  // Stage-1 routing : bank reads -> logical positions m_r0..3
+  //   issue at T   -> bank_rd_off populated combinationally
+  //   posedge T    -> bank_rd_data sampled (sync BRAM, 1-cycle latency)
+  //   cycle T+1    -> m_r[i] = bank_rd_data[bank_of(a_i)@T] via bank_a*_dly
+  // tw_a/b/c become valid at T+1 directly from the sync ROMs.
+  // ===========================================================================
+  logic [COEFF_W-1:0] m_r0,  m_r1,  m_r2,  m_r3;     // A-bank reads, routed
+  logic [COEFF_W-1:0] mb_r0, mb_r1, mb_r2, mb_r3;    // B-bank reads, routed (PWM)
+  logic               v_s1, sc_s1, pw_s1;
+  logic [1:0]         bank_a0_dly, bank_a1_dly, bank_a2_dly, bank_a3_dly;
+  logic [5:0]         ext_rd_off_hold;
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) ext_rd_off_hold <= '0;
+    else if (rd_en_i && state == S_IDLE) ext_rd_off_hold <= off_of(rd_addr_i);
+  end
+
+  // Route the 4 tile read addresses to the 4 (guaranteed-distinct) banks.
+  // While idle, keep the last external offset on every read port. The RAM
+  // outputs must remain stable when the downstream receiver stalls in TX.
+  always_comb begin
+    if (state == S_IDLE) begin
+      for (int b = 0; b < 4; b++) bank_rd_off[b] = ext_rd_off_hold;
+      if (rd_en_i) bank_rd_off[bank_of(rd_addr_i)] = off_of(rd_addr_i);
+    end else begin
+      for (int b = 0; b < 4; b++) bank_rd_off[b] = 6'd0;
+      bank_rd_off[bank_of(a0_idx_r[7:0])] = off_of(a0_idx_r[7:0]);
+      bank_rd_off[bank_of(a1_idx_r[7:0])] = off_of(a1_idx_r[7:0]);
+      bank_rd_off[bank_of(a2_idx_r[7:0])] = off_of(a2_idx_r[7:0]);
+      bank_rd_off[bank_of(a3_idx_r[7:0])] = off_of(a3_idx_r[7:0]);
+    end
+  end
+
+  // Delay the 4 bank indices by 1 cycle to align with the sync read data.
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      bank_a0_dly <= '0; bank_a1_dly <= '0;
+      bank_a2_dly <= '0; bank_a3_dly <= '0;
+      v_s1 <= 1'b0; sc_s1 <= 1'b0; pw_s1 <= 1'b0;
+    end else begin
+      bank_a0_dly <= bank_of(a0_idx_r[7:0]);
+      bank_a1_dly <= bank_of(a1_idx_r[7:0]);
+      bank_a2_dly <= bank_of(a2_idx_r[7:0]);
+      bank_a3_dly <= bank_of(a3_idx_r[7:0]);
+      v_s1        <= issue_run_r || issue_scale_r || issue_pwm_r;
+      sc_s1       <= issue_scale_r;
+      pw_s1       <= issue_pwm_r;
+    end
+  end
+
+  always_comb begin
+    m_r0  = bank_rd_data  [bank_a0_dly];
+    m_r1  = bank_rd_data  [bank_a1_dly];
+    m_r2  = bank_rd_data  [bank_a2_dly];
+    m_r3  = bank_rd_data  [bank_a3_dly];
+    mb_r0 = bank_rd_data_b[bank_a0_dly];
+    mb_r1 = bank_rd_data_b[bank_a1_dly];
+    mb_r2 = bank_rd_data_b[bank_a2_dly];
+    mb_r3 = bank_rd_data_b[bank_a3_dly];
+  end
+
+  // ===========================================================================
+  // D1: REGISTERED datapath inputs  (Fmax fix #2)
+  // After A1 the worst path was: BRAM read -> m_r crossbar mux -> BFU input mux
+  // -> modular subtract -> 23x23 multiply -> mod_mul prod_s1, all in one cycle
+  // (~14.5 ns). Register the routed read data + twiddles + valid flags here so
+  // the RAM-access + crossbar land in one stage and the BFU-mux + msub + multiply
+  // in the next. Twiddles and v/sc/pw are delayed one matching cycle so the
+  // rank-s feed stays aligned; the BF_LAT delay lines (driving rank-t) are
+  // seeded from these delayed versions. MEM_LAT 1->2 propagates to RUN_LAT/
+  // SCL_LAT/WB_DEPTH. +1 cycle latency.
+  // ===========================================================================
+  logic [COEFF_W-1:0] m_r0_r, m_r1_r, m_r2_r, m_r3_r;
+  logic [COEFF_W-1:0] mb_r0_r, mb_r1_r, mb_r2_r, mb_r3_r;
+  logic [COEFF_W-1:0] tw_a_d, tw_b_d, tw_c_d;
+  logic               v_s2, sc_s2, pw_s2;
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      m_r0_r <= '0; m_r1_r <= '0; m_r2_r <= '0; m_r3_r <= '0;
+      mb_r0_r <= '0; mb_r1_r <= '0; mb_r2_r <= '0; mb_r3_r <= '0;
+      tw_a_d <= '0; tw_b_d <= '0; tw_c_d <= '0;
+      v_s2 <= 1'b0; sc_s2 <= 1'b0; pw_s2 <= 1'b0;
+    end else begin
+      m_r0_r <= m_r0; m_r1_r <= m_r1; m_r2_r <= m_r2; m_r3_r <= m_r3;
+      mb_r0_r <= mb_r0; mb_r1_r <= mb_r1; mb_r2_r <= mb_r2; mb_r3_r <= mb_r3;
+      tw_a_d <= tw_a; tw_b_d <= tw_b; tw_c_d <= tw_c;
+      v_s2 <= v_s1; sc_s2 <= sc_s1; pw_s2 <= pw_s1;
+    end
+  end
+
+  // ===========================================================================
+  // BF_LAT-deep delay line for the 3 twiddles + valid + sc flag.
+  // These are needed BF_LAT cycles after stage-s feed to drive the rank-t
+  // inputs (only relevant for RUN; SCALE feeds rank-t directly at T+1).
+  // ===========================================================================
+  logic [COEFF_W-1:0] twa_dly [BF_LAT];
+  logic [COEFF_W-1:0] twb_dly [BF_LAT];
+  logic [COEFF_W-1:0] twc_dly [BF_LAT];
+  logic               vt_dly  [BF_LAT];
+  logic               sct_dly [BF_LAT];
+  logic               pwt_dly [BF_LAT];
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      for (int i = 0; i < BF_LAT; i++) begin
+        twa_dly[i] <= '0; twb_dly[i] <= '0; twc_dly[i] <= '0;
+        vt_dly[i]  <= 1'b0; sct_dly[i] <= 1'b0; pwt_dly[i] <= 1'b0;
+      end
+    end else begin
+      twa_dly[0] <= tw_a_d;
+      twb_dly[0] <= tw_b_d;
+      twc_dly[0] <= tw_c_d;
+      vt_dly [0] <= v_s2;
+      sct_dly[0] <= sc_s2;
+      pwt_dly[0] <= pw_s2;
+      for (int i = 1; i < BF_LAT; i++) begin
+        twa_dly[i] <= twa_dly[i-1];
+        twb_dly[i] <= twb_dly[i-1];
+        twc_dly[i] <= twc_dly[i-1];
+        vt_dly [i] <= vt_dly [i-1];
+        sct_dly[i] <= sct_dly[i-1];
+        pwt_dly[i] <= pwt_dly[i-1];
+      end
+    end
+  end
+
+  // ===========================================================================
+  // BFU input mux (combinational)
+  //   BFU0/1 fed at stage-1 cycle (T+1) -- RUN or SCALE
+  //   BFU2/3 fed at SCALE: same cycle (T+1) with m_r2/m_r3, N_INV
+  //          fed at RUN  : T+5, with BFU0/1 outputs + delayed inner/outer tw
+  // ===========================================================================
+  logic vt_tail, sct_tail, pwt_tail;
+  assign vt_tail  = vt_dly [BF_LAT-1];
+  assign sct_tail = sct_dly[BF_LAT-1];
+  assign pwt_tail = pwt_dly[BF_LAT-1];
+
+  always_comb begin
+    // ---- rank-s (BFU0, BFU1) -------------------------------------------------
+    if (sc_s2) begin
+      // SCALE: multiply each mem coeff by N_INV (CT with a=0 -> a_o = b*z)
+      bf0_mode = BF_CT;   bf1_mode = BF_CT;
+      bf0_a_i  = '0;      bf0_b_i  = m_r0_r; bf0_z = COEFF_W'(N_INV);
+      bf1_a_i  = '0;      bf1_b_i  = m_r1_r; bf1_z = COEFF_W'(N_INV);
+    end else if (pw_s2) begin
+      // PWM: c[i] = A[i] * B[i]  (CT with a=0 -> a_o = m_r * mb_r)
+      bf0_mode = BF_CT;   bf1_mode = BF_CT;
+      bf0_a_i  = '0;      bf0_b_i  = m_r0_r; bf0_z = mb_r0_r;
+      bf1_a_i  = '0;      bf1_b_i  = m_r1_r; bf1_z = mb_r1_r;
+    end else if (fwd) begin
+      // NTT stage 2p (CT): pairs (b,b+L) and (b+L/2, b+3L/2); same outer tw
+      bf0_mode = BF_CT;   bf1_mode = BF_CT;
+      bf0_a_i  = m_r0_r;  bf0_b_i  = m_r2_r; bf0_z = tw_a_d;
+      bf1_a_i  = m_r1_r;  bf1_b_i  = m_r3_r; bf1_z = tw_a_d;
+    end else begin
+      // INTT stage 2p (GS): pairs (b,b+L) and (b+2L,b+3L); two inner tw
+      bf0_mode = BF_GS;   bf1_mode = BF_GS;
+      bf0_a_i  = m_r0_r;  bf0_b_i  = m_r1_r; bf0_z = modneg(tw_b_d);
+      bf1_a_i  = m_r2_r;  bf1_b_i  = m_r3_r; bf1_z = modneg(tw_c_d);
+    end
+
+    // ---- rank-t (BFU2, BFU3) -------------------------------------------------
+    if (sc_s2) begin
+      // SCALE: BFU2/3 also do multiply-by-N_INV on m_r2/m_r3
+      bf2_mode = BF_CT;   bf3_mode = BF_CT;
+      bf2_a_i  = '0;      bf2_b_i  = m_r2_r; bf2_z = COEFF_W'(N_INV);
+      bf3_a_i  = '0;      bf3_b_i  = m_r3_r; bf3_z = COEFF_W'(N_INV);
+    end else if (pw_s2) begin
+      // PWM: BFU2/3 do the same pointwise multiply on m_r2/m_r3 with mb_r2/3
+      bf2_mode = BF_CT;   bf3_mode = BF_CT;
+      bf2_a_i  = '0;      bf2_b_i  = m_r2_r; bf2_z = mb_r2_r;
+      bf3_a_i  = '0;      bf3_b_i  = m_r3_r; bf3_z = mb_r3_r;
+    end else if (vt_tail && !sct_tail && !pwt_tail) begin
+      // RUN stage 2p+1 : rank-s outputs feed rank-s+1 (intra-tile forwarding)
+      bf2_mode = fwd ? BF_CT : BF_GS;
+      bf3_mode = fwd ? BF_CT : BF_GS;
+      bf2_a_i  = bf0_a_o; bf2_b_i = bf1_a_o;
+      bf3_a_i  = bf0_b_o; bf3_b_i = bf1_b_o;
+      if (fwd) begin
+        bf2_z = twb_dly[BF_LAT-1];        // inner left tw
+        bf3_z = twc_dly[BF_LAT-1];        // inner right tw
+      end else begin
+        bf2_z = modneg(twa_dly[BF_LAT-1]);// outer tw, broadcast (negated for GS)
+        bf3_z = modneg(twa_dly[BF_LAT-1]);
+      end
+    end else begin
+      bf2_mode = BF_CT;   bf3_mode = BF_CT;
+      bf2_a_i  = '0;      bf2_b_i = '0;   bf2_z = '0;
+      bf3_a_i  = '0;      bf3_b_i = '0;   bf3_z = '0;
+    end
+  end
+
+  // ===========================================================================
+  // Writeback shift register : addresses + flags travel alongside the pipeline
+  // so the BFU outputs land at the correct mem indices.
+  //   stage 0 = stage-1 feed (issue+1)
+  //   stage 7  = SCALE writeback  (issue+8)
+  //   stage 13 = RUN   writeback  (issue+14)
+  // ===========================================================================
+  typedef struct packed {
+    logic [8:0]   a0, a1, a2, a3;
+    // Bank IDs are computed beside issue, then carried with the addresses.
+    // This removes the bank XOR from the writeback-memory timing path.
+    logic [1:0]   bank0, bank1, bank2, bank3;
+    logic         v;
+    logic         sc;        // SCALE writeback (4 from BFU0..3 a_o at SCL_LAT)
+    logic         pw;        // PWM   writeback (same depth as SCALE)
+    logic         inv_final; // final inverse pass: scale results before write
+    logic         fwd;
+  } wb_entry_t;
+
+  wb_entry_t wb [WB_DEPTH];
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      for (int i = 0; i < WB_DEPTH; i++) begin
+        wb[i] <= '{default:'0};
+      end
+    end else begin
+      wb[0].a0  <= a0_idx_r; wb[0].a1 <= a1_idx_r;
+      wb[0].a2  <= a2_idx_r; wb[0].a3 <= a3_idx_r;
+      wb[0].bank0 <= bank_of(a0_idx_r[7:0]);
+      wb[0].bank1 <= bank_of(a1_idx_r[7:0]);
+      wb[0].bank2 <= bank_of(a2_idx_r[7:0]);
+      wb[0].bank3 <= bank_of(a3_idx_r[7:0]);
+      wb[0].v   <= issue_run_r || issue_scale_r || issue_pwm_r;
+      wb[0].sc  <= issue_scale_r;
+      wb[0].pw  <= issue_pwm_r;
+      wb[0].inv_final <= inv_final_r;
+      wb[0].fwd <= fwd_r;
+      for (int i = 1; i < WB_DEPTH; i++) wb[i] <= wb[i-1];
+    end
+  end
+
+  // ===========================================================================
+  // Memory write : drive the 4 bank write ports via the bank crossbar.
+  //   - external load (S_IDLE only) : single coefficient via wr_en_i
+  //   - SCALE writeback             : 4 coeffs from BFU0..3 a_o    at wb[SCL_LAT-1]
+  //   - RUN   writeback             : 4 coeffs from rank-t outputs at wb[RUN_LAT-1]
+  // These three are mutually exclusive in the FSM. Each tile's 4 target
+  // addresses land in 4 distinct banks (bank() XOR property).
+  // ===========================================================================
+  wb_entry_t scl_tail, run_tail;
+  assign scl_tail = wb[SCL_LAT-1];
+  assign run_tail = wb[RUN_LAT-1];
+
+  logic [COEFF_W-1:0] wd0, wd1, wd2, wd3;   // RUN writeback values per a0..a3
+  logic [COEFF_W-1:0] inv_wd0, inv_wd1, inv_wd2, inv_wd3;
+  wb_entry_t inv_scale_wb [4];
+
+  // Four extra lanes normalize the four coefficients of each final inverse
+  // tile while subsequent tiles are processed. This replaces the 64-tile
+  // memory reread/SCALE pass. Address tags follow the four-cycle multipliers.
+  mod_mul u_inv_scale0 (.clk(clk), .rst(rst), .a_i(wd0), .b_i(COEFF_W'(N_INV)), .r_o(inv_wd0));
+  mod_mul u_inv_scale1 (.clk(clk), .rst(rst), .a_i(wd1), .b_i(COEFF_W'(N_INV)), .r_o(inv_wd1));
+  mod_mul u_inv_scale2 (.clk(clk), .rst(rst), .a_i(wd2), .b_i(COEFF_W'(N_INV)), .r_o(inv_wd2));
+  mod_mul u_inv_scale3 (.clk(clk), .rst(rst), .a_i(wd3), .b_i(COEFF_W'(N_INV)), .r_o(inv_wd3));
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      for (int i = 0; i < 4; i++) inv_scale_wb[i] <= '{default:'0};
+    end else begin
+      inv_scale_wb[0] <= run_tail;
+      for (int i = 1; i < 4; i++) inv_scale_wb[i] <= inv_scale_wb[i-1];
+    end
+  end
+  always_comb begin
+    if (run_tail.fwd) begin
+      // NTT  : {b, b+L/2, b+L, b+3L/2}  <-  {bf2.a, bf2.b, bf3.a, bf3.b}
+      wd0 = bf2_a_o; wd1 = bf2_b_o; wd2 = bf3_a_o; wd3 = bf3_b_o;
+    end else begin
+      // INTT : {b, b+L, b+2L, b+3L}    <-  {bf2.a, bf3.a, bf2.b, bf3.b}
+      wd0 = bf2_a_o; wd1 = bf3_a_o; wd2 = bf2_b_o; wd3 = bf3_b_o;
+    end
+  end
+
+  always_comb begin
+    for (int b = 0; b < 4; b++) begin
+      bank_wr_en    [b] = 1'b0;
+      bank_wr_off   [b] = 6'd0;
+      bank_wr_data  [b] = '0;
+      bank_b_wr_en  [b] = 1'b0;
+      bank_b_wr_off [b] = 6'd0;
+      bank_b_wr_data[b] = '0;
+    end
+    // External load (S_IDLE only): operand A or operand B depending on wr_b_sel_i.
+    if (wr_en_i && state == S_IDLE) begin
+      if (!wr_b_sel_i) begin
+        bank_wr_en  [bank_of(wr_addr_i)] = 1'b1;
+        bank_wr_off [bank_of(wr_addr_i)] = off_of(wr_addr_i);
+        bank_wr_data[bank_of(wr_addr_i)] = wr_data_i;
+      end else begin
+        bank_b_wr_en  [bank_of(wr_addr_i)] = 1'b1;
+        bank_b_wr_off [bank_of(wr_addr_i)] = off_of(wr_addr_i);
+        bank_b_wr_data[bank_of(wr_addr_i)] = wr_data_i;
+      end
+    end
+    // SCALE / PWM writeback (same pipeline depth, 4 BFU.a_o values).
+    if (scl_tail.v && (scl_tail.sc || scl_tail.pw)) begin
+      bank_wr_en  [scl_tail.bank0] = 1'b1;
+      bank_wr_off [scl_tail.bank0] = off_of(scl_tail.a0[7:0]);
+      bank_wr_data[scl_tail.bank0] = bf0_a_o;
+      bank_wr_en  [scl_tail.bank1] = 1'b1;
+      bank_wr_off [scl_tail.bank1] = off_of(scl_tail.a1[7:0]);
+      bank_wr_data[scl_tail.bank1] = bf1_a_o;
+      bank_wr_en  [scl_tail.bank2] = 1'b1;
+      bank_wr_off [scl_tail.bank2] = off_of(scl_tail.a2[7:0]);
+      bank_wr_data[scl_tail.bank2] = bf2_a_o;
+      bank_wr_en  [scl_tail.bank3] = 1'b1;
+      bank_wr_off [scl_tail.bank3] = off_of(scl_tail.a3[7:0]);
+      bank_wr_data[scl_tail.bank3] = bf3_a_o;
+    end
+    // RUN writeback (tile rank-t outputs).
+    if (run_tail.v && !run_tail.sc && !run_tail.pw && !run_tail.inv_final) begin
+      bank_wr_en  [run_tail.bank0] = 1'b1;
+      bank_wr_off [run_tail.bank0] = off_of(run_tail.a0[7:0]);
+      bank_wr_data[run_tail.bank0] = wd0;
+      bank_wr_en  [run_tail.bank1] = 1'b1;
+      bank_wr_off [run_tail.bank1] = off_of(run_tail.a1[7:0]);
+      bank_wr_data[run_tail.bank1] = wd1;
+      bank_wr_en  [run_tail.bank2] = 1'b1;
+      bank_wr_off [run_tail.bank2] = off_of(run_tail.a2[7:0]);
+      bank_wr_data[run_tail.bank2] = wd2;
+      bank_wr_en  [run_tail.bank3] = 1'b1;
+      bank_wr_off [run_tail.bank3] = off_of(run_tail.a3[7:0]);
+      bank_wr_data[run_tail.bank3] = wd3;
+    end
+    if (inv_scale_wb[3].v && inv_scale_wb[3].inv_final) begin
+      bank_wr_en  [inv_scale_wb[3].bank0] = 1'b1;
+      bank_wr_off [inv_scale_wb[3].bank0] = off_of(inv_scale_wb[3].a0[7:0]);
+      bank_wr_data[inv_scale_wb[3].bank0] = inv_wd0;
+      bank_wr_en  [inv_scale_wb[3].bank1] = 1'b1;
+      bank_wr_off [inv_scale_wb[3].bank1] = off_of(inv_scale_wb[3].a1[7:0]);
+      bank_wr_data[inv_scale_wb[3].bank1] = inv_wd1;
+      bank_wr_en  [inv_scale_wb[3].bank2] = 1'b1;
+      bank_wr_off [inv_scale_wb[3].bank2] = off_of(inv_scale_wb[3].a2[7:0]);
+      bank_wr_data[inv_scale_wb[3].bank2] = inv_wd2;
+      bank_wr_en  [inv_scale_wb[3].bank3] = 1'b1;
+      bank_wr_off [inv_scale_wb[3].bank3] = off_of(inv_scale_wb[3].a3[7:0]);
+      bank_wr_data[inv_scale_wb[3].bank3] = inv_wd3;
+    end
+  end
+
+  // ===========================================================================
+  // External read port : route via the delayed bank index.
+  // rd_en_i high at T  ->  bank read returns at T+1  ->  rd_data_o = that bank.
+  // ===========================================================================
+  logic [1:0] rd_bank_dly;
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst)            rd_bank_dly <= '0;
+    else if (rd_en_i)   rd_bank_dly <= bank_of(rd_addr_i);
+  end
+  assign rd_data_o = bank_rd_data[rd_bank_dly];
+
+
+  // ===========================================================================
+  // FSM
+  // ===========================================================================
+  logic last_in_pass;
+  always_comb begin
+    last_in_pass = (off_r == off_max - 7'd1) && (g_outer_r == g_max - 7'd1);
+  end
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      state     <= S_IDLE;
+      busy_o    <= 1'b0;
+      done_o    <= 1'b0;
+      op_r      <= OP_NTT;
+      fwd       <= 1'b1;
+      pass_r    <= '0;
+      g_outer_r <= '0;
+      off_r     <= '0;
+      sc_r      <= '0;
+      drain_cnt <= '0;
+      last_pass <= 1'b0;
+    end else begin
+      done_o <= 1'b0;
+      case (state)
+
+        // ----- wait for a start pulse --------------------------------------
+        S_IDLE: begin
+          if (start_i) begin
+            op_r      <= op_i;
+            busy_o    <= 1'b1;
+            fwd       <= (op_i != OP_INTT);
+            pass_r    <= '0;
+            g_outer_r <= '0;
+            off_r     <= '0;
+            sc_r      <= '0;
+            last_pass <= 1'b0;
+            state     <= (op_i == OP_PWM) ? S_PWM : S_RUN;
+          end
+        end
+
+        // ----- issue one tile per cycle ------------------------------------
+        S_RUN: begin
+          if (!last_in_pass) begin
+            if (off_r == off_max - 7'd1) begin
+              off_r     <= '0;
+              g_outer_r <= g_outer_r + 7'd1;
+            end else begin
+              off_r <= off_r + 7'd1;
+            end
+          end else begin
+            // last tile of this pass issued -- go to drain
+            off_r     <= '0;
+            g_outer_r <= '0;
+            drain_cnt <= '0;
+            if (pass_r == 2'd3) last_pass <= 1'b1;
+            state     <= S_RDRAIN;
+          end
+        end
+
+        // ----- overlap safe pass tails; wait for all writes before NTT done -----
+        S_RDRAIN: begin
+          if (drain_cnt == ((last_pass && op_r == OP_NTT) ? FINAL_RUN_DRAIN :
+                            (last_pass && op_r == OP_INTT) ? FINAL_INV_DRAIN :
+                            INTERPASS_DRAIN) - 5'd1) begin
+            if (!last_pass) begin
+              pass_r <= pass_r + 2'd1;
+              state  <= S_RUN;
+            end else begin
+              state <= S_DONE;
+            end
+          end else begin
+            drain_cnt <= drain_cnt + 5'd1;
+          end
+        end
+
+        // ----- INTT SCALE pass : 4 coeffs/cycle x N_INV --------------------
+        S_SCALE: begin
+          if (sc_r == 7'd63) begin
+            drain_cnt <= '0;
+            state     <= S_SDRAIN;
+          end else begin
+            sc_r <= sc_r + 7'd1;
+          end
+        end
+
+        S_SDRAIN: begin
+          if (drain_cnt == FINAL_MUL_DRAIN - 5'd1) state <= S_DONE;
+          else                                    drain_cnt <= drain_cnt + 5'd1;
+        end
+
+        // ----- PWM pass : 4 coeffs/cycle, c[i] = A[i]*B[i] mod q -----------
+        S_PWM: begin
+          if (sc_r == 7'd63) begin
+            drain_cnt <= '0;
+            state     <= S_PDRAIN;
+          end else begin
+            sc_r <= sc_r + 7'd1;
+          end
+        end
+
+        S_PDRAIN: begin
+          if (drain_cnt == FINAL_MUL_DRAIN - 5'd1) state <= S_DONE;
+          else                                    drain_cnt <= drain_cnt + 5'd1;
+        end
+
+        // ----- done : single-cycle pulse, then back to IDLE ----------------
+        S_DONE: begin
+          busy_o <= 1'b0;
+          done_o <= 1'b1;
+          state  <= S_IDLE;
+        end
+
+        default: state <= S_IDLE;
+      endcase
+    end
+  end
+
+endmodule : ntt_core

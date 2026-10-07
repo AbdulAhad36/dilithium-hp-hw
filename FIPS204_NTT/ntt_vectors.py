@@ -231,9 +231,9 @@ def read_outputs(path: Path) -> list[tuple[str, str, list[int]]]:
     return result
 
 
-def compare() -> int:
+def compare(observed_path: Path = OBSERVED) -> int:
     expected = read_outputs(EXPECTED)
-    observed = read_outputs(OBSERVED)
+    observed = read_outputs(observed_path)
     if len(observed) != len(expected):
         print(f"NTT COMPARE FAIL: expected {len(expected)} cases, got {len(observed)}")
         return 1
@@ -262,12 +262,14 @@ def compare() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("prepare", "compare"))
-    command = parser.parse_args().command
-    if command == "prepare":
+    parser.add_argument("--observed", type=Path, default=OBSERVED,
+                        help="captured DUT output file (default: sim/ntt_dut_outputs.txt)")
+    args = parser.parse_args()
+    if args.command == "prepare":
         prepare()
         return 0
     try:
-        return compare()
+        return compare(args.observed)
     except (OSError, ValueError) as exc:
         print(f"NTT COMPARE FAIL: {exc}")
         return 1

@@ -22,12 +22,12 @@
 //     --fold-->  < 2q     (hi is a single bit)
 //     --(>=q ? -q)-->  [0, q)
 //
-// Latency: 3 clock cycles (LAT) -- UNCHANGED from the Barrett version, so the
-// butterfly_unit / ntt_core pipeline constants are untouched. Fully pipelined:
+// Latency: 4 clock cycles (LAT). Fully pipelined:
 // accepts a new pair every cycle, `r_o` valid LAT cycles after the inputs.
 //   Stage 1 : prod = a*b                (the only multiply)
 //   Stage 2 : folds 1 and 2             (shift-add)
-//   Stage 3 : folds 3 and 4 + cond. sub (shift-add)
+//   Stage 3 : fold 3                    (shift-add)
+//   Stage 4 : fold 4 + cond. sub        (shift-add)
 // ============================================================================
 import ntt_pkg::*;
 
@@ -39,7 +39,7 @@ module mod_mul (
     output logic [COEFF_W-1:0]  r_o
 );
 
-  localparam int unsigned LAT = 3;
+  localparam int unsigned LAT = 4;
 
   // ---- Stage 1 : 23 x 23 -> 46-bit product (the ONLY multiply) ------------
   logic [PROD_W-1:0] prod_s1;
@@ -75,14 +75,22 @@ module mod_mul (
     else     t2_q <= s2_t2[27:0];
   end
 
-  // ---- Stage 3 : folds 3 + 4, then one conditional subtract -> [0, q) -----
-  logic [37:0] s3_t3, s3_t4;
+  // ---- Stage 3 : fold 3 -> < 2^24 ------------------------------------------
+  logic [37:0] s3_t3;
+  logic [23:0] t3_q;
+  always_comb s3_t3 = fold(46'(t2_q));
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) t3_q <= '0;
+    else     t3_q <= s3_t3[23:0];
+  end
+
+  // ---- Stage 4 : fold 4 + conditional subtract -> [0, q) ------------------
+  logic [37:0] s4_t4;
   logic [23:0] t4;
 
   always_comb begin
-    s3_t3 = fold(46'(t2_q));            // < 2^24
-    s3_t4 = fold(46'(s3_t3));           // < 2q  (hi is a single bit)
-    t4    = s3_t4[23:0];
+    s4_t4 = fold(46'(t3_q));            // < 2q  (hi is a single bit)
+    t4    = s4_t4[23:0];
   end
 
   always_ff @(posedge clk or posedge rst) begin

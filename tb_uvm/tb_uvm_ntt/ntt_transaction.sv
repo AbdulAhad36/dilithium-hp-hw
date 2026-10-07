@@ -10,7 +10,8 @@
 // ============================================================================
 
 // Stimulus class -- used by the coverage model.
-typedef enum { IK_ZERO, IK_MAX, IK_DELTA, IK_RANDOM } in_kind_e;
+typedef enum { IK_ZERO, IK_MAX, IK_DELTA, IK_RANDOM,
+               IK_PRE_BOUNDARY, IK_ETA2, IK_ETA4 } in_kind_e;
 
 class ntt_transaction extends uvm_sequence_item;
     `uvm_object_utils(ntt_transaction)
@@ -23,6 +24,8 @@ class ntt_transaction extends uvm_sequence_item;
     poly_t      in_poly_b;     // input polynomial   B (only used for OP_PWM)
     poly_t      exp_poly;      // golden output       (from ntt_ref_pkg)
     poly_t      obs_poly;      // observed output     (filled by the monitor)
+    int         observed_count; // accepted output beats, not merely allocated entries
+    bit         output_framing_ok; // m_tlast only on accepted coefficient 255
 
     function new(string name = "ntt_transaction");
         super.new(name);

@@ -14,12 +14,55 @@ module tb_ntt_vectors;
   longint unsigned cycles = 0;
   always @(posedge clk) cycles <= cycles + 1;
   longint unsigned core_launch_cycle;
+  int run_cycles, run_drain_cycles, scale_cycles, scale_drain_cycles;
+  int pwm_cycles, pwm_drain_cycles, other_cycles;
   always @(posedge clk) begin
     if (!rst) begin
-      if (dut.core_start) core_launch_cycle = cycles;
-      if (dut.core_done)
+      if (dut.u_core.run_tail.v && !dut.u_core.run_tail.sc &&
+          !dut.u_core.run_tail.pw && dut.u_core.scl_tail.v &&
+          (dut.u_core.scl_tail.sc || dut.u_core.scl_tail.pw))
+        $fatal(1, "simultaneous RUN and SCALE/PWM writeback");
+      if (dut.u_core.inv_scale_wb[3].v && dut.u_core.inv_scale_wb[3].inv_final &&
+          dut.u_core.run_tail.v && !dut.u_core.run_tail.inv_final &&
+          !dut.u_core.run_tail.sc && !dut.u_core.run_tail.pw)
+        $fatal(1, "simultaneous RUN and inverse-scale writeback");
+      if (dut.core_start) begin
+        core_launch_cycle = cycles;
+        run_cycles = 0;
+        run_drain_cycles = 0;
+        scale_cycles = 0;
+        scale_drain_cycles = 0;
+        pwm_cycles = 0;
+        pwm_drain_cycles = 0;
+        other_cycles = 0;
+      end else if (dut.core_busy || dut.core_done) begin
+        case (dut.u_core.state.name())
+          "S_RUN":    run_cycles++;
+          "S_RDRAIN": run_drain_cycles++;
+          "S_SCALE":  scale_cycles++;
+          "S_SDRAIN":scale_drain_cycles++;
+          "S_PWM":    pwm_cycles++;
+          "S_PDRAIN":pwm_drain_cycles++;
+          default:    other_cycles++;
+        endcase
+      end
+      if (dut.core_done) begin
+        for (int i = 0; i < dut.u_core.WB_DEPTH; i++) begin
+          if (dut.u_core.wb[i].v &&
+              ((!dut.u_core.wb[i].sc && !dut.u_core.wb[i].pw) ||
+               (i < dut.u_core.SCL_LAT)))
+            $fatal(1, "core_done with pending writeback at pipeline slot %0d", i);
+        end
+        for (int i = 0; i < 4; i++) begin
+          if (dut.u_core.inv_scale_wb[i].v && dut.u_core.inv_scale_wb[i].inv_final)
+            $fatal(1, "core_done with pending inverse-scale writeback at slot %0d", i);
+        end
         $display("NTT_VECTOR_CORE_LATENCY operation=%s cycles=%0d",
                  dut.op_r.name(), cycles - core_launch_cycle);
+        $display("NTT_VECTOR_PHASES operation=%s run=%0d run_drain=%0d scale=%0d scale_drain=%0d pwm=%0d pwm_drain=%0d other=%0d",
+                 dut.op_r.name(), run_cycles, run_drain_cycles, scale_cycles,
+                 scale_drain_cycles, pwm_cycles, pwm_drain_cycles, other_cycles);
+      end
     end
   end
   ntt_engine dut (

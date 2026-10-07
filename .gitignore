@@ -9,6 +9,13 @@ sim/*.ucdb
 sim/ntt_dut_outputs.txt
 sim/ntt_stage1_*.log
 sim/ntt_stage2_*.log
+sim/*.log
+sim/*_transcript.log
+sim/ntt_*_work/
+sim/cyclonev_sim_libs*/
+sim/post_*_gate_work*/
+sim/nist_shake_dut_outputs.txt
+sim/dual_interleaved_coverage.txt
 __pycache__/
 sim/*.vcd
 *.vcd
@@ -36,6 +43,13 @@ quartus/*.ttf
 quartus/*.cdf
 quartus/*.qws
 quartus/*.bak
+quartus/dual_interleaved/db/
+quartus/dual_interleaved/incremental_db/
+quartus/dual_interleaved/output_files/
+quartus/dual_interleaved/simulation_postfit/
+quartus/dual_interleaved/simulation_postsynth/
+quartus/dual_interleaved/critical_paths/
+quartus/dual_interleaved/c5_pin_model_dump.txt
 
 # Claude Code local state (track CLAUDE.md; ignore everything else)
 .claude/*
@@ -50,3 +64,6 @@ Thumbs.db
 # Word temp / lock files
 docs/~$*.docx
 docs/~$*.doc
+**/~$*.docx
+**/~$*.doc
+wlft*

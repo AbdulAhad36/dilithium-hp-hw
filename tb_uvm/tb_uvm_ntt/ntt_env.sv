@@ -26,8 +26,8 @@ class ntt_env extends uvm_env;
     function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
         agent.driver.drv_ap.connect(scoreboard.exp_fifo.analysis_export);
-        agent.driver.drv_ap.connect(coverage.analysis_export);
         agent.monitor.mon_ap.connect(scoreboard.obs_fifo.analysis_export);
+        scoreboard.checked_ap.connect(coverage.analysis_export);
     endfunction
 
 endclass

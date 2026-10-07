@@ -21,8 +21,8 @@
 // dual-port BRAM provides. The 4 tile reads/writes are routed through 4-way
 // crossbars between {logical positions} and {physical banks}.
 //
-//   compute cycles  ~=  N_PASSES x 64 + drain  ~=  ~290  (NTT)
-//                  ~=  292 + 64-tile SCALE pass + drain  ~=  ~360  (INTT)
+// Current measured core cycles: 284 NTT, 288 INTT, 74 PWM. The four NTT
+// passes each issue 64 tiles; the final inverse pass scales on writeback.
 //
 // Pipeline (one tile, T = issue cycle):
 //   T    : address-gen issues (a0..a3, k_a/b/c, sc_flag) combinationally.
@@ -30,26 +30,19 @@
 //   T+1  : mem regs (m_r0..3) + twiddle ROM outputs (tw_a/b/c) valid.
 //          -> feed rank-s BFUs (BFU0/1) with m_r* and outer/inner twiddles
 //             (NTT: outer tw_a to both; INTT: inner tw_b/c, negated).
-//          -> for SCALE only: feed rank-t BFUs (BFU2/3) the same cycle with
-//             m_r2/m_r3 x N_INV (4 multipliers used in parallel).
-//   T+5  : BFU0/1 outputs (rank-s done). For RUN: feed BFU2/3 with rank-s
+//          -> PWM feeds all four BFUs with operand-A/B coefficients.
+//   T+7  : BFU0/1 outputs (rank-s done). For RUN: feed BFU2/3 with rank-s
 //          outputs + delayed inner twiddles (NTT) / delayed outer twiddle
 //          (INTT, broadcast to both).
-//   T+5  : (SCALE) BFU0..3 outputs are the scaled coefficients; write back
-//          to mem at the 4 issue addresses.
-//   T+9  : (RUN) BFU2/3 outputs (rank-t done); write back 4 coeffs to mem
-//          at the 4 issue addresses, with the NTT- or INTT-specific
-//          (rank-t output -> position) mapping.
+//   RUN  : rank-t outputs write back four coefficients at the issue addresses.
+//          On the final inverse pass, four extra modular multipliers scale
+//          those results by N_INV before their tagged memory writeback.
 //
-// Memory model: flat 256x23 array with combinational 4R + 4W per cycle.
-// In simulation this is direct; for synthesis-to-BRAM it will be refactored
-// to 4 conflict-free banks (the address-resolver-ROM scheme of section 4.3a)
-// in a follow-up increment. The compute schedule and cycle count are the
-// same either way -- banking is purely about which RAM ports the 4 accesses
-// land on.
+// Memory model: four conflict-free banks of 64x23 coefficients with
+// synchronous reads. Each bank has one read and one write port.
 //
 // Verified by tb_ntt_core.sv and the full UVM env (tb_uvm/tb_uvm_ntt/).
-// OP_PWM still needs a two-operand interface -- a later increment.
+// OP_PWM loads its second operand into a separate four-bank memory.
 // ============================================================================
 import ntt_pkg::*;
 
@@ -74,12 +67,19 @@ module ntt_core (
   // ===========================================================================
   // Pipeline / timing constants
   // ===========================================================================
-  localparam int unsigned BF_LAT     = 4;                // butterfly_unit latency
+  localparam int unsigned BF_LAT     = 6;                // butterfly_unit latency
   localparam int unsigned MEM_LAT    = 2;                // mem-read reg + D1 datapath-input reg
-  localparam int unsigned RUN_LAT    = MEM_LAT + 2*BF_LAT; // = 9, RUN issue -> writeback
-  localparam int unsigned SCL_LAT    = MEM_LAT + BF_LAT;   // = 5, SCALE issue -> writeback
+  localparam int unsigned RUN_LAT    = MEM_LAT + 2*BF_LAT; // = 14, RUN issue -> writeback
+  localparam int unsigned SCL_LAT    = MEM_LAT + BF_LAT;   // = 8, SCALE issue -> writeback
   localparam int unsigned WB_DEPTH   = RUN_LAT;          // shift-reg length (deepest path)
-  localparam int unsigned DRAIN_LEN  = RUN_LAT + 1;      // 10 cycles between passes
+  // Adjacent passes can overlap their tails: the earliest tiles of the next
+  // pass already have their previous-pass values. A three-clock gap fails the
+  // reference vectors. A final NTT/PWM/scale drain must instead clear every
+  // pending writeback before done_o tells the caller the result is complete.
+  localparam logic [4:0] INTERPASS_DRAIN = 5'd4;
+  localparam logic [4:0] FINAL_RUN_DRAIN = 5'(RUN_LAT);
+  localparam logic [4:0] FINAL_MUL_DRAIN = 5'(SCL_LAT);
+  localparam logic [4:0] FINAL_INV_DRAIN = 5'(RUN_LAT + 4);
 
   // ===========================================================================
   // Coefficient memory : 4 banks x 64 x 23, conflict-free
@@ -161,8 +161,10 @@ module ntt_core (
   // ===========================================================================
   // FSM
   //   NTT  :  IDLE -> [RUN -> RDRAIN] x 4 -> DONE
-  //   INTT :  IDLE -> [RUN -> RDRAIN] x 4 -> SCALE -> SDRAIN -> DONE
+  //   INTT :  IDLE -> [RUN -> RDRAIN] x 4 -> DONE (final writeback scaled)
   //   PWM  :  IDLE -> PWM -> PDRAIN -> DONE
+  // The old S_SCALE/S_SDRAIN states remain in the enum as an inactive fallback;
+  // normal transitions no longer enter them.
   // ===========================================================================
   typedef enum logic [3:0] {
     S_IDLE, S_RUN, S_RDRAIN, S_SCALE, S_SDRAIN, S_PWM, S_PDRAIN, S_DONE
@@ -174,7 +176,7 @@ module ntt_core (
   logic [6:0]   g_outer_r;     // outer-group counter (0..63)
   logic [6:0]   off_r;         // intra-group offset
   logic [6:0]   sc_r;          // SCALE / PWM tile counter (0..63)
-  logic [3:0]   drain_cnt;
+  logic [4:0]   drain_cnt;
   logic         last_pass;     // marks the final pass before SCALE/DONE
 
   // Per-pass schedule limits (combinational from pass_r and fwd):
@@ -274,7 +276,7 @@ module ntt_core (
   // delay line, writeback shift register, and the v/sc/pw valid flags) now keys
   // off these REGISTERED versions, so the entire read/compute pipeline shifts
   // exactly one cycle later relative to the FSM counters. All *relative*
-  // alignments are preserved -> RUN_LAT / SCL_LAT / WB_DEPTH / DRAIN_LEN are
+  // alignments are preserved -> RUN_LAT / SCL_LAT / WB_DEPTH are
   // unchanged. The registered issue_*_r flags carry the "valid tile" marker
   // forward, so a tile issued in the last S_RUN cycle is still processed after
   // the FSM has moved to S_RDRAIN. Cost: +1 cycle total latency.
@@ -282,6 +284,7 @@ module ntt_core (
   logic [8:0]      a0_idx_r, a1_idx_r, a2_idx_r, a3_idx_r;
   logic [LOGN-1:0] k_a_r, k_b_r, k_c_r;
   logic            issue_run_r, issue_scale_r, issue_pwm_r;
+  logic            inv_final_r;
   logic            fwd_r;
 
   always_ff @(posedge clk or posedge rst) begin
@@ -289,11 +292,13 @@ module ntt_core (
       a0_idx_r <= '0; a1_idx_r <= '0; a2_idx_r <= '0; a3_idx_r <= '0;
       k_a_r <= '0; k_b_r <= '0; k_c_r <= '0;
       issue_run_r <= 1'b0; issue_scale_r <= 1'b0; issue_pwm_r <= 1'b0;
+      inv_final_r <= 1'b0;
       fwd_r <= 1'b1;
     end else begin
       a0_idx_r <= a0_idx; a1_idx_r <= a1_idx; a2_idx_r <= a2_idx; a3_idx_r <= a3_idx;
       k_a_r <= k_a; k_b_r <= k_b; k_c_r <= k_c;
       issue_run_r <= issue_run; issue_scale_r <= issue_scale; issue_pwm_r <= issue_pwm;
+      inv_final_r <= issue_run && !fwd && pass_r == 2'd3;
       fwd_r <= fwd;
     end
   end
@@ -314,16 +319,27 @@ module ntt_core (
   logic [COEFF_W-1:0] mb_r0, mb_r1, mb_r2, mb_r3;    // B-bank reads, routed (PWM)
   logic               v_s1, sc_s1, pw_s1;
   logic [1:0]         bank_a0_dly, bank_a1_dly, bank_a2_dly, bank_a3_dly;
+  logic [5:0]         ext_rd_off_hold;
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) ext_rd_off_hold <= '0;
+    else if (rd_en_i && state == S_IDLE) ext_rd_off_hold <= off_of(rd_addr_i);
+  end
 
   // Route the 4 tile read addresses to the 4 (guaranteed-distinct) banks.
-  // External rd_en_i (only in S_IDLE) overrides one bank for TX.
+  // While idle, keep the last external offset on every read port. The RAM
+  // outputs must remain stable when the downstream receiver stalls in TX.
   always_comb begin
-    for (int b = 0; b < 4; b++) bank_rd_off[b] = 6'd0;
-    bank_rd_off[bank_of(a0_idx_r[7:0])] = off_of(a0_idx_r[7:0]);
-    bank_rd_off[bank_of(a1_idx_r[7:0])] = off_of(a1_idx_r[7:0]);
-    bank_rd_off[bank_of(a2_idx_r[7:0])] = off_of(a2_idx_r[7:0]);
-    bank_rd_off[bank_of(a3_idx_r[7:0])] = off_of(a3_idx_r[7:0]);
-    if (rd_en_i) bank_rd_off[bank_of(rd_addr_i)] = off_of(rd_addr_i);
+    if (state == S_IDLE) begin
+      for (int b = 0; b < 4; b++) bank_rd_off[b] = ext_rd_off_hold;
+      if (rd_en_i) bank_rd_off[bank_of(rd_addr_i)] = off_of(rd_addr_i);
+    end else begin
+      for (int b = 0; b < 4; b++) bank_rd_off[b] = 6'd0;
+      bank_rd_off[bank_of(a0_idx_r[7:0])] = off_of(a0_idx_r[7:0]);
+      bank_rd_off[bank_of(a1_idx_r[7:0])] = off_of(a1_idx_r[7:0]);
+      bank_rd_off[bank_of(a2_idx_r[7:0])] = off_of(a2_idx_r[7:0]);
+      bank_rd_off[bank_of(a3_idx_r[7:0])] = off_of(a3_idx_r[7:0]);
+    end
   end
 
   // Delay the 4 bank indices by 1 cycle to align with the sync read data.
@@ -363,7 +379,7 @@ module ntt_core (
   // in the next. Twiddles and v/sc/pw are delayed one matching cycle so the
   // rank-s feed stays aligned; the BF_LAT delay lines (driving rank-t) are
   // seeded from these delayed versions. MEM_LAT 1->2 propagates to RUN_LAT/
-  // SCL_LAT/WB_DEPTH/DRAIN_LEN. +1 cycle latency.
+  // SCL_LAT/WB_DEPTH. +1 cycle latency.
   // ===========================================================================
   logic [COEFF_W-1:0] m_r0_r, m_r1_r, m_r2_r, m_r3_r;
   logic [COEFF_W-1:0] mb_r0_r, mb_r1_r, mb_r2_r, mb_r3_r;
@@ -490,14 +506,18 @@ module ntt_core (
   // Writeback shift register : addresses + flags travel alongside the pipeline
   // so the BFU outputs land at the correct mem indices.
   //   stage 0 = stage-1 feed (issue+1)
-  //   stage 4 = SCALE writeback  (issue+5)
-  //   stage 8 = RUN   writeback  (issue+9)
+  //   stage 7  = SCALE writeback  (issue+8)
+  //   stage 13 = RUN   writeback  (issue+14)
   // ===========================================================================
   typedef struct packed {
     logic [8:0]   a0, a1, a2, a3;
+    // Bank IDs are computed beside issue, then carried with the addresses.
+    // This removes the bank XOR from the writeback-memory timing path.
+    logic [1:0]   bank0, bank1, bank2, bank3;
     logic         v;
     logic         sc;        // SCALE writeback (4 from BFU0..3 a_o at SCL_LAT)
     logic         pw;        // PWM   writeback (same depth as SCALE)
+    logic         inv_final; // final inverse pass: scale results before write
     logic         fwd;
   } wb_entry_t;
 
@@ -511,9 +531,14 @@ module ntt_core (
     end else begin
       wb[0].a0  <= a0_idx_r; wb[0].a1 <= a1_idx_r;
       wb[0].a2  <= a2_idx_r; wb[0].a3 <= a3_idx_r;
+      wb[0].bank0 <= bank_of(a0_idx_r[7:0]);
+      wb[0].bank1 <= bank_of(a1_idx_r[7:0]);
+      wb[0].bank2 <= bank_of(a2_idx_r[7:0]);
+      wb[0].bank3 <= bank_of(a3_idx_r[7:0]);
       wb[0].v   <= issue_run_r || issue_scale_r || issue_pwm_r;
       wb[0].sc  <= issue_scale_r;
       wb[0].pw  <= issue_pwm_r;
+      wb[0].inv_final <= inv_final_r;
       wb[0].fwd <= fwd_r;
       for (int i = 1; i < WB_DEPTH; i++) wb[i] <= wb[i-1];
     end
@@ -532,6 +557,25 @@ module ntt_core (
   assign run_tail = wb[RUN_LAT-1];
 
   logic [COEFF_W-1:0] wd0, wd1, wd2, wd3;   // RUN writeback values per a0..a3
+  logic [COEFF_W-1:0] inv_wd0, inv_wd1, inv_wd2, inv_wd3;
+  wb_entry_t inv_scale_wb [4];
+
+  // Four extra lanes normalize the four coefficients of each final inverse
+  // tile while subsequent tiles are processed. This replaces the 64-tile
+  // memory reread/SCALE pass. Address tags follow the four-cycle multipliers.
+  mod_mul u_inv_scale0 (.clk(clk), .rst(rst), .a_i(wd0), .b_i(COEFF_W'(N_INV)), .r_o(inv_wd0));
+  mod_mul u_inv_scale1 (.clk(clk), .rst(rst), .a_i(wd1), .b_i(COEFF_W'(N_INV)), .r_o(inv_wd1));
+  mod_mul u_inv_scale2 (.clk(clk), .rst(rst), .a_i(wd2), .b_i(COEFF_W'(N_INV)), .r_o(inv_wd2));
+  mod_mul u_inv_scale3 (.clk(clk), .rst(rst), .a_i(wd3), .b_i(COEFF_W'(N_INV)), .r_o(inv_wd3));
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      for (int i = 0; i < 4; i++) inv_scale_wb[i] <= '{default:'0};
+    end else begin
+      inv_scale_wb[0] <= run_tail;
+      for (int i = 1; i < 4; i++) inv_scale_wb[i] <= inv_scale_wb[i-1];
+    end
+  end
   always_comb begin
     if (run_tail.fwd) begin
       // NTT  : {b, b+L/2, b+L, b+3L/2}  <-  {bf2.a, bf2.b, bf3.a, bf3.b}
@@ -565,33 +609,47 @@ module ntt_core (
     end
     // SCALE / PWM writeback (same pipeline depth, 4 BFU.a_o values).
     if (scl_tail.v && (scl_tail.sc || scl_tail.pw)) begin
-      bank_wr_en  [bank_of(scl_tail.a0[7:0])] = 1'b1;
-      bank_wr_off [bank_of(scl_tail.a0[7:0])] = off_of(scl_tail.a0[7:0]);
-      bank_wr_data[bank_of(scl_tail.a0[7:0])] = bf0_a_o;
-      bank_wr_en  [bank_of(scl_tail.a1[7:0])] = 1'b1;
-      bank_wr_off [bank_of(scl_tail.a1[7:0])] = off_of(scl_tail.a1[7:0]);
-      bank_wr_data[bank_of(scl_tail.a1[7:0])] = bf1_a_o;
-      bank_wr_en  [bank_of(scl_tail.a2[7:0])] = 1'b1;
-      bank_wr_off [bank_of(scl_tail.a2[7:0])] = off_of(scl_tail.a2[7:0]);
-      bank_wr_data[bank_of(scl_tail.a2[7:0])] = bf2_a_o;
-      bank_wr_en  [bank_of(scl_tail.a3[7:0])] = 1'b1;
-      bank_wr_off [bank_of(scl_tail.a3[7:0])] = off_of(scl_tail.a3[7:0]);
-      bank_wr_data[bank_of(scl_tail.a3[7:0])] = bf3_a_o;
+      bank_wr_en  [scl_tail.bank0] = 1'b1;
+      bank_wr_off [scl_tail.bank0] = off_of(scl_tail.a0[7:0]);
+      bank_wr_data[scl_tail.bank0] = bf0_a_o;
+      bank_wr_en  [scl_tail.bank1] = 1'b1;
+      bank_wr_off [scl_tail.bank1] = off_of(scl_tail.a1[7:0]);
+      bank_wr_data[scl_tail.bank1] = bf1_a_o;
+      bank_wr_en  [scl_tail.bank2] = 1'b1;
+      bank_wr_off [scl_tail.bank2] = off_of(scl_tail.a2[7:0]);
+      bank_wr_data[scl_tail.bank2] = bf2_a_o;
+      bank_wr_en  [scl_tail.bank3] = 1'b1;
+      bank_wr_off [scl_tail.bank3] = off_of(scl_tail.a3[7:0]);
+      bank_wr_data[scl_tail.bank3] = bf3_a_o;
     end
     // RUN writeback (tile rank-t outputs).
-    if (run_tail.v && !run_tail.sc && !run_tail.pw) begin
-      bank_wr_en  [bank_of(run_tail.a0[7:0])] = 1'b1;
-      bank_wr_off [bank_of(run_tail.a0[7:0])] = off_of(run_tail.a0[7:0]);
-      bank_wr_data[bank_of(run_tail.a0[7:0])] = wd0;
-      bank_wr_en  [bank_of(run_tail.a1[7:0])] = 1'b1;
-      bank_wr_off [bank_of(run_tail.a1[7:0])] = off_of(run_tail.a1[7:0]);
-      bank_wr_data[bank_of(run_tail.a1[7:0])] = wd1;
-      bank_wr_en  [bank_of(run_tail.a2[7:0])] = 1'b1;
-      bank_wr_off [bank_of(run_tail.a2[7:0])] = off_of(run_tail.a2[7:0]);
-      bank_wr_data[bank_of(run_tail.a2[7:0])] = wd2;
-      bank_wr_en  [bank_of(run_tail.a3[7:0])] = 1'b1;
-      bank_wr_off [bank_of(run_tail.a3[7:0])] = off_of(run_tail.a3[7:0]);
-      bank_wr_data[bank_of(run_tail.a3[7:0])] = wd3;
+    if (run_tail.v && !run_tail.sc && !run_tail.pw && !run_tail.inv_final) begin
+      bank_wr_en  [run_tail.bank0] = 1'b1;
+      bank_wr_off [run_tail.bank0] = off_of(run_tail.a0[7:0]);
+      bank_wr_data[run_tail.bank0] = wd0;
+      bank_wr_en  [run_tail.bank1] = 1'b1;
+      bank_wr_off [run_tail.bank1] = off_of(run_tail.a1[7:0]);
+      bank_wr_data[run_tail.bank1] = wd1;
+      bank_wr_en  [run_tail.bank2] = 1'b1;
+      bank_wr_off [run_tail.bank2] = off_of(run_tail.a2[7:0]);
+      bank_wr_data[run_tail.bank2] = wd2;
+      bank_wr_en  [run_tail.bank3] = 1'b1;
+      bank_wr_off [run_tail.bank3] = off_of(run_tail.a3[7:0]);
+      bank_wr_data[run_tail.bank3] = wd3;
+    end
+    if (inv_scale_wb[3].v && inv_scale_wb[3].inv_final) begin
+      bank_wr_en  [inv_scale_wb[3].bank0] = 1'b1;
+      bank_wr_off [inv_scale_wb[3].bank0] = off_of(inv_scale_wb[3].a0[7:0]);
+      bank_wr_data[inv_scale_wb[3].bank0] = inv_wd0;
+      bank_wr_en  [inv_scale_wb[3].bank1] = 1'b1;
+      bank_wr_off [inv_scale_wb[3].bank1] = off_of(inv_scale_wb[3].a1[7:0]);
+      bank_wr_data[inv_scale_wb[3].bank1] = inv_wd1;
+      bank_wr_en  [inv_scale_wb[3].bank2] = 1'b1;
+      bank_wr_off [inv_scale_wb[3].bank2] = off_of(inv_scale_wb[3].a2[7:0]);
+      bank_wr_data[inv_scale_wb[3].bank2] = inv_wd2;
+      bank_wr_en  [inv_scale_wb[3].bank3] = 1'b1;
+      bank_wr_off [inv_scale_wb[3].bank3] = off_of(inv_scale_wb[3].a3[7:0]);
+      bank_wr_data[inv_scale_wb[3].bank3] = inv_wd3;
     end
   end
 
@@ -666,20 +724,19 @@ module ntt_core (
           end
         end
 
-        // ----- let RUN pipeline drain (writes settle before next pass) -----
+        // ----- overlap safe pass tails; wait for all writes before NTT done -----
         S_RDRAIN: begin
-          if (drain_cnt == DRAIN_LEN[3:0] - 4'd1) begin
+          if (drain_cnt == ((last_pass && op_r == OP_NTT) ? FINAL_RUN_DRAIN :
+                            (last_pass && op_r == OP_INTT) ? FINAL_INV_DRAIN :
+                            INTERPASS_DRAIN) - 5'd1) begin
             if (!last_pass) begin
               pass_r <= pass_r + 2'd1;
               state  <= S_RUN;
-            end else if (op_r == OP_INTT) begin
-              sc_r  <= '0;
-              state <= S_SCALE;
             end else begin
               state <= S_DONE;
             end
           end else begin
-            drain_cnt <= drain_cnt + 4'd1;
+            drain_cnt <= drain_cnt + 5'd1;
           end
         end
 
@@ -694,8 +751,8 @@ module ntt_core (
         end
 
         S_SDRAIN: begin
-          if (drain_cnt == DRAIN_LEN[3:0] - 4'd1) state <= S_DONE;
-          else                                    drain_cnt <= drain_cnt + 4'd1;
+          if (drain_cnt == FINAL_MUL_DRAIN - 5'd1) state <= S_DONE;
+          else                                    drain_cnt <= drain_cnt + 5'd1;
         end
 
         // ----- PWM pass : 4 coeffs/cycle, c[i] = A[i]*B[i] mod q -----------
@@ -709,8 +766,8 @@ module ntt_core (
         end
 
         S_PDRAIN: begin
-          if (drain_cnt == DRAIN_LEN[3:0] - 4'd1) state <= S_DONE;
-          else                                    drain_cnt <= drain_cnt + 4'd1;
+          if (drain_cnt == FINAL_MUL_DRAIN - 5'd1) state <= S_DONE;
+          else                                    drain_cnt <= drain_cnt + 5'd1;
         end
 
         // ----- done : single-cycle pulse, then back to IDLE ----------------

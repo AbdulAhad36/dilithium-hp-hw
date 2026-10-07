@@ -54,11 +54,16 @@ module tb_ntt_engine;
 
   int tests  = 0;
   int errors = 0;
+  longint unsigned tb_cycles = 0;
+  always @(posedge clk) tb_cycles <= tb_cycles + 1;
 
   // ---- drive one operation through the engine -----------------------------
   task automatic run_engine(input ntt_op_e o, input poly_t din,
-                            output poly_t dout, input bit stall_output = 0);
+                            output poly_t dout, input bit stall_output = 0,
+                            input int input_gap = 0,
+                            input bit report_latency = 0);
     int got, cycles;
+    longint unsigned launch_cycle;
     bit stalled;
     logic [COEFF_W-1:0] held_data;
     logic held_last;
@@ -67,6 +72,7 @@ module tb_ntt_engine;
     //  E_DONE state would be missed.)
     @(negedge clk);
     while (busy) @(negedge clk);
+    launch_cycle = tb_cycles;
     op    = o;
     start = 1'b1;
     @(negedge clk);
@@ -81,6 +87,13 @@ module tb_ntt_engine;
       s_tdata  = din[i];
       s_tlast  = (i == N-1);
       @(negedge clk);
+      if (i != N-1) begin
+        for (int gap = 0; gap < input_gap; gap++) begin
+          s_tvalid = 1'b0;
+          s_tlast = 1'b0;
+          @(negedge clk);
+        end
+      end
     end
     s_tvalid = 1'b0;
     s_tlast  = 1'b0;
@@ -92,11 +105,14 @@ module tb_ntt_engine;
     stalled = 0;
     while (got < N) begin
       @(negedge clk);
+      m_tready = !stall_output || ((cycles % 7) >= 2);
+      @(posedge clk);
       if (stalled && (!m_tvalid || m_tdata !== held_data || m_tlast !== held_last)) begin
         errors++;
-        $display("  [FAIL] output changed while stalled at coefficient %0d", got);
+        $display("  [FAIL] output changed while stalled at coefficient %0d held=%0d current=%0d last=%0b/%0b ready=%0b tx_idx=%0d core_rd_en=%0b",
+                 got, held_data, m_tdata, held_last, m_tlast, m_tready,
+                 dut.tx_idx, dut.core_rd_en);
       end
-      m_tready = !stall_output || ((cycles % 7) >= 2);
       stalled = m_tvalid && !m_tready;
       if (stalled) begin
         held_data = m_tdata;
@@ -113,13 +129,17 @@ module tb_ntt_engine;
       cycles++;
     end
     m_tready = 1'b1;
+    if (report_latency)
+      $display("NTT_ENGINE_PACED_LATENCY operation=%s input_gap=%0d output_stalls=%0d launch_to_last_output_cycles=%0d",
+               o.name(), input_gap, stall_output, tb_cycles - launch_cycle);
   endtask
 
   // ---- check a single transform against the golden model ------------------
   task automatic check_op(input ntt_op_e o, input poly_t din, input string tag,
-                          input bit stall_output = 0);
+                          input bit stall_output = 0, input int input_gap = 0,
+                          input bit report_latency = 0);
     poly_t dut_out, ref_out;
-    run_engine(o, din, dut_out, stall_output);
+    run_engine(o, din, dut_out, stall_output, input_gap, report_latency);
     ref_out = (o == OP_NTT) ? ntt_fwd(din) : ntt_inv(din);
     tests++;
     if (poly_eq(dut_out, ref_out)) begin
@@ -191,9 +211,13 @@ module tb_ntt_engine;
     check_op(OP_NTT,  a, "all-(q-1)");
     check_roundtrip(a, "all-(q-1)");
     fill_const(a, coeff_t'(0));  a[0] = coeff_t'(1);
-    check_op(OP_NTT,  a, "delta @0");
+    check_op(OP_NTT,  a, "delta @0", 0, 0, 1);
+    check_op(OP_INTT, a, "delta @0", 0, 0, 1);
     check_roundtrip(a, "delta @0");
     check_op(OP_NTT, a, "delta @0 with output stalls", 1);
+    check_op(OP_NTT, a, "delta @0 with one input gap per coefficient", 0, 1, 1);
+    check_op(OP_INTT, a, "delta @0 with output stalls", 1, 0, 1);
+    check_op(OP_INTT, a, "delta @0 with input gaps and output stalls", 1, 1, 1);
 
     // random stress
     for (int it = 0; it < N_RANDOM; it++) begin
@@ -201,6 +225,10 @@ module tb_ntt_engine;
       check_op(OP_NTT,  a, $sformatf("random #%0d", it));
       check_op(OP_INTT, a, $sformatf("random #%0d", it));
       check_roundtrip(a, $sformatf("random #%0d", it));
+      if (it == 0) begin
+        check_op(OP_NTT, a, "random #0 with input gaps and output stalls", 1, 1);
+        check_op(OP_INTT, a, "random #0 with output stalls", 1);
+      end
     end
 
     $display("------------------------------------------------------------");
