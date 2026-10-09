@@ -10,12 +10,12 @@
 //     a'  = a + b               (mod q)
 //     b'  = (a - b) * zeta      (mod q)
 //
-// Both modes share one pipelined modular multiplier. Fixed latency BF_LAT = 6
+// Both modes share one pipelined modular multiplier. Fixed latency BF_LAT = 7
 // cycles, fully pipelined (one butterfly per clock).
 //
 //   cycle 1 : registered (CT: b) / (GS: a-b) and zeta feed multiplier
-//   cycle 5 : mul result `t` ready; combine with delayed operand
-//   cycle 6 : a_o / b_o registered out
+//   cycle 6 : mul result `t` ready; combine with delayed operand
+//   cycle 7 : a_o / b_o registered out
 // ============================================================================
 import ntt_pkg::*;
 
@@ -30,27 +30,54 @@ module butterfly_unit (
     output logic [COEFF_W-1:0]  b_o
 );
 
-  localparam int unsigned BF_LAT  = 6;
-  localparam int unsigned MUL_LAT = 4;   // mod_mul latency
+  localparam int unsigned BF_LAT  = 7;
+  localparam int unsigned MUL_LAT = 5;   // mod_mul latency
 
   // ---- combinational modular add / sub helpers ----------------------------
   function automatic logic [COEFF_W-1:0] madd(input logic [COEFF_W-1:0] x,
                                               input logic [COEFF_W-1:0] y);
-    logic [COEFF_W:0] s;
-    s = x + y;
-    return (s >= Q) ? (s - Q) : s[COEFF_W-1:0];
+    logic [COEFF_W:0] raw_sum, biased_sum, save_bits, majority;
+    logic [COEFF_W:0] x_ext, y_ext, bias;
+    x_ext = {1'b0,x}; y_ext = {1'b0,y};
+    bias = (COEFF_W+1)'((1<<COEFF_W)-Q); // 8191
+    raw_sum = x_ext + y_ext;
+    // For canonical x/y, x+y+8191 < 2^24. Bit 23 is set exactly when
+    // x+y >= q. Its low 23 bits already equal x+y-q in that case.
+    // Compute the biased candidate with a three-input compressor and
+    // one carry chain, in parallel with the uncorrected sum.
+    save_bits = x_ext ^ y_ext ^ bias;
+    majority = (x_ext & y_ext) | (x_ext & bias) | (y_ext & bias);
+    biased_sum = save_bits + {majority[COEFF_W-1:0],1'b0};
+    return biased_sum[COEFF_W] ? biased_sum[COEFF_W-1:0]
+                              : raw_sum[COEFF_W-1:0];
   endfunction
 
   function automatic logic [COEFF_W-1:0] msub(input logic [COEFF_W-1:0] x,
                                               input logic [COEFF_W-1:0] y);
-    return (x >= y) ? (x - y) : (x + Q - y);
+    logic [COEFF_W:0] raw_diff, corrected_diff, save_bits, majority;
+    logic [COEFF_W:0] x_ext, neg_y, modulus;
+    x_ext = {1'b0,x};
+    neg_y = ~{1'b0,y};
+    modulus = (COEFF_W+1)'(Q+1);
+    raw_diff = x_ext - {1'b0,y};
+    // For canonical x/y, the 24-bit wrapped difference has bit 23 set
+    // exactly when x<y. Compute x-y+q independently as x+~y+(q+1).
+    // Absorb the two's-complement +1 into the constant before compression;
+    // the shifted carry word now retains its zero bit 0.
+    // Both candidate carry chains run in parallel, then borrow selects.
+    save_bits = x_ext ^ neg_y ^ modulus;
+    majority = (x_ext & neg_y) | (x_ext & modulus) | (neg_y & modulus);
+    corrected_diff = save_bits + {majority[COEFF_W-1:0],1'b0};
+    return raw_diff[COEFF_W] ? corrected_diff[COEFF_W-1:0]
+                            : raw_diff[COEFF_W-1:0];
   endfunction
 
   // ---- multiplier operand select ------------------------------------------
   // Register CT and GS candidates independently. Select the registered
   // candidate in the multiplier stage, separating GS subtraction from DSP.
   logic [COEFF_W-1:0] mul_ct_reg, mul_gs_reg;
-  logic [COEFF_W-1:0] zeta_reg, keep_a_reg, keep_b_reg;
+  logic [COEFF_W-1:0] zeta_reg, keep_a_reg;
+  logic [COEFF_W:0] keep_sum_reg;
   logic [COEFF_W-1:0] mul_after_reg;
   bf_mode_e mode_reg;
   always_comb mul_after_reg = (mode_reg == BF_CT) ? mul_ct_reg : mul_gs_reg;
@@ -60,14 +87,16 @@ module butterfly_unit (
       mul_gs_reg <= '0;
       zeta_reg   <= '0;
       keep_a_reg <= '0;
-      keep_b_reg <= '0;
+      keep_sum_reg <= '0;
       mode_reg   <= BF_CT;
     end else begin
       mul_ct_reg <= b_i;
       mul_gs_reg <= msub(a_i, b_i);
       zeta_reg   <= zeta_i;
       keep_a_reg <= a_i;
-      keep_b_reg <= b_i;
+      // Register the raw GS sum before reducing it in the next stage.
+      // This replaces keep_b_reg; it does not add a pipeline cycle.
+      keep_sum_reg <= {1'b0, a_i} + {1'b0, b_i};
       mode_reg   <= mode_i;
     end
   end
@@ -82,11 +111,19 @@ module butterfly_unit (
   );
 
   // ---- operand to be combined with `t` ------------------------------------
-  // CT keeps `a`; GS keeps `a+b`. Compute the sum after the input register
-  // so upstream mode selection and modular addition do not share one path.
+  // CT keeps `a`; GS reduces the sum registered in the input stage.
+  // Addition and compare/subtract now occupy separate existing stages.
   logic [COEFF_W-1:0] keep_after_reg;
-  always_comb keep_after_reg = (mode_reg == BF_CT)
-                             ? keep_a_reg : madd(keep_a_reg, keep_b_reg);
+  logic [COEFF_W:0] keep_biased_sum;
+  // Canonical a/b give 0 <= sum <= 2q-2, so sum+8191 fits 24 bits.
+  // Bit23 is set iff sum>=q; the low23 bits then already equal sum-q.
+  // Use this carry instead of a separate wide comparator on keep_sum_reg.
+  always_comb begin
+    keep_biased_sum = keep_sum_reg + (COEFF_W+1)'((1<<COEFF_W)-Q);
+    keep_after_reg = (mode_reg == BF_CT) ? keep_a_reg :
+                     (keep_biased_sum[COEFF_W] ? keep_biased_sum[COEFF_W-1:0]
+                                               : keep_sum_reg[COEFF_W-1:0]);
+  end
 
   logic [COEFF_W-1:0] keep_dly [MUL_LAT];
   bf_mode_e            mode_dly [MUL_LAT];
@@ -107,7 +144,7 @@ module butterfly_unit (
     end
   end
 
-  // ---- final combine (cycle 5 -> registered at cycle 6) -------------------
+  // ---- final combine (cycle 6 -> registered at cycle 7) -------------------
   logic [COEFF_W-1:0] keep_al;
   bf_mode_e            mode_al;
   always_comb begin

@@ -1,0 +1,5 @@
+Planning check only: existing index scheduler with proposed PIPE=10.
+This is not RTL, arithmetic, timing or operation-latency verification.
+NTT FIFO INDEX PASS: 8 stages, 128 pairs/stage, peak words [32, 32, 11], 266 scheduled cycles
+INTT FIFO INDEX PASS: 8 stages, 128 pairs/stage, peak words [32, 32, 11], 266 scheduled cycles
+PRE-NTT FIFO INDEX PASS: stage-0 regrouping and 7 remaining stages, peak words [32, 32, 16], 234 scheduled cycles

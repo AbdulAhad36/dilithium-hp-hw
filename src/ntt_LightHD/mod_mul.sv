@@ -11,23 +11,16 @@
 //   fold(x):  hi = x >> 23,  lo = x[22:0]
 //             x ≡ hi*(2^13 - 1) + lo  =  (hi<<13) - hi + lo   (mod q)
 //
-// fold() is monotone-shrinking and its result is always >= 0 (since
-// (hi<<13) >= hi). Applied to the 46-bit product a*b, four folds bring the
-// value below 2q; one conditional subtract finishes into [0, q):
+// For any 23-bit operands the conservative successive fold bounds are
+// 68,719,460,353 (36 bits), 75,481,088 (27 bits), 8,454,135 (24 bits).
+// The third fold is already below 2q, so one subtraction makes it canonical.
 //
-//   product (46-bit)
-//     --fold-->  < 2^37   (hi up to 2^23)
-//     --fold-->  < 2^28   (hi up to 2^14)
-//     --fold-->  < 2^24   (hi up to 2^5)
-//     --fold-->  < 2q     (hi is a single bit)
-//     --(>=q ? -q)-->  [0, q)
-//
-// Latency: 4 clock cycles (LAT). Fully pipelined:
-// accepts a new pair every cycle, `r_o` valid LAT cycles after the inputs.
+// Latency: 5 clock cycles (LAT), accepting a new pair every cycle.
 //   Stage 1 : prod = a*b                (the only multiply)
-//   Stage 2 : folds 1 and 2             (shift-add)
-//   Stage 3 : fold 3                    (shift-add)
-//   Stage 4 : fold 4 + cond. sub        (shift-add)
+//   Stage 2 : fold 1 carry-save compression
+//   Stage 3 : fold 1 carry propagation
+//   Stage 4 : fold 2                    (shift-add)
+//   Stage 5 : fold 3 + canonical correction, parallel carry-save candidates
 // ============================================================================
 import ntt_pkg::*;
 
@@ -39,7 +32,7 @@ module mod_mul (
     output logic [COEFF_W-1:0]  r_o
 );
 
-  localparam int unsigned LAT = 4;
+  localparam int unsigned LAT = 5;
 
   // ---- Stage 1 : 23 x 23 -> 46-bit product (the ONLY multiply) ------------
   logic [PROD_W-1:0] prod_s1;
@@ -54,48 +47,91 @@ module mod_mul (
   //   Always >= 0 because (hi<<13) >= hi for hi >= 0.
   function automatic logic [37:0] fold(input logic [45:0] x);
     logic [22:0] hi, lo;
-    logic [37:0] hs;
+    logic [37:0] hs, lo_ext, neg_hi;
+    logic [37:0] save_bits, majority;
     hi = x[45:23];
     lo = x[22:0];
     hs = {2'b00, hi, 13'b0};            // hi << 13  (36-bit value in 38 bits)
-    return hs - 38'(hi) + 38'(lo);      // (hi<<13) - hi + lo  (>= 0)
+    lo_ext = 38'(lo);
+    neg_hi = ~{15'b0, hi};
+    // hs + lo - hi = hs + lo + ~hi + 1 (modulo 2^38).
+    // Compress the three operands without propagating a carry. Inject the
+    // subtraction's +1 into the otherwise-zero carry bit 0, then use ONE
+    // carry-propagate adder. The exact nonnegative result fits 38 bits.
+    save_bits = hs ^ lo_ext ^ neg_hi;
+    majority = (hs & lo_ext) | (hs & neg_hi) | (lo_ext & neg_hi);
+    return save_bits + {majority[36:0], 1'b1};
   endfunction
 
-  // ---- Stage 2 : folds 1 + 2  (46-bit product -> < 2^28) ------------------
-  logic [37:0] s2_t1, s2_t2;
-  logic [27:0] t2_q;
-
+  // ---- Stage 2 : register first-fold carry-save words -----------------
+  // (hi<<13)-hi+lo is nonnegative and fits 36 bits for all 23-bit operands.
+  // Compress modulo 2^36; put subtraction's +1 in the carry word's bit0.
+  // Separating this LUT logic from carry propagation targets the measured
+  // DSP product -> fold1 register setup path. Accept one new pair per clock.
+  logic [35:0] s2_shift, s2_low, s2_neg, s2_save, s2_carry;
+  logic [35:0] s2_save_q, s2_carry_q;
   always_comb begin
-    s2_t1 = fold(prod_s1);              // < 2^37
-    s2_t2 = fold(46'(s2_t1));           // < 2^28
+    s2_shift = {prod_s1[45:23],13'b0};
+    s2_low = {13'b0,prod_s1[22:0]};
+    s2_neg = ~{13'b0,prod_s1[45:23]};
+    s2_save = s2_shift ^ s2_low ^ s2_neg;
+    s2_carry = ((s2_shift & s2_low) | (s2_shift & s2_neg) |
+                (s2_low & s2_neg)) << 1;
+    s2_carry[0] = 1'b1;
+  end
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin s2_save_q <= '0; s2_carry_q <= '0; end
+    else begin s2_save_q <= s2_save; s2_carry_q <= s2_carry; end
   end
 
+  // ---- Stage 3 : first-fold carry propagation --------------------------
+  // The exact result fits 36 bits; wraparound cancels the complemented hi.
+  logic [35:0] t1_q;
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) t1_q <= '0;
+    else     t1_q <= s2_save_q + s2_carry_q;
+  end
+
+  // ---- Stage 4 : fold 2 (36 bits -> at most 27 bits) -------------------
+  // Isolate one fold in this stage instead of two serial carry chains.
+  logic [37:0] s3_t2;
+  logic [26:0] t2_q;
+  always_comb s3_t2 = fold(46'(t1_q));
   always_ff @(posedge clk or posedge rst) begin
     if (rst) t2_q <= '0;
-    else     t2_q <= s2_t2[27:0];
+    else     t2_q <= s3_t2[26:0];
   end
 
-  // ---- Stage 3 : fold 3 -> < 2^24 ------------------------------------------
-  logic [37:0] s3_t3;
-  logic [23:0] t3_q;
-  always_comb s3_t3 = fold(46'(t2_q));
-  always_ff @(posedge clk or posedge rst) begin
-    if (rst) t3_q <= '0;
-    else     t3_q <= s3_t3[23:0];
-  end
-
-  // ---- Stage 4 : fold 4 + conditional subtract -> [0, q) ------------------
-  logic [37:0] s4_t4;
-  logic [23:0] t4;
-
+  // ---- Stage 5 : fold 3 + parallel canonical correction ---------------
+  // H=t2>>23 <= 8; T=low+(H<<13)-H <= 8,454,135 < 2q.
+  // T+8191 has bit 23 set exactly when T>=q; its low 23 bits then
+  // equal T-q. T+8191 < 2^24, including the T>=2^23 case.
+  // Compress low, H<<13 and ~H; the carry word's zero bit 0 holds +1.
+  // Raw T and T+8191 propagate their carries in parallel, then select.
+  // This final correction is unchanged; BF/core return alignment includes
+  // the extra first-fold carry-save register stage.
+  logic [23:0] s4_low, s4_high_shift, s4_neg_high;
+  logic [23:0] s4_save, s4_carry, s4_bias_save, s4_bias_carry;
+  logic [23:0] s4_raw, s4_biased;
+  logic [COEFF_W-1:0] canonical;
   always_comb begin
-    s4_t4 = fold(46'(t3_q));            // < 2q  (hi is a single bit)
-    t4    = s4_t4[23:0];
+    s4_low = {1'b0,t2_q[22:0]};
+    s4_high_shift = {7'b0,t2_q[26:23],13'b0};
+    s4_neg_high = ~{20'b0,t2_q[26:23]};
+    s4_save = s4_low ^ s4_high_shift ^ s4_neg_high;
+    s4_carry = ((s4_low & s4_high_shift) | (s4_low & s4_neg_high) |
+                (s4_high_shift & s4_neg_high)) << 1;
+    s4_raw = s4_save + {s4_carry[23:1],1'b1};
+    s4_bias_save = s4_save ^ s4_carry ^ 24'd8191;
+    s4_bias_carry = ((s4_save & s4_carry) | (s4_save & 24'd8191) |
+                     (s4_carry & 24'd8191)) << 1;
+    s4_biased = s4_bias_save + {s4_bias_carry[23:1],1'b1};
+    canonical = s4_biased[23] ? s4_biased[22:0] : s4_raw[22:0];
   end
 
   always_ff @(posedge clk or posedge rst) begin
     if (rst) r_o <= '0;
-    else     r_o <= (t4 >= Q) ? COEFF_W'(t4 - Q) : t4[COEFF_W-1:0];
+    else     r_o <= canonical;
   end
 
 endmodule : mod_mul

@@ -17,7 +17,7 @@ module ntt_core (
     output logic [COEFF_W-1:0] rd_data_o
 );
   localparam int W = 4*COEFF_W;           // 92 bits per FIFO word
-  localparam int PIPE = 9;                // 1 FIFO + 1 input + 6 BF + 1 result
+  localparam int PIPE = 10;                // 1 FIFO + 1 input + 7 BF + 1 result
   typedef enum logic [2:0] {IDLE, PRE_DRAIN, RUN, DRAIN, DONE} state_e;
   state_e state;
   ntt_op_e op_r;
@@ -37,13 +37,16 @@ module ntt_core (
   logic read_sel_q;
   logic [1:0] read_lane_q;
   logic [W-1:0] read_word;
-  logic [W-1:0] word_a, word_b;
+  // Combined FIFO/coefficient selectors are decoded on the read-launch side.
+  // Their registers align with fifo_q*, avoiding cascaded word/lane muxes.
+  logic [3:0][11:0] operand_a_sel, operand_b_sel;
+  logic [3:0][11:0] operand_a_sel_q, operand_b_sel_q;
   logic [1:0] source_a, source_b;
-  logic [1:0] source_a_q, source_b_q;
   logic [1:0] dest_a, dest_b;
   logic [4:0] issue;
   logic [2:0] stage, p;
   logic run_issue, pwm_issue;
+  logic route_middle, route_swap, dest_to3;
   logic [W-1:0] b_q;
 
   typedef struct packed {
@@ -72,30 +75,59 @@ module ntt_core (
   function automatic logic [COEFF_W-1:0] pre_mul(input logic [COEFF_W-1:0] x);
     // First forward-stage twiddle is twiddle[1] = 4808194. The only legal
     // inputs for this shortcut are sampled secret coefficients in [-4,4].
-    case (x)
-      23'd0:             return 23'd0;
-      23'd1:             return 23'd4808194;
-      23'd2:             return 23'd1235971;
-      23'd3:             return 23'd6044165;
-      23'd4:             return 23'd2471942;
-      COEFF_W'(Q-1):     return 23'd3572223;
-      COEFF_W'(Q-2):     return 23'd7144446;
-      COEFF_W'(Q-3):     return 23'd2336252;
-      COEFF_W'(Q-4):     return 23'd5908475;
-      default:           return '0;
+    // For the contracted domain, {sign-bit, low-three-bits} identifies
+    // all nine residues uniquely. q mod 8 = 1, so q-k uses low bits 1-k.
+    // Decode four bits rather than comparing nine full 23-bit words on
+    // the measured load_pack -> pre_product_q path. The full input
+    // eligibility guard below remains unchanged; callers must ensure it
+    // in hardware too. Invalid residues can alias a valid key.
+    case ({x[COEFF_W-1],x[2:0]})
+      4'b0000: return 23'd0;
+      4'b0001: return 23'd4808194;
+      4'b0010: return 23'd1235971;
+      4'b0011: return 23'd6044165;
+      4'b0100: return 23'd2471942;
+      4'b1000: return 23'd3572223; // q-1
+      4'b1111: return 23'd7144446; // q-2
+      4'b1110: return 23'd2336252; // q-3
+      4'b1101: return 23'd5908475; // q-4
+      default: return '0;
     endcase
   endfunction
 
   function automatic logic [COEFF_W-1:0] pre_add(input logic [COEFF_W-1:0] a,
                                                    input logic [COEFF_W-1:0] b);
-    logic [COEFF_W:0] sum;
-    sum = {1'b0,a} + {1'b0,b};
-    return (sum >= Q) ? COEFF_W'(sum-Q) : sum[COEFF_W-1:0];
+    logic [COEFF_W:0] raw_sum, biased_sum, save_bits, majority;
+    logic [COEFF_W:0] a_ext, b_ext, bias;
+    a_ext = {1'b0,a}; b_ext = {1'b0,b};
+    bias = (COEFF_W+1)'((1<<COEFF_W)-Q);
+    raw_sum = a_ext + b_ext;
+    // Same canonical-input identity as butterfly madd: sum + 8191 has
+    // carry bit 23 iff sum >= q; its low bits already equal sum-q.
+    save_bits = a_ext ^ b_ext ^ bias;
+    majority = (a_ext & b_ext) | (a_ext & bias) | (b_ext & bias);
+    biased_sum = save_bits + {majority[COEFF_W-1:0],1'b0};
+    return biased_sum[COEFF_W] ? biased_sum[COEFF_W-1:0]
+                              : raw_sum[COEFF_W-1:0];
   endfunction
 
   function automatic logic [COEFF_W-1:0] pre_sub(input logic [COEFF_W-1:0] a,
                                                    input logic [COEFF_W-1:0] b);
-    return (a >= b) ? a-b : COEFF_W'(a+Q-b);
+    logic [COEFF_W:0] raw_diff, corrected_diff, save_bits, majority;
+    logic [COEFF_W:0] x_ext, neg_y, modulus;
+    x_ext = {1'b0,a};
+    neg_y = ~{1'b0,b};
+    modulus = (COEFF_W+1)'(Q);
+    raw_diff = x_ext - {1'b0,b};
+    // For canonical a/b, the 24-bit wrapped difference has bit 23 set
+    // exactly when a<b. Compute a-b+q independently as a+~b+q+1;
+    // compress the three operands and put +1 in the zero carry bit.
+    // Both candidate carry chains run in parallel, then borrow selects.
+    save_bits = x_ext ^ neg_y ^ modulus;
+    majority = (x_ext & neg_y) | (x_ext & modulus) | (neg_y & modulus);
+    corrected_diff = save_bits + {majority[COEFF_W-1:0],1'b1};
+    return raw_diff[COEFF_W] ? corrected_diff[COEFF_W-1:0]
+                            : raw_diff[COEFF_W-1:0];
   endfunction
 
   // The stream supplies a whole polynomial before start_i. For INTT the
@@ -122,8 +154,17 @@ module ntt_core (
   end
   always_ff @(posedge clk or posedge rst) begin
     if (rst) load_pack <= '0;
-    else if (state == IDLE && wr_en_i)
-      load_pack[wr_addr_i[1:0]*COEFF_W +: COEFF_W] <= wr_data_i;
+    else if (state == IDLE && wr_en_i) begin
+      // Fixed slices avoid synthesizing a variable bit offset (index * 23)
+      // on the measured rx_idx -> load_pack critical path. One beat still
+      // updates exactly one lane in the same clock; there is no extra stage.
+      case (wr_addr_i[1:0])
+        2'd0: load_pack[0*COEFF_W +: COEFF_W] <= wr_data_i;
+        2'd1: load_pack[1*COEFF_W +: COEFF_W] <= wr_data_i;
+        2'd2: load_pack[2*COEFF_W +: COEFF_W] <= wr_data_i;
+        2'd3: load_pack[3*COEFF_W +: COEFF_W] <= wr_data_i;
+      endcase
+    end
   end
   always_ff @(posedge clk) begin
     if (load_b) b_words[wr_addr_i[7:2]] <= completed_word;
@@ -175,66 +216,115 @@ module ntt_core (
     p = (op_r == OP_INTT) ? stage : (3'd7-stage);
     run_issue = (state == RUN && op_r != OP_PWM);
     pwm_issue = (state == RUN && op_r == OP_PWM);
+    // Direct bit decoding implements the group formulas without a variable
+    // shifter. Middle stages alternate (F1,F3) and (F2,F1); edge stages use
+    // (F1,F2). Therefore every transform issue reads F1.
+    route_middle = 0; route_swap = 0; dest_to3 = 0;
+    if (op_r == OP_INTT) begin
+      case (stage)
+        3'd3: begin route_middle=1; route_swap=issue[0]; end
+        3'd4: begin route_middle=1; route_swap=issue[1]; end
+        3'd5: begin route_middle=1; route_swap=issue[2]; end
+        3'd6: begin route_middle=1; route_swap=issue[3]; end
+        3'd7: begin route_middle=1; route_swap=issue[4]; end
+        default: begin end
+      endcase
+      case (stage)
+        3'd2: dest_to3=issue[0];
+        3'd3: dest_to3=issue[1];
+        3'd4: dest_to3=issue[2];
+        3'd5: dest_to3=issue[3];
+        3'd6: dest_to3=issue[4];
+        default: begin end
+      endcase
+    end else begin
+      case (stage)
+        3'd1: begin route_middle=1; route_swap=issue[4]; end
+        3'd2: begin route_middle=1; route_swap=issue[3]; end
+        3'd3: begin route_middle=1; route_swap=issue[2]; end
+        3'd4: begin route_middle=1; route_swap=issue[1]; end
+        3'd5: begin route_middle=1; route_swap=issue[0]; end
+        default: begin end
+      endcase
+      case (stage)
+        3'd0: dest_to3=issue[4];
+        3'd1: dest_to3=issue[3];
+        3'd2: dest_to3=issue[2];
+        3'd3: dest_to3=issue[1];
+        3'd4: dest_to3=issue[0];
+        default: begin end
+      endcase
+    end
     source_a = 0; source_b = 1;
     dest_a = 0; dest_b = 1;
     if (run_issue) begin
-      if (op_r == OP_NTT || op_r == OP_PRE_NTT) begin
-        if (stage >= 1 && stage <= 5) begin
-          if ((issue >> (5-stage)) & 1) begin
-            source_a = 1; source_b = 0;
-          end else begin
-            source_a = 0; source_b = 2;
-          end
-        end
-        if (stage <= 4 && ((issue >> (4-stage)) & 1)) begin
-          dest_a = 2; dest_b = 0;
-        end
-      end else begin
-        if (stage >= 3) begin
-          if ((issue >> (stage-3)) & 1) begin
-            source_a = 1; source_b = 0;
-          end else begin
-            source_a = 0; source_b = 2;
-          end
-        end
-        if (stage >= 2 && stage <= 6 && ((issue >> (stage-2)) & 1)) begin
-          dest_a = 2; dest_b = 0;
-        end
+      if (route_middle) begin
+        source_a = route_swap ? 2'd1 : 2'd0;
+        source_b = route_swap ? 2'd0 : 2'd2;
       end
+      if (dest_to3) begin dest_a = 2; dest_b = 0; end
     end else if (pwm_issue) begin
       source_a = tick[5] ? 2'd1 : 2'd0;
       dest_a = source_a;
     end
   end
 
+  // Fixed Boolean decoder: avoid variable one-hot bit indexing, which can
+  // infer a control ROM. Packed masks expose all selector bits to toggles.
   always_comb begin
-    word_a = (source_a_q == 0) ? fifo_q1 :
-             (source_a_q == 1) ? fifo_q2 : fifo_q3;
-    word_b = (source_b_q == 0) ? fifo_q1 :
-             (source_b_q == 1) ? fifo_q2 : fifo_q3;
+    for (int lane = 0; lane < 4; lane++) begin
+      for (int f = 0; f < 3; f++) begin
+        for (int k = 0; k < 4; k++) begin
+          operand_a_sel[lane][4*f+k] = !pwm_issue &&
+              (((p >= 3'd2) && source_a == f && k == lane) ||
+               ((p == 3'd1) && (lane < 2 ? source_a : source_b) == f &&
+                k == (lane < 2 ? lane : lane-2)) ||
+               ((p == 3'd0) && (lane < 2 ? source_a : source_b) == f &&
+                k == (lane < 2 ? lane*2 : (lane-2)*2)));
+          operand_b_sel[lane][4*f+k] =
+              (pwm_issue && source_a == f && k == lane) ||
+              (!pwm_issue &&
+               (((p >= 3'd2) && source_b == f && k == lane) ||
+                ((p == 3'd1) && (lane < 2 ? source_a : source_b) == f &&
+                 k == (lane < 2 ? lane+2 : lane)) ||
+                ((p == 3'd0) && (lane < 2 ? source_a : source_b) == f &&
+                 k == (lane < 2 ? lane*2+1 : (lane-2)*2+1))));
+        end
+      end
+    end
+  end
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      for (int lane = 0; lane < 4; lane++) begin
+        operand_a_sel_q[lane] <= '0;
+        operand_b_sel_q[lane] <= '0;
+      end
+    end else begin
+      for (int lane = 0; lane < 4; lane++) begin
+        operand_a_sel_q[lane] <= operand_a_sel[lane];
+        operand_b_sel_q[lane] <= operand_b_sel[lane];
+      end
+    end
+  end
+
+  always_comb begin
     for (int lane = 0; lane < 4; lane++) begin
       bf_mode[lane] = (op_r == OP_INTT && !tag[0].pwm) ? BF_GS : BF_CT;
       bf_ai[lane] = '0;
       bf_bi[lane] = '0;
-      bf_zi[lane] = tw[lane];
-      if (tag[0].pwm) begin
-        bf_bi[lane] = word_a[lane*COEFF_W +: COEFF_W];
-        bf_zi[lane] = b_q[lane*COEFF_W +: COEFF_W];
-      end else if (tag[0].p >= 3'd2) begin
-        bf_ai[lane] = word_a[lane*COEFF_W +: COEFF_W];
-        bf_bi[lane] = word_b[lane*COEFF_W +: COEFF_W];
-      end else if (tag[0].p == 3'd1) begin
-        bf_ai[lane] = (lane < 2) ? word_a[lane*COEFF_W +: COEFF_W]
-                                  : word_b[(lane-2)*COEFF_W +: COEFF_W];
-        bf_bi[lane] = (lane < 2) ? word_a[(lane+2)*COEFF_W +: COEFF_W]
-                                  : word_b[lane*COEFF_W +: COEFF_W];
-      end else begin
-        bf_ai[lane] = (lane < 2) ? word_a[(lane*2)*COEFF_W +: COEFF_W]
-                                  : word_b[((lane-2)*2)*COEFF_W +: COEFF_W];
-        bf_bi[lane] = (lane < 2) ? word_a[(lane*2+1)*COEFF_W +: COEFF_W]
-                                  : word_b[((lane-2)*2+1)*COEFF_W +: COEFF_W];
+      // One-hot masks combine physical FIFO and coefficient selection.
+      // PWM A stays zero, so CT returns the product on its A output.
+      for (int k = 0; k < 4; k++) begin
+        bf_ai[lane] |= ({COEFF_W{operand_a_sel_q[lane][k]}} & fifo_q1[k*COEFF_W +: COEFF_W]) |
+                       ({COEFF_W{operand_a_sel_q[lane][4+k]}} & fifo_q2[k*COEFF_W +: COEFF_W]) |
+                       ({COEFF_W{operand_a_sel_q[lane][8+k]}} & fifo_q3[k*COEFF_W +: COEFF_W]);
+        bf_bi[lane] |= ({COEFF_W{operand_b_sel_q[lane][k]}} & fifo_q1[k*COEFF_W +: COEFF_W]) |
+                       ({COEFF_W{operand_b_sel_q[lane][4+k]}} & fifo_q2[k*COEFF_W +: COEFF_W]) |
+                       ({COEFF_W{operand_b_sel_q[lane][8+k]}} & fifo_q3[k*COEFF_W +: COEFF_W]);
       end
-      if (op_r == OP_INTT && !tag[0].pwm && tw[lane] != 0)
+      bf_zi[lane] = tag[0].pwm ? b_q[lane*COEFF_W +: COEFF_W] : tw[lane];
+      // Every ROM entry is in [1, Q-1], so inverse twiddles need no zero guard.
+      if (op_r == OP_INTT && !tag[0].pwm)
         bf_zi[lane] = COEFF_W'(Q) - tw[lane];
     end
   end
@@ -338,18 +428,17 @@ module ntt_core (
   end
 
   // The FIFO controls below allow one read and one write to each store on the
-  // same edge. Write destinations travel with the eight-cycle BF pipeline.
+  // same edge. Write destinations travel with the nine-clock return pipeline.
   always_comb begin
     pop1 = 0; pop2 = 0; pop3 = 0;
     push1 = 0; push2 = 0; push3 = 0;
-    push_word1 = '0; push_word2 = '0; push_word3 = '0;
     if (run_issue) begin
-      if (source_a == 0 || source_b == 0) pop1 = 1;
-      if (source_a == 1 || source_b == 1) pop2 = 1;
-      if (source_a == 2 || source_b == 2) pop3 = 1;
+      pop1 = 1;
+      pop2 = !route_middle || route_swap;
+      pop3 = route_middle && !route_swap;
     end else if (pwm_issue) begin
-      if (source_a == 0) pop1 = 1;
-      else pop2 = 1;
+      pop1 = !tick[5];
+      pop2 = tick[5];
     end
     if (pre_pop) pop1 = 1;
     if (state == IDLE && rd_en_i && rd_addr_i[1:0] == 2'd3) begin
@@ -360,28 +449,45 @@ module ntt_core (
     end
     if (load_a && !pre_write) begin
       if (load_dest == 0) begin
-        push1 = 1; push_word1 = completed_word;
+        push1 = 1;
       end else begin
-        push2 = 1; push_word2 = completed_word;
+        push2 = 1;
       end
     end else if (pre_v1) begin
       // Normal stage-0 destinations: first 16 words F1/F2, then F3/F1.
       if (!pre_upper_q1) begin
-        push1 = 1; push_word1 = pre_sum_q;
-        push2 = 1; push_word2 = pre_diff_q;
+        push1 = 1;
+        push2 = 1;
       end else begin
-        push3 = 1; push_word3 = pre_sum_q;
-        push1 = 1; push_word1 = pre_diff_q;
+        push3 = 1;
+        push1 = 1;
       end
     end else if (tag[PIPE-1].valid) begin
-      if (tag[PIPE-1].dest_a == 0) begin push1 = 1; push_word1 = result_a; end
-      else if (tag[PIPE-1].dest_a == 1) begin push2 = 1; push_word2 = result_a; end
-      else begin push3 = 1; push_word3 = result_a; end
+      if (tag[PIPE-1].dest_a == 0) begin push1 = 1; end
+      else if (tag[PIPE-1].dest_a == 1) begin push2 = 1; end
+      else begin push3 = 1; end
       if (!tag[PIPE-1].pwm) begin
-        if (tag[PIPE-1].dest_b == 0) begin push1 = 1; push_word1 = result_b; end
-        else if (tag[PIPE-1].dest_b == 1) begin push2 = 1; push_word2 = result_b; end
-        else begin push3 = 1; push_word3 = result_b; end
+        if (tag[PIPE-1].dest_b == 0) begin push1 = 1; end
+        else if (tag[PIPE-1].dest_b == 1) begin push2 = 1; end
+        else begin push3 = 1; end
       end
+    end
+  end
+
+  // Select data independently of load_a's state/wr_en/address decode.
+  // Load, Pre-return and compute-return writes are mutually exclusive.
+  // Only the existing push controls above enable a memory write; inactive
+  // data ports need no zeroing. The independent UVM routing model checks
+  // every actual write value/destination and physical FIFO update.
+  always_comb begin
+    push_word1 = pre_v1 ? (pre_upper_q1 ? pre_diff_q : pre_sum_q)
+                        : completed_word;
+    push_word2 = pre_v1 ? pre_diff_q : completed_word;
+    push_word3 = pre_sum_q;
+    if (tag[PIPE-1].valid) begin
+      push_word1 = (!tag[PIPE-1].pwm && tag[PIPE-1].dest_b == 0) ? result_b : result_a;
+      push_word2 = (!tag[PIPE-1].pwm && tag[PIPE-1].dest_b == 1) ? result_b : result_a;
+      push_word3 = (!tag[PIPE-1].pwm && tag[PIPE-1].dest_b == 2) ? result_b : result_a;
     end
   end
 
@@ -389,11 +495,14 @@ module ntt_core (
     if (push1) fifo1[tail1] <= push_word1;
     if (push2) fifo2[tail2] <= push_word2;
     if (push3) fifo3[tail3] <= push_word3;
-    if ((pop1 && state == RUN) || pre_pop || (rd_en_i && state == IDLE))
+    // Decode RAM enables directly from issue/route controls. Output reads
+    // still occur on every requested beat; heads advance only on pop above.
+    if (run_issue || (pwm_issue && !tick[5]) || pre_pop || (rd_en_i && state == IDLE))
       fifo_q1 <= fifo1[head1];
-    if ((pop2 && state == RUN) || (rd_en_i && state == IDLE))
+    if ((run_issue && (!route_middle || route_swap)) ||
+        (pwm_issue && tick[5]) || (rd_en_i && state == IDLE))
       fifo_q2 <= fifo2[head2];
-    if (pop3 && state == RUN) fifo_q3 <= fifo3[head3];
+    if (run_issue && route_middle && !route_swap) fifo_q3 <= fifo3[head3];
     if (pwm_issue) b_q <= b_words[tick[5:0]];
   end
   always_ff @(posedge clk or posedge rst) begin
@@ -401,7 +510,6 @@ module ntt_core (
       head1 <= 0; tail1 <= 0; head2 <= 0; tail2 <= 0;
       head3 <= 0; tail3 <= 0;
       count1 <= 0; count2 <= 0; count3 <= 0;
-      source_a_q <= 0; source_b_q <= 1;
       for (int i = 0; i < PIPE; i++) tag[i] <= '0;
     end else begin
       if (pop1) head1 <= head1 + 1'b1;
@@ -413,7 +521,6 @@ module ntt_core (
       count1 <= count1 + 6'(push1) - 6'(pop1);
       count2 <= count2 + 6'(push2) - 6'(pop2);
       count3 <= count3 + 5'(push3) - 5'(pop3);
-      source_a_q <= source_a; source_b_q <= source_b;
       tag[0].valid <= run_issue || pwm_issue;
       tag[0].pwm <= pwm_issue;
       tag[0].inverse <= op_r == OP_INTT;
@@ -472,6 +579,9 @@ module ntt_core (
     if (state == IDLE && wr_en_i && !wr_b_sel_i && op_i == OP_PRE_NTT &&
         !(wr_data_i <= 4 || wr_data_i >= Q-4))
       $fatal(1, "Pre-NTT requires every coefficient in [-4,4]");
+    if ((load_a && !pre_write && (pre_v1 || tag[PIPE-1].valid)) ||
+        (pre_v1 && tag[PIPE-1].valid))
+      $fatal(1, "Overlapping FIFO load/Pre/compute write sources");
     if (pop1 && count1 == 0) $fatal(1, "FIFO1 underflow");
     if (pop2 && count2 == 0) $fatal(1, "FIFO2 underflow");
     if (pop3 && count3 == 0) $fatal(1, "FIFO3 underflow");

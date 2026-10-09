@@ -17,7 +17,7 @@ LANES = 4
 WORDS = N // LANES
 STAGE_CYCLES = N // (2 * LANES)
 FIFO_DEPTHS = (32, 32, 16)
-PIPELINES = (8, 9)  # original arithmetic path; registered BFU-input candidate
+PIPELINES = (8, 9, 10)  # saved schedules and current first-fold pipeline
 
 
 def expected_pairs(stage: int, inverse: bool) -> set[tuple[int, int]]:
@@ -76,7 +76,7 @@ def destination_fifos(stage: int, issue: int, inverse: bool) -> tuple[int, int]:
     return (0, 1) if issue % group_cycles < half else (2, 0)
 
 
-def run(inverse: bool, pipeline: int) -> None:
+def run(inverse: bool, pipeline: int) -> tuple[int, ...]:
     first, second = input_words(inverse)
     fifos = [deque(first), deque(second), deque()]
     pending: dict[int, list[tuple[int, tuple[int, ...]]]] = {}
@@ -127,9 +127,10 @@ def run(inverse: bool, pipeline: int) -> None:
     print(f"{'INTT' if inverse else 'NTT'} FIFO INDEX PASS: "
           f"8 stages, 128 pairs/stage, peak words {peak}, "
           f"{8 * STAGE_CYCLES + pipeline} scheduled cycles")
+    return tuple(peak)
 
 
-def run_pre_ntt(pipeline: int) -> None:
+def run_pre_ntt(pipeline: int) -> tuple[int, ...]:
     """Check the small-secret first-stage LUT output regrouping and 7 stages."""
     first, second = input_words(inverse=False)
     fifos = [deque(), deque(), deque()]
@@ -168,10 +169,20 @@ def run_pre_ntt(pipeline: int) -> None:
     assert result == list(range(N))
     print(f"PRE-NTT FIFO INDEX PASS: stage-0 regrouping and 7 remaining stages, "
           f"peak words {peak}, {7 * STAGE_CYCLES + pipeline} scheduled cycles")
+    return tuple(peak)
 
 
 if __name__ == "__main__":
     for pipe in PIPELINES:
-        run(inverse=False, pipeline=pipe)
-        run(inverse=True, pipeline=pipe)
-        run_pre_ntt(pipeline=pipe)
+        forward_peak = run(inverse=False, pipeline=pipe)
+        inverse_peak = run(inverse=True, pipeline=pipe)
+        pre_peak = run_pre_ntt(pipeline=pipe)
+        if pipe in (9, 10):
+            # The legal controller is data independent and has no pause in
+            # RUN. All 256 issues and the complete drain are enumerated above.
+            # FIFO3 is not used by standard loading/output, so this establishes
+            # its whole-job upper bound under the supported external protocol.
+            assert forward_peak == inverse_peak == (32, 32, 11)
+            assert pre_peak == (32, 32, 16)
+            print(f"FIFO REACHABILITY PASS: PIPE={pipe} standard FIFO3 peak=11/16; "
+                  "full is unreachable in legal NTT/INTT jobs; Pre peaks=32/32/16")

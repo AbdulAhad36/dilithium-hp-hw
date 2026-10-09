@@ -1,0 +1,214 @@
+Info: *******************************************************************
+Info: Running Quartus Prime Timing Analyzer
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Fri Oct  9 02:02:42 2026
+Info: Command: quartus_sta -t report_paths.tcl
+Info (20030): Parallel compilation is enabled and will use 12 of the 12 processors detected
+Info (21077): Low junction temperature is 0 degrees C
+Info (21077): High junction temperature is 85 degrees C
+Info (332104): Reading SDC File: 'ntt.sdc'
+Info (332151): Clock uncertainty is not calculated until you update the timing netlist.
+Info (21077): Core supply voltage is 1.1V
+Info (332123): Deriving Clock Uncertainty. Please refer to report_sdc in the Timing Analyzer to see clock uncertainties.
+==== WORST 3 SETUP PATHS (Slow 85C, 1100mV) ====
+Info (332115): Report Timing: Found 3 setup paths (3 violated).  Worst case slack is -2.646
+    Info (332115): -setup
+    Info (332115): -npaths 3
+    Info (332115): -detail summary
+    Info (332115): -stdout
+Info (332115): Path #1: Setup slack is -2.646 (VIOLATED)
+    Info (332115):    Slack        : -2.646 (VIOLATED)
+    Info (332115):    From Node    : ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_8dv:auto_generated|altsyncram_3gc1:altsyncram4|ram_block7a46
+    Info (332115):    To Node      : ntt_core:u_core|butterfly_unit:g_bf[2].u_bf|b_o[15]
+    Info (332115):    Launch Clock : clk
+    Info (332115):    Latch Clock  : clk
+    Info (332115):    Relationship : 5.000
+    Info (332115):    Clock Skew   : -0.378
+    Info (332115):    Data Delay   : 7.168
+Info (332115): Path #2: Setup slack is -2.626 (VIOLATED)
+    Info (332115):    Slack        : -2.626 (VIOLATED)
+    Info (332115):    From Node    : ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_8dv:auto_generated|altsyncram_3gc1:altsyncram4|ram_block7a46
+    Info (332115):    To Node      : ntt_core:u_core|butterfly_unit:g_bf[2].u_bf|b_o[16]
+    Info (332115):    Launch Clock : clk
+    Info (332115):    Latch Clock  : clk
+    Info (332115):    Relationship : 5.000
+    Info (332115):    Clock Skew   : -0.314
+    Info (332115):    Data Delay   : 7.212
+Info (332115): Path #3: Setup slack is -2.626 (VIOLATED)
+    Info (332115):    Slack        : -2.626 (VIOLATED)
+    Info (332115):    From Node    : ntt_core:u_core|state.IDLE~DUPLICATE
+    Info (332115):    To Node      : ntt_core:u_core|altsyncram:fifo2_rtl_0|altsyncram_60q1:auto_generated|ram_block1a0~porta_datain_reg34
+    Info (332115):    Launch Clock : clk
+    Info (332115):    Latch Clock  : clk
+    Info (332115):    Relationship : 5.000
+    Info (332115):    Clock Skew   : -0.138
+    Info (332115):    Data Delay   : 7.388
+==== WORST PATH FULL DETAIL (Slow 85C) ====
+Info (332115): Report Timing: Found 1 setup paths (1 violated).  Worst case slack is -2.646
+    Info (332115): -setup
+    Info (332115): -npaths 1
+    Info (332115): -detail full_path
+    Info (332115): -stdout
+Info (332115): Path #1: Setup slack is -2.646 (VIOLATED)
+    Info (332115): ===================================================================
+    Info (332115): From Node    : ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_8dv:auto_generated|altsyncram_3gc1:altsyncram4|ram_block7a46
+    Info (332115): To Node      : ntt_core:u_core|butterfly_unit:g_bf[2].u_bf|b_o[15]
+    Info (332115): Launch Clock : clk
+    Info (332115): Latch Clock  : clk
+    Info (332115): Data Arrival Path:
+    Info (332115): Total (ns)  Incr (ns)     Type  Element
+    Info (332115): ==========  ========= ==  ====  ===================================
+    Info (332115):      0.000      0.000           launch edge time
+    Info (332115):      0.000      0.000           source latency
+    Info (332115):      0.000      0.000           clk
+    Info (332115):      0.000      0.000 RR    IC  clk~input|i
+    Info (332115):      0.739      0.739 RR  CELL  clk~input|o
+    Info (332115):      1.125      0.386 RR    IC  clk~inputCLKENA0|inclk
+    Info (332115):      1.632      0.507 RR  CELL  clk~inputCLKENA0|outclk
+    Info (332115):      3.946      2.314 RR    IC  u_core|g_bf[3].u_bf|keep_dly_rtl_0|auto_generated|altsyncram4|ram_block7a46|clk1
+    Info (332115):      4.735      0.789 RR  CELL  ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_8dv:auto_generated|altsyncram_3gc1:altsyncram4|ram_block7a46
+    Info (332115):      4.735      0.000     uTco  ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_8dv:auto_generated|altsyncram_3gc1:altsyncram4|ram_block7a46
+    Info (332115):      4.764      0.029 FF  CELL  u_core|g_bf[3].u_bf|keep_dly_rtl_0|auto_generated|altsyncram4|ram_block7a46|portbdataout[0]
+    Info (332115):      6.785      2.021 FF    IC  u_core|g_bf[2].u_bf|LessThan2~0|datad
+    Info (332115):      7.225      0.440 FR  CELL  u_core|g_bf[2].u_bf|LessThan2~0|combout
+    Info (332115):      7.506      0.281 RR    IC  u_core|g_bf[2].u_bf|LessThan2~1|dataf
+    Info (332115):      7.603      0.097 RR  CELL  u_core|g_bf[2].u_bf|LessThan2~1|combout
+    Info (332115):      8.357      0.754 RR    IC  u_core|g_bf[2].u_bf|LessThan2~10|datac
+    Info (332115):      8.936      0.579 RF  CELL  u_core|g_bf[2].u_bf|LessThan2~10|combout
+    Info (332115):      9.870      0.934 FF    IC  u_core|g_bf[2].u_bf|LessThan2~18|dataf
+    Info (332115):      9.973      0.103 FR  CELL  u_core|g_bf[2].u_bf|LessThan2~18|combout
+    Info (332115):     10.893      0.920 RR    IC  u_core|g_bf[2].u_bf|b_o~21|dataa
+    Info (332115):     11.599      0.706 RR  CELL  u_core|g_bf[2].u_bf|b_o~21|combout
+    Info (332115):     11.599      0.000 RR    IC  u_core|g_bf[2].u_bf|b_o[15]|d
+    Info (332115):     11.903      0.304 RR  CELL  ntt_core:u_core|butterfly_unit:g_bf[2].u_bf|b_o[15]
+    Info (332115): Data Required Path:
+    Info (332115): Total (ns)  Incr (ns)     Type  Element
+    Info (332115): ==========  ========= ==  ====  ===================================
+    Info (332115):      5.000      5.000           latch edge time
+    Info (332115):      5.000      0.000           source latency
+    Info (332115):      5.000      0.000           clk
+    Info (332115):      5.000      0.000 RR    IC  clk~input|i
+    Info (332115):      5.739      0.739 RR  CELL  clk~input|o
+    Info (332115):      6.102      0.363 RR    IC  clk~inputCLKENA0|inclk
+    Info (332115):      6.572      0.470 RR  CELL  clk~inputCLKENA0|outclk
+    Info (332115):      8.712      2.140 RR    IC  u_core|g_bf[2].u_bf|b_o[15]|clk
+    Info (332115):      9.297      0.585 RR  CELL  ntt_core:u_core|butterfly_unit:g_bf[2].u_bf|b_o[15]
+    Info (332115):      9.357      0.060           clock pessimism removed
+    Info (332115):      9.257     -0.100           clock uncertainty
+    Info (332115):      9.257      0.000     uTsu  ntt_core:u_core|butterfly_unit:g_bf[2].u_bf|b_o[15]
+    Info (332115): Data Arrival Time  :    11.903
+    Info (332115): Data Required Time :     9.257
+    Info (332115): Slack              :    -2.646 (VIOLATED)
+    Info (332115): ===================================================================
+Info (21077): Core supply voltage is 1.1V
+Info (332123): Deriving Clock Uncertainty. Please refer to report_sdc in the Timing Analyzer to see clock uncertainties.
+==== WORST 3 SETUP PATHS (Slow 0C, 1100mV) ====
+Info (332115): Report Timing: Found 3 setup paths (3 violated).  Worst case slack is -2.747
+    Info (332115): -setup
+    Info (332115): -npaths 3
+    Info (332115): -detail summary
+    Info (332115): -stdout
+Info (332115): Path #1: Setup slack is -2.747 (VIOLATED)
+    Info (332115):    Slack        : -2.747 (VIOLATED)
+    Info (332115):    From Node    : ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_8dv:auto_generated|altsyncram_3gc1:altsyncram4|ram_block7a50
+    Info (332115):    To Node      : ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|b_o[22]
+    Info (332115):    Launch Clock : clk
+    Info (332115):    Latch Clock  : clk
+    Info (332115):    Relationship : 5.000
+    Info (332115):    Clock Skew   : -0.404
+    Info (332115):    Data Delay   : 7.243
+Info (332115): Path #2: Setup slack is -2.720 (VIOLATED)
+    Info (332115):    Slack        : -2.720 (VIOLATED)
+    Info (332115):    From Node    : ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_8dv:auto_generated|altsyncram_3gc1:altsyncram4|ram_block7a50
+    Info (332115):    To Node      : ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|b_o[21]
+    Info (332115):    Launch Clock : clk
+    Info (332115):    Latch Clock  : clk
+    Info (332115):    Relationship : 5.000
+    Info (332115):    Clock Skew   : -0.406
+    Info (332115):    Data Delay   : 7.214
+Info (332115): Path #3: Setup slack is -2.658 (VIOLATED)
+    Info (332115):    Slack        : -2.658 (VIOLATED)
+    Info (332115):    From Node    : ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_8dv:auto_generated|altsyncram_3gc1:altsyncram4|ram_block7a49
+    Info (332115):    To Node      : ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|b_o[22]
+    Info (332115):    Launch Clock : clk
+    Info (332115):    Latch Clock  : clk
+    Info (332115):    Relationship : 5.000
+    Info (332115):    Clock Skew   : -0.412
+    Info (332115):    Data Delay   : 7.146
+==== WORST PATH FULL DETAIL (Slow 0C) ====
+Info (332115): Report Timing: Found 1 setup paths (1 violated).  Worst case slack is -2.747
+    Info (332115): -setup
+    Info (332115): -npaths 1
+    Info (332115): -detail full_path
+    Info (332115): -stdout
+Info (332115): Path #1: Setup slack is -2.747 (VIOLATED)
+    Info (332115): ===================================================================
+    Info (332115): From Node    : ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_8dv:auto_generated|altsyncram_3gc1:altsyncram4|ram_block7a50
+    Info (332115): To Node      : ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|b_o[22]
+    Info (332115): Launch Clock : clk
+    Info (332115): Latch Clock  : clk
+    Info (332115): Data Arrival Path:
+    Info (332115): Total (ns)  Incr (ns)     Type  Element
+    Info (332115): ==========  ========= ==  ====  ===================================
+    Info (332115):      0.000      0.000           launch edge time
+    Info (332115):      0.000      0.000           source latency
+    Info (332115):      0.000      0.000           clk
+    Info (332115):      0.000      0.000 RR    IC  clk~input|i
+    Info (332115):      0.737      0.737 RR  CELL  clk~input|o
+    Info (332115):      1.127      0.390 RR    IC  clk~inputCLKENA0|inclk
+    Info (332115):      1.665      0.538 RR  CELL  clk~inputCLKENA0|outclk
+    Info (332115):      4.083      2.418 RR    IC  u_core|g_bf[3].u_bf|keep_dly_rtl_0|auto_generated|altsyncram4|ram_block7a0|clk1
+    Info (332115):      4.879      0.796 RR  CELL  ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_8dv:auto_generated|altsyncram_3gc1:altsyncram4|ram_block7a50
+    Info (332115):      4.879      0.000     uTco  ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_8dv:auto_generated|altsyncram_3gc1:altsyncram4|ram_block7a50
+    Info (332115):      4.931      0.052 FF  CELL  u_core|g_bf[3].u_bf|keep_dly_rtl_0|auto_generated|altsyncram4|ram_block7a0|portbdataout[31]
+    Info (332115):      6.848      1.917 FF    IC  u_core|g_bf[1].u_bf|Add8~53|datac
+    Info (332115):      8.090      1.242 FF  CELL  u_core|g_bf[1].u_bf|Add8~53|cout
+    Info (332115):      8.090      0.000 FF    IC  u_core|g_bf[1].u_bf|Add8~41|cin
+    Info (332115):      8.633      0.543 FR  CELL  u_core|g_bf[1].u_bf|Add8~41|sumout
+    Info (332115):      8.994      0.361 RR    IC  u_core|g_bf[1].u_bf|Add9~41|dataa
+    Info (332115):     10.447      1.453 RR  CELL  u_core|g_bf[1].u_bf|Add9~41|cout
+    Info (332115):     10.447      0.000 RR    IC  u_core|g_bf[1].u_bf|Add9~77|cin
+    Info (332115):     10.907      0.460 RF  CELL  u_core|g_bf[1].u_bf|Add9~77|sumout
+    Info (332115):     11.131      0.224 FF    IC  u_core|g_bf[1].u_bf|b_o~19|datac
+    Info (332115):     11.805      0.674 FF  CELL  u_core|g_bf[1].u_bf|b_o~19|combout
+    Info (332115):     11.805      0.000 FF    IC  u_core|g_bf[1].u_bf|b_o[22]|d
+    Info (332115):     12.122      0.317 FF  CELL  ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|b_o[22]
+    Info (332115): Data Required Path:
+    Info (332115): Total (ns)  Incr (ns)     Type  Element
+    Info (332115): ==========  ========= ==  ====  ===================================
+    Info (332115):      5.000      5.000           latch edge time
+    Info (332115):      5.000      0.000           source latency
+    Info (332115):      5.000      0.000           clk
+    Info (332115):      5.000      0.000 RR    IC  clk~input|i
+    Info (332115):      5.737      0.737 RR  CELL  clk~input|o
+    Info (332115):      6.109      0.372 RR    IC  clk~inputCLKENA0|inclk
+    Info (332115):      6.614      0.505 RR  CELL  clk~inputCLKENA0|outclk
+    Info (332115):      8.872      2.258 RR    IC  u_core|g_bf[1].u_bf|b_o[22]|clk
+    Info (332115):      9.424      0.552 RR  CELL  ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|b_o[22]
+    Info (332115):      9.475      0.051           clock pessimism removed
+    Info (332115):      9.375     -0.100           clock uncertainty
+    Info (332115):      9.375      0.000     uTsu  ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|b_o[22]
+    Info (332115): Data Arrival Time  :    12.122
+    Info (332115): Data Required Time :     9.375
+    Info (332115): Slack              :    -2.747 (VIOLATED)
+    Info (332115): ===================================================================
+Info (23030): Evaluation of Tcl script report_paths.tcl was successful
+Info: Quartus Prime Timing Analyzer was successful. 0 errors, 0 warnings
+    Info: Peak virtual memory: 5017 megabytes
+    Info: Processing ended: Fri Oct  9 02:02:45 2026
+    Info: Elapsed time: 00:00:03
+    Info: Total CPU time (on all processors): 00:00:03

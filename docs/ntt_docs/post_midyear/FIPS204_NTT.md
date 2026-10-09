@@ -44,7 +44,7 @@ On 2026-10-05, QuestaSim 2024.1 compiled the dedicated test with zero compile er
 
 The capture transcript measured the following at a 10 ns *simulation* clock with continuous input `valid` and output `ready`. `core_start` to `core_done` is counted separately from the external start request to the final output beat. These are clock counts; the simulation clock does not establish FPGA Fmax.
 
-| Operation | Stage 1 core | Current core | Stage 1 external | Current external |
+| Operation | Stage 1 core | Stage 2 checkpoint core | Stage 1 external | Stage 2 checkpoint external |
 |---|---:|---:|---:|---:|
 | Forward NTT | 302 | 284 | 1,071 | 798 |
 | Inverse NTT | 377 | 288 | 1,146 | 802 |
@@ -53,3 +53,141 @@ The capture transcript measured the following at a 10 ns *simulation* clock with
 The Stage 1 output interface used two clocks per coefficient. The current Stage 2 `ntt_engine` prefetches the next coefficient when the current output is accepted, so a continuously ready receiver gets one output per clock. The current `ntt_core` overlaps safe inter-pass drains, scales final inverse-pass results in four parallel lanes, and pipelines the butterfly input and modular reduction; it waits for all final writebacks before reporting `done`. The retained output-stall-fix source passed **18/18 cases and 4,608/4,608 coefficients** in `sim/ntt_stage2_stall_fix_vectors.log`; the capture test also checks for pending writeback at `done` and simultaneous writeback sources. Directed engine, core, UVM, and independent-reference checks passed **30/30, 33/33, 53/53, and 208/208** in the corresponding `sim/ntt_stage2_stall_fix_*.log` files. The directed engine test now checks varied-output stability through backpressure, random transformations with stalls, input gaps, final `m_tlast`, and no-stall/paced transaction counts. Composite `ROUNDTRIP` and `MUL` cases chain separate external operations; the table lists each constituent operation. The historical approximately 299/372/74 compute figures use a different counting boundary and should not be silently substituted for these measured start-to-done counts. The Stage 2 fit, timing, and paced measurements are recorded in [the plan](POST_MIDYEAR_VERIFICATION_PLAN.md).
 
 The unmodified baseline also reran successfully: `ntt_ref_check.do` **208/208**, `ntt_core_check.do` **33/33**, `ntt_engine_check.do` **23/23**, and `ntt_run.do` **53/53 UVM** with zero UVM errors/fatals. At that Stage 1 checkpoint, the narrow 19-bin UVM covergroup sampled requested input transactions, so its 100% was not a requirements-complete coverage claim. The later Stage 4 scoreboard now samples the documented bins only after output comparison and framing pass; see [COVERAGE.md](COVERAGE.md). RTL code coverage was not compiled in the Stage 1 run (`vsim-8634`).
+
+### Earlier LightHD Stage 4 pipeline checkpoint (2026-10-09)
+
+The current `src/ntt_LightHD/` RTL was captured by
+`sim/ntt_LightHD/run_vectors.do`; `vector_balanced.log` records all 18 cases.
+`compare_balanced.log` records **NTT COMPARE PASS: 18/18 cases,
+4,608/4,608 coefficients** using the same independent reference files.
+Measured core NTT/INTT/PWM/Pre cycles remain 266/266/74/235 and no-stall
+wrapper launch-to-last-output cycles remain 780/780/844/749. The standalone
+capture is retained separately from main UVM; redundant directed core/engine/
+arithmetic benches have been removed. Current fitting results are in the plan.
+
+### Earlier carry-save/fixed-packing result (2026-10-09)
+
+That checkpoint RTL capture `vector_fixed_load.log` and Python `compare_fixed_load.log` record **18/18 cases, 4,608/4,608 coefficients matching**. Operation cycles remain unchanged. Main UVM independently passes 115/115; this output-file flow remains separate from the full regression. Fitted results and rollback checkpoints are in the plan.
+
+### Earlier retained arithmetic result (2026-10-09)
+
+The current source capture `vector_final_fold.log` and Python
+`compare_final_fold.log` pass **18/18 cases, 4,608/4,608 coefficients**.
+Cycles stay 266/266/74/235 core and 780/780/844/749 wrapper (NTT/INTT/PWM/Pre).
+The main UVM separately passes 116/116 with fourteen checked functional
+covergroups 100%; the file-comparison flow is not included in that regression.
+The current fitted estimate is 129.08 MHz worst-corner Fmax and 2,717 ALMs.
+These are source simulation and fitted timing results; no netlist/FPGA result
+is claimed. See the plan for reports, saved checkpoints and remaining gates.
+
+### Earlier selected subtraction/FIFO result (2026-10-09)
+
+Current `vector_write_mux.log` and Python `compare_write_mux.log` pass **18/18
+cases, 4,608/4,608 coefficients**. Core cycles remain 266/266/74/235 and wrapper
+cycles 780/780/844/749 (NTT/INTT/PWM/Pre). Main UVM separately passes 116/116;
+all fourteen implemented checked functional groups reach 100%, including ten
+arithmetic bins. This capture/compare flow remains separate from main UVM.
+Fresh fitted estimate: 131.22 MHz worst-corner Fmax, 2,428 ALMs. Saved/rejected
+builds and reports are listed in the plan. No netlist or FPGA result is claimed.
+
+## Earlier restored selected source (2026-10-09)
+
+`vector_selected_restore.log` captures the selected RTL after rejecting two
+slower timing trials. `compare_selected_restore.log` records **NTT COMPARE PASS:
+18/18 cases, 4,608/4,608 coefficients**. Core cycles remain 266/266/74/235 and
+no-stall wrapper cycles 780/780/844/749 for NTT/INTT/PWM/Pre. No golden mathematics
+or reference vector files were changed.
+
+Main UVM is separate: **117/117** passing jobs, fourteen checked functional
+covergroup types 100%, including a new all-lane PWM product/carry-boundary case.
+That job is not an extra file-based Python vector case. Commands and generated
+file locations above remain the same. Selected/trial performance is in the plan;
+this file records standalone reference-output correctness, not code coverage.
+
+## Earlier selected reduction rebalance (2026-10-09)
+
+`vector_final_rebalance.log` captures current DUT outputs; Python
+`compare_final_rebalance.log` records **NTT COMPARE PASS: 18/18 cases,
+4,608/4,608 coefficients**. Golden mathematics and reference vector files are
+unchanged. Core cycles remain 266/266/74/235 and no-stall wrapper cycles
+780/780/844/749. Main UVM separately passes 117/117 with fourteen checked
+functional covergroup types 100%. The execution commands and file flow above
+remain unchanged; this source result does not establish netlist/FPGA behavior.
+
+## Earlier selected q+1 subtraction (2026-10-09)
+
+`vector_sub_qplus1.log` captures current DUT outputs; Python
+`compare_sub_qplus1.log` records **NTT COMPARE PASS: 18/18 cases,
+4,608/4,608 coefficients**. Golden mathematics and reference files are unchanged.
+Core cycles remain 266/266/74/235; no-stall wrapper cycles remain 780/780/844/749.
+Main UVM separately passes 117/117 with fourteen checked functional covergroups
+100%. Commands and file flow above are unchanged; this is source verification.
+
+## Earlier selected twiddle-guard removal (2026-10-10)
+
+`vector_tw_nonzero.log` captures current RTL outputs; `compare_tw_nonzero.log`
+records **NTT COMPARE PASS: 18/18 cases, 4,608/4,608 coefficients**. No input,
+expected-file or golden mathematics changed. Core cycles 266/266/74/235 and
+wrapper cycles 780/780/844/749 remain unchanged. Main UVM separately passes
+117/117 with fourteen checked functional covergroup types 100%. Commands and
+file flow above are unchanged; this is source verification, not netlist/FPGA.
+
+## Earlier selected operand selectors (2026-10-10)
+
+`vector_operand_boolean.log` captures the selected DUT outputs;
+`compare_operand_boolean.log` records **NTT COMPARE PASS: 18/18 cases,
+4,608/4,608 coefficients**. No reference files or golden mathematics changed.
+Core266/266/74/235 and wrapper780/780/844/749 cycles remain unchanged.
+Main UVM separately passes117/117 with14checked covergroup types100%.
+Commands/file flow unchanged; source verification only, not netlist/FPGA.
+
+## Earlier selected kept-sum reduction (2026-10-10)
+
+`vector_keep_bias.log` / `compare_keep_bias.log` record **NTT COMPARE PASS:
+18/18cases,4608/4608coefficients** on selected RTL. Reference files and golden
+mathematics unchanged. Core266/266/74/235 and wrapper780/780/844/749 unchanged.
+Main UVM separately passes118/118 with14checked groups100%; its added GS-sum
+boundary job is not an extra file-based Python case. Commands/file flow unchanged.
+Source simulation only; no netlist/FPGA validation claim.
+
+## Earlier restoration after decoder trials (2026-10-10)
+
+Both saved route-decoder trials passed 18/18 cases and 4,608/4,608 coefficients:
+`vector_route_decode.log` / `compare_route_decode.log` and
+`vector_route_pre_key.log` / `compare_route_pre_key.log`. Their worst-corner
+speed did not exceed the saved keep-bias source, so that exact RTL was restored.
+Fresh `vector_keep_bias_restore.log` / `compare_keep_bias_restore.log` again
+records **NTT COMPARE PASS: 18/18 cases, 4,608/4,608 coefficients**.
+
+Core NTT/INTT/PWM/Pre cycles remain 266/266/74/235; wrapper cycles remain
+780/780/844/749. Main UVM separately passes 118/118 with all fourteen checked
+groups at 100%. Reference files and golden mathematics are unchanged. Commands
+and file flow above are unchanged. These are source simulation results;
+netlist and FPGA verification remain separate stages.
+
+## Earlier source restoration after multiplier trials (2026-10-10)
+
+`vector_fold_select.log` / `compare_fold_select.log` and
+`vector_fold_parallel.log` / `compare_fold_parallel.log` each match all
+18 cases and 4,608 coefficients. Both were rejected for worse fitted timing.
+The selected keep-bias RTL is restored byte-for-byte. Fresh
+`vector_fold_trials_restore.log` / `compare_fold_trials_restore.log` again
+records **NTT COMPARE PASS: 18/18 cases, 4,608/4,608 coefficients**.
+
+Reference files, SV/Python models, commands and file flow are unchanged.
+Core NTT/INTT/PWM/Pre cycles remain 266/266/74/235, and no-stall wrapper cycles
+remain 780/780/844/749. Main UVM separately passes 118/118 with fourteen checked
+groups at 100%. The separate PIPE=10 index-model check is planning evidence;
+no new RTL pipeline or measured operation latency is claimed.
+
+## Latest selected first-fold pipeline (2026-10-10)
+
+`vector_fold_pipeline.log` / `compare_fold_pipeline.log` records **NTT COMPARE
+PASS: 18/18 cases, 4,608/4,608 coefficients**. Reference files and SV/Python
+mathematics are unchanged. The new pipeline adds one clock per operation:
+core NTT/INTT/PWM/Pre counts are **267/267/75/236**, and no-stall wrapper counts
+are **781/781/845/750**. These are measured capture boundaries, superseding
+the earlier planning prediction. Main UVM separately passes 118/118 with all
+fourteen checked groups at 100%. Commands and output-file flow are unchanged.
+Fresh fit reaches 148.46 MHz worst Fmax; full setup/hold/area evidence is in
+the plan. Source verification only; Stage 5 and FPGA validation remain pending.

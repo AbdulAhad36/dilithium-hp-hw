@@ -1,0 +1,17 @@
+Analysis & Synthesis Status : Successful - Sat Oct 10 02:13:21 2026
+Quartus Prime Version : 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+Revision Name : ntt
+Top-level Entity Name : ntt_engine
+Family : Cyclone V
+Logic utilization (in ALMs) : N/A
+Total registers : 2530
+Total pins : 59
+Total virtual pins : 0
+Total block memory bits : 37,348
+Total DSP Blocks : 5
+Total HSSI RX PCSs : 0
+Total HSSI PMA RX Deserializers : 0
+Total HSSI TX PCSs : 0
+Total HSSI PMA TX Serializers : 0
+Total PLLs : 0
+Total DLLs : 0
