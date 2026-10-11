@@ -1,0 +1,2 @@
+# Local build caches and historical generated outputs are not source changes.
+generated/

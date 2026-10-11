@@ -63,24 +63,16 @@ class ntt_full_test extends ntt_base_test;
 
     function void check_phase(uvm_phase phase);
         super.check_phase(phase);
-        if (env.scoreboard.total_tests!=118 || env.scoreboard.failed_tests!=0 ||
-            env.coverage.checked_jobs!=118 || env.scoreboard.equivalence_passed!=16)
-            `uvm_fatal("UVM_REGRESSION_GATE", "Expected 118 checked passing jobs")
-        if (env.coverage.cg_butterfly_arithmetic.get_coverage()!=100 ||
-            env.coverage.cg_schedule.get_coverage()!=100 ||
-            env.coverage.cg_twiddle.get_coverage()!=100 ||
-            env.coverage.cg_fifo.get_coverage()!=100 ||
-            env.coverage.cg_scaling.get_coverage()!=100 ||
-            env.coverage.cg_pre_lookup.get_coverage()!=100 ||
-            env.coverage.cg_pwm_schedule.get_coverage()!=100 ||
-            env.coverage.cg_flow.get_coverage()!=100 ||
-            env.coverage.cg_ntt.get_coverage()!=100 ||
-            env.coverage.cg_pre.get_coverage()!=100 ||
-            env.coverage.cg_restart.get_coverage()!=100 ||
-            env.coverage.cg_reset_abort.get_coverage()!=100 ||
-            env.coverage.cg_pre_equivalence.get_coverage()!=100 ||
-            env.coverage.cg_coefficient_routing.get_coverage()!=100)
-            `uvm_fatal("UVM_REGRESSION_GATE", "Implemented checked functional bins are incomplete")
+        if (env.scoreboard.total_tests!=748 || env.scoreboard.failed_tests!=0 ||
+            env.scoreboard.passed_tests!=748 || env.coverage.checked_jobs!=748 ||
+            env.scoreboard.checked_coefficients!=191488 || env.scoreboard.equivalence_passed!=16)
+            `uvm_fatal("UVM_REGRESSION_GATE", "Expected 748 checked passing jobs / 191488 coefficients")
+        if (env.coverage.minimum_group_coverage()<90.0)
+            `uvm_fatal("UVM_REGRESSION_GATE", "A checked functional group is below the 90 percent review target")
+        if(env.coverage.overall_coverage()<90.0)
+            `uvm_fatal("UVM_REGRESSION_GATE","Expanded overall functional coverage below 90 percent checkpoint")
+        // No upper-bound failure: genuine hits are always retained and reported.
+        `uvm_info("UVM_REGRESSION_GATE","NTT INTERACTION UVM PASS: 748/748 jobs, 191488/191488 coefficients, 32 checked covergroup types; see actual overall coverage and unhit crosses",UVM_NONE)
     endfunction
 endclass
 
@@ -118,8 +110,8 @@ class ntt_coverage_gate_test extends ntt_base_test;
         ntt_gate_seq seq;
         ntt_gate_error_catcher catcher;
         ntt_transaction good, expected, bad;
-        int saved_jobs;
-        real saved_coverage, saved_arithmetic_coverage;
+        int saved_jobs,saved_gap,saved_stall;
+        real saved_coverage, saved_arithmetic_coverage, saved_expanded_coverage, saved_interaction_coverage;
         bit [4:0] saved_sum_classes;
         bit [4:0] saved_sub_classes;
         phase.raise_objection(this);
@@ -130,6 +122,9 @@ class ntt_coverage_gate_test extends ntt_base_test;
         if (good==null || env.coverage.checked_jobs!=1)
             `uvm_fatal("COVERAGE_GATE_TEST", "Missing real passing DUT witness")
         saved_jobs=env.coverage.checked_jobs;
+        saved_gap=good.trace.max_gap;saved_stall=good.trace.max_stall;
+        saved_expanded_coverage=env.coverage.expanded_mean_coverage();
+        saved_interaction_coverage=env.coverage.interaction_mean_coverage();
         saved_coverage=env.coverage.cg_schedule.get_coverage();
         saved_arithmetic_coverage=env.coverage.cg_butterfly_arithmetic.get_coverage();
         saved_sum_classes=good.trace.routing.ct_sum_classes;
@@ -139,7 +134,8 @@ class ntt_coverage_gate_test extends ntt_base_test;
         expected.op=good.op; expected.exp_poly=good.exp_poly;
         catcher=new(); catcher.target=env.scoreboard; catcher.armed=1;
         uvm_report_cb::add(env.scoreboard,catcher);
-        for (int fault=0; fault<5; fault++) begin
+        for (int fault=0; fault<7; fault++) begin
+            expected.reset_point=-1;
             bad=ntt_transaction::type_id::create("bad");
             bad.op=good.op; bad.obs_poly=good.obs_poly;
             bad.observed_count=good.observed_count;
@@ -155,6 +151,8 @@ class ntt_coverage_gate_test extends ntt_base_test;
                     bad.observed_reset_point=0;
                     bad.reset_checks_ok=0;
                 end
+                5: bad.trace.max_gap=63;
+                6: bad.trace.max_stall=63;
             endcase
             // Poison only the rejected item's arithmetic metadata with
             // all boundary classes. If a failed item escaped to coverage,
@@ -164,11 +162,14 @@ class ntt_coverage_gate_test extends ntt_base_test;
                 bad.trace.routing.ct_sub_classes=5'b11111;
             end
             env.scoreboard.compare_tx(expected,bad);
+            good.trace.max_gap=saved_gap;good.trace.max_stall=saved_stall;
             good.trace.routing.ct_sum_classes=saved_sum_classes;
             good.trace.routing.ct_sub_classes=saved_sub_classes;
             if (catcher.expected_errors!=fault+1 ||
                 env.coverage.checked_jobs!=saved_jobs ||
                 env.coverage.cg_schedule.get_coverage()!=saved_coverage ||
+                env.coverage.expanded_mean_coverage()!=saved_expanded_coverage ||
+                env.coverage.interaction_mean_coverage()!=saved_interaction_coverage ||
                 env.coverage.cg_butterfly_arithmetic.get_coverage()!=saved_arithmetic_coverage)
                 `uvm_fatal("COVERAGE_GATE_TEST", "Failed item changed checked coverage or escaped rejection")
             `uvm_info("COVERAGE_GATE_TEST",
@@ -176,9 +177,9 @@ class ntt_coverage_gate_test extends ntt_base_test;
         end
         catcher.armed=0;
         uvm_report_cb::delete(env.scoreboard,catcher);
-        if (env.scoreboard.passed_tests!=1 || env.scoreboard.failed_tests!=5)
+        if (env.scoreboard.passed_tests!=1 || env.scoreboard.failed_tests!=7)
             `uvm_fatal("COVERAGE_GATE_TEST", "Unexpected checker counts")
-        `uvm_info("COVERAGE_GATE_TEST", "UVM COVERAGE GATE PASS: five deliberate failures rejected, no checked coverage added",UVM_NONE)
+        `uvm_info("COVERAGE_GATE_TEST", "UVM COVERAGE GATE PASS: seven deliberate failures rejected (including gap/stall observations), no checked coverage added",UVM_NONE)
         phase.drop_objection(this);
     endtask
 endclass

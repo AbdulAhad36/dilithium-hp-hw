@@ -4,6 +4,9 @@ class ntt_trace extends uvm_object;
     `uvm_object_utils(ntt_trace)
 
     ntt_routing_trace routing;
+    int gap_run,stall_run,gap_region,stall_region,max_gap,max_stall;
+    int gap_lengths[3][6],stall_lengths[3][6];
+    bit reset_seen;
     int issue_hits[8][32], pwm_hits[64];
     bit [255:0] twiddles[8];
     bit [2:0] sources, destinations, occupancy[3], scaling;
@@ -27,8 +30,72 @@ class ntt_trace extends uvm_object;
                ((op == OP_PWM) ? 3 : 0));
     endfunction
 
+    // Classes are derived from accepted pins, not sequence labels.
+    static function int value_class(coeff_t value);
+        if (value==0) return 0;
+        if (value==1) return 1;
+        if (value<=4) return 2;
+        if (value<=4095) return 3;
+        if (value<=Q/2) return 4;
+        if (value<Q-4) return 5;
+        if (value<Q-1) return 6;
+        return 7;
+    endfunction
+    static function int duration_class(int clocks);
+        if (clocks==0) return 0;
+        if (clocks==1) return 1;
+        if (clocks==2) return 2;
+        if (clocks<=7) return 3;
+        if (clocks<=15) return 4;
+        return 5; // tested durations 16..63; no upper bound is claimed
+    endfunction
+    static function int polynomial_shape(poly_t p);
+        int nonzero;
+        bit constant_value, alternating, ascending, descending, eta2;
+        nonzero=0;constant_value=1;alternating=1;ascending=1;descending=1;eta2=1;
+        for (int i=0;i<N;i++) begin
+            if(p[i]!=0) nonzero++;
+            if(p[i]!=p[0]) constant_value=0;
+            if(p[i]!=p[i%2]) alternating=0;
+            if(i>0 && p[i]<p[i-1]) ascending=0;
+            if(i>0 && p[i]>p[i-1]) descending=0;
+            if(p[i]>2 && p[i]<Q-2) eta2=0;
+        end
+        if(nonzero==0) return 0;
+        if(constant_value) return 1;
+        if(nonzero==1) return 2;
+        if(alternating) return 3;
+        if(ascending) return 4;
+        if(descending) return 5;
+        if(eta2) return 6;
+        return 7;
+    endfunction
+    function void sample_durations(virtual ntt_if v,ntt_op_e op);
+        int region;
+        if(v.rst) begin reset_seen=1;gap_run=0;stall_run=0;return;end
+        if(v.s_tready && !v.s_tvalid && inputs>0 && inputs<((op==OP_PWM)?512:256)) begin
+            if(gap_run==0) begin
+                region=inputs%256; gap_region=(region<16)?0:((region>=240)?2:1);
+            end
+            gap_run++;
+        end else if(gap_run>0) begin
+            gap_lengths[gap_region][duration_class(gap_run)]++;
+            if(gap_run>max_gap) max_gap=gap_run;
+            gap_run=0;
+        end
+        if(v.m_tvalid && !v.m_tready) begin
+            if(stall_run==0) stall_region=(routing.outputs==0)?0:((routing.outputs==N-1)?2:1);
+            stall_run++;
+        end else if(stall_run>0) begin
+            stall_lengths[stall_region][duration_class(stall_run)]++;
+            if(stall_run>max_stall) max_stall=stall_run;
+            stall_run=0;
+        end
+    endfunction
+
     function void sample(virtual ntt_if v, ntt_op_e op);
         int counts[3];
+        sample_durations(v,op);
         routing.sample(v,op);
         if (v.rst) begin
             previous_tw_valid = 0;

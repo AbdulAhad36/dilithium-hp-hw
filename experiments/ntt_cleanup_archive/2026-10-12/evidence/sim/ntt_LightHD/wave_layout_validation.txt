@@ -1,0 +1,66 @@
+onerror {resume}
+quietly WaveActivateNextPane {} 0
+add wave -noupdate -divider Control
+add wave -noupdate /tb_top/clk
+add wave -noupdate /tb_top/vif/rst
+add wave -noupdate /tb_top/vif/start
+add wave -noupdate /tb_top/vif/op
+add wave -noupdate /tb_top/vif/busy
+add wave -noupdate /tb_top/vif/done
+add wave -noupdate -divider Input
+add wave -noupdate -radix unsigned /tb_top/vif/s_tdata
+add wave -noupdate -radix unsigned /tb_top/vif/s_tvalid
+add wave -noupdate -radix unsigned /tb_top/vif/s_tready
+add wave -noupdate -radix unsigned /tb_top/vif/s_tlast
+add wave -noupdate -divider Output
+add wave -noupdate -radix unsigned /tb_top/vif/m_tdata
+add wave -noupdate -radix unsigned /tb_top/vif/m_tvalid
+add wave -noupdate -radix unsigned /tb_top/vif/m_tready
+add wave -noupdate -radix unsigned /tb_top/vif/m_tlast
+add wave -noupdate -divider Schedule
+add wave -noupdate -radix unsigned /tb_top/vif/wrapper_state
+add wave -noupdate -radix unsigned /tb_top/vif/core_state
+add wave -noupdate -radix unsigned /tb_top/vif/stage
+add wave -noupdate -radix unsigned /tb_top/vif/issue
+add wave -noupdate -radix unsigned /tb_top/vif/tick
+add wave -noupdate -radix unsigned /tb_top/vif/run_issue
+add wave -noupdate -radix unsigned /tb_top/vif/pwm_issue
+add wave -noupdate -radix unsigned /tb_top/vif/return_valid
+add wave -noupdate -radix unsigned /tb_top/vif/pending_tags
+add wave -noupdate -divider FIFOs
+add wave -noupdate -radix unsigned /tb_top/vif/fifo_count1
+add wave -noupdate -radix unsigned /tb_top/vif/fifo_count2
+add wave -noupdate -radix unsigned /tb_top/vif/fifo_count3
+add wave -noupdate -radix unsigned /tb_top/vif/fifo_push
+add wave -noupdate -radix unsigned /tb_top/vif/fifo_pop
+add wave -noupdate -divider Butterfly
+add wave -noupdate -radix unsigned /tb_top/vif/bf_input_a
+add wave -noupdate -radix unsigned /tb_top/vif/bf_input_b
+add wave -noupdate -radix unsigned /tb_top/vif/bf_input_z
+add wave -noupdate -radix unsigned /tb_top/vif/bf_input_mode
+add wave -noupdate -radix unsigned /tb_top/vif/bf_a
+add wave -noupdate -radix unsigned /tb_top/vif/bf_b
+add wave -noupdate -divider Routing
+add wave -noupdate -radix unsigned /tb_top/vif/source_a
+add wave -noupdate -radix unsigned /tb_top/vif/source_b
+add wave -noupdate -radix unsigned /tb_top/vif/dest_a
+add wave -noupdate -radix unsigned /tb_top/vif/dest_b
+add wave -noupdate -radix unsigned /tb_top/vif/output_address
+TreeUpdate [SetDefaultTree]
+WaveRestoreCursors {{Cursor 1} {0 ps} 0}
+quietly wave cursor active 0
+configure wave -namecolwidth 260
+configure wave -valuecolwidth 100
+configure wave -justifyvalue left
+configure wave -signalnamewidth 1
+configure wave -snapdistance 10
+configure wave -datasetprefix 0
+configure wave -rowmargin 4
+configure wave -childrowmargin 2
+configure wave -gridoffset 0
+configure wave -gridperiod 1
+configure wave -griddelta 40
+configure wave -timeline 0
+configure wave -timelineunits us
+update
+WaveRestoreZoom {16 us} {24 us}

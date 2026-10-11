@@ -1,0 +1,11 @@
+NTT FIFO INDEX PASS: 8 stages, 128 pairs/stage, peak words [32, 32, 12], 264 scheduled cycles
+INTT FIFO INDEX PASS: 8 stages, 128 pairs/stage, peak words [32, 32, 12], 264 scheduled cycles
+PRE-NTT FIFO INDEX PASS: stage-0 regrouping and 7 remaining stages, peak words [32, 32, 16], 232 scheduled cycles
+NTT FIFO INDEX PASS: 8 stages, 128 pairs/stage, peak words [32, 32, 11], 265 scheduled cycles
+INTT FIFO INDEX PASS: 8 stages, 128 pairs/stage, peak words [32, 32, 11], 265 scheduled cycles
+PRE-NTT FIFO INDEX PASS: stage-0 regrouping and 7 remaining stages, peak words [32, 32, 16], 233 scheduled cycles
+FIFO REACHABILITY PASS: PIPE=9 standard FIFO3 peak=11/16; full is unreachable in legal NTT/INTT jobs; Pre peaks=32/32/16
+NTT FIFO INDEX PASS: 8 stages, 128 pairs/stage, peak words [32, 32, 11], 266 scheduled cycles
+INTT FIFO INDEX PASS: 8 stages, 128 pairs/stage, peak words [32, 32, 11], 266 scheduled cycles
+PRE-NTT FIFO INDEX PASS: stage-0 regrouping and 7 remaining stages, peak words [32, 32, 16], 234 scheduled cycles
+FIFO REACHABILITY PASS: PIPE=10 standard FIFO3 peak=11/16; full is unreachable in legal NTT/INTT jobs; Pre peaks=32/32/16

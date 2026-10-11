@@ -1,6 +1,18 @@
 # LightHD NTT specification
 
-**Stage 4, 2026-10-10.** Active RTL: `src/ntt_LightHD/ntt_engine.sv` and its
+**Current source verification (2026-10-12):** 748/748 UVM jobs,
+191,488 compared coefficients, zero UVM errors/fatals, 32 checked covergroup
+types at **90.47% overall functional type average**. Ten new groups and 128
+new tests extend the prior 620-job checkpoint. The raw bin aggregation is
+73.33%; the large transition/shape/flow cross remains only 5.47%, so this is
+an incomplete-coverage review checkpoint. Original 22 groups retain their
+>=90% gate; overall must reach >=90%, with no upper-bound failure or suppression
+of valid hits. Code counts, RTL, golden model and fit metrics are unchanged.
+See [COVERAGE.md](COVERAGE.md) for exact definitions, all misses and evidence.
+Older dated counts below are historical checkpoints. Stage 6 has not begun.
+
+
+**Updated after Stage 5, 2026-10-11.** Active RTL: `src/ntt_LightHD/ntt_engine.sv` and its
 local dependencies. This is an independent reconstruction of the published
 four-butterfly, three-FIFO architecture; the authors' RTL was not available.
 
@@ -87,18 +99,92 @@ reduction argument are documented in `COVERAGE.md`. There are 256 issue clocks f
 for Pre-NTT after the shortcut. Measured start-to-done latency also includes
 pipeline/start/drain control; see [THROUGHPUT.md](THROUGHPUT.md).
 
+The selected write path predecodes each FIFO's A/B result choice in three
+control flops alongside result_a/b. Return data selection uses these bits;
+write enables and load/Pre/compute priority are unchanged. FIFO3 never receives
+B in legal routes, so its B-select is constant zero. This adds no operation clock.
+The wrapper prepares index+1 throughout E_TX_VALID; it issues a read only when
+the current output is accepted and is not final. Every enabled address remains
+identical; inactive addresses are not consumed. First output and stalled data/
+last behavior are unchanged. See the measured selection history in the plan.
+
 ## Verification and implementation limits
 
 Main UVM `tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv` checks outputs with the independent
 SV model and checks observed operands, twiddles, FIFO writes/routing, reset and
-stream flow before awarding coverage. Current regression is 118/118 passing
-jobs and fourteen implemented covergroup types at 100%. This is not exhaustive
+stream flow before awarding coverage. Current regression is 620/620 passing
+jobs and 22 covergroup types at 99.51% average (minimum 92.36%). This is not exhaustive
 input verification or 100% raw code coverage; see [COVERAGE.md](COVERAGE.md).
 Separate output capture and Python comparison are in [FIPS204_NTT.md](FIPS204_NTT.md).
 These are independent FIPS-derived cases, not NIST-published standalone NTT vectors.
 
-Implementation target is Cyclone V 5CGXFC7C7F23C8, Quartus 25.1std Lite,
-5 ns clock. Setup timing is still open. Current fitted evidence and retained
-iterations are in [the plan](POST_MIDYEAR_VERIFICATION_PLAN.md) and
-`quartus/ntt_LightHD/results/`. No board pinout, current-RTL netlist simulation,
-or Keccak/sampler integration result is claimed. See the plan for Stage 5/6 gates.
+Implementation target is Cyclone V 5CGXFC7C7F23C8, Quartus 25.1std Lite.
+The user approved an operating clock near current Fmax: nominal 148 MHz.
+The requested 6.756757 ns period is represented by TimeQuest as 6.756 ns
+(148.02 MHz). The permanent `ntt.sdc` selects 5 ns during synthesis/fitting and the approved
+operating constraint during final Timing Analyzer execution. In Quartus open
+`quartus/ntt_LightHD/ntt.qpf`, revision `ntt`, then **Processing > Start Compilation**.
+No SDC edits are required. Optional CLI: `quartus/ntt_LightHD/build_operating.ps1`.
+See the Quartus README for compiler-stage labels and report locations.
+Fresh full rebuild passes all 20 operating checks with zero TNS: worst setup/hold/
+pulse +0.111/+0.152/+1.201 ns. Worst Fmax 150.49 MHz, 2,475 ALMs, 2,414 registers,
+5 DSPs, 20 M10Ks. The 200 MHz benchmark remains in `ntt_benchmark_200mhz.sdc`;
+it is unmet. External I/O is false-pathed; closure covers standalone internal
+timing, not board/sampler timing.
+Current fitted evidence and retained iterations are in
+[the plan](POST_MIDYEAR_VERIFICATION_PLAN.md) and
+`quartus/ntt_LightHD/results/`. Board pinout/validation and Keccak/sampler
+integration remain pending. Current functional netlist results are below.
+
+## Stage 5 functional netlist results (2026-10-11)
+
+Both distinct post-synthesis and post-fit models pass the same main UVM top:
+**117/117 jobs and 29,952/29,952 coefficients each**, zero UVM errors/fatals.
+Each gate includes 117 completions, seven aborts, eight reset witnesses and
+16 Pre/general equivalence pairs. All 109 non-reset source jobs are reused;
+eight external reset scenarios replace the nine RTL-state source scenarios.
+
+Fresh source UVM passes **118/118**, with 118 checked trace/routing witnesses,
+all fourteen functional covergroup types at 100%, and unchanged raw code counts.
+Its current transcript/report producer is `uvm_stage5_source.log`.
+Netlist mode creates no coverage subscriber and credits no internal bins or
+code coverage. It checks public behavior with the unchanged independent model.
+The separate external checker self-test rejects five corrupted observations;
+its intentional rejections are not added to the passing regression totals.
+
+No RTL or golden-model change was required. The netlist driver waits for `done`
+after the final accepted output so completion is checked before another reset
+or request. Cyclone V models are functional, without SDF; operating timing
+remains the positive 148 MHz TimeQuest result. Board and integration tests are
+pending. Commands, warning review, scope and archived evidence are in
+[the Stage 5 plan section](POST_MIDYEAR_VERIFICATION_PLAN.md#stage-5---functional-implementation-verification-completed-2026-10-11).
+
+## Expanded source coverage after Stage 5 (2026-10-11)
+
+The main UVM regression now passes **620/620 jobs, 158,720 coefficients**, zero
+UVM errors/fatals. Eight new covergroup types bring the model to 22; each meets
+the 90% review threshold. Average across types is **99.51%**, minimum **92.36%**.
+Output ranges hit 31/32; mode/gap/stall combinations hit 133/144. The original
+fourteen groups remain 100%. No percentages are forced below 100% and no missed
+legal bins are waived. The 502 added jobs cover input shapes, prescribed
+outputs, PWM A/B range pairs, 400 reproducible variable-flow jobs and all 32
+checked operation/reset transitions. Actual measured durations are checked
+against requested profiles before coverage credit. A separate seven-fault
+checker self-test rejects corrupted observations without new credit.
+
+Raw DUT code coverage: statements **762/775 (98.32%)**, branches **388/402
+(96.52%)**, conditions **56/85 (65.88%)**, expressions **56/59 (94.92%)**,
+toggles **11,691/12,735 (91.80%)**, FSM states **13/13** and transitions **24/24**.
+Counts are unchanged from Stage 5; no exclusions or failed UCDB merges.
+Condition coverage remains below target, with reviewed guards/correlations and
+remaining review items described in [COVERAGE.md](COVERAGE.md). That document
+also lists every unhit new bin, sample/checker logic and arithmetic of totals.
+
+Run `do ntt_LightHD/run_uvm.do` from `sim/`; require `NTT EXPANDED UVM PASS`.
+Default simulator seed 20261011; new flow seed 439041101. Current log:
+`uvm_expanded.log`; main UCDB/raw-report names are unchanged. Exact evidence is
+in `experiments/ntt_stage4/lighthd_expanded_coverage_checkpoint/`.
+RTL/golden, fitted timing/resources and cycle counts are unchanged. Stage 5
+retains its archived 117-job netlist results; only its checker compatibility
+self-test was rerun with the updated UVM. No 620-job full-netlist result,
+FPGA result, Stage 6 integration or commit is claimed.

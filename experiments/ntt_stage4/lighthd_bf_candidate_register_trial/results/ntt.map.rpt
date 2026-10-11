@@ -1,0 +1,1729 @@
+Analysis & Synthesis report for ntt
+Sat Oct 10 18:06:59 2026
+Quartus Prime Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+
+
+---------------------
+; Table of Contents ;
+---------------------
+  1. Legal Notice
+  2. Analysis & Synthesis Summary
+  3. Analysis & Synthesis Settings
+  4. Parallel Compilation
+  5. Analysis & Synthesis Source Files Read
+  6. Analysis & Synthesis Resource Usage Summary
+  7. Analysis & Synthesis Resource Utilization by Entity
+  8. Analysis & Synthesis RAM Summary
+  9. Analysis & Synthesis DSP Block Usage Summary
+ 10. State Machine - |ntt_engine|state
+ 11. State Machine - |ntt_engine|ntt_core:u_core|state
+ 12. Registers Removed During Synthesis
+ 13. Removed Registers Triggering Further Register Optimizations
+ 14. General Register Statistics
+ 15. Inverted Register Statistics
+ 16. Registers Packed Into Inferred Megafunctions
+ 17. Multiplexer Restructuring Statistics (Restructuring Performed)
+ 18. Source assignments for ntt_core:u_core|altsyncram:fifo1_rtl_0|altsyncram_60q1:auto_generated
+ 19. Source assignments for ntt_core:u_core|altsyncram:fifo2_rtl_0|altsyncram_60q1:auto_generated
+ 20. Source assignments for ntt_core:u_core|altsyncram:fifo3_rtl_0|altsyncram_80q1:auto_generated
+ 21. Source assignments for ntt_core:u_core|altsyncram:b_words_rtl_0|altsyncram_i0q1:auto_generated
+ 22. Source assignments for ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated
+ 23. Source assignments for ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated
+ 24. Source assignments for ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated
+ 25. Source assignments for ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated
+ 26. Source assignments for ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|altsyncram_tcc1:altsyncram5
+ 27. Source assignments for ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|cntr_j1h:cntr6
+ 28. Source assignments for ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated|altsyncram_vfc1:altsyncram5
+ 29. Source assignments for ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated|cntr_e1h:cntr6
+ 30. Parameter Settings for Inferred Entity Instance: ntt_core:u_core|altsyncram:fifo1_rtl_0
+ 31. Parameter Settings for Inferred Entity Instance: ntt_core:u_core|altsyncram:fifo2_rtl_0
+ 32. Parameter Settings for Inferred Entity Instance: ntt_core:u_core|altsyncram:fifo3_rtl_0
+ 33. Parameter Settings for Inferred Entity Instance: ntt_core:u_core|altsyncram:b_words_rtl_0
+ 34. Parameter Settings for Inferred Entity Instance: ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0
+ 35. Parameter Settings for Inferred Entity Instance: ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|altsyncram:rom_rtl_0
+ 36. Parameter Settings for Inferred Entity Instance: ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|altsyncram:rom_rtl_0
+ 37. Parameter Settings for Inferred Entity Instance: ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|altsyncram:rom_rtl_0
+ 38. Parameter Settings for Inferred Entity Instance: ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0
+ 39. Parameter Settings for Inferred Entity Instance: ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0
+ 40. altsyncram Parameter Settings by Entity Instance
+ 41. altshift_taps Parameter Settings by Entity Instance
+ 42. Port Connectivity Checks: "ntt_core:u_core"
+ 43. Post-Synthesis Netlist Statistics for Top Partition
+ 44. Elapsed Time Per Partition
+ 45. Analysis & Synthesis Messages
+ 46. Analysis & Synthesis Suppressed Messages
+
+
+
+----------------
+; Legal Notice ;
+----------------
+Copyright (C) 2025  Altera Corporation. All rights reserved.
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and any partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, the Altera Quartus Prime License Agreement,
+the Altera IP License Agreement, or other applicable license
+agreement, including, without limitation, that your use is for
+the sole purpose of programming logic devices manufactured by
+Altera and sold by Altera or its authorized distributors.  Please
+refer to the Altera Software License Subscription Agreements 
+on the Quartus Prime software download page.
+
+
+
++-----------------------------------------------------------------------------------+
+; Analysis & Synthesis Summary                                                      ;
++---------------------------------+-------------------------------------------------+
+; Analysis & Synthesis Status     ; Successful - Sat Oct 10 18:06:59 2026           ;
+; Quartus Prime Version           ; 25.1std.0 Build 1129 10/21/2025 SC Lite Edition ;
+; Revision Name                   ; ntt                                             ;
+; Top-level Entity Name           ; ntt_engine                                      ;
+; Family                          ; Cyclone V                                       ;
+; Logic utilization (in ALMs)     ; N/A                                             ;
+; Total registers                 ; 2945                                            ;
+; Total pins                      ; 59                                              ;
+; Total virtual pins              ; 0                                               ;
+; Total block memory bits         ; 37,305                                          ;
+; Total DSP Blocks                ; 5                                               ;
+; Total HSSI RX PCSs              ; 0                                               ;
+; Total HSSI PMA RX Deserializers ; 0                                               ;
+; Total HSSI TX PCSs              ; 0                                               ;
+; Total HSSI PMA TX Serializers   ; 0                                               ;
+; Total PLLs                      ; 0                                               ;
+; Total DLLs                      ; 0                                               ;
++---------------------------------+-------------------------------------------------+
+
+
++---------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Settings                                                                                             ;
++---------------------------------------------------------------------------------+--------------------+--------------------+
+; Option                                                                          ; Setting            ; Default Value      ;
++---------------------------------------------------------------------------------+--------------------+--------------------+
+; Device                                                                          ; 5CGXFC7C7F23C8     ;                    ;
+; Top-level entity name                                                           ; ntt_engine         ; ntt                ;
+; Family name                                                                     ; Cyclone V          ; Cyclone V          ;
+; Maximum processors allowed for parallel compilation                             ; All                ;                    ;
+; Use smart compilation                                                           ; Off                ; Off                ;
+; Enable parallel Assembler and Timing Analyzer during compilation                ; On                 ; On                 ;
+; Enable compact report table                                                     ; Off                ; Off                ;
+; Restructure Multiplexers                                                        ; Auto               ; Auto               ;
+; MLAB Add Timing Constraints For Mixed-Port Feed-Through Mode Setting Don't Care ; Off                ; Off                ;
+; Create Debugging Nodes for IP Cores                                             ; Off                ; Off                ;
+; Preserve fewer node names                                                       ; On                 ; On                 ;
+; Intel FPGA IP Evaluation Mode                                                   ; Enable             ; Enable             ;
+; Verilog Version                                                                 ; Verilog_2001       ; Verilog_2001       ;
+; VHDL Version                                                                    ; VHDL_1993          ; VHDL_1993          ;
+; State Machine Processing                                                        ; Auto               ; Auto               ;
+; Safe State Machine                                                              ; Off                ; Off                ;
+; Extract Verilog State Machines                                                  ; On                 ; On                 ;
+; Extract VHDL State Machines                                                     ; On                 ; On                 ;
+; Ignore Verilog initial constructs                                               ; Off                ; Off                ;
+; Iteration limit for constant Verilog loops                                      ; 5000               ; 5000               ;
+; Iteration limit for non-constant Verilog loops                                  ; 250                ; 250                ;
+; Add Pass-Through Logic to Inferred RAMs                                         ; On                 ; On                 ;
+; Infer RAMs from Raw Logic                                                       ; On                 ; On                 ;
+; Parallel Synthesis                                                              ; On                 ; On                 ;
+; DSP Block Balancing                                                             ; Auto               ; Auto               ;
+; NOT Gate Push-Back                                                              ; On                 ; On                 ;
+; Power-Up Don't Care                                                             ; On                 ; On                 ;
+; Remove Redundant Logic Cells                                                    ; Off                ; Off                ;
+; Remove Duplicate Registers                                                      ; On                 ; On                 ;
+; Ignore CARRY Buffers                                                            ; Off                ; Off                ;
+; Ignore CASCADE Buffers                                                          ; Off                ; Off                ;
+; Ignore GLOBAL Buffers                                                           ; Off                ; Off                ;
+; Ignore ROW GLOBAL Buffers                                                       ; Off                ; Off                ;
+; Ignore LCELL Buffers                                                            ; Off                ; Off                ;
+; Ignore SOFT Buffers                                                             ; On                 ; On                 ;
+; Limit AHDL Integers to 32 Bits                                                  ; Off                ; Off                ;
+; Optimization Technique                                                          ; Balanced           ; Balanced           ;
+; Carry Chain Length                                                              ; 70                 ; 70                 ;
+; Auto Carry Chains                                                               ; On                 ; On                 ;
+; Auto Open-Drain Pins                                                            ; On                 ; On                 ;
+; Perform WYSIWYG Primitive Resynthesis                                           ; Off                ; Off                ;
+; Auto ROM Replacement                                                            ; On                 ; On                 ;
+; Auto RAM Replacement                                                            ; On                 ; On                 ;
+; Auto DSP Block Replacement                                                      ; On                 ; On                 ;
+; Auto Shift Register Replacement                                                 ; Auto               ; Auto               ;
+; Allow Shift Register Merging across Hierarchies                                 ; Auto               ; Auto               ;
+; Auto Clock Enable Replacement                                                   ; On                 ; On                 ;
+; Strict RAM Replacement                                                          ; Off                ; Off                ;
+; Allow Synchronous Control Signals                                               ; On                 ; On                 ;
+; Force Use of Synchronous Clear Signals                                          ; Off                ; Off                ;
+; Auto Resource Sharing                                                           ; Off                ; Off                ;
+; Allow Any RAM Size For Recognition                                              ; Off                ; Off                ;
+; Allow Any ROM Size For Recognition                                              ; Off                ; Off                ;
+; Allow Any Shift Register Size For Recognition                                   ; Off                ; Off                ;
+; Use LogicLock Constraints during Resource Balancing                             ; On                 ; On                 ;
+; Ignore translate_off and synthesis_off directives                               ; Off                ; Off                ;
+; Timing-Driven Synthesis                                                         ; On                 ; On                 ;
+; Report Parameter Settings                                                       ; On                 ; On                 ;
+; Report Source Assignments                                                       ; On                 ; On                 ;
+; Report Connectivity Checks                                                      ; On                 ; On                 ;
+; Ignore Maximum Fan-Out Assignments                                              ; Off                ; Off                ;
+; Synchronization Register Chain Length                                           ; 3                  ; 3                  ;
+; Power Optimization During Synthesis                                             ; Normal compilation ; Normal compilation ;
+; HDL message level                                                               ; Level2             ; Level2             ;
+; Suppress Register Optimization Related Messages                                 ; Off                ; Off                ;
+; Number of Removed Registers Reported in Synthesis Report                        ; 5000               ; 5000               ;
+; Number of Swept Nodes Reported in Synthesis Report                              ; 5000               ; 5000               ;
+; Number of Inverted Registers Reported in Synthesis Report                       ; 100                ; 100                ;
+; Clock MUX Protection                                                            ; On                 ; On                 ;
+; Auto Gated Clock Conversion                                                     ; Off                ; Off                ;
+; Block Design Naming                                                             ; Auto               ; Auto               ;
+; SDC constraint protection                                                       ; Off                ; Off                ;
+; Synthesis Effort                                                                ; Auto               ; Auto               ;
+; Shift Register Replacement - Allow Asynchronous Clear Signal                    ; On                 ; On                 ;
+; Pre-Mapping Resynthesis Optimization                                            ; Off                ; Off                ;
+; Analysis & Synthesis Message Level                                              ; Medium             ; Medium             ;
+; Disable Register Merging Across Hierarchies                                     ; Auto               ; Auto               ;
+; Resource Aware Inference For Block RAM                                          ; On                 ; On                 ;
+; Automatic Parallel Synthesis                                                    ; On                 ; On                 ;
+; Partial Reconfiguration Bitstream ID                                            ; Off                ; Off                ;
++---------------------------------------------------------------------------------+--------------------+--------------------+
+
+
++------------------------------------------+
+; Parallel Compilation                     ;
++----------------------------+-------------+
+; Processors                 ; Number      ;
++----------------------------+-------------+
+; Number detected on machine ; 12          ;
+; Maximum allowed            ; 12          ;
+;                            ;             ;
+; Average used               ; 1.01        ;
+; Maximum used               ; 12          ;
+;                            ;             ;
+; Usage by Processor         ; % Time Used ;
+;     Processor 1            ; 100.0%      ;
+;     Processor 2            ;   0.1%      ;
+;     Processor 3            ;   0.1%      ;
+;     Processor 4            ;   0.1%      ;
+;     Processor 5            ;   0.1%      ;
+;     Processor 6            ;   0.1%      ;
+;     Processor 7            ;   0.1%      ;
+;     Processor 8            ;   0.1%      ;
+;     Processors 9-12        ;   0.1%      ;
++----------------------------+-------------+
+
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Source Files Read                                                                                                                                                                                ;
++------------------------------------------+-----------------+-------------------------------------------------------+----------------------------------------------------------------------------------------+---------+
+; File Name with User-Entered Path         ; Used in Netlist ; File Type                                             ; File Name with Absolute Path                                                           ; Library ;
++------------------------------------------+-----------------+-------------------------------------------------------+----------------------------------------------------------------------------------------+---------+
+; ../../src/ntt_LightHD/ntt_pkg.sv         ; yes             ; User SystemVerilog HDL File                           ; D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_pkg.sv                                   ;         ;
+; ../../src/ntt_LightHD/mod_mul.sv         ; yes             ; User SystemVerilog HDL File                           ; D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/mod_mul.sv                                   ;         ;
+; ../../src/ntt_LightHD/butterfly_unit.sv  ; yes             ; User SystemVerilog HDL File                           ; D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/butterfly_unit.sv                            ;         ;
+; ../../src/ntt_LightHD/twiddle_rom.sv     ; yes             ; User SystemVerilog HDL File                           ; D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/twiddle_rom.sv                               ;         ;
+; ../../src/ntt_LightHD/ntt_core.sv        ; yes             ; User SystemVerilog HDL File                           ; D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_core.sv                                  ;         ;
+; ../../src/ntt_LightHD/ntt_engine.sv      ; yes             ; User SystemVerilog HDL File                           ; D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_engine.sv                                ;         ;
+; altsyncram.tdf                           ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/altsyncram.tdf                               ;         ;
+; stratix_ram_block.inc                    ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/stratix_ram_block.inc                        ;         ;
+; lpm_mux.inc                              ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/lpm_mux.inc                                  ;         ;
+; lpm_decode.inc                           ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/lpm_decode.inc                               ;         ;
+; aglobal251.inc                           ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/aglobal251.inc                               ;         ;
+; a_rdenreg.inc                            ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/a_rdenreg.inc                                ;         ;
+; altrom.inc                               ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/altrom.inc                                   ;         ;
+; altram.inc                               ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/altram.inc                                   ;         ;
+; altdpram.inc                             ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/altdpram.inc                                 ;         ;
+; db/altsyncram_60q1.tdf                   ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_60q1.tdf                   ;         ;
+; db/altsyncram_80q1.tdf                   ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_80q1.tdf                   ;         ;
+; db/altsyncram_i0q1.tdf                   ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_i0q1.tdf                   ;         ;
+; db/altsyncram_p8d1.tdf                   ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_p8d1.tdf                   ;         ;
+; db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif ; yes             ; Auto-Generated Auto-Found Memory Initialization File  ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif ;         ;
+; altshift_taps.tdf                        ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/altshift_taps.tdf                            ;         ;
+; lpm_counter.inc                          ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/lpm_counter.inc                              ;         ;
+; lpm_compare.inc                          ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/lpm_compare.inc                              ;         ;
+; lpm_constant.inc                         ; yes             ; Megafunction                                          ; f:/altera/quartus/libraries/megafunctions/lpm_constant.inc                             ;         ;
+; db/shift_taps_jbv.tdf                    ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/shift_taps_jbv.tdf                    ;         ;
+; db/altsyncram_tcc1.tdf                   ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_tcc1.tdf                   ;         ;
+; db/cntr_0if.tdf                          ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_0if.tdf                          ;         ;
+; db/cmpr_c9c.tdf                          ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cmpr_c9c.tdf                          ;         ;
+; db/cntr_j1h.tdf                          ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_j1h.tdf                          ;         ;
+; db/shift_taps_5dv.tdf                    ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/shift_taps_5dv.tdf                    ;         ;
+; db/altsyncram_vfc1.tdf                   ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_vfc1.tdf                   ;         ;
+; db/cntr_rhf.tdf                          ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_rhf.tdf                          ;         ;
+; db/cmpr_b9c.tdf                          ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cmpr_b9c.tdf                          ;         ;
+; db/cntr_e1h.tdf                          ; yes             ; Auto-Generated Megafunction                           ; D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_e1h.tdf                          ;         ;
++------------------------------------------+-----------------+-------------------------------------------------------+----------------------------------------------------------------------------------------+---------+
+
+
++---------------------------------------------------------+
+; Analysis & Synthesis Resource Usage Summary             ;
++---------------------------------------------+-----------+
+; Resource                                    ; Usage     ;
++---------------------------------------------+-----------+
+; Estimate of Logic utilization (ALMs needed) ; 2290      ;
+;                                             ;           ;
+; Combinational ALUT usage for logic          ; 3988      ;
+;     -- 7 input functions                    ; 24        ;
+;     -- 6 input functions                    ; 363       ;
+;     -- 5 input functions                    ; 658       ;
+;     -- 4 input functions                    ; 835       ;
+;     -- <=3 input functions                  ; 2108      ;
+;                                             ;           ;
+; Dedicated logic registers                   ; 2945      ;
+;                                             ;           ;
+; I/O pins                                    ; 59        ;
+; Total MLAB memory bits                      ; 0         ;
+; Total block memory bits                     ; 37305     ;
+;                                             ;           ;
+; Total DSP Blocks                            ; 5         ;
+;                                             ;           ;
+; Maximum fan-out node                        ; clk~input ;
+; Maximum fan-out                             ; 3502      ;
+; Total fan-out                               ; 33033     ;
+; Average fan-out                             ; 4.34      ;
++---------------------------------------------+-----------+
+
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Resource Utilization by Entity                                                                                                                                                                                                                                                                                     ;
++----------------------------------------------+---------------------+---------------------------+-------------------+------------+------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------+-----------------+--------------+
+; Compilation Hierarchy Node                   ; Combinational ALUTs ; Dedicated Logic Registers ; Block Memory Bits ; DSP Blocks ; Pins ; Virtual Pins ; Full Hierarchy Name                                                                                                                            ; Entity Name     ; Library Name ;
++----------------------------------------------+---------------------+---------------------------+-------------------+------------+------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------+-----------------+--------------+
+; |ntt_engine                                  ; 3988 (52)           ; 2945 (30)                 ; 37305             ; 5          ; 59   ; 0            ; |ntt_engine                                                                                                                                    ; ntt_engine      ; work         ;
+;    |ntt_core:u_core|                         ; 3936 (2012)         ; 2915 (1026)               ; 37305             ; 5          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core                                                                                                                    ; ntt_core        ; work         ;
+;       |altshift_taps:tag[0].inverse_rtl_0|   ; 22 (0)              ; 12 (0)                    ; 45                ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0                                                                                 ; altshift_taps   ; work         ;
+;          |shift_taps_jbv:auto_generated|     ; 22 (9)              ; 12 (5)                    ; 45                ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated                                                   ; shift_taps_jbv  ; work         ;
+;             |altsyncram_tcc1:altsyncram5|    ; 0 (0)               ; 0 (0)                     ; 45                ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|altsyncram_tcc1:altsyncram5                       ; altsyncram_tcc1 ; work         ;
+;             |cntr_0if:cntr1|                 ; 6 (6)               ; 4 (4)                     ; 0                 ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|cntr_0if:cntr1                                    ; cntr_0if        ; work         ;
+;             |cntr_j1h:cntr6|                 ; 7 (7)               ; 3 (3)                     ; 0                 ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|cntr_j1h:cntr6                                    ; cntr_j1h        ; work         ;
+;       |altsyncram:b_words_rtl_0|             ; 0 (0)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altsyncram:b_words_rtl_0                                                                                           ; altsyncram      ; work         ;
+;          |altsyncram_i0q1:auto_generated|    ; 0 (0)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altsyncram:b_words_rtl_0|altsyncram_i0q1:auto_generated                                                            ; altsyncram_i0q1 ; work         ;
+;       |altsyncram:fifo1_rtl_0|               ; 0 (0)               ; 0 (0)                     ; 2944              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altsyncram:fifo1_rtl_0                                                                                             ; altsyncram      ; work         ;
+;          |altsyncram_60q1:auto_generated|    ; 0 (0)               ; 0 (0)                     ; 2944              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altsyncram:fifo1_rtl_0|altsyncram_60q1:auto_generated                                                              ; altsyncram_60q1 ; work         ;
+;       |altsyncram:fifo2_rtl_0|               ; 0 (0)               ; 0 (0)                     ; 2944              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altsyncram:fifo2_rtl_0                                                                                             ; altsyncram      ; work         ;
+;          |altsyncram_60q1:auto_generated|    ; 0 (0)               ; 0 (0)                     ; 2944              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altsyncram:fifo2_rtl_0|altsyncram_60q1:auto_generated                                                              ; altsyncram_60q1 ; work         ;
+;       |altsyncram:fifo3_rtl_0|               ; 0 (0)               ; 0 (0)                     ; 1472              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altsyncram:fifo3_rtl_0                                                                                             ; altsyncram      ; work         ;
+;          |altsyncram_80q1:auto_generated|    ; 0 (0)               ; 0 (0)                     ; 1472              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|altsyncram:fifo3_rtl_0|altsyncram_80q1:auto_generated                                                              ; altsyncram_80q1 ; work         ;
+;       |butterfly_unit:g_bf[0].u_bf|          ; 481 (304)           ; 467 (263)                 ; 0                 ; 1          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[0].u_bf                                                                                        ; butterfly_unit  ; work         ;
+;          |mod_mul:u_mul|                     ; 177 (177)           ; 204 (204)                 ; 0                 ; 1          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[0].u_bf|mod_mul:u_mul                                                                          ; mod_mul         ; work         ;
+;       |butterfly_unit:g_bf[1].u_bf|          ; 458 (281)           ; 467 (263)                 ; 0                 ; 1          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[1].u_bf                                                                                        ; butterfly_unit  ; work         ;
+;          |mod_mul:u_mul|                     ; 177 (177)           ; 204 (204)                 ; 0                 ; 1          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|mod_mul:u_mul                                                                          ; mod_mul         ; work         ;
+;       |butterfly_unit:g_bf[2].u_bf|          ; 458 (281)           ; 467 (263)                 ; 0                 ; 1          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[2].u_bf                                                                                        ; butterfly_unit  ; work         ;
+;          |mod_mul:u_mul|                     ; 177 (177)           ; 204 (204)                 ; 0                 ; 1          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[2].u_bf|mod_mul:u_mul                                                                          ; mod_mul         ; work         ;
+;       |butterfly_unit:g_bf[3].u_bf|          ; 501 (304)           ; 476 (263)                 ; 460               ; 1          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[3].u_bf                                                                                        ; butterfly_unit  ; work         ;
+;          |altshift_taps:keep_dly_rtl_0|      ; 20 (0)              ; 9 (0)                     ; 460               ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0                                                           ; altshift_taps   ; work         ;
+;             |shift_taps_5dv:auto_generated|  ; 20 (8)              ; 9 (4)                     ; 460               ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated                             ; shift_taps_5dv  ; work         ;
+;                |altsyncram_vfc1:altsyncram5| ; 0 (0)               ; 0 (0)                     ; 460               ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated|altsyncram_vfc1:altsyncram5 ; altsyncram_vfc1 ; work         ;
+;                |cntr_e1h:cntr6|              ; 5 (5)               ; 2 (2)                     ; 0                 ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated|cntr_e1h:cntr6              ; cntr_e1h        ; work         ;
+;                |cntr_rhf:cntr1|              ; 7 (7)               ; 3 (3)                     ; 0                 ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated|cntr_rhf:cntr1              ; cntr_rhf        ; work         ;
+;          |mod_mul:u_mul|                     ; 177 (177)           ; 204 (204)                 ; 0                 ; 1          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|mod_mul:u_mul                                                                          ; mod_mul         ; work         ;
+;       |twiddle_rom:g_bf[0].u_tw|             ; 1 (0)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[0].u_tw                                                                                           ; twiddle_rom     ; work         ;
+;          |altsyncram:rom_rtl_0|              ; 1 (0)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|altsyncram:rom_rtl_0                                                                      ; altsyncram      ; work         ;
+;             |altsyncram_p8d1:auto_generated| ; 1 (1)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated                                       ; altsyncram_p8d1 ; work         ;
+;       |twiddle_rom:g_bf[1].u_tw|             ; 1 (0)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[1].u_tw                                                                                           ; twiddle_rom     ; work         ;
+;          |altsyncram:rom_rtl_0|              ; 1 (0)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|altsyncram:rom_rtl_0                                                                      ; altsyncram      ; work         ;
+;             |altsyncram_p8d1:auto_generated| ; 1 (1)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated                                       ; altsyncram_p8d1 ; work         ;
+;       |twiddle_rom:g_bf[2].u_tw|             ; 1 (0)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[2].u_tw                                                                                           ; twiddle_rom     ; work         ;
+;          |altsyncram:rom_rtl_0|              ; 1 (0)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|altsyncram:rom_rtl_0                                                                      ; altsyncram      ; work         ;
+;             |altsyncram_p8d1:auto_generated| ; 1 (1)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated                                       ; altsyncram_p8d1 ; work         ;
+;       |twiddle_rom:g_bf[3].u_tw|             ; 1 (0)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[3].u_tw                                                                                           ; twiddle_rom     ; work         ;
+;          |altsyncram:rom_rtl_0|              ; 1 (0)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0                                                                      ; altsyncram      ; work         ;
+;             |altsyncram_p8d1:auto_generated| ; 1 (1)               ; 0 (0)                     ; 5888              ; 0          ; 0    ; 0            ; |ntt_engine|ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated                                       ; altsyncram_p8d1 ; work         ;
++----------------------------------------------+---------------------+---------------------------+-------------------+------------+------+--------------+------------------------------------------------------------------------------------------------------------------------------------------------+-----------------+--------------+
+Note: For table entries with two numbers listed, the numbers in parentheses indicate the number of resources of the given type used by the specific entity alone. The numbers listed outside of parentheses indicate the total resources of the given type used by the specific entity and all of its sub-entities in the hierarchy.
+
+
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis RAM Summary                                                                                                                                                                                                                                                      ;
++-----------------------------------------------------------------------------------------------------------------------------------------------+------+------------------+--------------+--------------+--------------+--------------+------+------------------------------------------+
+; Name                                                                                                                                          ; Type ; Mode             ; Port A Depth ; Port A Width ; Port B Depth ; Port B Width ; Size ; MIF                                      ;
++-----------------------------------------------------------------------------------------------------------------------------------------------+------+------------------+--------------+--------------+--------------+--------------+------+------------------------------------------+
+; ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|altsyncram_tcc1:altsyncram5|ALTSYNCRAM                       ; AUTO ; Simple Dual Port ; 9            ; 5            ; 9            ; 5            ; 45   ; None                                     ;
+; ntt_core:u_core|altsyncram:b_words_rtl_0|altsyncram_i0q1:auto_generated|ALTSYNCRAM                                                            ; AUTO ; Simple Dual Port ; 64           ; 92           ; 64           ; 92           ; 5888 ; None                                     ;
+; ntt_core:u_core|altsyncram:fifo1_rtl_0|altsyncram_60q1:auto_generated|ALTSYNCRAM                                                              ; AUTO ; Simple Dual Port ; 32           ; 92           ; 32           ; 92           ; 2944 ; None                                     ;
+; ntt_core:u_core|altsyncram:fifo2_rtl_0|altsyncram_60q1:auto_generated|ALTSYNCRAM                                                              ; AUTO ; Simple Dual Port ; 32           ; 92           ; 32           ; 92           ; 2944 ; None                                     ;
+; ntt_core:u_core|altsyncram:fifo3_rtl_0|altsyncram_80q1:auto_generated|ALTSYNCRAM                                                              ; AUTO ; Simple Dual Port ; 16           ; 92           ; 16           ; 92           ; 1472 ; None                                     ;
+; ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated|altsyncram_vfc1:altsyncram5|ALTSYNCRAM ; AUTO ; Simple Dual Port ; 5            ; 92           ; 5            ; 92           ; 460  ; None                                     ;
+; ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated|ALTSYNCRAM                                       ; AUTO ; ROM              ; 256          ; 23           ; --           ; --           ; 5888 ; db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif ;
+; ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated|ALTSYNCRAM                                       ; AUTO ; ROM              ; 256          ; 23           ; --           ; --           ; 5888 ; db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif ;
+; ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated|ALTSYNCRAM                                       ; AUTO ; ROM              ; 256          ; 23           ; --           ; --           ; 5888 ; db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif ;
+; ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated|ALTSYNCRAM                                       ; AUTO ; ROM              ; 256          ; 23           ; --           ; --           ; 5888 ; db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif ;
++-----------------------------------------------------------------------------------------------------------------------------------------------+------+------------------+--------------+--------------+--------------+--------------+------+------------------------------------------+
+
+
++-----------------------------------------------+
+; Analysis & Synthesis DSP Block Usage Summary  ;
++---------------------------------+-------------+
+; Statistic                       ; Number Used ;
++---------------------------------+-------------+
+; Independent 9x9                 ; 1           ;
+; Independent 27x27               ; 4           ;
+; Total number of DSP blocks      ; 5           ;
+;                                 ;             ;
+; Fixed Point Unsigned Multiplier ; 5           ;
++---------------------------------+-------------+
+
+
+Encoding Type:  One-Hot
++---------------------------------------------------------------------------------------------------------------------------------------------------------+
+; State Machine - |ntt_engine|state                                                                                                                       ;
++-------------------+--------------+------------------+---------------+------------------+-------------------+--------------+--------------+--------------+
+; Name              ; state.E_DONE ; state.E_TX_VALID ; state.E_TX_RD ; state.E_RUN_WAIT ; state.E_RUN_START ; state.E_RX_B ; state.E_RX_A ; state.E_IDLE ;
++-------------------+--------------+------------------+---------------+------------------+-------------------+--------------+--------------+--------------+
+; state.E_IDLE      ; 0            ; 0                ; 0             ; 0                ; 0                 ; 0            ; 0            ; 0            ;
+; state.E_RX_A      ; 0            ; 0                ; 0             ; 0                ; 0                 ; 0            ; 1            ; 1            ;
+; state.E_RX_B      ; 0            ; 0                ; 0             ; 0                ; 0                 ; 1            ; 0            ; 1            ;
+; state.E_RUN_START ; 0            ; 0                ; 0             ; 0                ; 1                 ; 0            ; 0            ; 1            ;
+; state.E_RUN_WAIT  ; 0            ; 0                ; 0             ; 1                ; 0                 ; 0            ; 0            ; 1            ;
+; state.E_TX_RD     ; 0            ; 0                ; 1             ; 0                ; 0                 ; 0            ; 0            ; 1            ;
+; state.E_TX_VALID  ; 0            ; 1                ; 0             ; 0                ; 0                 ; 0            ; 0            ; 1            ;
+; state.E_DONE      ; 1            ; 0                ; 0             ; 0                ; 0                 ; 0            ; 0            ; 1            ;
++-------------------+--------------+------------------+---------------+------------------+-------------------+--------------+--------------+--------------+
+
+
+Encoding Type:  One-Hot
++---------------------------------------------------------------------------------------+
+; State Machine - |ntt_engine|ntt_core:u_core|state                                     ;
++-----------------+-------------+-----------+-----------------+------------+------------+
+; Name            ; state.DRAIN ; state.RUN ; state.PRE_DRAIN ; state.IDLE ; state.DONE ;
++-----------------+-------------+-----------+-----------------+------------+------------+
+; state.IDLE      ; 0           ; 0         ; 0               ; 0          ; 0          ;
+; state.PRE_DRAIN ; 0           ; 0         ; 1               ; 1          ; 0          ;
+; state.RUN       ; 0           ; 1         ; 0               ; 1          ; 0          ;
+; state.DRAIN     ; 1           ; 0         ; 0               ; 1          ; 0          ;
+; state.DONE      ; 0           ; 0         ; 0               ; 1          ; 1          ;
++-----------------+-------------+-----------+-----------------+------------+------------+
+
+
++---------------------------------------------------------------------------------+
+; Registers Removed During Synthesis                                              ;
++----------------------------------------+----------------------------------------+
+; Register name                          ; Reason for Removal                     ;
++----------------------------------------+----------------------------------------+
+; ntt_core:u_core|operand_a_sel_q[3][11] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[3][8]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[3][4]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[3][0]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[2][11] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[2][10] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[2][9]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[2][7]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[2][5]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[2][3]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[2][1]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[1][11] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[1][10] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[1][9]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[1][8]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[1][7]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[1][4]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[1][3]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[1][0]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[0][11] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[0][10] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[0][9]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[0][8]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[0][7]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[0][6]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[0][5]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[0][3]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[0][2]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[0][1]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[3][10] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[3][9]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[3][8]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[3][6]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[3][5]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[3][4]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[3][2]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[3][1]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[3][0]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[2][11] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[2][8]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[2][7]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[2][4]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[2][3]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[2][0]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[1][11] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[1][10] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[1][8]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[1][6]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[1][4]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[1][2]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[1][0]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[0][11] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[0][10] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[0][9]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[0][7]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[0][3]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|tag[0].dest_b[1]       ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|tag[1].dest_b[1]       ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|tag[2].dest_b[1]       ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|tag[3].dest_b[1]       ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|tag[4].dest_b[1]       ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|tag[5].dest_b[1]       ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|tag[6].dest_b[1]       ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|tag[7].dest_b[1]       ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|tag[8].dest_b[1]       ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|tag[9].dest_b[1]       ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|return_use_b_q[2]      ; Stuck at GND due to stuck port data_in ;
+; state~7                                ; Lost fanout                            ;
+; state~8                                ; Lost fanout                            ;
+; state~9                                ; Lost fanout                            ;
+; state~10                               ; Lost fanout                            ;
+; ntt_core:u_core|state~6                ; Lost fanout                            ;
+; ntt_core:u_core|state~7                ; Lost fanout                            ;
+; ntt_core:u_core|operand_a_sel_q[2][0]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[2][8]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[1][6]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[3][1]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[3][9]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[3][2]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_a_sel_q[3][10] ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[0][5]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[0][6]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[2][1]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[2][9]  ; Stuck at GND due to stuck port data_in ;
+; ntt_core:u_core|operand_b_sel_q[1][7]  ; Stuck at GND due to stuck port data_in ;
+; Total Number of Removed Registers = 85 ;                                        ;
++----------------------------------------+----------------------------------------+
+
+
++------------------------------------------------------------------------------------------------------------------------------------+
+; Removed Registers Triggering Further Register Optimizations                                                                        ;
++----------------------------------+---------------------------+---------------------------------------------------------------------+
+; Register name                    ; Reason for Removal        ; Registers Removed due to This Register                              ;
++----------------------------------+---------------------------+---------------------------------------------------------------------+
+; ntt_core:u_core|tag[0].dest_b[1] ; Stuck at GND              ; ntt_core:u_core|tag[1].dest_b[1], ntt_core:u_core|tag[2].dest_b[1], ;
+;                                  ; due to stuck port data_in ; ntt_core:u_core|tag[3].dest_b[1], ntt_core:u_core|tag[4].dest_b[1], ;
+;                                  ;                           ; ntt_core:u_core|tag[5].dest_b[1], ntt_core:u_core|tag[6].dest_b[1], ;
+;                                  ;                           ; ntt_core:u_core|tag[7].dest_b[1], ntt_core:u_core|tag[8].dest_b[1], ;
+;                                  ;                           ; ntt_core:u_core|tag[9].dest_b[1], ntt_core:u_core|return_use_b_q[2] ;
++----------------------------------+---------------------------+---------------------------------------------------------------------+
+
+
++------------------------------------------------------+
+; General Register Statistics                          ;
++----------------------------------------------+-------+
+; Statistic                                    ; Value ;
++----------------------------------------------+-------+
+; Total registers                              ; 2945  ;
+; Number of registers using Synchronous Clear  ; 22    ;
+; Number of registers using Synchronous Load   ; 594   ;
+; Number of registers using Asynchronous Clear ; 2931  ;
+; Number of registers using Asynchronous Load  ; 0     ;
+; Number of registers using Clock Enable       ; 568   ;
+; Number of registers using Preset             ; 0     ;
++----------------------------------------------+-------+
+
+
++--------------------------------------------------------------------------------------------------------------------------------------------------+
+; Inverted Register Statistics                                                                                                                     ;
++----------------------------------------------------------------------------------------------------------------------------------------+---------+
+; Inverted Register                                                                                                                      ; Fan out ;
++----------------------------------------------------------------------------------------------------------------------------------------+---------+
+; ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|dffe7                                                 ; 5       ;
+; ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated|dffe7                           ; 92      ;
+; ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|cntr_j1h:cntr6|counter_reg_bit2                       ; 1       ;
+; ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|cntr_j1h:cntr6|counter_reg_bit1                       ; 1       ;
+; ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated|cntr_e1h:cntr6|counter_reg_bit1 ; 1       ;
+; ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|cntr_j1h:cntr6|counter_reg_bit0                       ; 1       ;
+; ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated|cntr_e1h:cntr6|counter_reg_bit0 ; 1       ;
+; Total number of inverted registers = 7                                                                                                 ;         ;
++----------------------------------------------------------------------------------------------------------------------------------------+---------+
+
+
++---------------------------------------------------------------------------------------------------------------------------------------------+
+; Registers Packed Into Inferred Megafunctions                                                                                                ;
++-------------------------------------------------------------------+------------------------------------------------------------+------------+
+; Register Name                                                     ; Megafunction                                               ; Type       ;
++-------------------------------------------------------------------+------------------------------------------------------------+------------+
+; ntt_core:u_core|fifo_q1[0..91]                                    ; ntt_core:u_core|fifo1_rtl_0                                ; RAM        ;
+; ntt_core:u_core|fifo_q2[0..91]                                    ; ntt_core:u_core|fifo2_rtl_0                                ; RAM        ;
+; ntt_core:u_core|fifo_q3[0..91]                                    ; ntt_core:u_core|fifo3_rtl_0                                ; RAM        ;
+; ntt_core:u_core|b_q[0..91]                                        ; ntt_core:u_core|b_words_rtl_0                              ; RAM        ;
+; ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|tw_o[0..22]              ; ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|rom_rtl_0         ; RAM        ;
+; ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|tw_o[0..22]              ; ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|rom_rtl_0         ; RAM        ;
+; ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|tw_o[0..22]              ; ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|rom_rtl_0         ; RAM        ;
+; ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|tw_o[0..22]              ; ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|rom_rtl_0         ; RAM        ;
+; ntt_core:u_core|tag[8].inverse                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[7].inverse                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[6].inverse                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[5].inverse                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[4].inverse                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[3].inverse                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[2].inverse                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[1].inverse                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[0].inverse                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[8].p[0..2]                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[7].p[0..2]                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[6].p[0..2]                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[5].p[0..2]                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[4].p[0..2]                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[3].p[0..2]                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[2].p[0..2]                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[1].p[0..2]                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[0].p[0..2]                                    ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[8].dest_b[0]                                  ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[7].dest_b[0]                                  ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[6].dest_b[0]                                  ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[5].dest_b[0]                                  ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[4].dest_b[0]                                  ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[3].dest_b[0]                                  ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[2].dest_b[0]                                  ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[1].dest_b[0]                                  ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|tag[0].dest_b[0]                                  ; ntt_core:u_core|tag[0].inverse_rtl_0                       ; SHIFT_TAPS ;
+; ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|keep_dly[0..4][0..22] ; ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|keep_dly_rtl_0 ; SHIFT_TAPS ;
+; ntt_core:u_core|butterfly_unit:g_bf[2].u_bf|keep_dly[0..4][0..22] ; ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|keep_dly_rtl_0 ; SHIFT_TAPS ;
+; ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|keep_dly[0..4][0..22] ; ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|keep_dly_rtl_0 ; SHIFT_TAPS ;
+; ntt_core:u_core|butterfly_unit:g_bf[0].u_bf|keep_dly[0..4][0..22] ; ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|keep_dly_rtl_0 ; SHIFT_TAPS ;
++-------------------------------------------------------------------+------------------------------------------------------------+------------+
+
+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Multiplexer Restructuring Statistics (Restructuring Performed)                                                                                                                           ;
++--------------------+-----------+---------------+----------------------+------------------------+------------+----------------------------------------------------------------------------+
+; Multiplexer Inputs ; Bus Width ; Baseline Area ; Area if Restructured ; Saving if Restructured ; Registered ; Example Multiplexer Output                                                 ;
++--------------------+-----------+---------------+----------------------+------------------------+------------+----------------------------------------------------------------------------+
+; 3:1                ; 92 bits   ; 184 LEs       ; 184 LEs              ; 0 LEs                  ; Yes        ; |ntt_engine|ntt_core:u_core|bf_zi_q[1][12]                                 ;
+; 4:1                ; 23 bits   ; 46 LEs        ; 0 LEs                ; 46 LEs                 ; Yes        ; |ntt_engine|ntt_core:u_core|result_b[62]                                   ;
+; 4:1                ; 23 bits   ; 46 LEs        ; 0 LEs                ; 46 LEs                 ; Yes        ; |ntt_engine|ntt_core:u_core|result_a[38]                                   ;
+; 4:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; Yes        ; |ntt_engine|ntt_core:u_core|result_a[53]                                   ;
+; 4:1                ; 7 bits    ; 14 LEs        ; 7 LEs                ; 7 LEs                  ; Yes        ; |ntt_engine|ntt_core:u_core|tick[0]                                        ;
+; 5:1                ; 9 bits    ; 27 LEs        ; 0 LEs                ; 27 LEs                 ; Yes        ; |ntt_engine|tx_idx[2]                                                      ;
+; 6:1                ; 23 bits   ; 92 LEs        ; 46 LEs               ; 46 LEs                 ; Yes        ; |ntt_engine|ntt_core:u_core|result_b[41]                                   ;
+; 7:1                ; 4 bits    ; 16 LEs        ; 4 LEs                ; 12 LEs                 ; Yes        ; |ntt_engine|ntt_core:u_core|drain[3]                                       ;
+; 8:1                ; 9 bits    ; 45 LEs        ; 0 LEs                ; 45 LEs                 ; Yes        ; |ntt_engine|rx_idx[3]                                                      ;
+; 3:1                ; 12 bits   ; 24 LEs        ; 24 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux60                                          ;
+; 4:1                ; 22 bits   ; 44 LEs        ; 44 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux60                                          ;
+; 4:1                ; 21 bits   ; 42 LEs        ; 42 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux62                                          ;
+; 4:1                ; 18 bits   ; 36 LEs        ; 36 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux60                                          ;
+; 4:1                ; 6 bits    ; 12 LEs        ; 12 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux60                                          ;
+; 4:1                ; 2 bits    ; 4 LEs         ; 4 LEs                ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux2                                           ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|keep_after_reg[11] ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[2].u_bf|keep_after_reg[0]  ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|keep_after_reg[6]  ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[0].u_bf|keep_after_reg[11] ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[0].u_bf|a_o[8]             ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[2].u_bf|a_o[0]             ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[0].u_bf|b_o[11]            ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|a_o[19]            ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[2].u_bf|b_o[20]            ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[1].u_bf|b_o[10]            ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|a_o[0]             ;
+; 3:1                ; 23 bits   ; 46 LEs        ; 46 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|b_o[13]            ;
+; 4:1                ; 92 bits   ; 184 LEs       ; 184 LEs              ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|push_word2[56]                                 ;
+; 7:1                ; 6 bits    ; 24 LEs        ; 24 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux60                                          ;
+; 7:1                ; 6 bits    ; 24 LEs        ; 24 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux60                                          ;
+; 5:1                ; 2 bits    ; 6 LEs         ; 6 LEs                ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|tw_addr[1][0]                                  ;
+; 5:1                ; 92 bits   ; 276 LEs       ; 276 LEs              ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|push_word1[39]                                 ;
+; 7:1                ; 2 bits    ; 8 LEs         ; 8 LEs                ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|tw_addr[1][1]                                  ;
+; 9:1                ; 4 bits    ; 24 LEs        ; 24 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux60                                          ;
+; 9:1                ; 8 bits    ; 48 LEs        ; 48 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux60                                          ;
+; 10:1               ; 3 bits    ; 18 LEs        ; 18 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux60                                          ;
+; 7:1                ; 2 bits    ; 8 LEs         ; 6 LEs                ; 2 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Selector15                                     ;
+; 12:1               ; 3 bits    ; 24 LEs        ; 24 LEs               ; 0 LEs                  ; No         ; |ntt_engine|ntt_core:u_core|Mux60                                          ;
+; 9:1                ; 2 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; No         ; |ntt_engine|Selector12                                                     ;
+; 11:1               ; 2 bits    ; 14 LEs        ; 6 LEs                ; 8 LEs                  ; No         ; |ntt_engine|Selector14                                                     ;
++--------------------+-----------+---------------+----------------------+------------------------+------------+----------------------------------------------------------------------------+
+
+
++----------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|altsyncram:fifo1_rtl_0|altsyncram_60q1:auto_generated ;
++---------------------------------+--------------------+------+--------------------------------+
+; Assignment                      ; Value              ; From ; To                             ;
++---------------------------------+--------------------+------+--------------------------------+
+; OPTIMIZE_POWER_DURING_SYNTHESIS ; NORMAL_COMPILATION ; -    ; -                              ;
++---------------------------------+--------------------+------+--------------------------------+
+
+
++----------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|altsyncram:fifo2_rtl_0|altsyncram_60q1:auto_generated ;
++---------------------------------+--------------------+------+--------------------------------+
+; Assignment                      ; Value              ; From ; To                             ;
++---------------------------------+--------------------+------+--------------------------------+
+; OPTIMIZE_POWER_DURING_SYNTHESIS ; NORMAL_COMPILATION ; -    ; -                              ;
++---------------------------------+--------------------+------+--------------------------------+
+
+
++----------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|altsyncram:fifo3_rtl_0|altsyncram_80q1:auto_generated ;
++---------------------------------+--------------------+------+--------------------------------+
+; Assignment                      ; Value              ; From ; To                             ;
++---------------------------------+--------------------+------+--------------------------------+
+; OPTIMIZE_POWER_DURING_SYNTHESIS ; NORMAL_COMPILATION ; -    ; -                              ;
++---------------------------------+--------------------+------+--------------------------------+
+
+
++------------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|altsyncram:b_words_rtl_0|altsyncram_i0q1:auto_generated ;
++---------------------------------+--------------------+------+----------------------------------+
+; Assignment                      ; Value              ; From ; To                               ;
++---------------------------------+--------------------+------+----------------------------------+
+; OPTIMIZE_POWER_DURING_SYNTHESIS ; NORMAL_COMPILATION ; -    ; -                                ;
++---------------------------------+--------------------+------+----------------------------------+
+
+
++---------------------------------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+; Assignment                      ; Value              ; From ; To                                                    ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+; OPTIMIZE_POWER_DURING_SYNTHESIS ; NORMAL_COMPILATION ; -    ; -                                                     ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+
+
++---------------------------------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+; Assignment                      ; Value              ; From ; To                                                    ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+; OPTIMIZE_POWER_DURING_SYNTHESIS ; NORMAL_COMPILATION ; -    ; -                                                     ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+
+
++---------------------------------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+; Assignment                      ; Value              ; From ; To                                                    ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+; OPTIMIZE_POWER_DURING_SYNTHESIS ; NORMAL_COMPILATION ; -    ; -                                                     ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+
+
++---------------------------------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|altsyncram:rom_rtl_0|altsyncram_p8d1:auto_generated ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+; Assignment                      ; Value              ; From ; To                                                    ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+; OPTIMIZE_POWER_DURING_SYNTHESIS ; NORMAL_COMPILATION ; -    ; -                                                     ;
++---------------------------------+--------------------+------+-------------------------------------------------------+
+
+
++-------------------------------------------------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|altsyncram_tcc1:altsyncram5 ;
++---------------------------------+--------------------+------+-----------------------------------------------------------------------+
+; Assignment                      ; Value              ; From ; To                                                                    ;
++---------------------------------+--------------------+------+-----------------------------------------------------------------------+
+; OPTIMIZE_POWER_DURING_SYNTHESIS ; NORMAL_COMPILATION ; -    ; -                                                                     ;
++---------------------------------+--------------------+------+-----------------------------------------------------------------------+
+
+
++------------------------------------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0|shift_taps_jbv:auto_generated|cntr_j1h:cntr6 ;
++----------------+-------+------+----------------------------------------------------------------------------------------+
+; Assignment     ; Value ; From ; To                                                                                     ;
++----------------+-------+------+----------------------------------------------------------------------------------------+
+; POWER_UP_LEVEL ; HIGH  ; -    ; counter_reg_bit0                                                                       ;
+; POWER_UP_LEVEL ; HIGH  ; -    ; counter_reg_bit1                                                                       ;
+; POWER_UP_LEVEL ; HIGH  ; -    ; counter_reg_bit2                                                                       ;
++----------------+-------+------+----------------------------------------------------------------------------------------+
+
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated|altsyncram_vfc1:altsyncram5 ;
++---------------------------------+--------------------+------+---------------------------------------------------------------------------------------------+
+; Assignment                      ; Value              ; From ; To                                                                                          ;
++---------------------------------+--------------------+------+---------------------------------------------------------------------------------------------+
+; OPTIMIZE_POWER_DURING_SYNTHESIS ; NORMAL_COMPILATION ; -    ; -                                                                                           ;
++---------------------------------+--------------------+------+---------------------------------------------------------------------------------------------+
+
+
++----------------------------------------------------------------------------------------------------------------------------------------------+
+; Source assignments for ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0|shift_taps_5dv:auto_generated|cntr_e1h:cntr6 ;
++----------------+-------+------+--------------------------------------------------------------------------------------------------------------+
+; Assignment     ; Value ; From ; To                                                                                                           ;
++----------------+-------+------+--------------------------------------------------------------------------------------------------------------+
+; POWER_UP_LEVEL ; HIGH  ; -    ; counter_reg_bit0                                                                                             ;
+; POWER_UP_LEVEL ; HIGH  ; -    ; counter_reg_bit1                                                                                             ;
++----------------+-------+------+--------------------------------------------------------------------------------------------------------------+
+
+
++-----------------------------------------------------------------------------------------+
+; Parameter Settings for Inferred Entity Instance: ntt_core:u_core|altsyncram:fifo1_rtl_0 ;
++------------------------------------+----------------------+-----------------------------+
+; Parameter Name                     ; Value                ; Type                        ;
++------------------------------------+----------------------+-----------------------------+
+; BYTE_SIZE_BLOCK                    ; 8                    ; Untyped                     ;
+; AUTO_CARRY_CHAINS                  ; ON                   ; AUTO_CARRY                  ;
+; IGNORE_CARRY_BUFFERS               ; OFF                  ; IGNORE_CARRY                ;
+; AUTO_CASCADE_CHAINS                ; ON                   ; AUTO_CASCADE                ;
+; IGNORE_CASCADE_BUFFERS             ; OFF                  ; IGNORE_CASCADE              ;
+; WIDTH_BYTEENA                      ; 1                    ; Untyped                     ;
+; OPERATION_MODE                     ; DUAL_PORT            ; Untyped                     ;
+; WIDTH_A                            ; 92                   ; Untyped                     ;
+; WIDTHAD_A                          ; 5                    ; Untyped                     ;
+; NUMWORDS_A                         ; 32                   ; Untyped                     ;
+; OUTDATA_REG_A                      ; UNREGISTERED         ; Untyped                     ;
+; ADDRESS_ACLR_A                     ; NONE                 ; Untyped                     ;
+; OUTDATA_ACLR_A                     ; NONE                 ; Untyped                     ;
+; WRCONTROL_ACLR_A                   ; NONE                 ; Untyped                     ;
+; INDATA_ACLR_A                      ; NONE                 ; Untyped                     ;
+; BYTEENA_ACLR_A                     ; NONE                 ; Untyped                     ;
+; WIDTH_B                            ; 92                   ; Untyped                     ;
+; WIDTHAD_B                          ; 5                    ; Untyped                     ;
+; NUMWORDS_B                         ; 32                   ; Untyped                     ;
+; INDATA_REG_B                       ; CLOCK1               ; Untyped                     ;
+; WRCONTROL_WRADDRESS_REG_B          ; CLOCK1               ; Untyped                     ;
+; RDCONTROL_REG_B                    ; CLOCK0               ; Untyped                     ;
+; ADDRESS_REG_B                      ; CLOCK0               ; Untyped                     ;
+; OUTDATA_REG_B                      ; UNREGISTERED         ; Untyped                     ;
+; BYTEENA_REG_B                      ; CLOCK1               ; Untyped                     ;
+; INDATA_ACLR_B                      ; NONE                 ; Untyped                     ;
+; WRCONTROL_ACLR_B                   ; NONE                 ; Untyped                     ;
+; ADDRESS_ACLR_B                     ; NONE                 ; Untyped                     ;
+; OUTDATA_ACLR_B                     ; NONE                 ; Untyped                     ;
+; RDCONTROL_ACLR_B                   ; NONE                 ; Untyped                     ;
+; BYTEENA_ACLR_B                     ; NONE                 ; Untyped                     ;
+; WIDTH_BYTEENA_A                    ; 1                    ; Untyped                     ;
+; WIDTH_BYTEENA_B                    ; 1                    ; Untyped                     ;
+; RAM_BLOCK_TYPE                     ; AUTO                 ; Untyped                     ;
+; BYTE_SIZE                          ; 8                    ; Untyped                     ;
+; READ_DURING_WRITE_MODE_MIXED_PORTS ; OLD_DATA             ; Untyped                     ;
+; READ_DURING_WRITE_MODE_PORT_A      ; NEW_DATA_NO_NBE_READ ; Untyped                     ;
+; READ_DURING_WRITE_MODE_PORT_B      ; NEW_DATA_NO_NBE_READ ; Untyped                     ;
+; INIT_FILE                          ; UNUSED               ; Untyped                     ;
+; INIT_FILE_LAYOUT                   ; PORT_A               ; Untyped                     ;
+; MAXIMUM_DEPTH                      ; 0                    ; Untyped                     ;
+; CLOCK_ENABLE_INPUT_A               ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_INPUT_B               ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_OUTPUT_A              ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_OUTPUT_B              ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_CORE_A                ; USE_INPUT_CLKEN      ; Untyped                     ;
+; CLOCK_ENABLE_CORE_B                ; USE_INPUT_CLKEN      ; Untyped                     ;
+; ENABLE_ECC                         ; FALSE                ; Untyped                     ;
+; ECC_PIPELINE_STAGE_ENABLED         ; FALSE                ; Untyped                     ;
+; WIDTH_ECCSTATUS                    ; 3                    ; Untyped                     ;
+; DEVICE_FAMILY                      ; Cyclone V            ; Untyped                     ;
+; CBXI_PARAMETER                     ; altsyncram_60q1      ; Untyped                     ;
++------------------------------------+----------------------+-----------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++-----------------------------------------------------------------------------------------+
+; Parameter Settings for Inferred Entity Instance: ntt_core:u_core|altsyncram:fifo2_rtl_0 ;
++------------------------------------+----------------------+-----------------------------+
+; Parameter Name                     ; Value                ; Type                        ;
++------------------------------------+----------------------+-----------------------------+
+; BYTE_SIZE_BLOCK                    ; 8                    ; Untyped                     ;
+; AUTO_CARRY_CHAINS                  ; ON                   ; AUTO_CARRY                  ;
+; IGNORE_CARRY_BUFFERS               ; OFF                  ; IGNORE_CARRY                ;
+; AUTO_CASCADE_CHAINS                ; ON                   ; AUTO_CASCADE                ;
+; IGNORE_CASCADE_BUFFERS             ; OFF                  ; IGNORE_CASCADE              ;
+; WIDTH_BYTEENA                      ; 1                    ; Untyped                     ;
+; OPERATION_MODE                     ; DUAL_PORT            ; Untyped                     ;
+; WIDTH_A                            ; 92                   ; Untyped                     ;
+; WIDTHAD_A                          ; 5                    ; Untyped                     ;
+; NUMWORDS_A                         ; 32                   ; Untyped                     ;
+; OUTDATA_REG_A                      ; UNREGISTERED         ; Untyped                     ;
+; ADDRESS_ACLR_A                     ; NONE                 ; Untyped                     ;
+; OUTDATA_ACLR_A                     ; NONE                 ; Untyped                     ;
+; WRCONTROL_ACLR_A                   ; NONE                 ; Untyped                     ;
+; INDATA_ACLR_A                      ; NONE                 ; Untyped                     ;
+; BYTEENA_ACLR_A                     ; NONE                 ; Untyped                     ;
+; WIDTH_B                            ; 92                   ; Untyped                     ;
+; WIDTHAD_B                          ; 5                    ; Untyped                     ;
+; NUMWORDS_B                         ; 32                   ; Untyped                     ;
+; INDATA_REG_B                       ; CLOCK1               ; Untyped                     ;
+; WRCONTROL_WRADDRESS_REG_B          ; CLOCK1               ; Untyped                     ;
+; RDCONTROL_REG_B                    ; CLOCK0               ; Untyped                     ;
+; ADDRESS_REG_B                      ; CLOCK0               ; Untyped                     ;
+; OUTDATA_REG_B                      ; UNREGISTERED         ; Untyped                     ;
+; BYTEENA_REG_B                      ; CLOCK1               ; Untyped                     ;
+; INDATA_ACLR_B                      ; NONE                 ; Untyped                     ;
+; WRCONTROL_ACLR_B                   ; NONE                 ; Untyped                     ;
+; ADDRESS_ACLR_B                     ; NONE                 ; Untyped                     ;
+; OUTDATA_ACLR_B                     ; NONE                 ; Untyped                     ;
+; RDCONTROL_ACLR_B                   ; NONE                 ; Untyped                     ;
+; BYTEENA_ACLR_B                     ; NONE                 ; Untyped                     ;
+; WIDTH_BYTEENA_A                    ; 1                    ; Untyped                     ;
+; WIDTH_BYTEENA_B                    ; 1                    ; Untyped                     ;
+; RAM_BLOCK_TYPE                     ; AUTO                 ; Untyped                     ;
+; BYTE_SIZE                          ; 8                    ; Untyped                     ;
+; READ_DURING_WRITE_MODE_MIXED_PORTS ; OLD_DATA             ; Untyped                     ;
+; READ_DURING_WRITE_MODE_PORT_A      ; NEW_DATA_NO_NBE_READ ; Untyped                     ;
+; READ_DURING_WRITE_MODE_PORT_B      ; NEW_DATA_NO_NBE_READ ; Untyped                     ;
+; INIT_FILE                          ; UNUSED               ; Untyped                     ;
+; INIT_FILE_LAYOUT                   ; PORT_A               ; Untyped                     ;
+; MAXIMUM_DEPTH                      ; 0                    ; Untyped                     ;
+; CLOCK_ENABLE_INPUT_A               ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_INPUT_B               ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_OUTPUT_A              ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_OUTPUT_B              ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_CORE_A                ; USE_INPUT_CLKEN      ; Untyped                     ;
+; CLOCK_ENABLE_CORE_B                ; USE_INPUT_CLKEN      ; Untyped                     ;
+; ENABLE_ECC                         ; FALSE                ; Untyped                     ;
+; ECC_PIPELINE_STAGE_ENABLED         ; FALSE                ; Untyped                     ;
+; WIDTH_ECCSTATUS                    ; 3                    ; Untyped                     ;
+; DEVICE_FAMILY                      ; Cyclone V            ; Untyped                     ;
+; CBXI_PARAMETER                     ; altsyncram_60q1      ; Untyped                     ;
++------------------------------------+----------------------+-----------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++-----------------------------------------------------------------------------------------+
+; Parameter Settings for Inferred Entity Instance: ntt_core:u_core|altsyncram:fifo3_rtl_0 ;
++------------------------------------+----------------------+-----------------------------+
+; Parameter Name                     ; Value                ; Type                        ;
++------------------------------------+----------------------+-----------------------------+
+; BYTE_SIZE_BLOCK                    ; 8                    ; Untyped                     ;
+; AUTO_CARRY_CHAINS                  ; ON                   ; AUTO_CARRY                  ;
+; IGNORE_CARRY_BUFFERS               ; OFF                  ; IGNORE_CARRY                ;
+; AUTO_CASCADE_CHAINS                ; ON                   ; AUTO_CASCADE                ;
+; IGNORE_CASCADE_BUFFERS             ; OFF                  ; IGNORE_CASCADE              ;
+; WIDTH_BYTEENA                      ; 1                    ; Untyped                     ;
+; OPERATION_MODE                     ; DUAL_PORT            ; Untyped                     ;
+; WIDTH_A                            ; 92                   ; Untyped                     ;
+; WIDTHAD_A                          ; 4                    ; Untyped                     ;
+; NUMWORDS_A                         ; 16                   ; Untyped                     ;
+; OUTDATA_REG_A                      ; UNREGISTERED         ; Untyped                     ;
+; ADDRESS_ACLR_A                     ; NONE                 ; Untyped                     ;
+; OUTDATA_ACLR_A                     ; NONE                 ; Untyped                     ;
+; WRCONTROL_ACLR_A                   ; NONE                 ; Untyped                     ;
+; INDATA_ACLR_A                      ; NONE                 ; Untyped                     ;
+; BYTEENA_ACLR_A                     ; NONE                 ; Untyped                     ;
+; WIDTH_B                            ; 92                   ; Untyped                     ;
+; WIDTHAD_B                          ; 4                    ; Untyped                     ;
+; NUMWORDS_B                         ; 16                   ; Untyped                     ;
+; INDATA_REG_B                       ; CLOCK1               ; Untyped                     ;
+; WRCONTROL_WRADDRESS_REG_B          ; CLOCK1               ; Untyped                     ;
+; RDCONTROL_REG_B                    ; CLOCK0               ; Untyped                     ;
+; ADDRESS_REG_B                      ; CLOCK0               ; Untyped                     ;
+; OUTDATA_REG_B                      ; UNREGISTERED         ; Untyped                     ;
+; BYTEENA_REG_B                      ; CLOCK1               ; Untyped                     ;
+; INDATA_ACLR_B                      ; NONE                 ; Untyped                     ;
+; WRCONTROL_ACLR_B                   ; NONE                 ; Untyped                     ;
+; ADDRESS_ACLR_B                     ; NONE                 ; Untyped                     ;
+; OUTDATA_ACLR_B                     ; NONE                 ; Untyped                     ;
+; RDCONTROL_ACLR_B                   ; NONE                 ; Untyped                     ;
+; BYTEENA_ACLR_B                     ; NONE                 ; Untyped                     ;
+; WIDTH_BYTEENA_A                    ; 1                    ; Untyped                     ;
+; WIDTH_BYTEENA_B                    ; 1                    ; Untyped                     ;
+; RAM_BLOCK_TYPE                     ; AUTO                 ; Untyped                     ;
+; BYTE_SIZE                          ; 8                    ; Untyped                     ;
+; READ_DURING_WRITE_MODE_MIXED_PORTS ; OLD_DATA             ; Untyped                     ;
+; READ_DURING_WRITE_MODE_PORT_A      ; NEW_DATA_NO_NBE_READ ; Untyped                     ;
+; READ_DURING_WRITE_MODE_PORT_B      ; NEW_DATA_NO_NBE_READ ; Untyped                     ;
+; INIT_FILE                          ; UNUSED               ; Untyped                     ;
+; INIT_FILE_LAYOUT                   ; PORT_A               ; Untyped                     ;
+; MAXIMUM_DEPTH                      ; 0                    ; Untyped                     ;
+; CLOCK_ENABLE_INPUT_A               ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_INPUT_B               ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_OUTPUT_A              ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_OUTPUT_B              ; NORMAL               ; Untyped                     ;
+; CLOCK_ENABLE_CORE_A                ; USE_INPUT_CLKEN      ; Untyped                     ;
+; CLOCK_ENABLE_CORE_B                ; USE_INPUT_CLKEN      ; Untyped                     ;
+; ENABLE_ECC                         ; FALSE                ; Untyped                     ;
+; ECC_PIPELINE_STAGE_ENABLED         ; FALSE                ; Untyped                     ;
+; WIDTH_ECCSTATUS                    ; 3                    ; Untyped                     ;
+; DEVICE_FAMILY                      ; Cyclone V            ; Untyped                     ;
+; CBXI_PARAMETER                     ; altsyncram_80q1      ; Untyped                     ;
++------------------------------------+----------------------+-----------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++-------------------------------------------------------------------------------------------+
+; Parameter Settings for Inferred Entity Instance: ntt_core:u_core|altsyncram:b_words_rtl_0 ;
++------------------------------------+----------------------+-------------------------------+
+; Parameter Name                     ; Value                ; Type                          ;
++------------------------------------+----------------------+-------------------------------+
+; BYTE_SIZE_BLOCK                    ; 8                    ; Untyped                       ;
+; AUTO_CARRY_CHAINS                  ; ON                   ; AUTO_CARRY                    ;
+; IGNORE_CARRY_BUFFERS               ; OFF                  ; IGNORE_CARRY                  ;
+; AUTO_CASCADE_CHAINS                ; ON                   ; AUTO_CASCADE                  ;
+; IGNORE_CASCADE_BUFFERS             ; OFF                  ; IGNORE_CASCADE                ;
+; WIDTH_BYTEENA                      ; 1                    ; Untyped                       ;
+; OPERATION_MODE                     ; DUAL_PORT            ; Untyped                       ;
+; WIDTH_A                            ; 92                   ; Untyped                       ;
+; WIDTHAD_A                          ; 6                    ; Untyped                       ;
+; NUMWORDS_A                         ; 64                   ; Untyped                       ;
+; OUTDATA_REG_A                      ; UNREGISTERED         ; Untyped                       ;
+; ADDRESS_ACLR_A                     ; NONE                 ; Untyped                       ;
+; OUTDATA_ACLR_A                     ; NONE                 ; Untyped                       ;
+; WRCONTROL_ACLR_A                   ; NONE                 ; Untyped                       ;
+; INDATA_ACLR_A                      ; NONE                 ; Untyped                       ;
+; BYTEENA_ACLR_A                     ; NONE                 ; Untyped                       ;
+; WIDTH_B                            ; 92                   ; Untyped                       ;
+; WIDTHAD_B                          ; 6                    ; Untyped                       ;
+; NUMWORDS_B                         ; 64                   ; Untyped                       ;
+; INDATA_REG_B                       ; CLOCK1               ; Untyped                       ;
+; WRCONTROL_WRADDRESS_REG_B          ; CLOCK1               ; Untyped                       ;
+; RDCONTROL_REG_B                    ; CLOCK0               ; Untyped                       ;
+; ADDRESS_REG_B                      ; CLOCK0               ; Untyped                       ;
+; OUTDATA_REG_B                      ; UNREGISTERED         ; Untyped                       ;
+; BYTEENA_REG_B                      ; CLOCK1               ; Untyped                       ;
+; INDATA_ACLR_B                      ; NONE                 ; Untyped                       ;
+; WRCONTROL_ACLR_B                   ; NONE                 ; Untyped                       ;
+; ADDRESS_ACLR_B                     ; NONE                 ; Untyped                       ;
+; OUTDATA_ACLR_B                     ; NONE                 ; Untyped                       ;
+; RDCONTROL_ACLR_B                   ; NONE                 ; Untyped                       ;
+; BYTEENA_ACLR_B                     ; NONE                 ; Untyped                       ;
+; WIDTH_BYTEENA_A                    ; 1                    ; Untyped                       ;
+; WIDTH_BYTEENA_B                    ; 1                    ; Untyped                       ;
+; RAM_BLOCK_TYPE                     ; AUTO                 ; Untyped                       ;
+; BYTE_SIZE                          ; 8                    ; Untyped                       ;
+; READ_DURING_WRITE_MODE_MIXED_PORTS ; OLD_DATA             ; Untyped                       ;
+; READ_DURING_WRITE_MODE_PORT_A      ; NEW_DATA_NO_NBE_READ ; Untyped                       ;
+; READ_DURING_WRITE_MODE_PORT_B      ; NEW_DATA_NO_NBE_READ ; Untyped                       ;
+; INIT_FILE                          ; UNUSED               ; Untyped                       ;
+; INIT_FILE_LAYOUT                   ; PORT_A               ; Untyped                       ;
+; MAXIMUM_DEPTH                      ; 0                    ; Untyped                       ;
+; CLOCK_ENABLE_INPUT_A               ; NORMAL               ; Untyped                       ;
+; CLOCK_ENABLE_INPUT_B               ; NORMAL               ; Untyped                       ;
+; CLOCK_ENABLE_OUTPUT_A              ; NORMAL               ; Untyped                       ;
+; CLOCK_ENABLE_OUTPUT_B              ; NORMAL               ; Untyped                       ;
+; CLOCK_ENABLE_CORE_A                ; USE_INPUT_CLKEN      ; Untyped                       ;
+; CLOCK_ENABLE_CORE_B                ; USE_INPUT_CLKEN      ; Untyped                       ;
+; ENABLE_ECC                         ; FALSE                ; Untyped                       ;
+; ECC_PIPELINE_STAGE_ENABLED         ; FALSE                ; Untyped                       ;
+; WIDTH_ECCSTATUS                    ; 3                    ; Untyped                       ;
+; DEVICE_FAMILY                      ; Cyclone V            ; Untyped                       ;
+; CBXI_PARAMETER                     ; altsyncram_i0q1      ; Untyped                       ;
++------------------------------------+----------------------+-------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++----------------------------------------------------------------------------------------------------------------+
+; Parameter Settings for Inferred Entity Instance: ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0 ;
++------------------------------------+------------------------------------------+--------------------------------+
+; Parameter Name                     ; Value                                    ; Type                           ;
++------------------------------------+------------------------------------------+--------------------------------+
+; BYTE_SIZE_BLOCK                    ; 8                                        ; Untyped                        ;
+; AUTO_CARRY_CHAINS                  ; ON                                       ; AUTO_CARRY                     ;
+; IGNORE_CARRY_BUFFERS               ; OFF                                      ; IGNORE_CARRY                   ;
+; AUTO_CASCADE_CHAINS                ; ON                                       ; AUTO_CASCADE                   ;
+; IGNORE_CASCADE_BUFFERS             ; OFF                                      ; IGNORE_CASCADE                 ;
+; WIDTH_BYTEENA                      ; 1                                        ; Untyped                        ;
+; OPERATION_MODE                     ; ROM                                      ; Untyped                        ;
+; WIDTH_A                            ; 23                                       ; Untyped                        ;
+; WIDTHAD_A                          ; 8                                        ; Untyped                        ;
+; NUMWORDS_A                         ; 256                                      ; Untyped                        ;
+; OUTDATA_REG_A                      ; UNREGISTERED                             ; Untyped                        ;
+; ADDRESS_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; OUTDATA_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; WRCONTROL_ACLR_A                   ; NONE                                     ; Untyped                        ;
+; INDATA_ACLR_A                      ; NONE                                     ; Untyped                        ;
+; BYTEENA_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; WIDTH_B                            ; 1                                        ; Untyped                        ;
+; WIDTHAD_B                          ; 1                                        ; Untyped                        ;
+; NUMWORDS_B                         ; 1                                        ; Untyped                        ;
+; INDATA_REG_B                       ; CLOCK1                                   ; Untyped                        ;
+; WRCONTROL_WRADDRESS_REG_B          ; CLOCK1                                   ; Untyped                        ;
+; RDCONTROL_REG_B                    ; CLOCK1                                   ; Untyped                        ;
+; ADDRESS_REG_B                      ; CLOCK1                                   ; Untyped                        ;
+; OUTDATA_REG_B                      ; UNREGISTERED                             ; Untyped                        ;
+; BYTEENA_REG_B                      ; CLOCK1                                   ; Untyped                        ;
+; INDATA_ACLR_B                      ; NONE                                     ; Untyped                        ;
+; WRCONTROL_ACLR_B                   ; NONE                                     ; Untyped                        ;
+; ADDRESS_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; OUTDATA_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; RDCONTROL_ACLR_B                   ; NONE                                     ; Untyped                        ;
+; BYTEENA_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; WIDTH_BYTEENA_A                    ; 1                                        ; Untyped                        ;
+; WIDTH_BYTEENA_B                    ; 1                                        ; Untyped                        ;
+; RAM_BLOCK_TYPE                     ; AUTO                                     ; Untyped                        ;
+; BYTE_SIZE                          ; 8                                        ; Untyped                        ;
+; READ_DURING_WRITE_MODE_MIXED_PORTS ; DONT_CARE                                ; Untyped                        ;
+; READ_DURING_WRITE_MODE_PORT_A      ; NEW_DATA_NO_NBE_READ                     ; Untyped                        ;
+; READ_DURING_WRITE_MODE_PORT_B      ; NEW_DATA_NO_NBE_READ                     ; Untyped                        ;
+; INIT_FILE                          ; db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif ; Untyped                        ;
+; INIT_FILE_LAYOUT                   ; PORT_A                                   ; Untyped                        ;
+; MAXIMUM_DEPTH                      ; 0                                        ; Untyped                        ;
+; CLOCK_ENABLE_INPUT_A               ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_INPUT_B               ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_OUTPUT_A              ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_OUTPUT_B              ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_CORE_A                ; USE_INPUT_CLKEN                          ; Untyped                        ;
+; CLOCK_ENABLE_CORE_B                ; USE_INPUT_CLKEN                          ; Untyped                        ;
+; ENABLE_ECC                         ; FALSE                                    ; Untyped                        ;
+; ECC_PIPELINE_STAGE_ENABLED         ; FALSE                                    ; Untyped                        ;
+; WIDTH_ECCSTATUS                    ; 3                                        ; Untyped                        ;
+; DEVICE_FAMILY                      ; Cyclone V                                ; Untyped                        ;
+; CBXI_PARAMETER                     ; altsyncram_p8d1                          ; Untyped                        ;
++------------------------------------+------------------------------------------+--------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++----------------------------------------------------------------------------------------------------------------+
+; Parameter Settings for Inferred Entity Instance: ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|altsyncram:rom_rtl_0 ;
++------------------------------------+------------------------------------------+--------------------------------+
+; Parameter Name                     ; Value                                    ; Type                           ;
++------------------------------------+------------------------------------------+--------------------------------+
+; BYTE_SIZE_BLOCK                    ; 8                                        ; Untyped                        ;
+; AUTO_CARRY_CHAINS                  ; ON                                       ; AUTO_CARRY                     ;
+; IGNORE_CARRY_BUFFERS               ; OFF                                      ; IGNORE_CARRY                   ;
+; AUTO_CASCADE_CHAINS                ; ON                                       ; AUTO_CASCADE                   ;
+; IGNORE_CASCADE_BUFFERS             ; OFF                                      ; IGNORE_CASCADE                 ;
+; WIDTH_BYTEENA                      ; 1                                        ; Untyped                        ;
+; OPERATION_MODE                     ; ROM                                      ; Untyped                        ;
+; WIDTH_A                            ; 23                                       ; Untyped                        ;
+; WIDTHAD_A                          ; 8                                        ; Untyped                        ;
+; NUMWORDS_A                         ; 256                                      ; Untyped                        ;
+; OUTDATA_REG_A                      ; UNREGISTERED                             ; Untyped                        ;
+; ADDRESS_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; OUTDATA_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; WRCONTROL_ACLR_A                   ; NONE                                     ; Untyped                        ;
+; INDATA_ACLR_A                      ; NONE                                     ; Untyped                        ;
+; BYTEENA_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; WIDTH_B                            ; 1                                        ; Untyped                        ;
+; WIDTHAD_B                          ; 1                                        ; Untyped                        ;
+; NUMWORDS_B                         ; 1                                        ; Untyped                        ;
+; INDATA_REG_B                       ; CLOCK1                                   ; Untyped                        ;
+; WRCONTROL_WRADDRESS_REG_B          ; CLOCK1                                   ; Untyped                        ;
+; RDCONTROL_REG_B                    ; CLOCK1                                   ; Untyped                        ;
+; ADDRESS_REG_B                      ; CLOCK1                                   ; Untyped                        ;
+; OUTDATA_REG_B                      ; UNREGISTERED                             ; Untyped                        ;
+; BYTEENA_REG_B                      ; CLOCK1                                   ; Untyped                        ;
+; INDATA_ACLR_B                      ; NONE                                     ; Untyped                        ;
+; WRCONTROL_ACLR_B                   ; NONE                                     ; Untyped                        ;
+; ADDRESS_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; OUTDATA_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; RDCONTROL_ACLR_B                   ; NONE                                     ; Untyped                        ;
+; BYTEENA_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; WIDTH_BYTEENA_A                    ; 1                                        ; Untyped                        ;
+; WIDTH_BYTEENA_B                    ; 1                                        ; Untyped                        ;
+; RAM_BLOCK_TYPE                     ; AUTO                                     ; Untyped                        ;
+; BYTE_SIZE                          ; 8                                        ; Untyped                        ;
+; READ_DURING_WRITE_MODE_MIXED_PORTS ; DONT_CARE                                ; Untyped                        ;
+; READ_DURING_WRITE_MODE_PORT_A      ; NEW_DATA_NO_NBE_READ                     ; Untyped                        ;
+; READ_DURING_WRITE_MODE_PORT_B      ; NEW_DATA_NO_NBE_READ                     ; Untyped                        ;
+; INIT_FILE                          ; db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif ; Untyped                        ;
+; INIT_FILE_LAYOUT                   ; PORT_A                                   ; Untyped                        ;
+; MAXIMUM_DEPTH                      ; 0                                        ; Untyped                        ;
+; CLOCK_ENABLE_INPUT_A               ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_INPUT_B               ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_OUTPUT_A              ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_OUTPUT_B              ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_CORE_A                ; USE_INPUT_CLKEN                          ; Untyped                        ;
+; CLOCK_ENABLE_CORE_B                ; USE_INPUT_CLKEN                          ; Untyped                        ;
+; ENABLE_ECC                         ; FALSE                                    ; Untyped                        ;
+; ECC_PIPELINE_STAGE_ENABLED         ; FALSE                                    ; Untyped                        ;
+; WIDTH_ECCSTATUS                    ; 3                                        ; Untyped                        ;
+; DEVICE_FAMILY                      ; Cyclone V                                ; Untyped                        ;
+; CBXI_PARAMETER                     ; altsyncram_p8d1                          ; Untyped                        ;
++------------------------------------+------------------------------------------+--------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++----------------------------------------------------------------------------------------------------------------+
+; Parameter Settings for Inferred Entity Instance: ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|altsyncram:rom_rtl_0 ;
++------------------------------------+------------------------------------------+--------------------------------+
+; Parameter Name                     ; Value                                    ; Type                           ;
++------------------------------------+------------------------------------------+--------------------------------+
+; BYTE_SIZE_BLOCK                    ; 8                                        ; Untyped                        ;
+; AUTO_CARRY_CHAINS                  ; ON                                       ; AUTO_CARRY                     ;
+; IGNORE_CARRY_BUFFERS               ; OFF                                      ; IGNORE_CARRY                   ;
+; AUTO_CASCADE_CHAINS                ; ON                                       ; AUTO_CASCADE                   ;
+; IGNORE_CASCADE_BUFFERS             ; OFF                                      ; IGNORE_CASCADE                 ;
+; WIDTH_BYTEENA                      ; 1                                        ; Untyped                        ;
+; OPERATION_MODE                     ; ROM                                      ; Untyped                        ;
+; WIDTH_A                            ; 23                                       ; Untyped                        ;
+; WIDTHAD_A                          ; 8                                        ; Untyped                        ;
+; NUMWORDS_A                         ; 256                                      ; Untyped                        ;
+; OUTDATA_REG_A                      ; UNREGISTERED                             ; Untyped                        ;
+; ADDRESS_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; OUTDATA_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; WRCONTROL_ACLR_A                   ; NONE                                     ; Untyped                        ;
+; INDATA_ACLR_A                      ; NONE                                     ; Untyped                        ;
+; BYTEENA_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; WIDTH_B                            ; 1                                        ; Untyped                        ;
+; WIDTHAD_B                          ; 1                                        ; Untyped                        ;
+; NUMWORDS_B                         ; 1                                        ; Untyped                        ;
+; INDATA_REG_B                       ; CLOCK1                                   ; Untyped                        ;
+; WRCONTROL_WRADDRESS_REG_B          ; CLOCK1                                   ; Untyped                        ;
+; RDCONTROL_REG_B                    ; CLOCK1                                   ; Untyped                        ;
+; ADDRESS_REG_B                      ; CLOCK1                                   ; Untyped                        ;
+; OUTDATA_REG_B                      ; UNREGISTERED                             ; Untyped                        ;
+; BYTEENA_REG_B                      ; CLOCK1                                   ; Untyped                        ;
+; INDATA_ACLR_B                      ; NONE                                     ; Untyped                        ;
+; WRCONTROL_ACLR_B                   ; NONE                                     ; Untyped                        ;
+; ADDRESS_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; OUTDATA_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; RDCONTROL_ACLR_B                   ; NONE                                     ; Untyped                        ;
+; BYTEENA_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; WIDTH_BYTEENA_A                    ; 1                                        ; Untyped                        ;
+; WIDTH_BYTEENA_B                    ; 1                                        ; Untyped                        ;
+; RAM_BLOCK_TYPE                     ; AUTO                                     ; Untyped                        ;
+; BYTE_SIZE                          ; 8                                        ; Untyped                        ;
+; READ_DURING_WRITE_MODE_MIXED_PORTS ; DONT_CARE                                ; Untyped                        ;
+; READ_DURING_WRITE_MODE_PORT_A      ; NEW_DATA_NO_NBE_READ                     ; Untyped                        ;
+; READ_DURING_WRITE_MODE_PORT_B      ; NEW_DATA_NO_NBE_READ                     ; Untyped                        ;
+; INIT_FILE                          ; db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif ; Untyped                        ;
+; INIT_FILE_LAYOUT                   ; PORT_A                                   ; Untyped                        ;
+; MAXIMUM_DEPTH                      ; 0                                        ; Untyped                        ;
+; CLOCK_ENABLE_INPUT_A               ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_INPUT_B               ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_OUTPUT_A              ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_OUTPUT_B              ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_CORE_A                ; USE_INPUT_CLKEN                          ; Untyped                        ;
+; CLOCK_ENABLE_CORE_B                ; USE_INPUT_CLKEN                          ; Untyped                        ;
+; ENABLE_ECC                         ; FALSE                                    ; Untyped                        ;
+; ECC_PIPELINE_STAGE_ENABLED         ; FALSE                                    ; Untyped                        ;
+; WIDTH_ECCSTATUS                    ; 3                                        ; Untyped                        ;
+; DEVICE_FAMILY                      ; Cyclone V                                ; Untyped                        ;
+; CBXI_PARAMETER                     ; altsyncram_p8d1                          ; Untyped                        ;
++------------------------------------+------------------------------------------+--------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++----------------------------------------------------------------------------------------------------------------+
+; Parameter Settings for Inferred Entity Instance: ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|altsyncram:rom_rtl_0 ;
++------------------------------------+------------------------------------------+--------------------------------+
+; Parameter Name                     ; Value                                    ; Type                           ;
++------------------------------------+------------------------------------------+--------------------------------+
+; BYTE_SIZE_BLOCK                    ; 8                                        ; Untyped                        ;
+; AUTO_CARRY_CHAINS                  ; ON                                       ; AUTO_CARRY                     ;
+; IGNORE_CARRY_BUFFERS               ; OFF                                      ; IGNORE_CARRY                   ;
+; AUTO_CASCADE_CHAINS                ; ON                                       ; AUTO_CASCADE                   ;
+; IGNORE_CASCADE_BUFFERS             ; OFF                                      ; IGNORE_CASCADE                 ;
+; WIDTH_BYTEENA                      ; 1                                        ; Untyped                        ;
+; OPERATION_MODE                     ; ROM                                      ; Untyped                        ;
+; WIDTH_A                            ; 23                                       ; Untyped                        ;
+; WIDTHAD_A                          ; 8                                        ; Untyped                        ;
+; NUMWORDS_A                         ; 256                                      ; Untyped                        ;
+; OUTDATA_REG_A                      ; UNREGISTERED                             ; Untyped                        ;
+; ADDRESS_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; OUTDATA_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; WRCONTROL_ACLR_A                   ; NONE                                     ; Untyped                        ;
+; INDATA_ACLR_A                      ; NONE                                     ; Untyped                        ;
+; BYTEENA_ACLR_A                     ; NONE                                     ; Untyped                        ;
+; WIDTH_B                            ; 1                                        ; Untyped                        ;
+; WIDTHAD_B                          ; 1                                        ; Untyped                        ;
+; NUMWORDS_B                         ; 1                                        ; Untyped                        ;
+; INDATA_REG_B                       ; CLOCK1                                   ; Untyped                        ;
+; WRCONTROL_WRADDRESS_REG_B          ; CLOCK1                                   ; Untyped                        ;
+; RDCONTROL_REG_B                    ; CLOCK1                                   ; Untyped                        ;
+; ADDRESS_REG_B                      ; CLOCK1                                   ; Untyped                        ;
+; OUTDATA_REG_B                      ; UNREGISTERED                             ; Untyped                        ;
+; BYTEENA_REG_B                      ; CLOCK1                                   ; Untyped                        ;
+; INDATA_ACLR_B                      ; NONE                                     ; Untyped                        ;
+; WRCONTROL_ACLR_B                   ; NONE                                     ; Untyped                        ;
+; ADDRESS_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; OUTDATA_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; RDCONTROL_ACLR_B                   ; NONE                                     ; Untyped                        ;
+; BYTEENA_ACLR_B                     ; NONE                                     ; Untyped                        ;
+; WIDTH_BYTEENA_A                    ; 1                                        ; Untyped                        ;
+; WIDTH_BYTEENA_B                    ; 1                                        ; Untyped                        ;
+; RAM_BLOCK_TYPE                     ; AUTO                                     ; Untyped                        ;
+; BYTE_SIZE                          ; 8                                        ; Untyped                        ;
+; READ_DURING_WRITE_MODE_MIXED_PORTS ; DONT_CARE                                ; Untyped                        ;
+; READ_DURING_WRITE_MODE_PORT_A      ; NEW_DATA_NO_NBE_READ                     ; Untyped                        ;
+; READ_DURING_WRITE_MODE_PORT_B      ; NEW_DATA_NO_NBE_READ                     ; Untyped                        ;
+; INIT_FILE                          ; db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif ; Untyped                        ;
+; INIT_FILE_LAYOUT                   ; PORT_A                                   ; Untyped                        ;
+; MAXIMUM_DEPTH                      ; 0                                        ; Untyped                        ;
+; CLOCK_ENABLE_INPUT_A               ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_INPUT_B               ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_OUTPUT_A              ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_OUTPUT_B              ; NORMAL                                   ; Untyped                        ;
+; CLOCK_ENABLE_CORE_A                ; USE_INPUT_CLKEN                          ; Untyped                        ;
+; CLOCK_ENABLE_CORE_B                ; USE_INPUT_CLKEN                          ; Untyped                        ;
+; ENABLE_ECC                         ; FALSE                                    ; Untyped                        ;
+; ECC_PIPELINE_STAGE_ENABLED         ; FALSE                                    ; Untyped                        ;
+; WIDTH_ECCSTATUS                    ; 3                                        ; Untyped                        ;
+; DEVICE_FAMILY                      ; Cyclone V                                ; Untyped                        ;
+; CBXI_PARAMETER                     ; altsyncram_p8d1                          ; Untyped                        ;
++------------------------------------+------------------------------------------+--------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++-----------------------------------------------------------------------------------------------------+
+; Parameter Settings for Inferred Entity Instance: ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0 ;
++----------------+----------------+-------------------------------------------------------------------+
+; Parameter Name ; Value          ; Type                                                              ;
++----------------+----------------+-------------------------------------------------------------------+
+; WIDTH_BYTEENA  ; 1              ; Untyped                                                           ;
+; NUMBER_OF_TAPS ; 1              ; Untyped                                                           ;
+; TAP_DISTANCE   ; 9              ; Untyped                                                           ;
+; WIDTH          ; 5              ; Untyped                                                           ;
+; POWER_UP_STATE ; DONT_CARE      ; Untyped                                                           ;
+; CBXI_PARAMETER ; shift_taps_jbv ; Untyped                                                           ;
++----------------+----------------+-------------------------------------------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++---------------------------------------------------------------------------------------------------------------------------+
+; Parameter Settings for Inferred Entity Instance: ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0 ;
++----------------+----------------+-----------------------------------------------------------------------------------------+
+; Parameter Name ; Value          ; Type                                                                                    ;
++----------------+----------------+-----------------------------------------------------------------------------------------+
+; WIDTH_BYTEENA  ; 1              ; Untyped                                                                                 ;
+; NUMBER_OF_TAPS ; 1              ; Untyped                                                                                 ;
+; TAP_DISTANCE   ; 5              ; Untyped                                                                                 ;
+; WIDTH          ; 92             ; Untyped                                                                                 ;
+; POWER_UP_STATE ; DONT_CARE      ; Untyped                                                                                 ;
+; CBXI_PARAMETER ; shift_taps_5dv ; Untyped                                                                                 ;
++----------------+----------------+-----------------------------------------------------------------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++-----------------------------------------------------------------------------------------------------------+
+; altsyncram Parameter Settings by Entity Instance                                                          ;
++-------------------------------------------+---------------------------------------------------------------+
+; Name                                      ; Value                                                         ;
++-------------------------------------------+---------------------------------------------------------------+
+; Number of entity instances                ; 8                                                             ;
+; Entity Instance                           ; ntt_core:u_core|altsyncram:fifo1_rtl_0                        ;
+;     -- OPERATION_MODE                     ; DUAL_PORT                                                     ;
+;     -- WIDTH_A                            ; 92                                                            ;
+;     -- NUMWORDS_A                         ; 32                                                            ;
+;     -- OUTDATA_REG_A                      ; UNREGISTERED                                                  ;
+;     -- WIDTH_B                            ; 92                                                            ;
+;     -- NUMWORDS_B                         ; 32                                                            ;
+;     -- ADDRESS_REG_B                      ; CLOCK0                                                        ;
+;     -- OUTDATA_REG_B                      ; UNREGISTERED                                                  ;
+;     -- RAM_BLOCK_TYPE                     ; AUTO                                                          ;
+;     -- READ_DURING_WRITE_MODE_MIXED_PORTS ; OLD_DATA                                                      ;
+; Entity Instance                           ; ntt_core:u_core|altsyncram:fifo2_rtl_0                        ;
+;     -- OPERATION_MODE                     ; DUAL_PORT                                                     ;
+;     -- WIDTH_A                            ; 92                                                            ;
+;     -- NUMWORDS_A                         ; 32                                                            ;
+;     -- OUTDATA_REG_A                      ; UNREGISTERED                                                  ;
+;     -- WIDTH_B                            ; 92                                                            ;
+;     -- NUMWORDS_B                         ; 32                                                            ;
+;     -- ADDRESS_REG_B                      ; CLOCK0                                                        ;
+;     -- OUTDATA_REG_B                      ; UNREGISTERED                                                  ;
+;     -- RAM_BLOCK_TYPE                     ; AUTO                                                          ;
+;     -- READ_DURING_WRITE_MODE_MIXED_PORTS ; OLD_DATA                                                      ;
+; Entity Instance                           ; ntt_core:u_core|altsyncram:fifo3_rtl_0                        ;
+;     -- OPERATION_MODE                     ; DUAL_PORT                                                     ;
+;     -- WIDTH_A                            ; 92                                                            ;
+;     -- NUMWORDS_A                         ; 16                                                            ;
+;     -- OUTDATA_REG_A                      ; UNREGISTERED                                                  ;
+;     -- WIDTH_B                            ; 92                                                            ;
+;     -- NUMWORDS_B                         ; 16                                                            ;
+;     -- ADDRESS_REG_B                      ; CLOCK0                                                        ;
+;     -- OUTDATA_REG_B                      ; UNREGISTERED                                                  ;
+;     -- RAM_BLOCK_TYPE                     ; AUTO                                                          ;
+;     -- READ_DURING_WRITE_MODE_MIXED_PORTS ; OLD_DATA                                                      ;
+; Entity Instance                           ; ntt_core:u_core|altsyncram:b_words_rtl_0                      ;
+;     -- OPERATION_MODE                     ; DUAL_PORT                                                     ;
+;     -- WIDTH_A                            ; 92                                                            ;
+;     -- NUMWORDS_A                         ; 64                                                            ;
+;     -- OUTDATA_REG_A                      ; UNREGISTERED                                                  ;
+;     -- WIDTH_B                            ; 92                                                            ;
+;     -- NUMWORDS_B                         ; 64                                                            ;
+;     -- ADDRESS_REG_B                      ; CLOCK0                                                        ;
+;     -- OUTDATA_REG_B                      ; UNREGISTERED                                                  ;
+;     -- RAM_BLOCK_TYPE                     ; AUTO                                                          ;
+;     -- READ_DURING_WRITE_MODE_MIXED_PORTS ; OLD_DATA                                                      ;
+; Entity Instance                           ; ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0 ;
+;     -- OPERATION_MODE                     ; ROM                                                           ;
+;     -- WIDTH_A                            ; 23                                                            ;
+;     -- NUMWORDS_A                         ; 256                                                           ;
+;     -- OUTDATA_REG_A                      ; UNREGISTERED                                                  ;
+;     -- WIDTH_B                            ; 1                                                             ;
+;     -- NUMWORDS_B                         ; 1                                                             ;
+;     -- ADDRESS_REG_B                      ; CLOCK1                                                        ;
+;     -- OUTDATA_REG_B                      ; UNREGISTERED                                                  ;
+;     -- RAM_BLOCK_TYPE                     ; AUTO                                                          ;
+;     -- READ_DURING_WRITE_MODE_MIXED_PORTS ; DONT_CARE                                                     ;
+; Entity Instance                           ; ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|altsyncram:rom_rtl_0 ;
+;     -- OPERATION_MODE                     ; ROM                                                           ;
+;     -- WIDTH_A                            ; 23                                                            ;
+;     -- NUMWORDS_A                         ; 256                                                           ;
+;     -- OUTDATA_REG_A                      ; UNREGISTERED                                                  ;
+;     -- WIDTH_B                            ; 1                                                             ;
+;     -- NUMWORDS_B                         ; 1                                                             ;
+;     -- ADDRESS_REG_B                      ; CLOCK1                                                        ;
+;     -- OUTDATA_REG_B                      ; UNREGISTERED                                                  ;
+;     -- RAM_BLOCK_TYPE                     ; AUTO                                                          ;
+;     -- READ_DURING_WRITE_MODE_MIXED_PORTS ; DONT_CARE                                                     ;
+; Entity Instance                           ; ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|altsyncram:rom_rtl_0 ;
+;     -- OPERATION_MODE                     ; ROM                                                           ;
+;     -- WIDTH_A                            ; 23                                                            ;
+;     -- NUMWORDS_A                         ; 256                                                           ;
+;     -- OUTDATA_REG_A                      ; UNREGISTERED                                                  ;
+;     -- WIDTH_B                            ; 1                                                             ;
+;     -- NUMWORDS_B                         ; 1                                                             ;
+;     -- ADDRESS_REG_B                      ; CLOCK1                                                        ;
+;     -- OUTDATA_REG_B                      ; UNREGISTERED                                                  ;
+;     -- RAM_BLOCK_TYPE                     ; AUTO                                                          ;
+;     -- READ_DURING_WRITE_MODE_MIXED_PORTS ; DONT_CARE                                                     ;
+; Entity Instance                           ; ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|altsyncram:rom_rtl_0 ;
+;     -- OPERATION_MODE                     ; ROM                                                           ;
+;     -- WIDTH_A                            ; 23                                                            ;
+;     -- NUMWORDS_A                         ; 256                                                           ;
+;     -- OUTDATA_REG_A                      ; UNREGISTERED                                                  ;
+;     -- WIDTH_B                            ; 1                                                             ;
+;     -- NUMWORDS_B                         ; 1                                                             ;
+;     -- ADDRESS_REG_B                      ; CLOCK1                                                        ;
+;     -- OUTDATA_REG_B                      ; UNREGISTERED                                                  ;
+;     -- RAM_BLOCK_TYPE                     ; AUTO                                                          ;
+;     -- READ_DURING_WRITE_MODE_MIXED_PORTS ; DONT_CARE                                                     ;
++-------------------------------------------+---------------------------------------------------------------+
+
+
++-------------------------------------------------------------------------------------------------------+
+; altshift_taps Parameter Settings by Entity Instance                                                   ;
++----------------------------+--------------------------------------------------------------------------+
+; Name                       ; Value                                                                    ;
++----------------------------+--------------------------------------------------------------------------+
+; Number of entity instances ; 2                                                                        ;
+; Entity Instance            ; ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0                       ;
+;     -- NUMBER_OF_TAPS      ; 1                                                                        ;
+;     -- TAP_DISTANCE        ; 9                                                                        ;
+;     -- WIDTH               ; 5                                                                        ;
+; Entity Instance            ; ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0 ;
+;     -- NUMBER_OF_TAPS      ; 1                                                                        ;
+;     -- TAP_DISTANCE        ; 5                                                                        ;
+;     -- WIDTH               ; 92                                                                       ;
++----------------------------+--------------------------------------------------------------------------+
+
+
++------------------------------------------------------------------------------------------------------------------+
+; Port Connectivity Checks: "ntt_core:u_core"                                                                      ;
++--------+--------+----------+-------------------------------------------------------------------------------------+
+; Port   ; Type   ; Severity ; Details                                                                             ;
++--------+--------+----------+-------------------------------------------------------------------------------------+
+; busy_o ; Output ; Info     ; Connected to dangling logic. Logic that only feeds a dangling port will be removed. ;
++--------+--------+----------+-------------------------------------------------------------------------------------+
+
+
++-----------------------------------------------------+
+; Post-Synthesis Netlist Statistics for Top Partition ;
++-----------------------+-----------------------------+
+; Type                  ; Count                       ;
++-----------------------+-----------------------------+
+; arriav_ff             ; 2945                        ;
+;     CLR               ; 2018                        ;
+;     CLR SLD           ; 345                         ;
+;     ENA CLR           ; 301                         ;
+;     ENA CLR SCLR      ; 18                          ;
+;     ENA CLR SLD       ; 249                         ;
+;     SCLR              ; 4                           ;
+;     plain             ; 10                          ;
+; arriav_lcell_comb     ; 3988                        ;
+;     arith             ; 1597                        ;
+;         0 data inputs ; 16                          ;
+;         1 data inputs ; 240                         ;
+;         2 data inputs ; 505                         ;
+;         3 data inputs ; 152                         ;
+;         4 data inputs ; 568                         ;
+;         5 data inputs ; 116                         ;
+;     extend            ; 24                          ;
+;         7 data inputs ; 24                          ;
+;     normal            ; 2079                        ;
+;         1 data inputs ; 80                          ;
+;         2 data inputs ; 175                         ;
+;         3 data inputs ; 652                         ;
+;         4 data inputs ; 267                         ;
+;         5 data inputs ; 542                         ;
+;         6 data inputs ; 363                         ;
+;     shared            ; 288                         ;
+;         0 data inputs ; 12                          ;
+;         2 data inputs ; 276                         ;
+; arriav_mac            ; 5                           ;
+; boundary_port         ; 59                          ;
+; stratixv_ram_block    ; 557                         ;
+;                       ;                             ;
+; Max LUT depth         ; 6.20                        ;
+; Average LUT depth     ; 2.66                        ;
++-----------------------+-----------------------------+
+
+
++-------------------------------+
+; Elapsed Time Per Partition    ;
++----------------+--------------+
+; Partition Name ; Elapsed Time ;
++----------------+--------------+
+; Top            ; 00:00:10     ;
++----------------+--------------+
+
+
++-------------------------------+
+; Analysis & Synthesis Messages ;
++-------------------------------+
+Info: *******************************************************************
+Info: Running Quartus Prime Analysis & Synthesis
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Sat Oct 10 06:24:09 2026
+Info: Command: quartus_map ntt -c ntt
+Info (20030): Parallel compilation is enabled and will use 12 of the 12 processors detected
+Info (12021): Found 1 design units, including 0 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/ntt_pkg.sv
+    Info (12022): Found design unit 1: ntt_pkg (SystemVerilog) File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_pkg.sv Line: 12
+Info (12021): Found 1 design units, including 1 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/mod_mul.sv
+    Info (12023): Found entity 1: mod_mul File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/mod_mul.sv Line: 27
+Info (12021): Found 1 design units, including 1 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/butterfly_unit.sv
+    Info (12023): Found entity 1: butterfly_unit File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/butterfly_unit.sv Line: 22
+Info (12021): Found 1 design units, including 1 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/twiddle_rom.sv
+    Info (12023): Found entity 1: twiddle_rom File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/twiddle_rom.sv Line: 16
+Info (12021): Found 1 design units, including 1 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/ntt_core.sv
+    Info (12023): Found entity 1: ntt_core File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_core.sv Line: 7
+Info (12021): Found 1 design units, including 1 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/ntt_engine.sv
+    Info (12023): Found entity 1: ntt_engine File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_engine.sv Line: 28
+Info (12127): Elaborating entity "ntt_engine" for the top level hierarchy
+Info (10264): Verilog HDL Case Statement information at ntt_engine.sv(115): all case item expressions in this case statement are onehot File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_engine.sv Line: 115
+Info (12128): Elaborating entity "ntt_core" for hierarchy "ntt_core:u_core" File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_engine.sv Line: 78
+Info (12128): Elaborating entity "twiddle_rom" for hierarchy "ntt_core:u_core|twiddle_rom:g_bf[0].u_tw" File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_core.sv Line: 389
+Warning (10030): Net "rom.data_a" at twiddle_rom.sv(22) has no driver or initial value, using a default initial value '0' File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/twiddle_rom.sv Line: 22
+Warning (10030): Net "rom.waddr_a" at twiddle_rom.sv(22) has no driver or initial value, using a default initial value '0' File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/twiddle_rom.sv Line: 22
+Warning (10030): Net "rom.we_a" at twiddle_rom.sv(22) has no driver or initial value, using a default initial value '0' File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/twiddle_rom.sv Line: 22
+Info (12128): Elaborating entity "butterfly_unit" for hierarchy "ntt_core:u_core|butterfly_unit:g_bf[0].u_bf" File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_core.sv Line: 393
+Info (12128): Elaborating entity "mod_mul" for hierarchy "ntt_core:u_core|butterfly_unit:g_bf[0].u_bf|mod_mul:u_mul" File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/butterfly_unit.sv Line: 93
+Info (286030): Timing-Driven Synthesis is running
+Info (19000): Inferred 10 megafunctions from design logic
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|fifo1_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 92
+        Info (286033): Parameter WIDTHAD_A set to 5
+        Info (286033): Parameter NUMWORDS_A set to 32
+        Info (286033): Parameter WIDTH_B set to 92
+        Info (286033): Parameter WIDTHAD_B set to 5
+        Info (286033): Parameter NUMWORDS_B set to 32
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+        Info (286033): Parameter RDCONTROL_REG_B set to CLOCK0
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|fifo2_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 92
+        Info (286033): Parameter WIDTHAD_A set to 5
+        Info (286033): Parameter NUMWORDS_A set to 32
+        Info (286033): Parameter WIDTH_B set to 92
+        Info (286033): Parameter WIDTHAD_B set to 5
+        Info (286033): Parameter NUMWORDS_B set to 32
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+        Info (286033): Parameter RDCONTROL_REG_B set to CLOCK0
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|fifo3_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 92
+        Info (286033): Parameter WIDTHAD_A set to 4
+        Info (286033): Parameter NUMWORDS_A set to 16
+        Info (286033): Parameter WIDTH_B set to 92
+        Info (286033): Parameter WIDTHAD_B set to 4
+        Info (286033): Parameter NUMWORDS_B set to 16
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+        Info (286033): Parameter RDCONTROL_REG_B set to CLOCK0
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|b_words_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 92
+        Info (286033): Parameter WIDTHAD_A set to 6
+        Info (286033): Parameter NUMWORDS_A set to 64
+        Info (286033): Parameter WIDTH_B set to 92
+        Info (286033): Parameter WIDTHAD_B set to 6
+        Info (286033): Parameter NUMWORDS_B set to 64
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+        Info (286033): Parameter RDCONTROL_REG_B set to CLOCK0
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|rom_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to ROM
+        Info (286033): Parameter WIDTH_A set to 23
+        Info (286033): Parameter WIDTHAD_A set to 8
+        Info (286033): Parameter NUMWORDS_A set to 256
+        Info (286033): Parameter OUTDATA_REG_A set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_A set to NONE
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter INIT_FILE set to db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|rom_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to ROM
+        Info (286033): Parameter WIDTH_A set to 23
+        Info (286033): Parameter WIDTHAD_A set to 8
+        Info (286033): Parameter NUMWORDS_A set to 256
+        Info (286033): Parameter OUTDATA_REG_A set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_A set to NONE
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter INIT_FILE set to db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|rom_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to ROM
+        Info (286033): Parameter WIDTH_A set to 23
+        Info (286033): Parameter WIDTHAD_A set to 8
+        Info (286033): Parameter NUMWORDS_A set to 256
+        Info (286033): Parameter OUTDATA_REG_A set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_A set to NONE
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter INIT_FILE set to db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|rom_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to ROM
+        Info (286033): Parameter WIDTH_A set to 23
+        Info (286033): Parameter WIDTHAD_A set to 8
+        Info (286033): Parameter NUMWORDS_A set to 256
+        Info (286033): Parameter OUTDATA_REG_A set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_A set to NONE
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter INIT_FILE set to db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif
+    Info (276034): Inferred altshift_taps megafunction from the following design logic: "ntt_core:u_core|tag[0].inverse_rtl_0"
+        Info (286033): Parameter NUMBER_OF_TAPS set to 1
+        Info (286033): Parameter TAP_DISTANCE set to 9
+        Info (286033): Parameter WIDTH set to 5
+        Info (286033): Parameter POWER_UP_STATE set to DONT_CARE
+    Info (276034): Inferred altshift_taps megafunction from the following design logic: "ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|keep_dly_rtl_0"
+        Info (286033): Parameter NUMBER_OF_TAPS set to 1
+        Info (286033): Parameter TAP_DISTANCE set to 5
+        Info (286033): Parameter WIDTH set to 92
+        Info (286033): Parameter POWER_UP_STATE set to DONT_CARE
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|altsyncram:fifo1_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|altsyncram:fifo1_rtl_0" with the following parameter:
+    Info (12134): Parameter "OPERATION_MODE" = "DUAL_PORT"
+    Info (12134): Parameter "WIDTH_A" = "92"
+    Info (12134): Parameter "WIDTHAD_A" = "5"
+    Info (12134): Parameter "NUMWORDS_A" = "32"
+    Info (12134): Parameter "WIDTH_B" = "92"
+    Info (12134): Parameter "WIDTHAD_B" = "5"
+    Info (12134): Parameter "NUMWORDS_B" = "32"
+    Info (12134): Parameter "ADDRESS_ACLR_A" = "NONE"
+    Info (12134): Parameter "OUTDATA_REG_B" = "UNREGISTERED"
+    Info (12134): Parameter "ADDRESS_ACLR_B" = "NONE"
+    Info (12134): Parameter "OUTDATA_ACLR_B" = "NONE"
+    Info (12134): Parameter "ADDRESS_REG_B" = "CLOCK0"
+    Info (12134): Parameter "INDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "WRCONTROL_ACLR_A" = "NONE"
+    Info (12134): Parameter "READ_DURING_WRITE_MODE_MIXED_PORTS" = "OLD_DATA"
+    Info (12134): Parameter "RDCONTROL_REG_B" = "CLOCK0"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_60q1.tdf
+    Info (12023): Found entity 1: altsyncram_60q1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_60q1.tdf Line: 28
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|altsyncram:fifo3_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|altsyncram:fifo3_rtl_0" with the following parameter:
+    Info (12134): Parameter "OPERATION_MODE" = "DUAL_PORT"
+    Info (12134): Parameter "WIDTH_A" = "92"
+    Info (12134): Parameter "WIDTHAD_A" = "4"
+    Info (12134): Parameter "NUMWORDS_A" = "16"
+    Info (12134): Parameter "WIDTH_B" = "92"
+    Info (12134): Parameter "WIDTHAD_B" = "4"
+    Info (12134): Parameter "NUMWORDS_B" = "16"
+    Info (12134): Parameter "ADDRESS_ACLR_A" = "NONE"
+    Info (12134): Parameter "OUTDATA_REG_B" = "UNREGISTERED"
+    Info (12134): Parameter "ADDRESS_ACLR_B" = "NONE"
+    Info (12134): Parameter "OUTDATA_ACLR_B" = "NONE"
+    Info (12134): Parameter "ADDRESS_REG_B" = "CLOCK0"
+    Info (12134): Parameter "INDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "WRCONTROL_ACLR_A" = "NONE"
+    Info (12134): Parameter "READ_DURING_WRITE_MODE_MIXED_PORTS" = "OLD_DATA"
+    Info (12134): Parameter "RDCONTROL_REG_B" = "CLOCK0"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_80q1.tdf
+    Info (12023): Found entity 1: altsyncram_80q1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_80q1.tdf Line: 28
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|altsyncram:b_words_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|altsyncram:b_words_rtl_0" with the following parameter:
+    Info (12134): Parameter "OPERATION_MODE" = "DUAL_PORT"
+    Info (12134): Parameter "WIDTH_A" = "92"
+    Info (12134): Parameter "WIDTHAD_A" = "6"
+    Info (12134): Parameter "NUMWORDS_A" = "64"
+    Info (12134): Parameter "WIDTH_B" = "92"
+    Info (12134): Parameter "WIDTHAD_B" = "6"
+    Info (12134): Parameter "NUMWORDS_B" = "64"
+    Info (12134): Parameter "ADDRESS_ACLR_A" = "NONE"
+    Info (12134): Parameter "OUTDATA_REG_B" = "UNREGISTERED"
+    Info (12134): Parameter "ADDRESS_ACLR_B" = "NONE"
+    Info (12134): Parameter "OUTDATA_ACLR_B" = "NONE"
+    Info (12134): Parameter "ADDRESS_REG_B" = "CLOCK0"
+    Info (12134): Parameter "INDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "WRCONTROL_ACLR_A" = "NONE"
+    Info (12134): Parameter "READ_DURING_WRITE_MODE_MIXED_PORTS" = "OLD_DATA"
+    Info (12134): Parameter "RDCONTROL_REG_B" = "CLOCK0"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_i0q1.tdf
+    Info (12023): Found entity 1: altsyncram_i0q1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_i0q1.tdf Line: 28
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0" with the following parameter:
+    Info (12134): Parameter "OPERATION_MODE" = "ROM"
+    Info (12134): Parameter "WIDTH_A" = "23"
+    Info (12134): Parameter "WIDTHAD_A" = "8"
+    Info (12134): Parameter "NUMWORDS_A" = "256"
+    Info (12134): Parameter "OUTDATA_REG_A" = "UNREGISTERED"
+    Info (12134): Parameter "ADDRESS_ACLR_A" = "NONE"
+    Info (12134): Parameter "OUTDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "INDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "WRCONTROL_ACLR_A" = "NONE"
+    Info (12134): Parameter "INIT_FILE" = "db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_p8d1.tdf
+    Info (12023): Found entity 1: altsyncram_p8d1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_p8d1.tdf Line: 28
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0" with the following parameter:
+    Info (12134): Parameter "NUMBER_OF_TAPS" = "1"
+    Info (12134): Parameter "TAP_DISTANCE" = "9"
+    Info (12134): Parameter "WIDTH" = "5"
+    Info (12134): Parameter "POWER_UP_STATE" = "DONT_CARE"
+Info (12021): Found 1 design units, including 1 entities, in source file db/shift_taps_jbv.tdf
+    Info (12023): Found entity 1: shift_taps_jbv File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/shift_taps_jbv.tdf Line: 29
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_tcc1.tdf
+    Info (12023): Found entity 1: altsyncram_tcc1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_tcc1.tdf Line: 28
+Info (12021): Found 1 design units, including 1 entities, in source file db/cntr_0if.tdf
+    Info (12023): Found entity 1: cntr_0if File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_0if.tdf Line: 28
+Info (12021): Found 1 design units, including 1 entities, in source file db/cmpr_c9c.tdf
+    Info (12023): Found entity 1: cmpr_c9c File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cmpr_c9c.tdf Line: 23
+Info (12021): Found 1 design units, including 1 entities, in source file db/cntr_j1h.tdf
+    Info (12023): Found entity 1: cntr_j1h File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_j1h.tdf Line: 28
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0" with the following parameter:
+    Info (12134): Parameter "NUMBER_OF_TAPS" = "1"
+    Info (12134): Parameter "TAP_DISTANCE" = "5"
+    Info (12134): Parameter "WIDTH" = "92"
+    Info (12134): Parameter "POWER_UP_STATE" = "DONT_CARE"
+Info (12021): Found 1 design units, including 1 entities, in source file db/shift_taps_5dv.tdf
+    Info (12023): Found entity 1: shift_taps_5dv File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/shift_taps_5dv.tdf Line: 29
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_vfc1.tdf
+    Info (12023): Found entity 1: altsyncram_vfc1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_vfc1.tdf Line: 28
+Info (12021): Found 1 design units, including 1 entities, in source file db/cntr_rhf.tdf
+    Info (12023): Found entity 1: cntr_rhf File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_rhf.tdf Line: 28
+Info (12021): Found 1 design units, including 1 entities, in source file db/cmpr_b9c.tdf
+    Info (12023): Found entity 1: cmpr_b9c File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cmpr_b9c.tdf Line: 23
+Info (12021): Found 1 design units, including 1 entities, in source file db/cntr_e1h.tdf
+    Info (12023): Found entity 1: cntr_e1h File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_e1h.tdf Line: 28
+Info (17049): 6 registers lost all their fanouts during netlist optimizations.
+Info (144001): Generated suppressed messages file D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/output_files/ntt.map.smsg
+Info (16010): Generating hard_block partition "hard_block:auto_generated_inst"
+    Info (16011): Adding 0 node(s), including 0 DDIO, 0 PLL, 0 transceiver and 0 LCELL
+Warning (21074): Design contains 1 input pin(s) that do not drive logic
+    Warning (15610): No output dependent on input pin "s_tlast" File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_engine.sv Line: 41
+Info (21057): Implemented 5717 device resources after synthesis - the final resource count might be different
+    Info (21058): Implemented 31 input pins
+    Info (21059): Implemented 28 output pins
+    Info (21061): Implemented 5096 logic cells
+    Info (21064): Implemented 557 RAM segments
+    Info (21062): Implemented 5 DSP elements
+Info: Quartus Prime Analysis & Synthesis was successful. 0 errors, 5 warnings
+    Info: Peak virtual memory: 4944 megabytes
+    Info: Processing ended: Sat Oct 10 18:06:59 2026
+    Info: Elapsed time: 11:42:50
+    Info: Total CPU time (on all processors): 00:00:14
+
+
++------------------------------------------+
+; Analysis & Synthesis Suppressed Messages ;
++------------------------------------------+
+The suppressed messages can be found in D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/output_files/ntt.map.smsg.
+
+

@@ -1,0 +1,307 @@
+Info: *******************************************************************
+Info: Running Quartus Prime Analysis & Synthesis
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Sat Oct 10 02:13:03 2026
+Info: Command: quartus_map ntt -c ntt
+Info (20030): Parallel compilation is enabled and will use 12 of the 12 processors detected
+Info (12021): Found 1 design units, including 0 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/ntt_pkg.sv
+    Info (12022): Found design unit 1: ntt_pkg (SystemVerilog) File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_pkg.sv Line: 12
+Info (12021): Found 1 design units, including 1 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/mod_mul.sv
+    Info (12023): Found entity 1: mod_mul File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/mod_mul.sv Line: 27
+Info (12021): Found 1 design units, including 1 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/butterfly_unit.sv
+    Info (12023): Found entity 1: butterfly_unit File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/butterfly_unit.sv Line: 22
+Info (12021): Found 1 design units, including 1 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/twiddle_rom.sv
+    Info (12023): Found entity 1: twiddle_rom File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/twiddle_rom.sv Line: 16
+Info (12021): Found 1 design units, including 1 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/ntt_core.sv
+    Info (12023): Found entity 1: ntt_core File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_core.sv Line: 7
+Info (12021): Found 1 design units, including 1 entities, in source file /github/dilithium-hp-hw/src/ntt_lighthd/ntt_engine.sv
+    Info (12023): Found entity 1: ntt_engine File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_engine.sv Line: 28
+Info (12127): Elaborating entity "ntt_engine" for the top level hierarchy
+Info (10264): Verilog HDL Case Statement information at ntt_engine.sv(110): all case item expressions in this case statement are onehot File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_engine.sv Line: 110
+Info (12128): Elaborating entity "ntt_core" for hierarchy "ntt_core:u_core" File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_engine.sv Line: 78
+Info (12128): Elaborating entity "twiddle_rom" for hierarchy "ntt_core:u_core|twiddle_rom:g_bf[0].u_tw" File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_core.sv Line: 388
+Warning (10030): Net "rom.data_a" at twiddle_rom.sv(22) has no driver or initial value, using a default initial value '0' File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/twiddle_rom.sv Line: 22
+Warning (10030): Net "rom.waddr_a" at twiddle_rom.sv(22) has no driver or initial value, using a default initial value '0' File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/twiddle_rom.sv Line: 22
+Warning (10030): Net "rom.we_a" at twiddle_rom.sv(22) has no driver or initial value, using a default initial value '0' File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/twiddle_rom.sv Line: 22
+Info (12128): Elaborating entity "butterfly_unit" for hierarchy "ntt_core:u_core|butterfly_unit:g_bf[0].u_bf" File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_core.sv Line: 392
+Info (12128): Elaborating entity "mod_mul" for hierarchy "ntt_core:u_core|butterfly_unit:g_bf[0].u_bf|mod_mul:u_mul" File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/butterfly_unit.sv Line: 111
+Info (286030): Timing-Driven Synthesis is running
+Info (19000): Inferred 11 megafunctions from design logic
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|fifo1_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 92
+        Info (286033): Parameter WIDTHAD_A set to 5
+        Info (286033): Parameter NUMWORDS_A set to 32
+        Info (286033): Parameter WIDTH_B set to 92
+        Info (286033): Parameter WIDTHAD_B set to 5
+        Info (286033): Parameter NUMWORDS_B set to 32
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+        Info (286033): Parameter RDCONTROL_REG_B set to CLOCK0
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|fifo2_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 92
+        Info (286033): Parameter WIDTHAD_A set to 5
+        Info (286033): Parameter NUMWORDS_A set to 32
+        Info (286033): Parameter WIDTH_B set to 92
+        Info (286033): Parameter WIDTHAD_B set to 5
+        Info (286033): Parameter NUMWORDS_B set to 32
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+        Info (286033): Parameter RDCONTROL_REG_B set to CLOCK0
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|fifo3_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 92
+        Info (286033): Parameter WIDTHAD_A set to 4
+        Info (286033): Parameter NUMWORDS_A set to 16
+        Info (286033): Parameter WIDTH_B set to 92
+        Info (286033): Parameter WIDTHAD_B set to 4
+        Info (286033): Parameter NUMWORDS_B set to 16
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+        Info (286033): Parameter RDCONTROL_REG_B set to CLOCK0
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|b_words_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 92
+        Info (286033): Parameter WIDTHAD_A set to 6
+        Info (286033): Parameter NUMWORDS_A set to 64
+        Info (286033): Parameter WIDTH_B set to 92
+        Info (286033): Parameter WIDTHAD_B set to 6
+        Info (286033): Parameter NUMWORDS_B set to 64
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+        Info (286033): Parameter RDCONTROL_REG_B set to CLOCK0
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|rom_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to ROM
+        Info (286033): Parameter WIDTH_A set to 23
+        Info (286033): Parameter WIDTHAD_A set to 8
+        Info (286033): Parameter NUMWORDS_A set to 256
+        Info (286033): Parameter OUTDATA_REG_A set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_A set to NONE
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter INIT_FILE set to db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|twiddle_rom:g_bf[2].u_tw|rom_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to ROM
+        Info (286033): Parameter WIDTH_A set to 23
+        Info (286033): Parameter WIDTHAD_A set to 8
+        Info (286033): Parameter NUMWORDS_A set to 256
+        Info (286033): Parameter OUTDATA_REG_A set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_A set to NONE
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter INIT_FILE set to db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|twiddle_rom:g_bf[1].u_tw|rom_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to ROM
+        Info (286033): Parameter WIDTH_A set to 23
+        Info (286033): Parameter WIDTHAD_A set to 8
+        Info (286033): Parameter NUMWORDS_A set to 256
+        Info (286033): Parameter OUTDATA_REG_A set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_A set to NONE
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter INIT_FILE set to db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "ntt_core:u_core|twiddle_rom:g_bf[0].u_tw|rom_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to ROM
+        Info (286033): Parameter WIDTH_A set to 23
+        Info (286033): Parameter WIDTHAD_A set to 8
+        Info (286033): Parameter NUMWORDS_A set to 256
+        Info (286033): Parameter OUTDATA_REG_A set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_A set to NONE
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter INIT_FILE set to db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif
+    Info (276034): Inferred altshift_taps megafunction from the following design logic: "ntt_core:u_core|tag[1].valid_rtl_0"
+        Info (286033): Parameter NUMBER_OF_TAPS set to 1
+        Info (286033): Parameter TAP_DISTANCE set to 8
+        Info (286033): Parameter WIDTH set to 4
+        Info (286033): Parameter POWER_UP_STATE set to DONT_CARE
+    Info (276034): Inferred altshift_taps megafunction from the following design logic: "ntt_core:u_core|tag[0].inverse_rtl_0"
+        Info (286033): Parameter NUMBER_OF_TAPS set to 1
+        Info (286033): Parameter TAP_DISTANCE set to 9
+        Info (286033): Parameter WIDTH set to 4
+        Info (286033): Parameter POWER_UP_STATE set to DONT_CARE
+    Info (276034): Inferred altshift_taps megafunction from the following design logic: "ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|keep_dly_rtl_0"
+        Info (286033): Parameter NUMBER_OF_TAPS set to 1
+        Info (286033): Parameter TAP_DISTANCE set to 5
+        Info (286033): Parameter WIDTH set to 96
+        Info (286033): Parameter POWER_UP_STATE set to DONT_CARE
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|altsyncram:fifo1_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|altsyncram:fifo1_rtl_0" with the following parameter:
+    Info (12134): Parameter "OPERATION_MODE" = "DUAL_PORT"
+    Info (12134): Parameter "WIDTH_A" = "92"
+    Info (12134): Parameter "WIDTHAD_A" = "5"
+    Info (12134): Parameter "NUMWORDS_A" = "32"
+    Info (12134): Parameter "WIDTH_B" = "92"
+    Info (12134): Parameter "WIDTHAD_B" = "5"
+    Info (12134): Parameter "NUMWORDS_B" = "32"
+    Info (12134): Parameter "ADDRESS_ACLR_A" = "NONE"
+    Info (12134): Parameter "OUTDATA_REG_B" = "UNREGISTERED"
+    Info (12134): Parameter "ADDRESS_ACLR_B" = "NONE"
+    Info (12134): Parameter "OUTDATA_ACLR_B" = "NONE"
+    Info (12134): Parameter "ADDRESS_REG_B" = "CLOCK0"
+    Info (12134): Parameter "INDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "WRCONTROL_ACLR_A" = "NONE"
+    Info (12134): Parameter "READ_DURING_WRITE_MODE_MIXED_PORTS" = "OLD_DATA"
+    Info (12134): Parameter "RDCONTROL_REG_B" = "CLOCK0"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_60q1.tdf
+    Info (12023): Found entity 1: altsyncram_60q1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_60q1.tdf Line: 28
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|altsyncram:fifo3_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|altsyncram:fifo3_rtl_0" with the following parameter:
+    Info (12134): Parameter "OPERATION_MODE" = "DUAL_PORT"
+    Info (12134): Parameter "WIDTH_A" = "92"
+    Info (12134): Parameter "WIDTHAD_A" = "4"
+    Info (12134): Parameter "NUMWORDS_A" = "16"
+    Info (12134): Parameter "WIDTH_B" = "92"
+    Info (12134): Parameter "WIDTHAD_B" = "4"
+    Info (12134): Parameter "NUMWORDS_B" = "16"
+    Info (12134): Parameter "ADDRESS_ACLR_A" = "NONE"
+    Info (12134): Parameter "OUTDATA_REG_B" = "UNREGISTERED"
+    Info (12134): Parameter "ADDRESS_ACLR_B" = "NONE"
+    Info (12134): Parameter "OUTDATA_ACLR_B" = "NONE"
+    Info (12134): Parameter "ADDRESS_REG_B" = "CLOCK0"
+    Info (12134): Parameter "INDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "WRCONTROL_ACLR_A" = "NONE"
+    Info (12134): Parameter "READ_DURING_WRITE_MODE_MIXED_PORTS" = "OLD_DATA"
+    Info (12134): Parameter "RDCONTROL_REG_B" = "CLOCK0"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_80q1.tdf
+    Info (12023): Found entity 1: altsyncram_80q1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_80q1.tdf Line: 28
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|altsyncram:b_words_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|altsyncram:b_words_rtl_0" with the following parameter:
+    Info (12134): Parameter "OPERATION_MODE" = "DUAL_PORT"
+    Info (12134): Parameter "WIDTH_A" = "92"
+    Info (12134): Parameter "WIDTHAD_A" = "6"
+    Info (12134): Parameter "NUMWORDS_A" = "64"
+    Info (12134): Parameter "WIDTH_B" = "92"
+    Info (12134): Parameter "WIDTHAD_B" = "6"
+    Info (12134): Parameter "NUMWORDS_B" = "64"
+    Info (12134): Parameter "ADDRESS_ACLR_A" = "NONE"
+    Info (12134): Parameter "OUTDATA_REG_B" = "UNREGISTERED"
+    Info (12134): Parameter "ADDRESS_ACLR_B" = "NONE"
+    Info (12134): Parameter "OUTDATA_ACLR_B" = "NONE"
+    Info (12134): Parameter "ADDRESS_REG_B" = "CLOCK0"
+    Info (12134): Parameter "INDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "WRCONTROL_ACLR_A" = "NONE"
+    Info (12134): Parameter "READ_DURING_WRITE_MODE_MIXED_PORTS" = "OLD_DATA"
+    Info (12134): Parameter "RDCONTROL_REG_B" = "CLOCK0"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_i0q1.tdf
+    Info (12023): Found entity 1: altsyncram_i0q1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_i0q1.tdf Line: 28
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|twiddle_rom:g_bf[3].u_tw|altsyncram:rom_rtl_0" with the following parameter:
+    Info (12134): Parameter "OPERATION_MODE" = "ROM"
+    Info (12134): Parameter "WIDTH_A" = "23"
+    Info (12134): Parameter "WIDTHAD_A" = "8"
+    Info (12134): Parameter "NUMWORDS_A" = "256"
+    Info (12134): Parameter "OUTDATA_REG_A" = "UNREGISTERED"
+    Info (12134): Parameter "ADDRESS_ACLR_A" = "NONE"
+    Info (12134): Parameter "OUTDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "INDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "WRCONTROL_ACLR_A" = "NONE"
+    Info (12134): Parameter "INIT_FILE" = "db/ntt.ram0_twiddle_rom_9e9ca19a.hdl.mif"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_p8d1.tdf
+    Info (12023): Found entity 1: altsyncram_p8d1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_p8d1.tdf Line: 28
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|altshift_taps:tag[1].valid_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|altshift_taps:tag[1].valid_rtl_0" with the following parameter:
+    Info (12134): Parameter "NUMBER_OF_TAPS" = "1"
+    Info (12134): Parameter "TAP_DISTANCE" = "8"
+    Info (12134): Parameter "WIDTH" = "4"
+    Info (12134): Parameter "POWER_UP_STATE" = "DONT_CARE"
+Info (12021): Found 1 design units, including 1 entities, in source file db/shift_taps_hbv.tdf
+    Info (12023): Found entity 1: shift_taps_hbv File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/shift_taps_hbv.tdf Line: 29
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_ncc1.tdf
+    Info (12023): Found entity 1: altsyncram_ncc1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_ncc1.tdf Line: 28
+Info (12021): Found 1 design units, including 1 entities, in source file db/cntr_uhf.tdf
+    Info (12023): Found entity 1: cntr_uhf File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_uhf.tdf Line: 26
+Info (12021): Found 1 design units, including 1 entities, in source file db/cntr_i1h.tdf
+    Info (12023): Found entity 1: cntr_i1h File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_i1h.tdf Line: 28
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|altshift_taps:tag[0].inverse_rtl_0" with the following parameter:
+    Info (12134): Parameter "NUMBER_OF_TAPS" = "1"
+    Info (12134): Parameter "TAP_DISTANCE" = "9"
+    Info (12134): Parameter "WIDTH" = "4"
+    Info (12134): Parameter "POWER_UP_STATE" = "DONT_CARE"
+Info (12021): Found 1 design units, including 1 entities, in source file db/shift_taps_ibv.tdf
+    Info (12023): Found entity 1: shift_taps_ibv File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/shift_taps_ibv.tdf Line: 29
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_rcc1.tdf
+    Info (12023): Found entity 1: altsyncram_rcc1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_rcc1.tdf Line: 28
+Info (12021): Found 1 design units, including 1 entities, in source file db/cntr_0if.tdf
+    Info (12023): Found entity 1: cntr_0if File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_0if.tdf Line: 28
+Info (12021): Found 1 design units, including 1 entities, in source file db/cmpr_c9c.tdf
+    Info (12023): Found entity 1: cmpr_c9c File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cmpr_c9c.tdf Line: 23
+Info (12021): Found 1 design units, including 1 entities, in source file db/cntr_j1h.tdf
+    Info (12023): Found entity 1: cntr_j1h File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_j1h.tdf Line: 28
+Info (12130): Elaborated megafunction instantiation "ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0"
+Info (12133): Instantiated megafunction "ntt_core:u_core|butterfly_unit:g_bf[3].u_bf|altshift_taps:keep_dly_rtl_0" with the following parameter:
+    Info (12134): Parameter "NUMBER_OF_TAPS" = "1"
+    Info (12134): Parameter "TAP_DISTANCE" = "5"
+    Info (12134): Parameter "WIDTH" = "96"
+    Info (12134): Parameter "POWER_UP_STATE" = "DONT_CARE"
+Info (12021): Found 1 design units, including 1 entities, in source file db/shift_taps_9dv.tdf
+    Info (12023): Found entity 1: shift_taps_9dv File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/shift_taps_9dv.tdf Line: 29
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_7gc1.tdf
+    Info (12023): Found entity 1: altsyncram_7gc1 File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/altsyncram_7gc1.tdf Line: 28
+Info (12021): Found 1 design units, including 1 entities, in source file db/cntr_rhf.tdf
+    Info (12023): Found entity 1: cntr_rhf File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_rhf.tdf Line: 28
+Info (12021): Found 1 design units, including 1 entities, in source file db/cmpr_b9c.tdf
+    Info (12023): Found entity 1: cmpr_b9c File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cmpr_b9c.tdf Line: 23
+Info (12021): Found 1 design units, including 1 entities, in source file db/cntr_e1h.tdf
+    Info (12023): Found entity 1: cntr_e1h File: D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/db/cntr_e1h.tdf Line: 28
+Info (17049): 6 registers lost all their fanouts during netlist optimizations.
+Info (144001): Generated suppressed messages file D:/GitHub/dilithium-hp-hw/quartus/ntt_LightHD/output_files/ntt.map.smsg
+Info (16010): Generating hard_block partition "hard_block:auto_generated_inst"
+    Info (16011): Adding 0 node(s), including 0 DDIO, 0 PLL, 0 transceiver and 0 LCELL
+Warning (21074): Design contains 1 input pin(s) that do not drive logic
+    Warning (15610): No output dependent on input pin "s_tlast" File: D:/GitHub/dilithium-hp-hw/src/ntt_LightHD/ntt_engine.sv Line: 41
+Info (21057): Implemented 5450 device resources after synthesis - the final resource count might be different
+    Info (21058): Implemented 31 input pins
+    Info (21059): Implemented 28 output pins
+    Info (21061): Implemented 4822 logic cells
+    Info (21064): Implemented 564 RAM segments
+    Info (21062): Implemented 5 DSP elements
+Info: Quartus Prime Analysis & Synthesis was successful. 0 errors, 5 warnings
+    Info: Peak virtual memory: 4948 megabytes
+    Info: Processing ended: Sat Oct 10 02:13:21 2026
+    Info: Elapsed time: 00:00:18
+    Info: Total CPU time (on all processors): 00:00:12

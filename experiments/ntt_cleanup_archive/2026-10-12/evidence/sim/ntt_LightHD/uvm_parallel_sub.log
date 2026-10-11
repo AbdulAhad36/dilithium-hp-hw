@@ -1,0 +1,595 @@
+# do ntt_LightHD/run_uvm.do
+# ntt_LightHD/work_uvm
+# ntt_LightHD/ntt_lighthd_cov.ucdb
+# ntt_LightHD/ntt_lighthd_coverage.rpt
+# ntt_full_test
+# ** Warning: (vlib-34) Library already exists at "ntt_LightHD/work_uvm".
+# Errors: 0, Warnings: 1
+# QuestaSim-64 vmap 2024.1 Lib Mapping Utility 2024.02 Feb  1 2024
+# vmap work ntt_LightHD/work_uvm 
+# Modifying modelsim.ini
+# ../src/ntt_LightHD
+# ../tb_uvm/tb_uvm_ntt_LightHD
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:08:24 on Oct 09,2026
+# vlog -sv -work work ../src/ntt_LightHD/ntt_pkg.sv 
+# -- Compiling package ntt_pkg
+# 
+# Top level modules:
+# 	--none--
+# End time: 02:08:24 on Oct 09,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:08:24 on Oct 09,2026
+# vlog -sv "+cover=sbceft" -work work ../src/ntt_LightHD/mod_mul.sv ../src/ntt_LightHD/butterfly_unit.sv ../src/ntt_LightHD/twiddle_rom.sv ../src/ntt_LightHD/ntt_core.sv ../src/ntt_LightHD/ntt_engine.sv 
+# -- Compiling package mod_mul_sv_unit
+# -- Importing package ntt_pkg
+# -- Compiling module mod_mul
+# -- Compiling package butterfly_unit_sv_unit
+# -- Compiling module butterfly_unit
+# -- Compiling package twiddle_rom_sv_unit
+# -- Compiling module twiddle_rom
+# -- Compiling package ntt_core_sv_unit
+# -- Compiling module ntt_core
+# -- Compiling package ntt_engine_sv_unit
+# -- Compiling module ntt_engine
+# 
+# Top level modules:
+# 	ntt_engine
+# End time: 02:08:25 on Oct 09,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:08:25 on Oct 09,2026
+# vlog -sv "+incdir+../tb_uvm/tb_uvm_ntt_LightHD" -L mtiUvm -work work ../tb_uvm/tb_uvm_ntt_LightHD/ntt_ref_pkg.sv ../tb_uvm/tb_uvm_ntt_LightHD/ntt_if.sv 
+# -- Compiling package ntt_ref_pkg
+# -- Importing package ntt_pkg
+# -- Compiling package ntt_if_sv_unit
+# -- Compiling interface ntt_if
+# 
+# Top level modules:
+# 	--none--
+# End time: 02:08:25 on Oct 09,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:08:25 on Oct 09,2026
+# vlog -sv "+define+NTT_FIFO" "+incdir+../tb_uvm/tb_uvm_ntt_LightHD" -L mtiUvm -work work ../tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv 
+# ** Note: (vlog-2286) ../tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv(13): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+# -- Compiling package tb_top_sv_unit
+# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+# -- Importing package ntt_pkg
+# -- Importing package ntt_ref_pkg
+# -- Compiling module tb_top
+# 
+# Top level modules:
+# 	tb_top
+# End time: 02:08:26 on Oct 09,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# vsim -coverage -voptargs="+acc" work.tb_top "+UVM_TESTNAME=ntt_full_test" 
+# Start time: 02:08:26 on Oct 09,2026
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: (vopt-10587) Some optimizations are turned off because the +acc switch is in effect. This will cause your simulation to run slowly. Please use -access/-debug to maintain needed visibility.
+# Support of the MGLS_LICENSE_FILE and LM_LICENSE_FILE licensing environment variables will be discontinued starting with the 2025.1 release. Please update to using the SALT_LICENSE_SERVER variable.
+# Please contact Siemens EDA Customer Support (https://support.sw.siemens.com/) for assistance.
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=1.
+# //  Questa Sim-64
+# //  Version 2024.1 win64 Feb  1 2024
+# //
+# // Unpublished work. Copyright 2024 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# Loading sv_std.std
+# Loading work.ntt_pkg(fast)
+# Loading work.ntt_ref_pkg(fast)
+# Loading work.ntt_if(fast)
+# Loading mtiUvm.uvm_pkg(fast)
+# Loading work.tb_top_sv_unit(fast)
+# Loading mtiUvm.questa_uvm_pkg(fast)
+# Loading work.tb_top(fast)
+# Loading work.ntt_if_sv_unit(fast)
+# Loading work.ntt_if(fast__2)
+# Loading work.ntt_engine_sv_unit(fast)
+# Loading work.ntt_engine(fast)
+# Loading work.ntt_core_sv_unit(fast)
+# Loading work.ntt_core(fast)
+# Loading work.twiddle_rom_sv_unit(fast)
+# Loading work.twiddle_rom(fast)
+# Loading work.butterfly_unit_sv_unit(fast)
+# Loading work.butterfly_unit(fast)
+# Loading work.mod_mul_sv_unit(fast)
+# Loading work.mod_mul(fast)
+# Loading C:/questasim64_2024.1/uvm-1.1d\win64\uvm_dpi.dll
+# ----------------------------------------------------------------
+# UVM-1.1d
+# (C) 2007-2013 Mentor Graphics Corporation
+# (C) 2007-2013 Cadence Design Systems, Inc.
+# (C) 2006-2013 Synopsys, Inc.
+# (C) 2011-2013 Cypress Semiconductor Corp.
+# ----------------------------------------------------------------
+# 
+#   ***********       IMPORTANT RELEASE NOTES         ************
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_NO_DEPRECATED undefined.
+#   See http://www.eda.org/svdb/view.php?id=3313 for more details.
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_OBJECT_MUST_HAVE_CONSTRUCTOR undefined.
+#   See http://www.eda.org/svdb/view.php?id=3770 for more details.
+# 
+#       (Specify +UVM_NO_RELNOTES to turn off this notice)
+# 
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(277) @ 0: reporter [Questa UVM] QUESTA_UVM-1.2.3
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(278) @ 0: reporter [Questa UVM]  questa_uvm::init(+struct)
+# UVM_INFO @ 0: reporter [RNTST] Running test ntt_full_test...
+# UVM_INFO @ 0: reporter [UVMTOP] UVM testbench topology:
+# ------------------------------------------------------------------
+# Name                       Type                        Size  Value
+# ------------------------------------------------------------------
+# uvm_test_top               ntt_full_test               -     @471 
+#   env                      ntt_env                     -     @478 
+#     agent                  ntt_agent                   -     @485 
+#       driver               ntt_driver                  -     @632 
+#         drv_ap             uvm_analysis_port           -     @655 
+#         rsp_port           uvm_analysis_port           -     @647 
+#         seq_item_port      uvm_seq_item_pull_port      -     @639 
+#       monitor              ntt_monitor                 -     @663 
+#         exp_fifo           uvm_tlm_analysis_fifo #(T)  -     @678 
+#           analysis_export  uvm_analysis_imp            -     @717 
+#           get_ap           uvm_analysis_port           -     @709 
+#           get_peek_export  uvm_get_peek_imp            -     @693 
+#           put_ap           uvm_analysis_port           -     @701 
+#           put_export       uvm_put_imp                 -     @685 
+#         mon_ap             uvm_analysis_port           -     @670 
+#       sequencer            ntt_sequencer               -     @523 
+#         rsp_export         uvm_analysis_export         -     @530 
+#         seq_item_export    uvm_seq_item_pull_imp       -     @624 
+#         arbitration_queue  array                       0     -    
+#         lock_queue         array                       0     -    
+#         num_last_reqs      integral                    32    'd1  
+#         num_last_rsps      integral                    32    'd1  
+#     coverage               ntt_coverage                -     @507 
+#       analysis_imp         uvm_analysis_imp            -     @514 
+#     scoreboard             ntt_scoreboard              -     @492 
+#       checked_ap           uvm_analysis_port           -     @499 
+#       exp_fifo             uvm_tlm_analysis_fifo #(T)  -     @733 
+#         analysis_export    uvm_analysis_imp            -     @772 
+#         get_ap             uvm_analysis_port           -     @764 
+#         get_peek_export    uvm_get_peek_imp            -     @748 
+#         put_ap             uvm_analysis_port           -     @756 
+#         put_export         uvm_put_imp                 -     @740 
+#       obs_fifo             uvm_tlm_analysis_fifo #(T)  -     @780 
+#         analysis_export    uvm_analysis_imp            -     @819 
+#         get_ap             uvm_analysis_port           -     @811 
+#         get_peek_export    uvm_get_peek_imp            -     @795 
+#         put_ap             uvm_analysis_port           -     @803 
+#         put_export         uvm_put_imp                 -     @787 
+# ------------------------------------------------------------------
+# 
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 7865000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [DIR all-zero NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 7865000: uvm_test_top.env.coverage [CHECKED_TRACE] [DIR all-zero NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 7865000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-zero NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 15715000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [DIR all-zero INTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 15715000: uvm_test_top.env.coverage [CHECKED_TRACE] [DIR all-zero INTT] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=001 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 15715000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-zero INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 23565000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [DIR all-(q-1) NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 23565000: uvm_test_top.env.coverage [CHECKED_TRACE] [DIR all-(q-1) NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 23565000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-(q-1) NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 31415000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [DIR all-(q-1) INTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 31415000: uvm_test_top.env.coverage [CHECKED_TRACE] [DIR all-(q-1) INTT] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=101 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 31415000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-(q-1) INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 39265000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [DIR delta@0 NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 39265000: uvm_test_top.env.coverage [CHECKED_TRACE] [DIR delta@0 NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 39265000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR delta@0 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 47115000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [DIR delta@0 INTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 47115000: uvm_test_top.env.coverage [CHECKED_TRACE] [DIR delta@0 INTT] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=111 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 47115000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR delta@0 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 55605000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [DIR PWM zero o zero] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 55605000: uvm_test_top.env.coverage [CHECKED_TRACE] [DIR PWM zero o zero] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 55605000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR PWM zero o zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 64095000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [DIR PWM max  o max] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 64095000: uvm_test_top.env.coverage [CHECKED_TRACE] [DIR PWM max  o max] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 64095000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR PWM max  o max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 72585000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [DIR PWM delta o delta] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 72585000: uvm_test_top.env.coverage [CHECKED_TRACE] [DIR PWM delta o delta] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 72585000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR PWM delta o delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 80435000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 0 NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 80435000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 0 NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 80435000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 88285000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 0 INTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 88285000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 0 INTT] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 88285000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 96135000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 0 round] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 96135000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 0 round] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 96135000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 104625000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 0 PWM] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 104625000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 0 PWM] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 104625000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 112475000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 1 NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 112475000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 1 NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 112475000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 120325000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 1 INTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 120325000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 1 INTT] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 120325000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 128175000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 1 round] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 128175000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 1 round] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 128175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 136665000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 1 PWM] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 136665000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 1 PWM] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 136665000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 144515000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 2 NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 144515000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 2 NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 144515000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 152365000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 2 INTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 152365000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 2 INTT] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 152365000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 160215000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 2 round] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 160215000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 2 round] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 160215000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 168705000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 2 PWM] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 168705000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 2 PWM] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 168705000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 176555000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 3 NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 176555000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 3 NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 176555000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 184405000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 3 INTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 184405000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 3 INTT] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 184405000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 192255000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 3 round] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 192255000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 3 round] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 192255000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 200745000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 3 PWM] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 200745000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 3 PWM] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 200745000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 208595000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 4 NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 208595000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 4 NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 208595000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 216445000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 4 INTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 216445000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 4 INTT] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 216445000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 224295000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 4 round] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 224295000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 4 round] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 224295000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 232785000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 4 PWM] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 232785000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 4 PWM] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 232785000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 240635000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 5 NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 240635000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 5 NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 240635000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 248485000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 5 INTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 248485000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 5 INTT] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 248485000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 256335000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 5 round] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 256335000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 5 round] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 256335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 264825000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 5 PWM] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 264825000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 5 PWM] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 264825000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 272675000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 6 NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 272675000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 6 NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 272675000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 280525000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 6 INTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 280525000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 6 INTT] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 280525000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 288375000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 6 round] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 288375000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 6 round] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 288375000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 296865000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 6 PWM] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 296865000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 6 PWM] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 296865000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 304715000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 7 NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 304715000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 7 NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 304715000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 312565000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 7 INTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 312565000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 7 INTT] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 312565000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 320415000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 7 round] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 320415000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 7 round] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 320415000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 328905000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [STRESS 7 PWM] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 328905000: uvm_test_top.env.coverage [CHECKED_TRACE] [STRESS 7 PWM] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 328905000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 336755000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV OP_NTT zero] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 336755000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV OP_NTT zero] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 336755000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 344605000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV OP_NTT max] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 344605000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV OP_NTT max] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 344605000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 352455000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV OP_NTT delta] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 352455000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV OP_NTT delta] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 352455000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 360305000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV OP_NTT random] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 360305000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV OP_NTT random] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 360305000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT random
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 368155000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV OP_INTT zero] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 368155000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV OP_INTT zero] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=001 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 368155000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 376005000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV OP_INTT max] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 376005000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV OP_INTT max] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=101 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 376005000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 383855000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV OP_INTT delta] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 383855000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV OP_INTT delta] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=111 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 383855000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 391705000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV OP_INTT random] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 391705000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV OP_INTT random] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 391705000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT random
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 400195000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV PWM zero] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 400195000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV PWM zero] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 400195000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 408685000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV PWM max] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 408685000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV PWM max] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 408685000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 417175000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV PWM delta] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 417175000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV PWM delta] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 417175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 425665000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [COV PWM random] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 425665000: uvm_test_top.env.coverage [CHECKED_TRACE] [COV PWM random] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 425665000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM random
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 433205000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE uniform -4] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 433205000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE uniform -4] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000001/000000001/000000001 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 433205000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -4
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 440745000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE uniform -3] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 440745000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE uniform -3] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000010/000000010/000000010 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 440745000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -3
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 448285000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE uniform -2] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 448285000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE uniform -2] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000100/000000100/000000100 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 448285000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -2
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 455825000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE uniform -1] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 455825000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE uniform -1] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000001000/000001000/000001000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 455825000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 463365000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE uniform 0] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 463365000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE uniform 0] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000010000/000010000/000010000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 463365000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 470905000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE uniform 1] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 470905000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE uniform 1] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000100000/000100000/000100000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 470905000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 478445000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE uniform 2] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 478445000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE uniform 2] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=001000000/001000000/001000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 478445000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 2
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 485985000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE uniform 3] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 485985000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE uniform 3] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=010000000/010000000/010000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 485985000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 3
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 493525000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE uniform 4] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 493525000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE uniform 4] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=100000000/100000000/100000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 493525000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 4
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 501065000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE eta2 mixed] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 501065000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE eta2 mixed] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000100/001111100/000000100 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 501065000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE eta2 mixed
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 508605000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE eta4 mixed] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 508605000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE eta4 mixed] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000001/111111111/000001000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 508605000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE eta4 mixed
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 516145000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE negative at first] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 516145000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE negative at first] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000001/000010000/000010000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 516145000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE negative at first
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 523685000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [PRE positive at last] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 523685000: uvm_test_top.env.coverage [CHECKED_TRACE] [PRE positive at last] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000010000/000010000/100000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 523685000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE positive at last
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 531505000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [REPEAT NTT no reset] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 531505000: uvm_test_top.env.coverage [CHECKED_TRACE] [REPEAT NTT no reset] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 531505000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT NTT no reset
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 539325000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [REPEAT INTT no reset] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 539325000: uvm_test_top.env.coverage [CHECKED_TRACE] [REPEAT INTT no reset] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 539325000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT INTT no reset
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 547785000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [REPEAT PWM no reset] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 547785000: uvm_test_top.env.coverage [CHECKED_TRACE] [REPEAT PWM no reset] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 547785000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT PWM no reset
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 555295000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [REPEAT PRE no reset] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 555295000: uvm_test_top.env.coverage [CHECKED_TRACE] [REPEAT PRE no reset] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000001/111111111/000001000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 555295000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT PRE no reset
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 563605000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [FLOW NTT gaps/stalls] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 563605000: uvm_test_top.env.coverage [CHECKED_TRACE] [FLOW NTT gaps/stalls] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=111 stalls=111 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 563605000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] FLOW NTT gaps/stalls
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 571915000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [FLOW INTT gaps/stalls] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 571915000: uvm_test_top.env.coverage [CHECKED_TRACE] [FLOW INTT gaps/stalls] op=OP_INTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=110 pre_values=000000000/000000000/000000000 gaps=111 stalls=111 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 571915000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] FLOW INTT gaps/stalls
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 581295000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [FLOW PWM gaps/stalls] pairs=0 destinations=256 pwm_ids=256 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 581295000: uvm_test_top.env.coverage [CHECKED_TRACE] [FLOW PWM gaps/stalls] op=OP_PWM inputs=512 issues=64 returns=64 twiddles=0 fifo_peak=32/32/0 occupancy=111/111/001 sources=011 destinations=011 scaling=000 pre_values=000000000/000000000/000000000 gaps=111 stalls=111 pwm_boundary_gap=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 581295000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] FLOW PWM gaps/stalls
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 589295000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [FLOW PRE gaps/stalls] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 589295000: uvm_test_top.env.coverage [CHECKED_TRACE] [FLOW PRE gaps/stalls] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000001/111111111/000001000 gaps=111 stalls=111 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 589295000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] FLOW PRE gaps/stalls
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_monitor.sv(103) @ 589385001: uvm_test_top.env.agent.monitor [RESET_OBSERVED] [RESET recovery after idle] target=0 observed=0 wrapper=0 core=0 inputs=0 clear=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 597215000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [RESET recovery after idle] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 597215000: uvm_test_top.env.coverage [CHECKED_TRACE] [RESET recovery after idle] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 597215000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] RESET recovery after idle
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_monitor.sv(103) @ 597485001: uvm_test_top.env.agent.monitor [RESET_OBSERVED] [RESET recovery after input load] target=1 observed=1 wrapper=1 core=0 inputs=17 clear=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 605315000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [RESET recovery after input load] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 605315000: uvm_test_top.env.coverage [CHECKED_TRACE] [RESET recovery after input load] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 605315000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] RESET recovery after input load
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_monitor.sv(103) @ 608145001: uvm_test_top.env.agent.monitor [RESET_OBSERVED] [RESET recovery after compute] target=2 observed=2 wrapper=4 core=2 inputs=256 clear=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 615975000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [RESET recovery after compute] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 615975000: uvm_test_top.env.coverage [CHECKED_TRACE] [RESET recovery after compute] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 615975000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] RESET recovery after compute
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_monitor.sv(103) @ 621345001: uvm_test_top.env.agent.monitor [RESET_OBSERVED] [RESET recovery after stalled output] target=3 observed=3 wrapper=6 core=0 inputs=256 clear=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 629175000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [RESET recovery after stalled output] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 629175000: uvm_test_top.env.coverage [CHECKED_TRACE] [RESET recovery after stalled output] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 629175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] RESET recovery after stalled output
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_monitor.sv(103) @ 631835001: uvm_test_top.env.agent.monitor [RESET_OBSERVED] [RESET recovery after run start] target=4 observed=4 wrapper=3 core=0 inputs=256 clear=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 639665000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [RESET recovery after run start] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 639665000: uvm_test_top.env.coverage [CHECKED_TRACE] [RESET recovery after run start] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 639665000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] RESET recovery after run start
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_monitor.sv(103) @ 642495001: uvm_test_top.env.agent.monitor [RESET_OBSERVED] [RESET recovery after PWM B load] target=5 observed=5 wrapper=2 core=0 inputs=273 clear=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 650325000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [RESET recovery after PWM B load] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 650325000: uvm_test_top.env.coverage [CHECKED_TRACE] [RESET recovery after PWM B load] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 650325000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] RESET recovery after PWM B load
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_monitor.sv(103) @ 655655001: uvm_test_top.env.agent.monitor [RESET_OBSERVED] [RESET recovery after output prefetch] target=6 observed=6 wrapper=5 core=0 inputs=256 clear=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 663485000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [RESET recovery after output prefetch] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 663485000: uvm_test_top.env.coverage [CHECKED_TRACE] [RESET recovery after output prefetch] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 663485000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] RESET recovery after output prefetch
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_monitor.sv(103) @ 666155001: uvm_test_top.env.agent.monitor [RESET_OBSERVED] [RESET recovery after Pre drain] target=7 observed=7 wrapper=4 core=1 inputs=256 clear=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 673985000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [RESET recovery after Pre drain] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 673985000: uvm_test_top.env.coverage [CHECKED_TRACE] [RESET recovery after Pre drain] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 673985000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] RESET recovery after Pre drain
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_monitor.sv(103) @ 679215001: uvm_test_top.env.agent.monitor [RESET_OBSERVED] [RESET recovery after pipeline drain] target=8 observed=8 wrapper=4 core=3 inputs=256 clear=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 687045000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [RESET recovery after pipeline drain] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 687045000: uvm_test_top.env.coverage [CHECKED_TRACE] [RESET recovery after pipeline drain] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 687045000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] RESET recovery after pipeline drain
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 694865000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 0 eta2 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 694865000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 0 eta2 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 694865000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 0 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 702375000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=0 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 702375000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 0 eta2 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 702375000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 0 eta2 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000100/001111100/001000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 702375000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 0 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 710195000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 1 eta2 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 710195000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 1 eta2 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 710195000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 1 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 717705000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=1 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 717705000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 1 eta2 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 717705000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 1 eta2 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000010000/001111100/000010000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 717705000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 1 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 725525000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 2 eta2 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 725525000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 2 eta2 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 725525000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 2 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 733035000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=2 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 733035000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 2 eta2 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 733035000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 2 eta2 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000100000/001111100/000001000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 733035000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 2 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 740855000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 3 eta2 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 740855000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 3 eta2 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 740855000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 3 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 748365000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=3 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 748365000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 3 eta2 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 748365000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 3 eta2 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=001000000/001111100/000100000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 748365000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 3 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 756185000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 4 eta2 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 756185000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 4 eta2 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 756185000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 4 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 763695000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=4 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 763695000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 4 eta2 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 763695000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 4 eta2 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000010000/001111100/000100000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 763695000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 4 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 771515000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 5 eta2 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 771515000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 5 eta2 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 771515000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 5 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 779025000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=5 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 779025000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 5 eta2 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 779025000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 5 eta2 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000001000/001111100/000010000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 779025000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 5 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 786845000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 6 eta2 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 786845000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 6 eta2 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 786845000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 6 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 794355000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=6 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 794355000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 6 eta2 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 794355000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 6 eta2 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000100000/001111100/001000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 794355000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 6 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 802175000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 7 eta2 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 802175000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 7 eta2 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 802175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 7 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 809685000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=7 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 809685000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 7 eta2 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 809685000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 7 eta2 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000100000/001111100/000001000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 809685000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 7 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 817505000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 8 eta4 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 817505000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 8 eta4 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 817505000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 8 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 825015000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=8 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 825015000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 8 eta4 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 825015000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 8 eta4 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000001/111111111/000010000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 825015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 8 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 832835000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 9 eta4 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 832835000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 9 eta4 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 832835000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 9 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 840345000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=9 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 840345000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 9 eta4 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 840345000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 9 eta4 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000010000/111111111/001000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 840345000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 9 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 848165000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 10 eta4 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 848165000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 10 eta4 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 848165000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 10 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 855675000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=10 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 855675000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 10 eta4 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 855675000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 10 eta4 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=100000000/111111111/010000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 855675000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 10 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 863495000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 11 eta4 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 863495000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 11 eta4 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 863495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 11 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 871005000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=11 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 871005000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 11 eta4 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 871005000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 11 eta4 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000100000/111111111/000000010 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 871005000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 11 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 878825000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 12 eta4 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 878825000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 12 eta4 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 878825000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 12 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 886335000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=12 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 886335000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 12 eta4 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 886335000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 12 eta4 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000100/111111111/000010000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 886335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 12 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 894155000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 13 eta4 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 894155000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 13 eta4 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 894155000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 13 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 901665000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=13 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 901665000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 13 eta4 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 901665000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 13 eta4 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000010/111111111/000010000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 901665000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 13 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 909485000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 14 eta4 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 909485000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 14 eta4 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 909485000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 14 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 916995000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=14 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 916995000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 14 eta4 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 916995000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 14 eta4 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=000000010/111111111/001000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 916995000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 14 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 924815000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 15 eta4 general] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 924815000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 15 eta4 general] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 924815000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 15 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(77) @ 932325000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=15 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 932325000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [EQUIV 15 eta4 Pre] pairs=896 destinations=1792 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 932325000: uvm_test_top.env.coverage [CHECKED_TRACE] [EQUIV 15 eta4 Pre] op=OP_PRE_NTT inputs=256 issues=224 returns=224 twiddles=254 fifo_peak=32/32/16 occupancy=111/111/111 sources=111 destinations=111 scaling=000 pre_values=100000000/111111111/000001000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 932325000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 15 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(172) @ 940175000: uvm_test_top.env.coverage [CHECKED_ARITHMETIC_BOUNDARIES] Observed/check-passed CT sums: zero, below q, equal q, above q, maximum; subtraction: minimum, negative, zero, positive, maximum
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 940175000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [ARITH CT addition/subtraction boundaries] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 940175000: uvm_test_top.env.coverage [CHECKED_TRACE] [ARITH CT addition/subtraction boundaries] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(88) @ 940175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] ARITH CT addition/subtraction boundaries
+# UVM_INFO verilog_src/uvm-1.1d/src/base/uvm_objection.svh(1267) @ 940375000: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(253) @ 940375000: uvm_test_top.env.coverage [COEFFICIENT_ROUTING_COVERAGE] checked_pairs_destinations_PWM_output=100.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(254) @ 940375000: uvm_test_top.env.coverage [CHECKED_PRE_EQUIVALENCE] observed_Pre_general_equivalence=100.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(255) @ 940375000: uvm_test_top.env.coverage [CHECKED_RESET_COVERAGE] reset_cancel_and_recovery=100.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(257) @ 940375000: uvm_test_top.env.coverage [CHECKED_INTERNAL_COVERAGE] jobs=116 schedule=100.00% twiddle=100.00% fifo=100.00% scaling=100.00% pre_lookup=100.00% pwm_words=100.00% flow=100.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(262) @ 940375000: uvm_test_top.env.coverage [ntt_coverage] Functional Coverage: 100.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(266) @ 940375000: uvm_test_top.env.coverage [ntt_coverage] Checked Pre-NTT Coverage: 100.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(269) @ 940375000: uvm_test_top.env.coverage [ntt_coverage] Checked Operation x Reset Coverage: 100.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(104) @ 940375000: uvm_test_top.env.scoreboard [ntt_scoreboard] 
+# =================== SCOREBOARD SUMMARY ===================
+#   Total:  116
+#   Passed: 116
+#   Failed: 0
+# ==========================================================
+# 
+# --- UVM Report Summary ---
+# 
+# ** Report counts by severity
+# UVM_INFO :  387
+# UVM_WARNING :    0
+# UVM_ERROR :    0
+# UVM_FATAL :    0
+# ** Report counts by id
+# [CHECKED_ARITHMETIC_BOUNDARIES]     1
+# [CHECKED_COEFFICIENT_ROUTING]   116
+# [CHECKED_INTERNAL_COVERAGE]     1
+# [CHECKED_PRE_EQUIVALENCE]     1
+# [CHECKED_RESET_COVERAGE]     1
+# [CHECKED_TRACE]   116
+# [COEFFICIENT_ROUTING_COVERAGE]     1
+# [PRE_EQUIVALENCE]    16
+# [Questa UVM]     2
+# [RESET_OBSERVED]     9
+# [RNTST]     1
+# [TEST_DONE]     1
+# [UVMTOP]     1
+# [ntt_coverage]     3
+# [ntt_scoreboard]   117
+# ** Note: $finish    : C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh(430)
+#    Time: 940375 ns  Iteration: 54  Instance: /tb_top
+# Break in Task uvm_pkg/uvm_root::run_test at C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh line 430
+# Stopped at C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh line 430
+# Saving coverage database on exit...
+# End time: 02:08:35 on Oct 09,2026, Elapsed time: 0:00:09
+# Errors: 0, Warnings: 1
+#  quit -f

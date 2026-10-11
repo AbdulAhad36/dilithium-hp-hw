@@ -1,9 +1,11 @@
 # LightHD-inspired NTT source
 
 This is the active source location for the four-butterfly, three-FIFO NTT
-candidate. All six RTL dependencies are in this directory. The older
-`src/ntt_engine/` four-bank design remains separate; do not compile both
-packages/cores into the same library.
+implementation selected through Stages 4 and 5. All six RTL dependencies are
+in this directory. Stage 6 sampler/integration is pending. The older four-bank
+design is archived at
+`experiments/ntt_cleanup_archive/2026-10-12/legacy/src/ntt_engine/`.
+Compile only this active implementation.
 
 | File | Role |
 |---|---|
@@ -19,7 +21,7 @@ packages/cores into the same library.
 current RTL uses a simulation assertion and does not provide a hardware
 fallback for other values.
 
-Run the candidate scripts from `sim/ntt_LightHD/` **with the working
+Run the simulation scripts from `sim/ntt_LightHD/` **with the working
 directory set to `sim/`**; see its README. The independent Quartus project
 is `quartus/ntt_LightHD/`. The Stage 3 experiment and exact fitted source
 snapshot remain under `experiments/ntt_stage3/lighthd_fifo/evidence/`.

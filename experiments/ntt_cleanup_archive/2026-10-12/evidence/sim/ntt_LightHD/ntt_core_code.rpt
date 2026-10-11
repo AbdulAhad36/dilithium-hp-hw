@@ -1,0 +1,2849 @@
+Coverage Report by instance with details
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[3]/u_tw
+=== Design Unit: work.twiddle_rom
+=================================================================================
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                       3         3         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[3]/u_tw --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/twiddle_rom.sv
+    25              1                          1     
+    93              1                       8142     
+    94              1                       8142     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                         64        64         0   100.00%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[3]/u_tw --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+
+Total Node Count     =         32 
+Toggled Node Count   =         32 
+Untoggled Node Count =          0 
+
+Toggle Coverage      =     100.00% (64 of 64 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[3]/u_bf/u_mul
+=== Design Unit: work.mod_mul
+=================================================================================
+Branch Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Branches                        10        10         0   100.00%
+
+================================Branch Details================================
+
+Branch Coverage for instance /tb_ntt_core/dut/g_bf[3]/u_bf/u_mul
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/mod_mul.sv
+------------------------------------IF Branch------------------------------------
+    48                                     14215     Count coming in to IF
+    48              1                          2     
+    49              1                      14213     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    74                                     13440     Count coming in to IF
+    74              1                          2     
+    75              1                      13438     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    83                                     13415     Count coming in to IF
+    83              1                          2     
+    84              1                      13413     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    97                                     13415     Count coming in to IF
+    97              1                          2     
+    98              1                      13413     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    98                                     13411     Count coming in to IF
+    98              2                         21     
+    98              3                      13390     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+
+Condition Coverage:
+    Enabled Coverage              Bins   Covered    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Conditions                       1         1         0   100.00%
+
+================================Condition Details================================
+
+Condition Coverage for instance /tb_ntt_core/dut/g_bf[3]/u_bf/u_mul --
+
+  File ../src/ntt_LightHD/mod_mul.sv
+----------------Focused Condition View-------------------
+Line       98 Item    1  (t4 >= 8380417)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                      24        24         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[3]/u_bf/u_mul --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/mod_mul.sv
+    47              1                      14215     
+    48              1                          2     
+    49              1                      14213     
+    58              1                      47305     
+    59              1                      47305     
+    60              1                      47305     
+    61              1                      47305     
+    68              1                      11833     
+    69              1                      11833     
+    70              1                      11833     
+    73              1                      13440     
+    74              1                          2     
+    75              1                      13438     
+    81              1                      11827     
+    81              2                      11827     
+    82              1                      13415     
+    83              1                          2     
+    84              1                      13413     
+    91              1                      11812     
+    92              1                      11812     
+    93              1                      11812     
+    96              1                      13415     
+    97              1                          2     
+    98              1                      13413     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                        690       601        89    87.10%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[3]/u_bf/u_mul --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+                                               rst           1           0                               50.00 
+                                      s2_t1[36-37]           0           0                                0.00 
+                                      s2_t2[27-37]           0           0                                0.00 
+                                      s3_t3[24-37]           0           0                                0.00 
+                                      s4_t4[23-37]           0           0                                0.00 
+                                          t2_q[27]           0           0                                0.00 
+                                            t4[23]           0           0                                0.00 
+
+Total Node Count     =        345 
+Toggled Node Count   =        300 
+Untoggled Node Count =         45 
+
+Toggle Coverage      =      87.10% (601 of 690 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[3]/u_bf
+=== Design Unit: work.butterfly_unit
+=================================================================================
+Branch Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Branches                        15        15         0   100.00%
+
+================================Branch Details================================
+
+Branch Coverage for instance /tb_ntt_core/dut/g_bf[3]/u_bf
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/butterfly_unit.sv
+------------------------------------IF Branch------------------------------------
+    41                                     14798     Count coming in to IF
+    41              1                       7293     
+    41              2                       7505     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    46                                     26090     Count coming in to IF
+    46              1                      13628     
+    46              2                      12462     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    56                                     12815     Count coming in to IF
+    56              1                       7750     
+    56              2                       5065     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    58                                     16361     Count coming in to IF
+    58              1                          2     
+    65              1                      16359     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    89                                     12815     Count coming in to IF
+    89              1                       7750     
+    89              2                       5065     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    95                                     17788     Count coming in to IF
+    95              1                          2     
+    100             1                      17786     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    119                                    15416     Count coming in to IF
+    119             1                          2     
+    122             1                       9735     
+    125             1                       5679     
+Branch totals: 3 hits of 3 branches = 100.00%
+
+
+Condition Coverage:
+    Enabled Coverage              Bins   Covered    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Conditions                       2         2         0   100.00%
+
+================================Condition Details================================
+
+Condition Coverage for instance /tb_ntt_core/dut/g_bf[3]/u_bf --
+
+  File ../src/ntt_LightHD/butterfly_unit.sv
+----------------Focused Condition View-------------------
+Line       41 Item    1  (s >= 8380417)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       46 Item    1  (x >= y)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                      41        41         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[3]/u_bf --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/butterfly_unit.sv
+    40              1                      14801     
+    41              1                      14801     
+    46              1                      26094     
+    56              1                      12816     
+    56              2                      12816     
+    57              1                      16361     
+    59              1                          2     
+    60              1                          2     
+    61              1                          2     
+    62              1                          2     
+    63              1                          2     
+    64              1                          2     
+    66              1                      16359     
+    67              1                      16359     
+    68              1                      16359     
+    69              1                      16359     
+    70              1                      16359     
+    71              1                      16359     
+    88              1                      12816     
+    88              2                      12816     
+    94              1                      17788     
+    96              1                          2     
+    96              2                          8     
+    97              1                          8     
+    98              1                          8     
+    101             1                      17786     
+    102             1                      17786     
+    103             1                      17786     
+    103             2                      53358     
+    104             1                      53358     
+    105             1                      53358     
+    113             1                          1     
+    114             1                      11688     
+    115             1                         44     
+    118             1                      15416     
+    120             1                          2     
+    121             1                          2     
+    123             1                       9735     
+    124             1                       9735     
+    126             1                       5679     
+    127             1                       5679     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                        654       653         1    99.84%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[3]/u_bf --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+                                           mode_al               ENUM type       Value       Count 
+                                          mode_reg               ENUM type       Value       Count 
+                                               rst           1           0                               50.00 
+
+Total Node Count     =        329 
+Toggled Node Count   =        328 
+Untoggled Node Count =          1 
+
+Toggle Coverage      =      99.84% (653 of 654 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[2]/u_tw
+=== Design Unit: work.twiddle_rom
+=================================================================================
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                       3         3         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[2]/u_tw --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/twiddle_rom.sv
+    25              1                          1     
+    93              1                       8142     
+    94              1                       8142     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                         64        64         0   100.00%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[2]/u_tw --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+
+Total Node Count     =         32 
+Toggled Node Count   =         32 
+Untoggled Node Count =          0 
+
+Toggle Coverage      =     100.00% (64 of 64 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[2]/u_bf/u_mul
+=== Design Unit: work.mod_mul
+=================================================================================
+Branch Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Branches                        10        10         0   100.00%
+
+================================Branch Details================================
+
+Branch Coverage for instance /tb_ntt_core/dut/g_bf[2]/u_bf/u_mul
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/mod_mul.sv
+------------------------------------IF Branch------------------------------------
+    48                                     14117     Count coming in to IF
+    48              1                          2     
+    49              1                      14115     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    74                                     13155     Count coming in to IF
+    74              1                          2     
+    75              1                      13153     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    83                                     13131     Count coming in to IF
+    83              1                          2     
+    84              1                      13129     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    97                                     13131     Count coming in to IF
+    97              1                          2     
+    98              1                      13129     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    98                                     13127     Count coming in to IF
+    98              2                         11     
+    98              3                      13116     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+
+Condition Coverage:
+    Enabled Coverage              Bins   Covered    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Conditions                       1         1         0   100.00%
+
+================================Condition Details================================
+
+Condition Coverage for instance /tb_ntt_core/dut/g_bf[2]/u_bf/u_mul --
+
+  File ../src/ntt_LightHD/mod_mul.sv
+----------------Focused Condition View-------------------
+Line       98 Item    1  (t4 >= 8380417)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                      24        24         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[2]/u_bf/u_mul --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/mod_mul.sv
+    47              1                      14117     
+    48              1                          2     
+    49              1                      14115     
+    58              1                      46290     
+    59              1                      46290     
+    60              1                      46290     
+    61              1                      46290     
+    68              1                      11579     
+    69              1                      11579     
+    70              1                      11579     
+    73              1                      13155     
+    74              1                          2     
+    75              1                      13153     
+    81              1                      11573     
+    81              2                      11573     
+    82              1                      13131     
+    83              1                          2     
+    84              1                      13129     
+    91              1                      11559     
+    92              1                      11559     
+    93              1                      11559     
+    96              1                      13131     
+    97              1                          2     
+    98              1                      13129     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                        690       601        89    87.10%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[2]/u_bf/u_mul --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+                                               rst           1           0                               50.00 
+                                      s2_t1[36-37]           0           0                                0.00 
+                                      s2_t2[27-37]           0           0                                0.00 
+                                      s3_t3[24-37]           0           0                                0.00 
+                                      s4_t4[23-37]           0           0                                0.00 
+                                          t2_q[27]           0           0                                0.00 
+                                            t4[23]           0           0                                0.00 
+
+Total Node Count     =        345 
+Toggled Node Count   =        300 
+Untoggled Node Count =         45 
+
+Toggle Coverage      =      87.10% (601 of 690 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[2]/u_bf
+=== Design Unit: work.butterfly_unit
+=================================================================================
+Branch Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Branches                        15        15         0   100.00%
+
+================================Branch Details================================
+
+Branch Coverage for instance /tb_ntt_core/dut/g_bf[2]/u_bf
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/butterfly_unit.sv
+------------------------------------IF Branch------------------------------------
+    41                                     14525     Count coming in to IF
+    41              1                       7099     
+    41              2                       7426     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    46                                     25905     Count coming in to IF
+    46              1                      13963     
+    46              2                      11942     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    56                                     12559     Count coming in to IF
+    56              1                       7622     
+    56              2                       4937     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    58                                     16321     Count coming in to IF
+    58              1                          2     
+    65              1                      16319     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    89                                     12559     Count coming in to IF
+    89              1                       7622     
+    89              2                       4937     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    95                                     17743     Count coming in to IF
+    95              1                          2     
+    100             1                      17741     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    119                                    15126     Count coming in to IF
+    119             1                          2     
+    122             1                       9590     
+    125             1                       5534     
+Branch totals: 3 hits of 3 branches = 100.00%
+
+
+Condition Coverage:
+    Enabled Coverage              Bins   Covered    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Conditions                       2         2         0   100.00%
+
+================================Condition Details================================
+
+Condition Coverage for instance /tb_ntt_core/dut/g_bf[2]/u_bf --
+
+  File ../src/ntt_LightHD/butterfly_unit.sv
+----------------Focused Condition View-------------------
+Line       41 Item    1  (s >= 8380417)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       46 Item    1  (x >= y)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                      41        41         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[2]/u_bf --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/butterfly_unit.sv
+    40              1                      14528     
+    41              1                      14528     
+    46              1                      25909     
+    56              1                      12560     
+    56              2                      12560     
+    57              1                      16321     
+    59              1                          2     
+    60              1                          2     
+    61              1                          2     
+    62              1                          2     
+    63              1                          2     
+    64              1                          2     
+    66              1                      16319     
+    67              1                      16319     
+    68              1                      16319     
+    69              1                      16319     
+    70              1                      16319     
+    71              1                      16319     
+    88              1                      12560     
+    88              2                      12560     
+    94              1                      17743     
+    96              1                          2     
+    96              2                          8     
+    97              1                          8     
+    98              1                          8     
+    101             1                      17741     
+    102             1                      17741     
+    103             1                      17741     
+    103             2                      53223     
+    104             1                      53223     
+    105             1                      53223     
+    113             1                          1     
+    114             1                      11678     
+    115             1                         44     
+    118             1                      15126     
+    120             1                          2     
+    121             1                          2     
+    123             1                       9590     
+    124             1                       9590     
+    126             1                       5534     
+    127             1                       5534     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                        654       653         1    99.84%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[2]/u_bf --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+                                           mode_al               ENUM type       Value       Count 
+                                          mode_reg               ENUM type       Value       Count 
+                                               rst           1           0                               50.00 
+
+Total Node Count     =        329 
+Toggled Node Count   =        328 
+Untoggled Node Count =          1 
+
+Toggle Coverage      =      99.84% (653 of 654 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[1]/u_tw
+=== Design Unit: work.twiddle_rom
+=================================================================================
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                       3         3         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[1]/u_tw --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/twiddle_rom.sv
+    25              1                          1     
+    93              1                       8142     
+    94              1                       8142     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                         64        64         0   100.00%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[1]/u_tw --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+
+Total Node Count     =         32 
+Toggled Node Count   =         32 
+Untoggled Node Count =          0 
+
+Toggle Coverage      =     100.00% (64 of 64 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[1]/u_bf/u_mul
+=== Design Unit: work.mod_mul
+=================================================================================
+Branch Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Branches                        10        10         0   100.00%
+
+================================Branch Details================================
+
+Branch Coverage for instance /tb_ntt_core/dut/g_bf[1]/u_bf/u_mul
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/mod_mul.sv
+------------------------------------IF Branch------------------------------------
+    48                                     14156     Count coming in to IF
+    48              1                          2     
+    49              1                      14154     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    74                                     13256     Count coming in to IF
+    74              1                          2     
+    75              1                      13254     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    83                                     13232     Count coming in to IF
+    83              1                          2     
+    84              1                      13230     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    97                                     13232     Count coming in to IF
+    97              1                          2     
+    98              1                      13230     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    98                                     13228     Count coming in to IF
+    98              2                         17     
+    98              3                      13211     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+
+Condition Coverage:
+    Enabled Coverage              Bins   Covered    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Conditions                       1         1         0   100.00%
+
+================================Condition Details================================
+
+Condition Coverage for instance /tb_ntt_core/dut/g_bf[1]/u_bf/u_mul --
+
+  File ../src/ntt_LightHD/mod_mul.sv
+----------------Focused Condition View-------------------
+Line       98 Item    1  (t4 >= 8380417)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                      24        24         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[1]/u_bf/u_mul --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/mod_mul.sv
+    47              1                      14156     
+    48              1                          2     
+    49              1                      14154     
+    58              1                      46602     
+    59              1                      46602     
+    60              1                      46602     
+    61              1                      46602     
+    68              1                      11657     
+    69              1                      11657     
+    70              1                      11657     
+    73              1                      13256     
+    74              1                          2     
+    75              1                      13254     
+    81              1                      11651     
+    81              2                      11651     
+    82              1                      13232     
+    83              1                          2     
+    84              1                      13230     
+    91              1                      11637     
+    92              1                      11637     
+    93              1                      11637     
+    96              1                      13232     
+    97              1                          2     
+    98              1                      13230     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                        690       601        89    87.10%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[1]/u_bf/u_mul --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+                                               rst           1           0                               50.00 
+                                      s2_t1[36-37]           0           0                                0.00 
+                                      s2_t2[27-37]           0           0                                0.00 
+                                      s3_t3[24-37]           0           0                                0.00 
+                                      s4_t4[23-37]           0           0                                0.00 
+                                          t2_q[27]           0           0                                0.00 
+                                            t4[23]           0           0                                0.00 
+
+Total Node Count     =        345 
+Toggled Node Count   =        300 
+Untoggled Node Count =         45 
+
+Toggle Coverage      =      87.10% (601 of 690 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[1]/u_bf
+=== Design Unit: work.butterfly_unit
+=================================================================================
+Branch Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Branches                        15        15         0   100.00%
+
+================================Branch Details================================
+
+Branch Coverage for instance /tb_ntt_core/dut/g_bf[1]/u_bf
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/butterfly_unit.sv
+------------------------------------IF Branch------------------------------------
+    41                                     14604     Count coming in to IF
+    41              1                       7130     
+    41              2                       7474     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    46                                     25965     Count coming in to IF
+    46              1                      13901     
+    46              2                      12064     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    56                                     12640     Count coming in to IF
+    56              1                       7652     
+    56              2                       4988     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    58                                     16353     Count coming in to IF
+    58              1                          2     
+    65              1                      16351     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    89                                     12640     Count coming in to IF
+    89              1                       7652     
+    89              2                       4988     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    95                                     17819     Count coming in to IF
+    95              1                          2     
+    100             1                      17817     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    119                                    15224     Count coming in to IF
+    119             1                          2     
+    122             1                       9618     
+    125             1                       5604     
+Branch totals: 3 hits of 3 branches = 100.00%
+
+
+Condition Coverage:
+    Enabled Coverage              Bins   Covered    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Conditions                       2         2         0   100.00%
+
+================================Condition Details================================
+
+Condition Coverage for instance /tb_ntt_core/dut/g_bf[1]/u_bf --
+
+  File ../src/ntt_LightHD/butterfly_unit.sv
+----------------Focused Condition View-------------------
+Line       41 Item    1  (s >= 8380417)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       46 Item    1  (x >= y)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                      41        41         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[1]/u_bf --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/butterfly_unit.sv
+    40              1                      14607     
+    41              1                      14607     
+    46              1                      25969     
+    56              1                      12641     
+    56              2                      12641     
+    57              1                      16353     
+    59              1                          2     
+    60              1                          2     
+    61              1                          2     
+    62              1                          2     
+    63              1                          2     
+    64              1                          2     
+    66              1                      16351     
+    67              1                      16351     
+    68              1                      16351     
+    69              1                      16351     
+    70              1                      16351     
+    71              1                      16351     
+    88              1                      12641     
+    88              2                      12641     
+    94              1                      17819     
+    96              1                          2     
+    96              2                          8     
+    97              1                          8     
+    98              1                          8     
+    101             1                      17817     
+    102             1                      17817     
+    103             1                      17817     
+    103             2                      53451     
+    104             1                      53451     
+    105             1                      53451     
+    113             1                          1     
+    114             1                      11695     
+    115             1                         44     
+    118             1                      15224     
+    120             1                          2     
+    121             1                          2     
+    123             1                       9618     
+    124             1                       9618     
+    126             1                       5604     
+    127             1                       5604     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                        654       653         1    99.84%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[1]/u_bf --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+                                           mode_al               ENUM type       Value       Count 
+                                          mode_reg               ENUM type       Value       Count 
+                                               rst           1           0                               50.00 
+
+Total Node Count     =        329 
+Toggled Node Count   =        328 
+Untoggled Node Count =          1 
+
+Toggle Coverage      =      99.84% (653 of 654 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[0]/u_tw
+=== Design Unit: work.twiddle_rom
+=================================================================================
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                       3         3         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[0]/u_tw --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/twiddle_rom.sv
+    25              1                          1     
+    93              1                       8142     
+    94              1                       8142     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                         64        64         0   100.00%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[0]/u_tw --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+
+Total Node Count     =         32 
+Toggled Node Count   =         32 
+Untoggled Node Count =          0 
+
+Toggle Coverage      =     100.00% (64 of 64 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[0]/u_bf/u_mul
+=== Design Unit: work.mod_mul
+=================================================================================
+Branch Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Branches                        10        10         0   100.00%
+
+================================Branch Details================================
+
+Branch Coverage for instance /tb_ntt_core/dut/g_bf[0]/u_bf/u_mul
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/mod_mul.sv
+------------------------------------IF Branch------------------------------------
+    48                                     14157     Count coming in to IF
+    48              1                          2     
+    49              1                      14155     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    74                                     13196     Count coming in to IF
+    74              1                          2     
+    75              1                      13194     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    83                                     13172     Count coming in to IF
+    83              1                          2     
+    84              1                      13170     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    97                                     13172     Count coming in to IF
+    97              1                          2     
+    98              1                      13170     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    98                                     13168     Count coming in to IF
+    98              2                         20     
+    98              3                      13148     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+
+Condition Coverage:
+    Enabled Coverage              Bins   Covered    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Conditions                       1         1         0   100.00%
+
+================================Condition Details================================
+
+Condition Coverage for instance /tb_ntt_core/dut/g_bf[0]/u_bf/u_mul --
+
+  File ../src/ntt_LightHD/mod_mul.sv
+----------------Focused Condition View-------------------
+Line       98 Item    1  (t4 >= 8380417)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                      24        24         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[0]/u_bf/u_mul --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/mod_mul.sv
+    47              1                      14157     
+    48              1                          2     
+    49              1                      14155     
+    58              1                      46370     
+    59              1                      46370     
+    60              1                      46370     
+    61              1                      46370     
+    68              1                      11599     
+    69              1                      11599     
+    70              1                      11599     
+    73              1                      13196     
+    74              1                          2     
+    75              1                      13194     
+    81              1                      11593     
+    81              2                      11593     
+    82              1                      13172     
+    83              1                          2     
+    84              1                      13170     
+    91              1                      11579     
+    92              1                      11579     
+    93              1                      11579     
+    96              1                      13172     
+    97              1                          2     
+    98              1                      13170     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                        690       601        89    87.10%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[0]/u_bf/u_mul --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+                                               rst           1           0                               50.00 
+                                      s2_t1[36-37]           0           0                                0.00 
+                                      s2_t2[27-37]           0           0                                0.00 
+                                      s3_t3[24-37]           0           0                                0.00 
+                                      s4_t4[23-37]           0           0                                0.00 
+                                          t2_q[27]           0           0                                0.00 
+                                            t4[23]           0           0                                0.00 
+
+Total Node Count     =        345 
+Toggled Node Count   =        300 
+Untoggled Node Count =         45 
+
+Toggle Coverage      =      87.10% (601 of 690 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut/g_bf[0]/u_bf
+=== Design Unit: work.butterfly_unit
+=================================================================================
+Branch Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Branches                        15        15         0   100.00%
+
+================================Branch Details================================
+
+Branch Coverage for instance /tb_ntt_core/dut/g_bf[0]/u_bf
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/butterfly_unit.sv
+------------------------------------IF Branch------------------------------------
+    41                                     14769     Count coming in to IF
+    41              1                       7128     
+    41              2                       7641     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    46                                     26166     Count coming in to IF
+    46              1                      14048     
+    46              2                      12118     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    56                                     12768     Count coming in to IF
+    56              1                       7751     
+    56              2                       5017     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    58                                     16418     Count coming in to IF
+    58              1                          2     
+    65              1                      16416     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    89                                     12768     Count coming in to IF
+    89              1                       7751     
+    89              2                       5017     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    95                                     18105     Count coming in to IF
+    95              1                          2     
+    100             1                      18103     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    119                                    15404     Count coming in to IF
+    119             1                          2     
+    122             1                       9754     
+    125             1                       5648     
+Branch totals: 3 hits of 3 branches = 100.00%
+
+
+Condition Coverage:
+    Enabled Coverage              Bins   Covered    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Conditions                       2         2         0   100.00%
+
+================================Condition Details================================
+
+Condition Coverage for instance /tb_ntt_core/dut/g_bf[0]/u_bf --
+
+  File ../src/ntt_LightHD/butterfly_unit.sv
+----------------Focused Condition View-------------------
+Line       41 Item    1  (s >= 8380417)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       46 Item    1  (x >= y)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                      41        41         0   100.00%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut/g_bf[0]/u_bf --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/butterfly_unit.sv
+    40              1                      14772     
+    41              1                      14772     
+    46              1                      26170     
+    56              1                      12769     
+    56              2                      12769     
+    57              1                      16418     
+    59              1                          2     
+    60              1                          2     
+    61              1                          2     
+    62              1                          2     
+    63              1                          2     
+    64              1                          2     
+    66              1                      16416     
+    67              1                      16416     
+    68              1                      16416     
+    69              1                      16416     
+    70              1                      16416     
+    71              1                      16416     
+    88              1                      12769     
+    88              2                      12769     
+    94              1                      18105     
+    96              1                          2     
+    96              2                          8     
+    97              1                          8     
+    98              1                          8     
+    101             1                      18103     
+    102             1                      18103     
+    103             1                      18103     
+    103             2                      54309     
+    104             1                      54309     
+    105             1                      54309     
+    113             1                          1     
+    114             1                      11859     
+    115             1                         44     
+    118             1                      15404     
+    120             1                          2     
+    121             1                          2     
+    123             1                       9754     
+    124             1                       9754     
+    126             1                       5648     
+    127             1                       5648     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                        654       653         1    99.84%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut/g_bf[0]/u_bf --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+                                           mode_al               ENUM type       Value       Count 
+                                          mode_reg               ENUM type       Value       Count 
+                                               rst           1           0                               50.00 
+
+Total Node Count     =        329 
+Toggled Node Count   =        328 
+Untoggled Node Count =          1 
+
+Toggle Coverage      =      99.84% (653 of 654 bins)
+
+=================================================================================
+=== Instance: /tb_ntt_core/dut
+=== Design Unit: work.ntt_core
+=================================================================================
+Branch Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Branches                       212       188        24    88.67%
+
+================================Branch Details================================
+
+Branch Coverage for instance /tb_ntt_core/dut
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/ntt_core.sv
+------------------------------------IF Branch------------------------------------
+    68                                     58840     Count coming in to IF
+    68              1                      26834     
+    68              2                      32006     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------CASE Branch------------------------------------
+    75                                       768     Count coming in to CASE
+    76              1                        196     
+    77              1                         68     
+    78              1                         73     
+    79              1                         72     
+    80              1                         77     
+    81              1                         66     
+    82              1                         75     
+    83              1                         74     
+    84              1                         67     
+    85              1                    ***0***     
+Branch totals: 9 hits of 10 branches = 90.00%
+
+------------------------------------IF Branch------------------------------------
+    93                                       768     Count coming in to IF
+    93              1                        245     
+    93              2                        523     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    98                                       768     Count coming in to IF
+    98              1                        441     
+    98              2                        327     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    118                                    23469     Count coming in to IF
+    118             1                      10349     
+    119             1                      13120     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    118                                    10349     Count coming in to IF
+    118             2                       5225     
+    118             3                       5124     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    119                                    13120     Count coming in to IF
+    119             2                       6631     
+    119             3                       6489     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    124                                    13320     Count coming in to IF
+    124             1                          2     
+    125             1                      13056     
+                                             262     All False Count
+Branch totals: 3 hits of 3 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    129                                        1     Count coming in to IF
+    129             1                    ***0***     
+                                               1     All False Count
+Branch totals: 1 hit of 2 branches = 50.00%
+
+------------------------------------IF Branch------------------------------------
+    137                                    22434     Count coming in to IF
+    137             1                          2     
+    146             1                      22432     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    149                                    22432     Count coming in to IF
+    149             1                        192     
+                                           22240     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    156                                    22432     Count coming in to IF
+    156             1                        192     
+                                           22240     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    175                                    13024     Count coming in to IF
+    175             1                       5439     
+    175             2                       7585     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    180                                    13025     Count coming in to IF
+    180             1                      12864     
+    204             1                    ***0***     
+                                             161     All False Count
+Branch totals: 2 hits of 3 branches = 66.66%
+
+------------------------------------IF Branch------------------------------------
+    181                                    12864     Count coming in to IF
+    181             1                       7488     
+    192             1                       5376     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    182                                     7488     Count coming in to IF
+    182             1                       4800     
+                                            2688     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    183                                     4800     Count coming in to IF
+    183             1                       2400     
+    185             1                       2400     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    189                                     7488     Count coming in to IF
+    189             1                       2304     
+                                            5184     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    193                                     5376     Count coming in to IF
+    193             1                       3360     
+                                            2016     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    194                                     3360     Count coming in to IF
+    194             1                       1680     
+    196             1                       1680     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    200                                     5376     Count coming in to IF
+    200             1                       1680     
+                                            3696     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    205                                  ***0***     Count coming in to IF
+    205             1                    ***0***     
+    205             2                    ***0***     
+Branch totals: 0 hits of 2 branches = 0.00%
+
+------------------------------------IF Branch------------------------------------
+    211                                    14327     Count coming in to IF
+    211             1                      10873     
+    212             1                       3454     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    212                                     3454     Count coming in to IF
+    212             2                       3454     
+    212             3                    ***0***     
+Branch totals: 1 hit of 2 branches = 50.00%
+
+------------------------------------IF Branch------------------------------------
+    213                                    14327     Count coming in to IF
+    213             1                       3454     
+    214             1                      10873     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    214                                    10873     Count coming in to IF
+    214             2                       7419     
+    214             3                       3454     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    220                                    57312     Count coming in to IF
+    220             1                    ***0***     
+    223             1                      39948     
+    226             1                       6528     
+    231             1                      10836     
+Branch totals: 3 hits of 4 branches = 75.00%
+
+------------------------------------IF Branch------------------------------------
+    227                                     6528     Count coming in to IF
+    227             1                       3264     
+    228             1                       3264     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    229                                     6528     Count coming in to IF
+    229             1                       3264     
+    230             1                       3264     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    232                                    10836     Count coming in to IF
+    232             1                       5418     
+    233             1                       5418     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    234                                    10836     Count coming in to IF
+    234             1                       5418     
+    235             1                       5418     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    237                                    57312     Count coming in to IF
+    237             1                      23960     
+                                           33352     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    251                                    51656     Count coming in to IF
+    251             1                      21588     
+    262             1                      30068     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------CASE Branch------------------------------------
+    252                                    21588     Count coming in to CASE
+    253             1                       2772     
+    254             1                       2688     
+    255             1                       2688     
+    256             1                       2688     
+    257             1                       2688     
+    258             1                       2688     
+    259             1                       2688     
+    260             1                       2688     
+Branch totals: 8 hits of 8 branches = 100.00%
+
+------------------------------------CASE Branch------------------------------------
+    263                                    30068     Count coming in to CASE
+    264             1                       3180     
+    265             1                       3840     
+    266             1                       3840     
+    267             1                       3840     
+    268             1                       3840     
+    269             1                       3840     
+    270             1                       3840     
+    271             1                       3848     
+Branch totals: 8 hits of 8 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    280                                    17535     Count coming in to IF
+    280             1                          3     
+    287             1                      17532     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    308                                    18383     Count coming in to IF
+    308             1                          2     
+    309             1                      18381     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    312                                    73524     Count coming in to IF
+    312             1                      29420     
+    312             2                      44104     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    313                                    73524     Count coming in to IF
+    313             1                      29420     
+    313             2                      44104     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    314                                    73524     Count coming in to IF
+    314             1                    ***0***     
+    316             1                      52528     
+    319             1                       5976     
+    327             1                      15020     
+Branch totals: 3 hits of 4 branches = 75.00%
+
+------------------------------------IF Branch------------------------------------
+    320                                     5976     Count coming in to IF
+    320             1                       2988     
+    323             1                       2988     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    328                                    15020     Count coming in to IF
+    328             1                       7510     
+    331             1                       7510     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    346                                    48845     Count coming in to IF
+    346             1                      12993     
+    350             1                    ***0***     
+                                           35852     All False Count
+Branch totals: 2 hits of 3 branches = 66.66%
+
+------------------------------------IF Branch------------------------------------
+    347                                    12993     Count coming in to IF
+    347             1                      12993     
+                                         ***0***     All False Count
+Branch totals: 1 hit of 2 branches = 50.00%
+
+------------------------------------IF Branch------------------------------------
+    348                                    12993     Count coming in to IF
+    348             1                       8732     
+                                            4261     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    349                                    12993     Count coming in to IF
+    349             1                       4261     
+                                            8732     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    351                                  ***0***     Count coming in to IF
+    351             1                    ***0***     
+    352             1                    ***0***     
+Branch totals: 0 hits of 2 branches = 0.00%
+
+------------------------------------IF Branch------------------------------------
+    354                                    48845     Count coming in to IF
+    354             1                        402     
+                                           48443     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    355                                    48845     Count coming in to IF
+    355             1                       3264     
+                                           45581     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    356                                     3264     Count coming in to IF
+    356             1                       1632     
+    359             1                       1632     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    361                                    48845     Count coming in to IF
+    361             1                       3114     
+    367             1                        397     
+    376             1                      13280     
+                                           32054     All False Count
+Branch totals: 4 hits of 4 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    362                                     3114     Count coming in to IF
+    362             1                       1674     
+    364             1                       1440     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    369                                      397     Count coming in to IF
+    369             1                        202     
+    372             1                        195     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    377                                    13280     Count coming in to IF
+    377             1                       8685     
+    378             1                    ***0***     
+    379             1                       4595     
+Branch totals: 2 hits of 3 branches = 66.66%
+
+------------------------------------IF Branch------------------------------------
+    380                                    13280     Count coming in to IF
+    380             1                      13280     
+                                         ***0***     All False Count
+Branch totals: 1 hit of 2 branches = 50.00%
+
+------------------------------------IF Branch------------------------------------
+    381                                    13280     Count coming in to IF
+    381             1                       4595     
+    382             1                       8685     
+    383             1                    ***0***     
+Branch totals: 2 hits of 3 branches = 66.66%
+
+------------------------------------IF Branch------------------------------------
+    389                                    16564     Count coming in to IF
+    389             1                      14688     
+                                            1876     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    390                                    13579     Count coming in to IF
+    390             1                      10416     
+                                            3163     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    391                                     5752     Count coming in to IF
+    391             1                       4080     
+                                            1672     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    392                                    19818     Count coming in to IF
+    392             1                      17765     
+                                            2053     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    394                                    17529     Count coming in to IF
+    394             1                      13398     
+                                            4131     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    396                                     7217     Count coming in to IF
+    396             1                       4080     
+                                            3137     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    397                                        1     Count coming in to IF
+    397             1                    ***0***     
+                                               1     All False Count
+Branch totals: 1 hit of 2 branches = 50.00%
+
+------------------------------------IF Branch------------------------------------
+    400                                    26625     Count coming in to IF
+    400             1                          2     
+    406             1                      26623     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    407                                    26623     Count coming in to IF
+    407             1                      14688     
+                                           11935     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    408                                    26623     Count coming in to IF
+    408             1                      10416     
+                                           16207     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    409                                    26623     Count coming in to IF
+    409             1                       4080     
+                                           22543     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    410                                    26623     Count coming in to IF
+    410             1                      14688     
+                                           11935     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    411                                    26623     Count coming in to IF
+    411             1                      10416     
+                                           16207     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    412                                    26623     Count coming in to IF
+    412             1                       4080     
+                                           22543     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    431                                    13268     Count coming in to IF
+    431             1                          2     
+    434             1                      13056     
+                                             210     All False Count
+Branch totals: 3 hits of 3 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    436                                    13056     Count coming in to IF
+    436             1                       7680     
+    436             2                       5376     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    441                                    23911     Count coming in to IF
+    441             1                      17382     
+    441             2                       6529     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    448                                    13527     Count coming in to IF
+    448             1                          2     
+    450             1                      13525     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------CASE Branch------------------------------------
+    451                                    13525     Count coming in to CASE
+    452             1                        145     
+    458             1                          6     
+    459             1                      12864     
+    463             1                        459     
+    465             1                         51     
+    466             1                    ***0***     
+Branch totals: 5 hits of 6 branches = 83.33%
+
+------------------------------------IF Branch------------------------------------
+    452                                      145     Count coming in to IF
+    452             2                         51     
+                                              94     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    454                                       51     Count coming in to IF
+    454             1                          6     
+    454             2                         45     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    456                                       51     Count coming in to IF
+    456             1                          6     
+    456             2                         45     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    459                                    12864     Count coming in to IF
+    459             2                         51     
+    462             1                      12813     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    463                                      459     Count coming in to IF
+    463             2                         51     
+    464             1                        408     
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    471                                    30680     Count coming in to IF
+    471             1                      30679     
+                                               1     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    472                                    30679     Count coming in to IF
+    472             1                    ***0***     
+                                           30679     All False Count
+Branch totals: 1 hit of 2 branches = 50.00%
+
+------------------------------------IF Branch------------------------------------
+    475                                    30679     Count coming in to IF
+    475             1                    ***0***     
+                                           30679     All False Count
+Branch totals: 1 hit of 2 branches = 50.00%
+
+------------------------------------IF Branch------------------------------------
+    476                                    30679     Count coming in to IF
+    476             1                    ***0***     
+                                           30679     All False Count
+Branch totals: 1 hit of 2 branches = 50.00%
+
+------------------------------------IF Branch------------------------------------
+    477                                    30679     Count coming in to IF
+    477             1                    ***0***     
+                                           30679     All False Count
+Branch totals: 1 hit of 2 branches = 50.00%
+
+------------------------------------IF Branch------------------------------------
+    478                                    30679     Count coming in to IF
+    478             1                    ***0***     
+                                           30679     All False Count
+Branch totals: 1 hit of 2 branches = 50.00%
+
+------------------------------------IF Branch------------------------------------
+    479                                    30679     Count coming in to IF
+    479             1                    ***0***     
+                                           30679     All False Count
+Branch totals: 1 hit of 2 branches = 50.00%
+
+------------------------------------IF Branch------------------------------------
+    480                                    30679     Count coming in to IF
+    480             1                    ***0***     
+                                           30679     All False Count
+Branch totals: 1 hit of 2 branches = 50.00%
+
+
+Condition Coverage:
+    Enabled Coverage              Bins   Covered    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Conditions                      95        58        37    61.05%
+
+================================Condition Details================================
+
+Condition Coverage for instance /tb_ntt_core/dut --
+
+  File ../src/ntt_LightHD/ntt_core.sv
+----------------Focused Condition View-------------------
+Line       93 Item    1  (sum >= 8380417)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       98 Item    1  (a >= b)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       117 Item    1  (op_i == OP_INTT)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       125 Item    1  ((state == IDLE) && wr_en_i)
+Condition totals: 2 of 2 input terms covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       175 Item    1  (op_r == OP_INTT)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       181 Item    1  ((op_r == OP_NTT) || (op_r == OP_PRE_NTT))
+Condition totals: 2 of 2 input terms covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       182 Item    1  ((stage >= 1) && (stage <= 5))
+Condition totals: 2 of 2 input terms covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       189 Item    1  ((stage <= 4) && ((issue >> (4 - stage)) & 1))
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       193 Item    1  (stage >= 3)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       200 Item    1  ((stage >= 2) && (stage <= 6) && ((issue >> (stage - 2)) & 1))
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       211 Item    1  (source_a_q == 0)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       212 Item    1  (source_a_q == 1)
+Condition totals: 0 of 1 input term covered = 0.00%
+
+         Input Term   Covered  Reason for no coverage   Hint
+        -----------  --------  -----------------------  --------------
+  (source_a_q == 1)         N  '_0' not hit             Hit '_0'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:    ***0***  (source_a_q == 1)_0   -                             
+  Row   2:          1  (source_a_q == 1)_1   -                             
+
+----------------Focused Condition View-------------------
+Line       213 Item    1  (source_b_q == 0)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       214 Item    1  (source_b_q == 1)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       223 Item    1  (tag[0].p >= 2)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       226 Item    1  (tag[0].p == 1)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       227 Item    1  (lane < 2)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       229 Item    1  (lane < 2)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       232 Item    1  (lane < 2)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       234 Item    1  (lane < 2)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       237 Item    1  (((op_r == OP_INTT) && ~tag[0].pwm) && (tw[lane] != 0))
+Condition totals: 1 of 3 input terms covered = 33.33%
+
+         Input Term   Covered  Reason for no coverage   Hint
+        -----------  --------  -----------------------  --------------
+  (op_r == OP_INTT)         Y
+         tag[0].pwm         N  '_1' not hit             Hit '_1'
+    (tw[lane] != 0)         N  '_0' not hit             Hit '_0'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  (op_r == OP_INTT)_0   -                             
+  Row   2:          1  (op_r == OP_INTT)_1   ((tw[lane] != 0) && ~tag[0].pwm)
+  Row   3:          1  tag[0].pwm_0          ((tw[lane] != 0) && (op_r == OP_INTT))
+  Row   4:    ***0***  tag[0].pwm_1          (op_r == OP_INTT)             
+  Row   5:    ***0***  (tw[lane] != 0)_0     ((op_r == OP_INTT) && ~tag[0].pwm)
+  Row   6:          1  (tw[lane] != 0)_1     ((op_r == OP_INTT) && ~tag[0].pwm)
+
+----------------Focused Condition View-------------------
+Line       251 Item    1  (op_r == OP_INTT)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       316 Item    1  (tag[7].p >= 2)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       319 Item    1  (tag[7].p == 1)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       320 Item    1  (lane < 2)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       328 Item    1  (lane < 2)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       347 Item    1  ((source_a == 0) || (source_b == 0))
+Condition totals: 0 of 2 input terms covered = 0.00%
+
+       Input Term   Covered  Reason for no coverage   Hint
+      -----------  --------  -----------------------  --------------
+  (source_a == 0)         N  '_0' not hit             Hit '_0'
+  (source_b == 0)         N  '_0' not hit             Hit '_0'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:    ***0***  (source_a == 0)_0     ~(source_b == 0)              
+  Row   2:          1  (source_a == 0)_1     -                             
+  Row   3:    ***0***  (source_b == 0)_0     ~(source_a == 0)              
+  Row   4:          1  (source_b == 0)_1     ~(source_a == 0)              
+
+----------------Focused Condition View-------------------
+Line       348 Item    1  ((source_a == 1) || (source_b == 1))
+Condition totals: 2 of 2 input terms covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       349 Item    1  ((source_a == 2) || (source_b == 2))
+Condition totals: 1 of 2 input terms covered = 50.00%
+
+       Input Term   Covered  Reason for no coverage   Hint
+      -----------  --------  -----------------------  --------------
+  (source_a == 2)         N  '_1' not hit             Hit '_1'
+  (source_b == 2)         Y
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  (source_a == 2)_0     ~(source_b == 2)              
+  Row   2:    ***0***  (source_a == 2)_1     -                             
+  Row   3:          1  (source_b == 2)_0     ~(source_a == 2)              
+  Row   4:          1  (source_b == 2)_1     ~(source_a == 2)              
+
+----------------Focused Condition View-------------------
+Line       351 Item    1  (source_a == 0)
+Condition totals: 0 of 1 input term covered = 0.00%
+
+       Input Term   Covered  Reason for no coverage   Hint
+      -----------  --------  -----------------------  --------------
+  (source_a == 0)         N  No hits                  Hit '_0' and '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:    ***0***  (source_a == 0)_0     -                             
+  Row   2:    ***0***  (source_a == 0)_1     -                             
+
+----------------Focused Condition View-------------------
+Line       355 Item    1  (((state == IDLE) && rd_en_i) && (rd_addr_i[1:0] == 3))
+Condition totals: 3 of 3 input terms covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       356 Item    1  (((((op_r == OP_NTT) || (op_r == OP_PRE_NTT)) && ~rd_addr_i[2]) || ((op_r == OP_INTT) && ~rd_addr_i[7])) || ((op_r == OP_PWM) && ~rd_addr_i[7]))
+Condition totals: 5 of 6 input terms covered = 83.33%
+
+            Input Term   Covered  Reason for no coverage   Hint
+           -----------  --------  -----------------------  --------------
+      (op_r == OP_NTT)         Y
+  (op_r == OP_PRE_NTT)         Y
+          rd_addr_i[2]         Y
+     (op_r == OP_INTT)         Y
+          rd_addr_i[7]         Y
+      (op_r == OP_PWM)         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target              Non-masking condition(s)      
+ ---------  ---------  --------------------    -------------------------     
+  Row   1:          1  (op_r == OP_NTT)_0      (~((op_r == OP_PWM) && ~rd_addr_i[7]) && ~((op_r == OP_INTT) && ~rd_addr_i[7]) && ~(op_r == OP_PRE_NTT))
+  Row   2:          1  (op_r == OP_NTT)_1      ~rd_addr_i[2]                 
+  Row   3:          1  (op_r == OP_PRE_NTT)_0  (~((op_r == OP_PWM) && ~rd_addr_i[7]) && ~((op_r == OP_INTT) && ~rd_addr_i[7]) && ~(op_r == OP_NTT))
+  Row   4:          1  (op_r == OP_PRE_NTT)_1  (~rd_addr_i[2] && ~(op_r == OP_NTT))
+  Row   5:          1  rd_addr_i[2]_0          ((op_r == OP_NTT) || (op_r == OP_PRE_NTT))
+  Row   6:          1  rd_addr_i[2]_1          (~((op_r == OP_PWM) && ~rd_addr_i[7]) && ~((op_r == OP_INTT) && ~rd_addr_i[7]) && ((op_r == OP_NTT) || (op_r == OP_PRE_NTT)))
+  Row   7:          1  (op_r == OP_INTT)_0     (~((op_r == OP_PWM) && ~rd_addr_i[7]) && ~(((op_r == OP_NTT) || (op_r == OP_PRE_NTT)) && ~rd_addr_i[2]))
+  Row   8:          1  (op_r == OP_INTT)_1     (~(((op_r == OP_NTT) || (op_r == OP_PRE_NTT)) && ~rd_addr_i[2]) && ~rd_addr_i[7])
+  Row   9:          1  rd_addr_i[7]_0          (~(((op_r == OP_NTT) || (op_r == OP_PRE_NTT)) && ~rd_addr_i[2]) && (op_r == OP_INTT)), (~((((op_r == OP_NTT) || (op_r == OP_PRE_NTT)) && ~rd_addr_i[2]) || ((op_r == OP_INTT) && ~rd_addr_i[7])) && (op_r == OP_PWM))
+ Row   10:          1  rd_addr_i[7]_1          (~(((op_r == OP_NTT) || (op_r == OP_PRE_NTT)) && ~rd_addr_i[2]) && (op_r == OP_INTT)), (~((((op_r == OP_NTT) || (op_r == OP_PRE_NTT)) && ~rd_addr_i[2]) || ((op_r == OP_INTT) && ~rd_addr_i[7])) && (op_r == OP_PWM))
+ Row   11:          1  (op_r == OP_PWM)_0      ~((((op_r == OP_NTT) || (op_r == OP_PRE_NTT)) && ~rd_addr_i[2]) || ((op_r == OP_INTT) && ~rd_addr_i[7]))
+ Row   12:    ***0***  (op_r == OP_PWM)_1      (~((((op_r == OP_NTT) || (op_r == OP_PRE_NTT)) && ~rd_addr_i[2]) || ((op_r == OP_INTT) && ~rd_addr_i[7])) && ~rd_addr_i[7])
+
+----------------Focused Condition View-------------------
+Line       361 Item    1  (load_a && ~pre_write)
+Condition totals: 2 of 2 input terms covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       362 Item    1  (load_dest == 0)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       377 Item    1  (tag[8].dest_a == 0)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       378 Item    1  (tag[8].dest_a == 1)
+Condition totals: 0 of 1 input term covered = 0.00%
+
+            Input Term   Covered  Reason for no coverage   Hint
+           -----------  --------  -----------------------  --------------
+  (tag[8].dest_a == 1)         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target              Non-masking condition(s)      
+ ---------  ---------  --------------------    -------------------------     
+  Row   1:          1  (tag[8].dest_a == 1)_0  -                             
+  Row   2:    ***0***  (tag[8].dest_a == 1)_1  -                             
+
+----------------Focused Condition View-------------------
+Line       381 Item    1  (tag[8].dest_b == 0)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       382 Item    1  (tag[8].dest_b == 1)
+Condition totals: 0 of 1 input term covered = 0.00%
+
+            Input Term   Covered  Reason for no coverage   Hint
+           -----------  --------  -----------------------  --------------
+  (tag[8].dest_b == 1)         N  '_0' not hit             Hit '_0'
+
+     Rows:       Hits  FEC Target              Non-masking condition(s)      
+ ---------  ---------  --------------------    -------------------------     
+  Row   1:    ***0***  (tag[8].dest_b == 1)_0  -                             
+  Row   2:          1  (tag[8].dest_b == 1)_1  -                             
+
+----------------Focused Condition View-------------------
+Line       392 Item    1  (((pop1 && (state == RUN)) || pre_pop) || (rd_en_i && (state == IDLE)))
+Condition totals: 4 of 5 input terms covered = 80.00%
+
+       Input Term   Covered  Reason for no coverage   Hint
+      -----------  --------  -----------------------  --------------
+             pop1         Y
+   (state == RUN)         N  '_0' not hit             Hit '_0'
+          pre_pop         Y
+          rd_en_i         Y
+  (state == IDLE)         Y
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  pop1_0                (~(rd_en_i && (state == IDLE)) && ~pre_pop)
+  Row   2:          1  pop1_1                (state == RUN)                
+  Row   3:    ***0***  (state == RUN)_0      (~(rd_en_i && (state == IDLE)) && ~pre_pop && pop1)
+  Row   4:          1  (state == RUN)_1      pop1                          
+  Row   5:          1  pre_pop_0             (~(rd_en_i && (state == IDLE)) && ~(pop1 && (state == RUN)))
+  Row   6:          1  pre_pop_1             ~(pop1 && (state == RUN))     
+  Row   7:          1  rd_en_i_0             ~((pop1 && (state == RUN)) || pre_pop)
+  Row   8:          1  rd_en_i_1             (~((pop1 && (state == RUN)) || pre_pop) && (state == IDLE))
+  Row   9:          1  (state == IDLE)_0     (~((pop1 && (state == RUN)) || pre_pop) && rd_en_i)
+ Row   10:          1  (state == IDLE)_1     (~((pop1 && (state == RUN)) || pre_pop) && rd_en_i)
+
+----------------Focused Condition View-------------------
+Line       394 Item    1  ((pop2 && (state == RUN)) || (rd_en_i && (state == IDLE)))
+Condition totals: 3 of 4 input terms covered = 75.00%
+
+       Input Term   Covered  Reason for no coverage   Hint
+      -----------  --------  -----------------------  --------------
+             pop2         Y
+   (state == RUN)         N  '_0' not hit             Hit '_0'
+          rd_en_i         Y
+  (state == IDLE)         Y
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  pop2_0                ~(rd_en_i && (state == IDLE)) 
+  Row   2:          1  pop2_1                (state == RUN)                
+  Row   3:    ***0***  (state == RUN)_0      (~(rd_en_i && (state == IDLE)) && pop2)
+  Row   4:          1  (state == RUN)_1      pop2                          
+  Row   5:          1  rd_en_i_0             ~(pop2 && (state == RUN))     
+  Row   6:          1  rd_en_i_1             (~(pop2 && (state == RUN)) && (state == IDLE))
+  Row   7:          1  (state == IDLE)_0     (~(pop2 && (state == RUN)) && rd_en_i)
+  Row   8:          1  (state == IDLE)_1     (~(pop2 && (state == RUN)) && rd_en_i)
+
+----------------Focused Condition View-------------------
+Line       396 Item    1  (pop3 && (state == RUN))
+Condition totals: 1 of 2 input terms covered = 50.00%
+
+      Input Term   Covered  Reason for no coverage   Hint
+     -----------  --------  -----------------------  --------------
+            pop3         Y
+  (state == RUN)         N  '_0' not hit             Hit '_0'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  pop3_0                -                             
+  Row   2:          1  pop3_1                (state == RUN)                
+  Row   3:    ***0***  (state == RUN)_0      pop3                          
+  Row   4:          1  (state == RUN)_1      pop3                          
+
+----------------Focused Condition View-------------------
+Line       434 Item    1  ((state == IDLE) && rd_en_i)
+Condition totals: 2 of 2 input terms covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       454 Item    1  (op_i == OP_PRE_NTT)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       456 Item    1  (op_i == OP_PRE_NTT)
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       459 Item    1  (((op_r == OP_PWM) && (tick == 63)) || ((op_r != OP_PWM) && (tick == 255)))
+Condition totals: 1 of 4 input terms covered = 25.00%
+
+        Input Term   Covered  Reason for no coverage   Hint
+       -----------  --------  -----------------------  --------------
+  (op_r == OP_PWM)         N  '_1' not hit             Hit '_1'
+      (tick == 63)         N  No hits                  Hit '_0' and '_1'
+  (op_r != OP_PWM)         N  '_0' not hit             Hit '_0'
+     (tick == 255)         Y
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  (op_r == OP_PWM)_0    ~((op_r != OP_PWM) && (tick == 255))
+  Row   2:    ***0***  (op_r == OP_PWM)_1    (tick == 63)                  
+  Row   3:    ***0***  (tick == 63)_0        (~((op_r != OP_PWM) && (tick == 255)) && (op_r == OP_PWM))
+  Row   4:    ***0***  (tick == 63)_1        (op_r == OP_PWM)              
+  Row   5:    ***0***  (op_r != OP_PWM)_0    ~((op_r == OP_PWM) && (tick == 63))
+  Row   6:          1  (op_r != OP_PWM)_1    (~((op_r == OP_PWM) && (tick == 63)) && (tick == 255))
+  Row   7:          1  (tick == 255)_0       (~((op_r == OP_PWM) && (tick == 63)) && (op_r != OP_PWM))
+  Row   8:          1  (tick == 255)_1       (~((op_r == OP_PWM) && (tick == 63)) && (op_r != OP_PWM))
+
+----------------Focused Condition View-------------------
+Line       463 Item    1  (drain == (9 - 1))
+Condition totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       472 Item    1  (((((state == IDLE) && wr_en_i) && ~wr_b_sel_i) && (op_i == OP_PRE_NTT)) && ((wr_data_i <= 4) ~| (wr_data_i >= (8380417 - 4))))
+Condition totals: 0 of 6 input terms covered = 0.00%
+
+                    Input Term   Covered  Reason for no coverage   Hint
+                   -----------  --------  -----------------------  --------------
+               (state == IDLE)         N  '_1' not hit             Hit '_1'
+                       wr_en_i         N  '_1' not hit             Hit '_1'
+                    wr_b_sel_i         N  No hits                  Hit '_0' and '_1'
+          (op_i == OP_PRE_NTT)         N  '_1' not hit             Hit '_1'
+              (wr_data_i <= 4)         N  '_0' not hit             Hit '_0'
+  (wr_data_i >= (8380417 - 4))         N  '_0' not hit             Hit '_0'
+
+     Rows:       Hits  FEC Target                      Non-masking condition(s)      
+ ---------  ---------  --------------------            -------------------------     
+  Row   1:          1  (state == IDLE)_0               -                             
+  Row   2:    ***0***  (state == IDLE)_1               (((wr_data_i <= 4) ~| (wr_data_i >= (8380417 - 4))) && (op_i == OP_PRE_NTT) && ~wr_b_sel_i && wr_en_i)
+  Row   3:          1  wr_en_i_0                       (state == IDLE)               
+  Row   4:    ***0***  wr_en_i_1                       (((wr_data_i <= 4) ~| (wr_data_i >= (8380417 - 4))) && (op_i == OP_PRE_NTT) && ~wr_b_sel_i && (state == IDLE))
+  Row   5:    ***0***  wr_b_sel_i_0                    (((wr_data_i <= 4) ~| (wr_data_i >= (8380417 - 4))) && (op_i == OP_PRE_NTT) && ((state == IDLE) && wr_en_i))
+  Row   6:    ***0***  wr_b_sel_i_1                    ((state == IDLE) && wr_en_i)  
+  Row   7:          1  (op_i == OP_PRE_NTT)_0          (((state == IDLE) && wr_en_i) && ~wr_b_sel_i)
+  Row   8:    ***0***  (op_i == OP_PRE_NTT)_1          (((wr_data_i <= 4) ~| (wr_data_i >= (8380417 - 4))) && (((state == IDLE) && wr_en_i) && ~wr_b_sel_i))
+  Row   9:    ***0***  (wr_data_i <= 4)_0              (((((state == IDLE) && wr_en_i) && ~wr_b_sel_i) && (op_i == OP_PRE_NTT)) && ~(wr_data_i >= (8380417 - 4)))
+ Row   10:          1  (wr_data_i <= 4)_1              (((((state == IDLE) && wr_en_i) && ~wr_b_sel_i) && (op_i == OP_PRE_NTT)) && ~(wr_data_i >= (8380417 - 4)))
+ Row   11:    ***0***  (wr_data_i >= (8380417 - 4))_0  (((((state == IDLE) && wr_en_i) && ~wr_b_sel_i) && (op_i == OP_PRE_NTT)) && ~(wr_data_i <= 4))
+ Row   12:          1  (wr_data_i >= (8380417 - 4))_1  (((((state == IDLE) && wr_en_i) && ~wr_b_sel_i) && (op_i == OP_PRE_NTT)) && ~(wr_data_i <= 4))
+
+----------------Focused Condition View-------------------
+Line       475 Item    1  (pop1 && (count1 == 0))
+Condition totals: 0 of 2 input terms covered = 0.00%
+
+     Input Term   Covered  Reason for no coverage   Hint
+    -----------  --------  -----------------------  --------------
+           pop1         N  '_1' not hit             Hit '_1'
+  (count1 == 0)         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  pop1_0                -                             
+  Row   2:    ***0***  pop1_1                (count1 == 0)                 
+  Row   3:          1  (count1 == 0)_0       pop1                          
+  Row   4:    ***0***  (count1 == 0)_1       pop1                          
+
+----------------Focused Condition View-------------------
+Line       476 Item    1  (pop2 && (count2 == 0))
+Condition totals: 0 of 2 input terms covered = 0.00%
+
+     Input Term   Covered  Reason for no coverage   Hint
+    -----------  --------  -----------------------  --------------
+           pop2         N  '_1' not hit             Hit '_1'
+  (count2 == 0)         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  pop2_0                -                             
+  Row   2:    ***0***  pop2_1                (count2 == 0)                 
+  Row   3:          1  (count2 == 0)_0       pop2                          
+  Row   4:    ***0***  (count2 == 0)_1       pop2                          
+
+----------------Focused Condition View-------------------
+Line       477 Item    1  (pop3 && (count3 == 0))
+Condition totals: 0 of 2 input terms covered = 0.00%
+
+     Input Term   Covered  Reason for no coverage   Hint
+    -----------  --------  -----------------------  --------------
+           pop3         N  '_1' not hit             Hit '_1'
+  (count3 == 0)         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  pop3_0                -                             
+  Row   2:    ***0***  pop3_1                (count3 == 0)                 
+  Row   3:          1  (count3 == 0)_0       pop3                          
+  Row   4:    ***0***  (count3 == 0)_1       pop3                          
+
+----------------Focused Condition View-------------------
+Line       478 Item    1  ((push1 && ~pop1) && (count1 == 32))
+Condition totals: 0 of 3 input terms covered = 0.00%
+
+      Input Term   Covered  Reason for no coverage   Hint
+     -----------  --------  -----------------------  --------------
+           push1         N  '_1' not hit             Hit '_1'
+            pop1         N  '_0' not hit             Hit '_0'
+  (count1 == 32)         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  push1_0               -                             
+  Row   2:    ***0***  push1_1               ((count1 == 32) && ~pop1)     
+  Row   3:    ***0***  pop1_0                ((count1 == 32) && push1)     
+  Row   4:          1  pop1_1                push1                         
+  Row   5:          1  (count1 == 32)_0      (push1 && ~pop1)              
+  Row   6:    ***0***  (count1 == 32)_1      (push1 && ~pop1)              
+
+----------------Focused Condition View-------------------
+Line       479 Item    1  ((push2 && ~pop2) && (count2 == 32))
+Condition totals: 0 of 3 input terms covered = 0.00%
+
+      Input Term   Covered  Reason for no coverage   Hint
+     -----------  --------  -----------------------  --------------
+           push2         N  '_1' not hit             Hit '_1'
+            pop2         N  '_0' not hit             Hit '_0'
+  (count2 == 32)         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  push2_0               -                             
+  Row   2:    ***0***  push2_1               ((count2 == 32) && ~pop2)     
+  Row   3:    ***0***  pop2_0                ((count2 == 32) && push2)     
+  Row   4:          1  pop2_1                push2                         
+  Row   5:          1  (count2 == 32)_0      (push2 && ~pop2)              
+  Row   6:    ***0***  (count2 == 32)_1      (push2 && ~pop2)              
+
+----------------Focused Condition View-------------------
+Line       480 Item    1  ((push3 && ~pop3) && (count3 == 16))
+Condition totals: 0 of 3 input terms covered = 0.00%
+
+      Input Term   Covered  Reason for no coverage   Hint
+     -----------  --------  -----------------------  --------------
+           push3         N  '_1' not hit             Hit '_1'
+            pop3         N  '_0' not hit             Hit '_0'
+  (count3 == 16)         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  push3_0               -                             
+  Row   2:    ***0***  push3_1               ((count3 == 16) && ~pop3)     
+  Row   3:    ***0***  pop3_0                ((count3 == 16) && push3)     
+  Row   4:          1  pop3_1                push3                         
+  Row   5:          1  (count3 == 16)_0      (push3 && ~pop3)              
+  Row   6:    ***0***  (count3 == 16)_1      (push3 && ~pop3)              
+
+
+Expression Coverage:
+    Enabled Coverage              Bins   Covered    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Expressions                     29        20         9    68.96%
+
+================================Expression Details================================
+
+Expression Coverage for instance /tb_ntt_core/dut --
+
+  File ../src/ntt_LightHD/ntt_core.sv
+----------------Focused Expression View-----------------
+Line       111 Item    1  (((state == IDLE) && wr_en_i) && (wr_addr_i[1:0] == 3))
+Expression totals: 3 of 3 input terms covered = 100.00%
+
+----------------Focused Expression View-----------------
+Line       112 Item    1  (load_word && wr_b_sel_i)
+Expression totals: 0 of 2 input terms covered = 0.00%
+
+  Input Term   Covered  Reason for no coverage   Hint
+ -----------  --------  -----------------------  --------------
+   load_word         N  '_1' not hit             Hit '_1'
+  wr_b_sel_i         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  load_word_0           -                             
+  Row   2:    ***0***  load_word_1           wr_b_sel_i                    
+  Row   3:          1  wr_b_sel_i_0          load_word                     
+  Row   4:    ***0***  wr_b_sel_i_1          load_word                     
+
+----------------Focused Expression View-----------------
+Line       113 Item    1  (load_word && ~wr_b_sel_i)
+Expression totals: 1 of 2 input terms covered = 50.00%
+
+  Input Term   Covered  Reason for no coverage   Hint
+ -----------  --------  -----------------------  --------------
+   load_word         Y
+  wr_b_sel_i         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  load_word_0           -                             
+  Row   2:          1  load_word_1           ~wr_b_sel_i                   
+  Row   3:          1  wr_b_sel_i_0          load_word                     
+  Row   4:    ***0***  wr_b_sel_i_1          load_word                     
+
+----------------Focused Expression View-----------------
+Line       114 Item    1  ((((((state == IDLE) && wr_en_i) && ~wr_b_sel_i) && (op_i == OP_PRE_NTT)) && wr_addr_i[7]) && (wr_addr_i[1:0] == 0))
+Expression totals: 5 of 6 input terms covered = 83.33%
+
+             Input Term   Covered  Reason for no coverage   Hint
+            -----------  --------  -----------------------  --------------
+        (state == IDLE)         Y
+                wr_en_i         Y
+             wr_b_sel_i         N  '_1' not hit             Hit '_1'
+   (op_i == OP_PRE_NTT)         Y
+           wr_addr_i[7]         Y
+  (wr_addr_i[1:0] == 0)         Y
+
+     Rows:       Hits  FEC Target               Non-masking condition(s)      
+ ---------  ---------  --------------------     -------------------------     
+  Row   1:          1  (state == IDLE)_0        -                             
+  Row   2:          1  (state == IDLE)_1        ((wr_addr_i[1:0] == 0) && wr_addr_i[7] && (op_i == OP_PRE_NTT) && ~wr_b_sel_i && wr_en_i)
+  Row   3:          1  wr_en_i_0                (state == IDLE)               
+  Row   4:          1  wr_en_i_1                ((wr_addr_i[1:0] == 0) && wr_addr_i[7] && (op_i == OP_PRE_NTT) && ~wr_b_sel_i && (state == IDLE))
+  Row   5:          1  wr_b_sel_i_0             ((wr_addr_i[1:0] == 0) && wr_addr_i[7] && (op_i == OP_PRE_NTT) && ((state == IDLE) && wr_en_i))
+  Row   6:    ***0***  wr_b_sel_i_1             ((state == IDLE) && wr_en_i)  
+  Row   7:          1  (op_i == OP_PRE_NTT)_0   (((state == IDLE) && wr_en_i) && ~wr_b_sel_i)
+  Row   8:          1  (op_i == OP_PRE_NTT)_1   ((wr_addr_i[1:0] == 0) && wr_addr_i[7] && (((state == IDLE) && wr_en_i) && ~wr_b_sel_i))
+  Row   9:          1  wr_addr_i[7]_0           ((((state == IDLE) && wr_en_i) && ~wr_b_sel_i) && (op_i == OP_PRE_NTT))
+ Row   10:          1  wr_addr_i[7]_1           ((wr_addr_i[1:0] == 0) && ((((state == IDLE) && wr_en_i) && ~wr_b_sel_i) && (op_i == OP_PRE_NTT)))
+ Row   11:          1  (wr_addr_i[1:0] == 0)_0  (((((state == IDLE) && wr_en_i) && ~wr_b_sel_i) && (op_i == OP_PRE_NTT)) && wr_addr_i[7])
+ Row   12:          1  (wr_addr_i[1:0] == 0)_1  (((((state == IDLE) && wr_en_i) && ~wr_b_sel_i) && (op_i == OP_PRE_NTT)) && wr_addr_i[7])
+
+----------------Focused Expression View-----------------
+Line       116 Item    1  ((load_a && (op_i == OP_PRE_NTT)) && wr_addr_i[7])
+Expression totals: 3 of 3 input terms covered = 100.00%
+
+----------------Focused Expression View-----------------
+Line       176 Item    1  ((state == RUN) && (op_r != OP_PWM))
+Expression totals: 1 of 2 input terms covered = 50.00%
+
+        Input Term   Covered  Reason for no coverage   Hint
+       -----------  --------  -----------------------  --------------
+    (state == RUN)         Y
+  (op_r != OP_PWM)         N  '_0' not hit             Hit '_0'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  (state == RUN)_0      -                             
+  Row   2:          1  (state == RUN)_1      (op_r != OP_PWM)              
+  Row   3:    ***0***  (op_r != OP_PWM)_0    (state == RUN)                
+  Row   4:          1  (op_r != OP_PWM)_1    (state == RUN)                
+
+----------------Focused Expression View-----------------
+Line       177 Item    1  ((state == RUN) && (op_r == OP_PWM))
+Expression totals: 0 of 2 input terms covered = 0.00%
+
+        Input Term   Covered  Reason for no coverage   Hint
+       -----------  --------  -----------------------  --------------
+    (state == RUN)         N  '_1' not hit             Hit '_1'
+  (op_r == OP_PWM)         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  (state == RUN)_0      -                             
+  Row   2:    ***0***  (state == RUN)_1      (op_r == OP_PWM)              
+  Row   3:          1  (op_r == OP_PWM)_0    (state == RUN)                
+  Row   4:    ***0***  (op_r == OP_PWM)_1    (state == RUN)                
+
+----------------Focused Expression View-----------------
+Line       417 Item    1  (run_issue || pwm_issue)
+Expression totals: 1 of 2 input terms covered = 50.00%
+
+  Input Term   Covered  Reason for no coverage   Hint
+ -----------  --------  -----------------------  --------------
+   run_issue         Y
+   pwm_issue         N  '_1' not hit             Hit '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:          1  run_issue_0           ~pwm_issue                    
+  Row   2:          1  run_issue_1           -                             
+  Row   3:          1  pwm_issue_0           ~run_issue                    
+  Row   4:    ***0***  pwm_issue_1           ~run_issue                    
+
+----------------Focused Expression View-----------------
+Line       419 Item    1  (op_r == OP_INTT)
+Expression totals: 1 of 1 input term covered = 100.00%
+
+-----------Focused Expression View (Bimodal)------------
+Line       435 Item    1  (((op_r == OP_NTT) || (op_r == OP_PRE_NTT))? rd_addr_i[2]: rd_addr_i[7])
+Expression totals: 4 of 4 input terms covered = 100.00%
+
+----------------Focused Expression View-----------------
+Line       445 Item    1  (state != IDLE)
+Expression totals: 1 of 1 input term covered = 100.00%
+
+----------------Focused Expression View-----------------
+Line       446 Item    1  (state == DONE)
+Expression totals: 0 of 1 input term covered = 0.00%
+
+       Input Term   Covered  Reason for no coverage   Hint
+      -----------  --------  -----------------------  --------------
+  (state == DONE)         N  No hits                  Hit '_0' and '_1'
+
+     Rows:       Hits  FEC Target            Non-masking condition(s)      
+ ---------  ---------  --------------------  -------------------------     
+  Row   1:    ***0***  (state == DONE)_0     -                             
+  Row   2:    ***0***  (state == DONE)_1     -                             
+
+
+FSM Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    FSM States                       5         5         0   100.00%
+    FSM Transitions                  9         6         3    66.66%
+
+================================FSM Details================================
+
+FSM Coverage for instance /tb_ntt_core/dut --
+
+FSM_ID: state
+    Current State Object : state
+    ----------------------
+    State Value MapInfo :
+    ---------------------
+Line          State Name               Value
+----          ----------               -----
+ 452                IDLE                   0
+ 459                 RUN                   2
+ 458           PRE_DRAIN                   1
+ 463               DRAIN                   3
+ 465                DONE                   4
+    Covered States :
+    ----------------
+                   State           Hit_count
+                   -----           ---------
+                    IDLE                  53          
+                     RUN                  51          
+               PRE_DRAIN                   6          
+                   DRAIN                  51          
+                    DONE                  51          
+    Covered Transitions :
+    ---------------------
+Line            Trans_ID           Hit_count          Transition          
+----            --------           ---------          ----------          
+ 456                   0                  45          IDLE -> RUN                   
+ 456                   1                   6          IDLE -> PRE_DRAIN             
+ 461                   2                  51          RUN -> DRAIN                  
+ 458                   4                   6          PRE_DRAIN -> RUN              
+ 463                   6                  51          DRAIN -> DONE                 
+ 465                   8                  51          DONE -> IDLE                  
+    Uncovered Transitions :
+    -----------------------
+Line            Trans_ID          Transition          
+----            --------          ----------          
+ 449                   3          RUN -> IDLE         
+ 449                   5          PRE_DRAIN -> IDLE   
+ 449                   7          DRAIN -> IDLE       
+
+
+    Summary                       Bins      Hits    Misses  Coverage
+    -------                       ----      ----    ------  --------
+        FSM States                   5         5         0   100.00%
+        FSM Transitions              9         6         3    66.66%
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Statements                     265       242        23    91.32%
+
+================================Statement Details================================
+
+Statement Coverage for instance /tb_ntt_core/dut --
+
+    Line         Item                      Count     Source 
+    ----         ----                      -----     ------ 
+  File ../src/ntt_LightHD/ntt_core.sv
+    68              1                      58840     
+    69              1                      58840     
+    76              1                        196     
+    77              1                         68     
+    78              1                         73     
+    79              1                         72     
+    80              1                         77     
+    81              1                         66     
+    82              1                         75     
+    83              1                         74     
+    84              1                         67     
+    85              1                    ***0***     
+    92              1                        768     
+    93              1                        768     
+    98              1                        768     
+    110             1                      23470     
+    111             1                      23470     
+    112             1                      23470     
+    113             1                      23470     
+    114             1                      23470     
+    116             1                      23470     
+    117             1                      23470     
+    120             1                      23470     
+    121             1                      23470     
+    123             1                      13320     
+    124             1                          2     
+    126             1                      13056     
+    128             1                          1     
+    129             1                    ***0***     
+    136             1                      22434     
+    138             1                          2     
+    139             1                          2     
+    140             1                          2     
+    141             1                          2     
+    142             1                          2     
+    143             1                          2     
+    144             1                          2     
+    145             1                          2     
+    147             1                      22432     
+    148             1                      22432     
+    150             1                        192     
+    151             1                        192     
+    152             1                        192     
+    152             2                        768     
+    153             1                        768     
+    157             1                        192     
+    158             1                        192     
+    158             2                        768     
+    159             1                        768     
+    162             1                        768     
+    172             1                      13025     
+    173             1                      13025     
+    174             1                      13025     
+    175             1                      13025     
+    176             1                      13025     
+    177             1                      13025     
+    178             1                      13025     
+    178             2                      13025     
+    179             1                      13025     
+    179             2                      13025     
+    184             1                       2400     
+    184             2                       2400     
+    186             1                       2400     
+    186             2                       2400     
+    190             1                       2304     
+    190             2                       2304     
+    195             1                       1680     
+    195             2                       1680     
+    197             1                       1680     
+    197             2                       1680     
+    201             1                       1680     
+    201             2                       1680     
+    205             1                    ***0***     
+    206             1                    ***0***     
+    210             1                          1     
+    211             1                      14328     
+    213             1                      14328     
+    215             1                      14328     
+    215             2                      57312     
+    216             1                      57312     
+    217             1                      57312     
+    218             1                      57312     
+    219             1                      57312     
+    221             1                    ***0***     
+    222             1                    ***0***     
+    224             1                      39948     
+    225             1                      39948     
+    227             1                       6528     
+    229             1                       6528     
+    232             1                      10836     
+    234             1                      10836     
+    238             1                      23960     
+    245             1                      12914     
+    246             1                      12914     
+    246             2                      51656     
+    249             1                      51656     
+    250             1                      51656     
+    253             1                       2772     
+    254             1                       2688     
+    255             1                       2688     
+    256             1                       2688     
+    257             1                       2688     
+    258             1                       2688     
+    259             1                       2688     
+    260             1                       2688     
+    264             1                       3180     
+    265             1                       3840     
+    266             1                       3840     
+    267             1                       3840     
+    268             1                       3840     
+    269             1                       3840     
+    270             1                       3840     
+    271             1                       3848     
+    279             1                      17535     
+    281             1                          3     
+    281             2                         12     
+    282             1                         12     
+    283             1                         12     
+    284             1                         12     
+    285             1                         12     
+    288             1                      17532     
+    288             2                      70128     
+    289             1                      70128     
+    290             1                      70128     
+    291             1                      70128     
+    292             1                      70128     
+    307             1                      18383     
+    308             1                          2     
+    308             2                          2     
+    310             1                      18381     
+    310             2                      73524     
+    312             1                      73524     
+    313             1                      73524     
+    315             1                    ***0***     
+    317             1                      52528     
+    318             1                      52528     
+    321             1                       2988     
+    322             1                       2988     
+    324             1                       2988     
+    325             1                       2988     
+    329             1                       7510     
+    330             1                       7510     
+    332             1                       7510     
+    333             1                       7510     
+    342             1                          1     
+    343             1                      48845     
+    343             2                      48845     
+    343             3                      48845     
+    344             1                      48845     
+    344             2                      48845     
+    344             3                      48845     
+    345             1                      48845     
+    345             2                      48845     
+    345             3                      48845     
+    347             1                      12993     
+    348             1                       8732     
+    349             1                       4261     
+    351             1                    ***0***     
+    352             1                    ***0***     
+    354             1                        402     
+    358             1                       1632     
+    359             1                       1632     
+    363             1                       1674     
+    363             2                       1674     
+    365             1                       1440     
+    365             2                       1440     
+    370             1                        202     
+    370             2                        202     
+    371             1                        202     
+    371             2                        202     
+    373             1                        195     
+    373             2                        195     
+    374             1                        195     
+    374             2                        195     
+    377             1                       8685     
+    377             2                       8685     
+    378             1                    ***0***     
+    378             2                    ***0***     
+    379             1                       4595     
+    379             2                       4595     
+    381             1                       4595     
+    381             2                       4595     
+    382             1                       8685     
+    382             2                       8685     
+    383             1                    ***0***     
+    383             2                    ***0***     
+    388             1                      16564     
+    389             1                      14688     
+    390             1                      10416     
+    391             1                       4080     
+    393             1                      17765     
+    395             1                      13398     
+    396             1                       4080     
+    397             1                    ***0***     
+    399             1                      26625     
+    401             1                          2     
+    401             2                          2     
+    401             3                          2     
+    401             4                          2     
+    402             1                          2     
+    402             2                          2     
+    403             1                          2     
+    403             2                          2     
+    403             3                          2     
+    404             1                          2     
+    404             2                          2     
+    405             1                          2     
+    405             2                         18     
+    405             3                         18     
+    407             1                      14688     
+    408             1                      10416     
+    409             1                       4080     
+    410             1                      14688     
+    411             1                      10416     
+    412             1                       4080     
+    413             1                      26623     
+    414             1                      26623     
+    415             1                      26623     
+    416             1                      26623     
+    416             2                      26623     
+    417             1                      26623     
+    418             1                      26623     
+    419             1                      26623     
+    420             1                      26623     
+    421             1                      26623     
+    422             1                      26623     
+    423             1                      26623     
+    423             2                     212984     
+    423             3                     212984     
+    430             1                      13268     
+    432             1                          2     
+    433             1                          2     
+    435             1                      13056     
+    437             1                      13056     
+    440             1                      23912     
+    441             1                      23912     
+    442             1                      23912     
+    445             1                        212     
+    446             1                    ***0***     
+    447             1                      13527     
+    449             1                          2     
+    449             2                          2     
+    449             3                          2     
+    449             4                          2     
+    453             1                         51     
+    454             1                         51     
+    455             1                         51     
+    456             1                         51     
+    458             1                          6     
+    461             1                         51     
+    461             2                         51     
+    461             3                         51     
+    462             1                      12813     
+    463             1                         51     
+    464             1                        408     
+    465             1                         51     
+    466             1                    ***0***     
+    471             1                      30680     
+    474             1                    ***0***     
+    475             1                    ***0***     
+    476             1                    ***0***     
+    477             1                    ***0***     
+    478             1                    ***0***     
+    479             1                    ***0***     
+    480             1                    ***0***     
+Toggle Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Toggles                       3669      3466       203    94.46%
+
+================================Toggle Details================================
+
+Toggle Coverage for instance /tb_ntt_core/dut --
+
+                                              Node      1H->0L      0L->1H                          "Coverage"
+                                              ---------------------------------------------------------------
+                                         b_q[0-91]           0           0                                0.00 
+                                         dest_a[0]           0           0                                0.00 
+                                         dest_b[1]           0           0                                0.00 
+                                            load_b           0           0                                0.00 
+                                      load_dest[1]           0           0                                0.00 
+                                           op_i[1]           0           1                               50.00 
+                                              op_r               ENUM type       Value       Count 
+                                                                    OP_PWM           0        0.00 
+                                         pwm_issue           0           0                                0.00 
+                                               rst           1           0                               50.00 
+                                       source_a[1]           0           0                                0.00 
+                                     source_a_q[1]           0           0                                0.00 
+                                             state               ENUM type       Value       Count 
+                                        wr_b_sel_i           0           0                                0.00 
+
+Total Node Count     =       1839 
+Toggled Node Count   =       1736 
+Untoggled Node Count =        103 
+
+Toggle Coverage      =      94.46% (3466 of 3669 bins)
+
+
+Total Coverage By Instance (filtered view): 83.29%
+

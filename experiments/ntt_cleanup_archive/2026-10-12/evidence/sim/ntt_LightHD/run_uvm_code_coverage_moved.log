@@ -1,0 +1,269 @@
+# do ntt_LightHD/run_uvm_code_coverage.do
+# ../src/ntt_LightHD
+# ../tb_uvm/tb_uvm_ntt_LightHD
+# ntt_LightHD
+# QuestaSim-64 vmap 2024.1 Lib Mapping Utility 2024.02 Feb  1 2024
+# vmap work ntt_LightHD/work_uvm_code 
+# Modifying modelsim.ini
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:15:54 on Oct 08,2026
+# vlog -sv -work work ../src/ntt_LightHD/ntt_pkg.sv 
+# -- Compiling package ntt_pkg
+# 
+# Top level modules:
+# 	--none--
+# End time: 01:15:54 on Oct 08,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:15:54 on Oct 08,2026
+# vlog -sv "+cover=sbceft" -work work ../src/ntt_LightHD/mod_mul.sv ../src/ntt_LightHD/butterfly_unit.sv ../src/ntt_LightHD/twiddle_rom.sv ../src/ntt_LightHD/ntt_core.sv ../src/ntt_LightHD/ntt_engine.sv 
+# -- Compiling package mod_mul_sv_unit
+# -- Importing package ntt_pkg
+# -- Compiling module mod_mul
+# -- Compiling package butterfly_unit_sv_unit
+# -- Compiling module butterfly_unit
+# -- Compiling package twiddle_rom_sv_unit
+# -- Compiling module twiddle_rom
+# -- Compiling package ntt_core_sv_unit
+# -- Compiling module ntt_core
+# -- Compiling package ntt_engine_sv_unit
+# -- Compiling module ntt_engine
+# 
+# Top level modules:
+# 	ntt_engine
+# End time: 01:15:54 on Oct 08,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:15:54 on Oct 08,2026
+# vlog -sv "+incdir+../tb_uvm/tb_uvm_ntt_LightHD" -L mtiUvm -work work ../tb_uvm/tb_uvm_ntt_LightHD/ntt_ref_pkg.sv ../tb_uvm/tb_uvm_ntt_LightHD/ntt_if.sv 
+# -- Compiling package ntt_ref_pkg
+# -- Importing package ntt_pkg
+# -- Compiling package ntt_if_sv_unit
+# -- Compiling interface ntt_if
+# 
+# Top level modules:
+# 	--none--
+# End time: 01:15:54 on Oct 08,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:15:54 on Oct 08,2026
+# vlog -sv "+define+NTT_FIFO" "+incdir+../tb_uvm/tb_uvm_ntt_LightHD" -L mtiUvm -work work ../tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv 
+# ** Note: (vlog-2286) ../tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv(13): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+# -- Compiling package tb_top_sv_unit
+# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+# -- Importing package ntt_pkg
+# -- Importing package ntt_ref_pkg
+# -- Compiling module tb_top
+# 
+# Top level modules:
+# 	tb_top
+# End time: 01:15:55 on Oct 08,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# vsim -coverage -voptargs="+acc" work.tb_top 
+# Start time: 01:15:55 on Oct 08,2026
+# ** Note: (vsim-8009) Loading existing optimized design _opt
+# //  Questa Sim-64
+# //  Version 2024.1 win64 Feb  1 2024
+# //
+# // Unpublished work. Copyright 2024 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# Loading sv_std.std
+# Loading work.ntt_pkg(fast)
+# Loading work.ntt_ref_pkg(fast)
+# Loading work.ntt_if(fast)
+# Loading mtiUvm.uvm_pkg(fast)
+# Loading work.tb_top_sv_unit(fast)
+# Loading mtiUvm.questa_uvm_pkg(fast)
+# Loading work.tb_top(fast)
+# Loading work.ntt_if_sv_unit(fast)
+# Loading work.ntt_if(fast__2)
+# Loading work.ntt_engine_sv_unit(fast)
+# Loading work.ntt_engine(fast)
+# Loading work.ntt_core_sv_unit(fast)
+# Loading work.ntt_core(fast)
+# Loading work.twiddle_rom_sv_unit(fast)
+# Loading work.twiddle_rom(fast)
+# Loading work.butterfly_unit_sv_unit(fast)
+# Loading work.butterfly_unit(fast)
+# Loading work.mod_mul_sv_unit(fast)
+# Loading work.mod_mul(fast)
+# Loading C:/questasim64_2024.1/uvm-1.1d\win64\uvm_dpi.dll
+# ----------------------------------------------------------------
+# UVM-1.1d
+# (C) 2007-2013 Mentor Graphics Corporation
+# (C) 2007-2013 Cadence Design Systems, Inc.
+# (C) 2006-2013 Synopsys, Inc.
+# (C) 2011-2013 Cypress Semiconductor Corp.
+# ----------------------------------------------------------------
+# 
+#   ***********       IMPORTANT RELEASE NOTES         ************
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_NO_DEPRECATED undefined.
+#   See http://www.eda.org/svdb/view.php?id=3313 for more details.
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_OBJECT_MUST_HAVE_CONSTRUCTOR undefined.
+#   See http://www.eda.org/svdb/view.php?id=3770 for more details.
+# 
+#       (Specify +UVM_NO_RELNOTES to turn off this notice)
+# 
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(277) @ 0: reporter [Questa UVM] QUESTA_UVM-1.2.3
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(278) @ 0: reporter [Questa UVM]  questa_uvm::init(+struct)
+# UVM_INFO @ 0: reporter [RNTST] Running test ntt_full_test...
+# UVM_INFO @ 0: reporter [UVMTOP] UVM testbench topology:
+# ------------------------------------------------------------------
+# Name                       Type                        Size  Value
+# ------------------------------------------------------------------
+# uvm_test_top               ntt_full_test               -     @471 
+#   env                      ntt_env                     -     @478 
+#     agent                  ntt_agent                   -     @485 
+#       driver               ntt_driver                  -     @632 
+#         drv_ap             uvm_analysis_port           -     @655 
+#         rsp_port           uvm_analysis_port           -     @647 
+#         seq_item_port      uvm_seq_item_pull_port      -     @639 
+#       monitor              ntt_monitor                 -     @663 
+#         exp_fifo           uvm_tlm_analysis_fifo #(T)  -     @678 
+#           analysis_export  uvm_analysis_imp            -     @717 
+#           get_ap           uvm_analysis_port           -     @709 
+#           get_peek_export  uvm_get_peek_imp            -     @693 
+#           put_ap           uvm_analysis_port           -     @701 
+#           put_export       uvm_put_imp                 -     @685 
+#         mon_ap             uvm_analysis_port           -     @670 
+#       sequencer            ntt_sequencer               -     @523 
+#         rsp_export         uvm_analysis_export         -     @530 
+#         seq_item_export    uvm_seq_item_pull_imp       -     @624 
+#         arbitration_queue  array                       0     -    
+#         lock_queue         array                       0     -    
+#         num_last_reqs      integral                    32    'd1  
+#         num_last_rsps      integral                    32    'd1  
+#     coverage               ntt_coverage                -     @507 
+#       analysis_imp         uvm_analysis_imp            -     @514 
+#     scoreboard             ntt_scoreboard              -     @492 
+#       checked_ap           uvm_analysis_port           -     @499 
+#       exp_fifo             uvm_tlm_analysis_fifo #(T)  -     @733 
+#         analysis_export    uvm_analysis_imp            -     @772 
+#         get_ap             uvm_analysis_port           -     @764 
+#         get_peek_export    uvm_get_peek_imp            -     @748 
+#         put_ap             uvm_analysis_port           -     @756 
+#         put_export         uvm_put_imp                 -     @740 
+#       obs_fifo             uvm_tlm_analysis_fifo #(T)  -     @780 
+#         analysis_export    uvm_analysis_imp            -     @819 
+#         get_ap             uvm_analysis_port           -     @811 
+#         get_peek_export    uvm_get_peek_imp            -     @795 
+#         put_ap             uvm_analysis_port           -     @803 
+#         put_export         uvm_put_imp                 -     @787 
+# ------------------------------------------------------------------
+# 
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 7855000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-zero NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 15695000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-zero INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 23535000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-(q-1) NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 31375000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-(q-1) INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 39215000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR delta@0 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 47055000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR delta@0 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 55535000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR PWM zero o zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 64015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR PWM max  o max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 72495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR PWM delta o delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 80335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 88175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 96015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 104495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 112335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 120175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 128015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 136495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 144335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 152175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 160015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 168495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 176335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 184175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 192015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 200495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 208335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 216175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 224015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 232495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 240335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 248175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 256015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 264495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 272335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 280175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 288015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 296495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 304335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 312175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 320015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 328495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 336335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 344175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 352015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 359855000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT random
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 367695000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 375535000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 383375000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 391215000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT random
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 399695000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 408175000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 416655000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 425135000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM random
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 432665000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -4
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 440195000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -3
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 447725000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -2
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 455255000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 462785000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 470315000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 477845000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 2
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 485375000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 3
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 492905000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 4
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 500435000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE eta2 mixed
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 507965000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE eta4 mixed
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 515495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE negative at first
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 523025000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE positive at last
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 530845000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT NTT no reset
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 538665000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT INTT no reset
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 547125000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT PWM no reset
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(59) @ 554635000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT PRE no reset
+# UVM_INFO verilog_src/uvm-1.1d/src/base/uvm_objection.svh(1267) @ 554835000: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(73) @ 554835000: uvm_test_top.env.coverage [ntt_coverage] Functional Coverage: 100.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(77) @ 554835000: uvm_test_top.env.coverage [ntt_coverage] Checked Pre-NTT Coverage: 100.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(80) @ 554835000: uvm_test_top.env.coverage [ntt_coverage] Checked Operation x Reset Coverage: 100.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(72) @ 554835000: uvm_test_top.env.scoreboard [ntt_scoreboard] 
+# =================== SCOREBOARD SUMMARY ===================
+#   Total:  70
+#   Passed: 70
+#   Failed: 0
+# ==========================================================
+# 
+# --- UVM Report Summary ---
+# 
+# ** Report counts by severity
+# UVM_INFO :   79
+# UVM_WARNING :    0
+# UVM_ERROR :    0
+# UVM_FATAL :    0
+# ** Report counts by id
+# [Questa UVM]     2
+# [RNTST]     1
+# [TEST_DONE]     1
+# [UVMTOP]     1
+# [ntt_coverage]     3
+# [ntt_scoreboard]    71
+# ** Note: $finish    : C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh(430)
+#    Time: 554835 ns  Iteration: 54  Instance: /tb_top
+# Break in Task uvm_pkg/uvm_root::run_test at C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh line 430
+# Stopped at C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh line 430
+# Saving coverage database on exit...
+# End time: 01:15:58 on Oct 08,2026, Elapsed time: 0:00:03
+# Errors: 0, Warnings: 0
+#  quit -f

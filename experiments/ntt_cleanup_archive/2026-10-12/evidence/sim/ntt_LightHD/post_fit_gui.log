@@ -1,0 +1,296 @@
+# F:/altera/quartus/eda/sim_lib
+# ntt_LightHD/vendor_libs
+# altera_ver altera_primitives.v lpm_ver 220model.v sgate_ver sgate.v altera_mf_ver altera_mf.v altera_lnsim_ver altera_lnsim.sv cyclonev_ver cyclonev_atoms.v
+# ntt_LightHD/work_post_fit
+# QuestaSim-64 vmap 2024.1 Lib Mapping Utility 2024.02 Feb  1 2024
+# vmap work ntt_LightHD/work_post_fit 
+# Modifying modelsim.ini
+# ../src/ntt_LightHD
+# ../tb_uvm/tb_uvm_ntt_LightHD
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 23:58:54 on Oct 11,2026
+# vlog -reportprogress 300 -sv -work work ../src/ntt_LightHD/ntt_pkg.sv 
+# -- Compiling package ntt_pkg
+# 
+# Top level modules:
+# 	--none--
+# End time: 23:58:54 on Oct 11,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 23:58:54 on Oct 11,2026
+# vlog -reportprogress 300 -work work ../quartus/ntt_LightHD/simulation_postfit/ntt.vo 
+# -- Compiling module ntt_engine
+# 
+# Top level modules:
+# 	ntt_engine
+# End time: 23:58:56 on Oct 11,2026, Elapsed time: 0:00:02
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 23:58:56 on Oct 11,2026
+# vlog -reportprogress 300 -sv "+incdir+../tb_uvm/tb_uvm_ntt_LightHD" -L mtiUvm -work work ../tb_uvm/tb_uvm_ntt_LightHD/ntt_ref_pkg.sv ../tb_uvm/tb_uvm_ntt_LightHD/ntt_if.sv 
+# -- Compiling package ntt_ref_pkg
+# -- Importing package ntt_pkg
+# -- Compiling package ntt_if_sv_unit
+# -- Compiling interface ntt_if
+# 
+# Top level modules:
+# 	--none--
+# End time: 23:58:56 on Oct 11,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 23:58:56 on Oct 11,2026
+# vlog -reportprogress 300 -sv "+define+NTT_FIFO" "+define+NTT_NETLIST" "+incdir+../tb_uvm/tb_uvm_ntt_LightHD" -L mtiUvm -work work ../tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv 
+# ** Note: (vlog-2286) ../tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv(13): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+# -- Compiling package tb_top_sv_unit
+# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+# -- Importing package ntt_pkg
+# -- Importing package ntt_ref_pkg
+# -- Compiling module tb_top
+# 
+# Top level modules:
+# 	tb_top
+# End time: 23:58:57 on Oct 11,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# vsim -wlf ntt_LightHD/post_fit.wlf -voptargs="+acc" -t 1ps -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L altera_lnsim_ver -L cyclonev_ver work.tb_top "+UVM_TESTNAME=ntt_netlist_gate_test" "+NTT_REPRESENTATION=post_fit" 
+# Start time: 23:58:57 on Oct 11,2026
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: (vopt-10587) Some optimizations are turned off because the +acc switch is in effect. This will cause your simulation to run slowly. Please use -access/-debug to maintain needed visibility.
+# Support of the MGLS_LICENSE_FILE and LM_LICENSE_FILE licensing environment variables will be discontinued starting with the 2025.1 release. Please update to using the SALT_LICENSE_SERVER variable.
+# Please contact Siemens EDA Customer Support (https://support.sw.siemens.com/) for assistance.
+# ** Warning: F:/altera/quartus/eda/sim_lib/mentor/cyclonev_atoms_ncrypt.v(38): (vopt-2241) Connection width does not match width of port '<protected>'.<protected>
+# ** Warning: F:/altera/quartus/eda/sim_lib/mentor/cyclonev_atoms_ncrypt.v(38): (vopt-2241) Connection width does not match width of port '<protected>'.<protected>
+# ** Warning: F:/altera/quartus/eda/sim_lib/mentor/cyclonev_atoms_ncrypt.v(38): (vopt-2241) Connection width does not match width of port '<protected>'.<protected>
+# ** Warning: F:/altera/quartus/eda/sim_lib/mentor/cyclonev_atoms_ncrypt.v(38): (vopt-2241) Connection width does not match width of port '<protected>'.<protected>
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=5.
+# Loading sv_std.std
+# Loading work.ntt_pkg(fast)
+# Loading work.ntt_ref_pkg(fast)
+# Loading work.ntt_if(fast)
+# Loading mtiUvm.uvm_pkg(fast)
+# Loading work.tb_top_sv_unit(fast)
+# Loading mtiUvm.questa_uvm_pkg(fast)
+# Loading work.tb_top(fast)
+# Loading work.ntt_if_sv_unit(fast)
+# Loading work.ntt_if(fast__2)
+# Loading work.ntt_engine(fast)
+# Loading cyclonev_ver.cyclonev_io_obuf(fast)
+# Loading cyclonev_ver.cyclonev_io_ibuf(fast)
+# Loading cyclonev_ver.cyclonev_clkena(fast)
+# Loading cyclonev_ver.cyclonev_io_ibuf(fast__1)
+# Loading cyclonev_ver.cyclonev_lcell_comb(fast)
+# Loading altera_ver.dffeas(fast)
+# Loading cyclonev_ver.cyclonev_mac(fast)
+# Loading cyclonev_ver.cyclonev_ram_block(fast)
+# Loading altera_lnsim_ver.generic_m10k(fast)
+# Loading altera_lnsim_ver.altera_lnsim_functions(fast)
+# Loading altera_lnsim_ver.common_28nm_ram_block(fast)
+# Loading altera_lnsim_ver.common_28nm_ram_register(fast)
+# Loading altera_lnsim_ver.common_28nm_ram_register(fast__1)
+# Loading altera_lnsim_ver.common_28nm_ram_register(fast__2)
+# Loading altera_lnsim_ver.common_28nm_ram_pulse_generator(fast)
+# Loading cyclonev_ver.cyclonev_ram_block(fast__1)
+# Loading altera_lnsim_ver.generic_m10k(fast__1)
+# Loading altera_lnsim_ver.common_28nm_ram_block(fast__1)
+# Loading altera_lnsim_ver.common_28nm_ram_register(fast__3)
+# Loading altera_lnsim_ver.common_28nm_ram_pulse_generator(fast__1)
+# Loading cyclonev_ver.cyclonev_ram_block(fast__2)
+# Loading altera_lnsim_ver.generic_m10k(fast__2)
+# Loading altera_lnsim_ver.common_28nm_ram_block(fast__2)
+# Loading altera_lnsim_ver.common_28nm_ram_register(fast__4)
+# Loading cyclonev_ver.cyclonev_ram_block(fast__3)
+# Loading altera_lnsim_ver.generic_m10k(fast__3)
+# Loading altera_lnsim_ver.common_28nm_ram_block(fast__3)
+# Loading altera_lnsim_ver.common_28nm_ram_register(fast__5)
+# Loading cyclonev_ver.cyclonev_ram_block(fast__4)
+# Loading altera_lnsim_ver.generic_m10k(fast__4)
+# Loading altera_lnsim_ver.common_28nm_ram_block(fast__4)
+# Loading altera_lnsim_ver.common_28nm_ram_register(fast__6)
+# Loading cyclonev_ver.cyclonev_mac(fast__1)
+# Loading cyclonev_ver.cyclonev_ram_block(fast__5)
+# Loading altera_lnsim_ver.generic_m10k(fast__5)
+# Loading altera_lnsim_ver.common_28nm_ram_block(fast__5)
+# ** Warning: (vsim-3016) Port type 'tri0' is incompatible with connection type 'tri1', coercing to 'tri1' (port 'ax').
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3016) Port type 'tri0' is incompatible with connection type 'tri1', coercing to 'tri1' (port 'ax').
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3016) Port type 'tri0' is incompatible with connection type 'tri1', coercing to 'tri1' (port 'ax').
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3016) Port type 'tri0' is incompatible with connection type 'tri1', coercing to 'tri1' (port 'ax').
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (26) for port 'az'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4326).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (18) for port 'bx'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4328).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (19) for port 'by'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4329).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (18) for port 'bz'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4330).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (2) does not match connection size (27) for port 'scanin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4332).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (64) does not match connection size (1) for port 'chainin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4333).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (26) for port 'az'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4326).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (18) for port 'bx'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4328).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (19) for port 'by'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4329).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (18) for port 'bz'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4330).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (23) does not match connection size (27) for port 'scanin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4332).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (64) does not match connection size (1) for port 'chainin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4333).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (26) for port 'az'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4326).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (18) for port 'bx'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4328).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (19) for port 'by'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4329).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (18) for port 'bz'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4330).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (23) does not match connection size (27) for port 'scanin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4332).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (64) does not match connection size (1) for port 'chainin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4333).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (26) for port 'az'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4326).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (18) for port 'bx'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4328).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (19) for port 'by'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4329).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (18) for port 'bz'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4330).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (23) does not match connection size (27) for port 'scanin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4332).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (64) does not match connection size (1) for port 'chainin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4333).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (26) for port 'az'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4326).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (18) for port 'bx'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4328).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (19) for port 'by'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4329).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (18) for port 'bz'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4330).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# ** Warning: (vsim-3015) [PCDPC] - Port size (23) does not match connection size (27) for port 'scanin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4332).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# ** Warning: (vsim-3015) [PCDPC] - Port size (64) does not match connection size (1) for port 'chainin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4333).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# Loading C:/questasim64_2024.1/uvm-1.1d\win64\uvm_dpi.dll
+# run -all
+# ----------------------------------------------------------------
+# UVM-1.1d
+# (C) 2007-2013 Mentor Graphics Corporation
+# (C) 2007-2013 Cadence Design Systems, Inc.
+# (C) 2006-2013 Synopsys, Inc.
+# (C) 2011-2013 Cypress Semiconductor Corp.
+# ----------------------------------------------------------------
+# 
+#   ***********       IMPORTANT RELEASE NOTES         ************
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_NO_DEPRECATED undefined.
+#   See http://www.eda.org/svdb/view.php?id=3313 for more details.
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_OBJECT_MUST_HAVE_CONSTRUCTOR undefined.
+#   See http://www.eda.org/svdb/view.php?id=3770 for more details.
+# 
+#       (Specify +UVM_NO_RELNOTES to turn off this notice)
+# 
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(277) @ 0: reporter [Questa UVM] QUESTA_UVM-1.2.3
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(278) @ 0: reporter [Questa UVM]  questa_uvm::init(+struct)
+# UVM_INFO @ 0: reporter [RNTST] Running test ntt_netlist_gate_test...
+# UVM_INFO @ 0: reporter [UVMTOP] UVM testbench topology:
+# ------------------------------------------------------------------
+# Name                       Type                        Size  Value
+# ------------------------------------------------------------------
+# uvm_test_top               ntt_netlist_gate_test       -     @471 
+#   env                      ntt_env                     -     @482 
+#     agent                  ntt_agent                   -     @490 
+#       driver               ntt_netlist_driver          -     @622 
+#         drv_ap             uvm_analysis_port           -     @645 
+#         rsp_port           uvm_analysis_port           -     @637 
+#         seq_item_port      uvm_seq_item_pull_port      -     @629 
+#       monitor              ntt_netlist_monitor         -     @653 
+#         exp_fifo           uvm_tlm_analysis_fifo #(T)  -     @668 
+#           analysis_export  uvm_analysis_imp            -     @707 
+#           get_ap           uvm_analysis_port           -     @699 
+#           get_peek_export  uvm_get_peek_imp            -     @683 
+#           put_ap           uvm_analysis_port           -     @691 
+#           put_export       uvm_put_imp                 -     @675 
+#         mon_ap             uvm_analysis_port           -     @660 
+#       sequencer            ntt_sequencer               -     @513 
+#         rsp_export         uvm_analysis_export         -     @520 
+#         seq_item_export    uvm_seq_item_pull_imp       -     @614 
+#         arbitration_queue  array                       0     -    
+#         lock_queue         array                       0     -    
+#         num_last_reqs      integral                    32    'd1  
+#         num_last_rsps      integral                    32    'd1  
+#     scoreboard             ntt_scoreboard              -     @497 
+#       checked_ap           uvm_analysis_port           -     @504 
+#       exp_fifo             uvm_tlm_analysis_fifo #(T)  -     @725 
+#         analysis_export    uvm_analysis_imp            -     @764 
+#         get_ap             uvm_analysis_port           -     @756 
+#         get_peek_export    uvm_get_peek_imp            -     @740 
+#         put_ap             uvm_analysis_port           -     @748 
+#         put_export         uvm_put_imp                 -     @732 
+#       obs_fifo             uvm_tlm_analysis_fifo #(T)  -     @772 
+#         analysis_export    uvm_analysis_imp            -     @811 
+#         get_ap             uvm_analysis_port           -     @803 
+#         get_peek_export    uvm_get_peek_imp            -     @787 
+#         put_ap             uvm_analysis_port           -     @795 
+#         put_export         uvm_put_imp                 -     @779 
+# ------------------------------------------------------------------
+# 
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(142) @ 7875000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [GATE real zero NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(145) @ 7875000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] GATE real zero NTT
+# UVM_INFO verilog_src/uvm-1.1d/src/base/uvm_objection.svh(1267) @ 8100000: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_netlist.sv(287) @ 8100000: uvm_test_top [NETLIST_CHECKER_GATE] NTT NETLIST CHECKER GATE PASS: five external corruptions rejected
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(161) @ 8100000: uvm_test_top.env.scoreboard [ntt_scoreboard] 
+# =================== SCOREBOARD SUMMARY ===================
+#   Total:  6
+#   Passed: 1
+#   Failed: 5
+# ==========================================================
+# 
+# --- UVM Report catcher Summary ---
+# 
+# 
+# Number of demoted UVM_FATAL reports  :    0
+# Number of demoted UVM_ERROR reports  :    0
+# Number of demoted UVM_WARNING reports:    0
+# Number of caught UVM_FATAL reports   :    0
+# Number of caught UVM_ERROR reports   :    5
+# Number of caught UVM_WARNING reports :    0
+# 
+# --- UVM Report Summary ---
+# 
+# ** Report counts by severity
+# UVM_INFO :    9
+# UVM_WARNING :    0
+# UVM_ERROR :    0
+# UVM_FATAL :    0
+# ** Report counts by id
+# [NETLIST_CHECKER_GATE]     1
+# [NETLIST_EXTERNAL_CHECKED]     1
+# [Questa UVM]     2
+# [RNTST]     1
+# [TEST_DONE]     1
+# [UVMTOP]     1
+# [ntt_scoreboard]     2
+# ** Note: $finish    : C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh(430)
+#    Time: 8100 ns  Iteration: 54  Instance: /tb_top
+# Break in Task uvm_pkg/uvm_root::run_test at C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh line 430
+# if {[batch_mode]} {quit -sim} else {
+#   wave zoom range 0ns 12us
+#   echo "NETLIST GUI READY: functional simulation retained; no source coverage or SDF timing claim."
+# }
+# NETLIST GUI READY: functional simulation retained; no source coverage or SDF timing claim.
+# foreach variable {NTT_WORK NTT_TEST NTT_REPRESENTATION NTT_NETLIST_FILE} {unset $variable}
+#  echo CONSOLIDATED_POSTFIT_COMPLETE
+# CONSOLIDATED_POSTFIT_COMPLETE
+#  quit -f
+# End time: 23:59:23 on Oct 11,2026, Elapsed time: 0:00:26
+# Errors: 0, Warnings: 39

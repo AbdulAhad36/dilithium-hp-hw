@@ -1,13 +1,280 @@
 # NTT coverage status - LightHD UVM
 
-**Updated:** 2026-10-10. **Stage:** 4, in progress. **DUT:** `src/ntt_LightHD/`.
-The main coverage flow is **`sim/ntt_LightHD/run_uvm.do`**, running
-`tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv` with the UVM environment.
-The latest `sim/ntt_LightHD/uvm_fold_pipeline.log` records **118/118 passing jobs**,
-zero UVM errors/fatals, 118 named `CHECKED_TRACE` witnesses and
-118 `CHECKED_COEFFICIENT_ROUTING` witnesses. All fourteen implemented
-covergroup types reach 100%.
-This does not close Stage 4 or claim complete code coverage.
+## Current interaction coverage checkpoint - 2026-10-12
+
+**748/748 main UVM jobs, 191,488/191,488 compared coefficients, zero UVM
+errors/fatals. 32 checked covergroup types; overall functional type average
+90.4730903% (90.47%).** This adds ten groups and 128 jobs to the previous
+620-job checkpoint. Every valid hit is retained. The user's 90-91% target is
+a review checkpoint; no test fails for exceeding 91%, and no sampling is
+stopped, hidden or excluded to enforce an upper percentage.
+
+### New covergroups and genuine remaining gaps
+
+| Group | Hit/legal bins | Type coverage | Requirement |
+|---|---:|---:|---|
+| `cg_shape_input_flow` | 108/192 | 56.25% | Mode x actual A polynomial shape x observed maximum input-gap class |
+| `cg_shape_output_flow` | 108/192 | 56.25% | Mode x actual A polynomial shape x observed maximum output-stall class |
+| `cg_shape_reset` | 64/64 | 100.00% | Mode x actual A shape x observed reset between jobs |
+| `cg_pwm_shapes` | 64/64 | 100.00% | Actual PWM A shape x actual PWM B shape |
+| `cg_pre_spatial_values` | 144/144 | 100.00% | Exact signed Pre value (-4..4) x 64-coefficient quadrant x lane |
+| `cg_output_lane_ranges` | 104/128 | 81.25% | Mode x observed output range x coefficient lane |
+| `cg_input_spatial_ranges` | 148/148 | 100.00% | Accepted operand stream x input range x 64-coefficient quadrant |
+| `cg_transition_flow` | 186/576 | 32.29% | Previous/current checked mode x observed gap x observed stall |
+| `cg_shape_dual_flow` | 32/32, 36/36, 219/1152 | 73.00% | Explicit cross of mode/shape and gap/stall, plus its two marginals |
+| `cg_transition_shape_flow` | 252/4608 | 5.47% | Previous/current checked mode x actual A shape x gap x stall |
+
+For `cg_shape_dual_flow`, the three counts are the two marginals (32/32,
+36/36) and their **219/1,152 cross (19.01%)**. Its default equal-weight type
+score is `(100 + 100 + 19.0104167)/3 = 73.0034722%`; it must not be described
+as 73% of cross combinations. All coverpoint/cross weights use Questa defaults.
+The overall headline is `sum(32 type percentages)/32`, matching the existing
+headline definition. The raw report truncates the display to **90.47%**.
+
+For transparency, across all coverpoint/cross goals the raw counts are
+**16,166/22,047 bins = 73.33%**. This includes marginal and cross goals, not
+independent requirements. It is a different aggregation from the type average.
+The ten interaction types average **70.4513889%**. Several individual types
+reach 100%; these do not erase the incomplete crosses.
+
+### Bin definitions and reachability
+
+- `mode`: NTT=0, INTT=1, Pre=2, PWM=3.
+- `shape`: zero=0, nonzero constant=1, single nonzero=2, alternating=3,
+  ascending=4, descending=5, mixed eta-2=6, other=7, in this priority order.
+  Classification uses captured accepted A/B coefficients, not sequence labels.
+- `gap`/`stall`: none=0, 1 clock=1, 2 clocks=2, 3-7=3, 8-15=4, 16+=5.
+  These are measured maxima, checked against the requested profile. The tested
+  maximum remains 63 clocks; this does not claim an arbitrary duration proof.
+- `quadrant = coefficient_index/64`, `lane = coefficient_index%4`.
+- Input streams: NTT A=0, INTT A=1, PWM A=2, PWM B=3, Pre A=4. The eight
+  coefficient ranges retain the earlier definition below. Only Pre ranges
+  3,4,5 are ignored (12 quadrant bins, IDs140..151), because they violate
+  the bounded-secret contract. No new observed legal misses are excluded.
+- Encodings: shape/flow=`(mode*8+shape)*6+duration`; shape/reset=
+  `(mode*8+shape)*2+reset`; PWM shapes=`Ashape*8+Bshape`; Pre spatial=
+  `((signed_value+4)*4+quadrant)*4+lane`; output ranges=
+  `(mode*8+range)*4+lane`; input spatial=`(stream*8+range)*4+quadrant`;
+  transition flow=`(prior*4+current)*36+gap*6+stall`; transition shape flow=
+  `((prior*4+current)*8+shape)*36+gap*6+stall`.
+- Reset means an observed reset between checked jobs, including the independently
+  checked abort/recovery witness. Transition crosses do not claim that an
+  aborted operation produced an accepted result. There is no predecessor sample
+  for the first checked job.
+
+### New tests and checker connection
+
+`ntt_interaction_seq` runs **128** new jobs through the main UVM environment:
+64 mode/shape/flow jobs (4 operations x 8 shapes x 2 profiles, with varied
+reset and backpressure), then all 64 PWM A/B shape pairs. Its xorshift seed
+is **1831565813 (0x6d2b79f5)**; the retained 502-job extension keeps seed
+439041101; the simulator seed is 20261011. Tests never query coverage.
+
+The driver sends operands; the monitor's `ntt_trace` and independent routing
+model collect actual transfers/results. The scoreboard compares all 256 outputs,
+framing, routing and flow-duration observations. Only its `checked_ap` publishes
+passing jobs. `ntt_coverage::write` calls `sample_interactions` before updating
+the previous checked mode, then samples the retained groups. Each job prints
+`CHECKED_INTERACTIONS` with name, modes, actual shape, measured gap/stall and reset.
+
+The source checker self-test also saves the interaction mean and confirms all
+seven deliberate failures leave it and the checked-job count unchanged.
+`coverage_gate_interactions.log` reports `UVM COVERAGE GATE PASS` with zero
+UVM errors/fatals. The gate database remains separate from the passing regression.
+
+### Remaining verification work
+
+The unhit bins are real gaps. Shape/input and shape/output flow each miss 84/192;
+output ranges by lane miss 24/128; transition/flow misses 390/576; the explicit
+shape/dual-flow cross misses 933/1,152; transition/shape/flow misses 4,356/4,608.
+Next closure work would vary gap/stall profiles for structured inputs, force
+output ranges onto each lane, and exercise transitions with controlled shapes
+and flow. The 90.47% checkpoint does **not** mean these areas are fully verified.
+No integration coverage is credited; sampler/Keccak Stage 6 remains pending.
+
+### Current DUT code coverage
+
+These raw counts are unchanged from the previous checkpoint. Conditions remain
+below 90%; the existing code-hole discussion below still applies. No code
+exclusions or RTL changes were made to alter these numbers.
+
+| Metric | Hit/total | Coverage |
+|---|---:|---:|
+| Statements | 762/775 | 98.32% |
+| Toggles | 11691/12735 | 91.80% |
+| Branches | 388/402 | 96.52% |
+| Conditions | 56/85 | 65.88% |
+| Expressions | 56/59 | 94.92% |
+| FSM States | 13/13 | 100.00% |
+| FSM Transitions | 24/24 | 100.00% |
+
+### Run and evidence
+
+In Questa:
+
+```tcl
+cd D:/GitHub/dilithium-hp-hw/sim
+do ntt_LightHD/run_uvm.do
+```
+
+The GUI shows waves, covergroups, instance/code coverage and transcript.
+Require `NTT INTERACTION UVM PASS: 748/748 jobs` and zero UVM errors/fatals.
+See `OVERALL_FUNCTIONAL_COVERAGE` for the actual type average. The main UCDB
+and detailed report retain their existing names. Headless execution:
+
+```powershell
+& 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_LightHD/uvm_interactions.log -do 'do ntt_LightHD/run_uvm.do; quit -f'
+```
+
+Evidence and every missing bin are archived in
+[interaction checkpoint](../../../experiments/ntt_stage4/lighthd_interaction_coverage_checkpoint/README.md).
+`results.json` contains all 32 groups, each point/cross count and missing bin,
+seven DUT code metrics and seeds; source/evidence hashes and complete sources,
+logs, main UCDB and separate checker UCDB are retained. RTL and golden hashes
+match the previous accepted checkpoint. Full netlist suites were not rerun for
+this TB-only extension; retained 117-job Stage 5 results remain their evidence.
+
+## Historical 620-job checked coverage - 2026-10-11
+
+The main source regression is now **620/620 passing jobs**, **158,720/158,720
+compared coefficients**, zero UVM errors/fatals and 620 checked internal,
+coefficient-routing and extended-profile witnesses. It reuses the original
+118 jobs and adds **502**: 32 input-shape jobs, three prescribed output-range
+jobs, two bounded Pre impulses, one PWM operand-range Cartesian job, 400
+randomized flow jobs and 64 jobs checking 32 operation/reset transitions.
+
+The acceptance gate is **at least 90% in every one of 22 covergroup types**,
+not a requirement to hit every bin. No percentages are artificially reduced.
+The original fourteen types remain at 100%. Of the eight new types:
+
+| New covergroup | Hit/legal bins | Coverage | Checked meaning |
+|---|---:|---:|---|
+| `cg_input_range` | 37/37 | 100.00% | Four ordinary operand streams plus bounded Pre A; accepted coefficient ranges. |
+| `cg_output_range` | 31/32 | 96.88% | Four operations x eight canonical output ranges. |
+| `cg_pwm_pairs` | 256/256 | 100.00% | Eight A ranges x eight B ranges x four coefficient lanes. |
+| `cg_input_gap_duration` | 60/60 | 100.00% | Four modes x three input regions x five nonzero gap durations. |
+| `cg_output_stall_duration` | 60/60 | 100.00% | Four modes x first/middle/last output x five nonzero stall durations. |
+| `cg_flow_combination` | 133/144 | 92.36% | Four modes x six maximum-gap classes x six maximum-stall classes. |
+| `cg_operation_transition` | 32/32 | 100.00% | Previous/current checked mode x observed intervening reset. |
+| `cg_polynomial_shape` | 32/32 | 100.00% | Four modes x eight shapes classified from accepted operand A. |
+
+Questa's covergroup-type average is **99.51%** across 22 types. The eight new
+groups' equal-weight mean is **98.65%**, and the lowest group is **92.36%**.
+These averages weight groups equally; they are not a count of all bins and
+are not the percentage of all possible inputs verified. The 14,000-plus
+structural bins do not drown the new behavioral crosses in these averages.
+
+### Definitions and sampling evidence
+
+Canonical coefficient ranges are `0`, `1`, `2..4`, `5..4095`, `4096..floor(q/2)`,
+`floor(q/2)+1..q-5`, `q-4..q-2`, and `q-1`. Inputs are contractually canonical.
+Pre inputs can occupy only ranges 0,1,2,6,7; its three impossible ranges are
+explicitly ignored (32+5=37 legal input-range bins). Gap/stall classes are
+none, one, two, 3..7, 8..15 and 16..63 clocks. The final class also categorizes
+longer observations, but this run exercises values only through 63; arbitrary
+stall lengths are not claimed. Input regions are accepted index <16, >=240,
+otherwise middle; output regions are coefficient 0,255,otherwise middle.
+
+`ntt_extended_seq` generates the cases. `ntt_driver.sv` uses per-item gap and
+boundary lengths; `ntt_monitor.sv` drives requested output stalls and checks
+held data/last. `ntt_trace.sample_durations()` counts actual pin observations,
+including full runs and their regions. `ntt_scoreboard.flow_profile_ok()`
+independently derives requested per-region run counts and maximum lengths,
+and rejects discrepancies before `checked_ap` publication. The existing
+independent operand/routing model and all 256 golden comparisons must also
+pass. `ntt_coverage.sample_expanded()` then samples accepted operands, actual
+outputs, observed reset and measured durations; sequence labels never select
+these new bins. Each passing job prints `CHECKED_EXTENDED`.
+
+Shape classification, in priority order, is zero, nonzero constant, one
+nonzero coefficient, alternating pair, ascending, descending, mixed eta-2,
+and other. Ascending/descending are non-strict order in canonical residues,
+not signed order. Transition coverage describes two successive checked jobs;
+it does not replace the existing nine mid-job reset scenarios.
+
+Default simulator seed is **20261011**. The new flow generator has separate
+xorshift seed **439041101** (`0x1a2b3c4d`), selectable using `+NTT_EXT_SEED`.
+It selects gap/stall classes independently and never queries coverage to pick
+stimulus. Four operations each receive 100 randomized flow jobs. Both seeds
+and exact sources are archived; the remaining gaps are real results of this run.
+
+### Remaining functional bins
+
+Output bin `classes[23]` is unhit: Pre mode (index 2) producing exactly `q-1`.
+It is legal, remains in the denominator, and is not waived. The eleven unhit
+flow bins below decode as `mode*36 + gap_class*6 + stall_class`:
+
+| Bin | Mode | Max input gap (clocks) | Max output stall (clocks) |
+|---|---|---|---|
+| 10 | NTT | 1 | 8-15 |
+| 18 | NTT | 3-7 | none |
+| 37 | INTT | none | 1 |
+| 41 | INTT | none | 16-63 |
+| 46 | INTT | 1 | 8-15 |
+| 58 | INTT | 3-7 | 8-15 |
+| 91 | Pre | 3-7 | 1 |
+| 103 | Pre | 16-63 | 1 |
+| 115 | PWM | 1 | 1 |
+| 132 | PWM | 8-15 | none |
+| 142 | PWM | 16-63 | 8-15 |
+
+No claim covers arbitrary combinations of reset cycles, backpressure durations
+or all 23-bit inputs. The current sampled coverage target is met with the
+remaining bins visible.
+
+### Current raw DUT code coverage
+
+Only DUT RTL is instrumented. For each metric, sum hits and bins across the
+four ROMs, four multipliers, four butterflies, core and wrapper **self counts**;
+parent entries exclude children, so no instance is counted twice.
+Percentage = `100 * sum(hits) / sum(bins)`. No code exclusions or negative-test
+UCDBs are merged. This is different from Questa's filtered instance summary.
+
+| Code metric | Raw hit/total bins | Coverage |
+|---|---:|---:|
+| Statements | 762/775 | 98.32% |
+| Branches | 388/402 | 96.52% |
+| Conditions | 56/85 | 65.88% |
+| Expressions | 56/59 | 94.92% |
+| Toggles | 11,691/12,735 | 91.80% |
+| FSM States | 13/13 | 100.00% |
+| FSM Transitions | 24/24 | 100.00% |
+
+Raw counts are unchanged from the Stage 5 source baseline. The added tests
+exercise more functional combinations on already executed RTL; they do not
+establish new line/branch hits. **Condition coverage remains below 90%**:
+core 49/78 plus wrapper 7/7 = 56/85. Reviewed holes include error guards,
+correlated INTT/PWM terms and mutually exclusive write routes. The detailed
+code-hole review below remains applicable; unresolved attribution/routes are
+not automatically called unreachable. Multiplier constant bits, packed
+selectors and fixed-width counters explain many toggle misses. FSM coverage
+being 100% does not imply complete code coverage.
+
+### Checker proof, run and artifacts
+
+`coverage_gate_expanded.log` records a separate passing checker self-test:
+seven corrupted observations (coefficient, beat count, framing, missing trace,
+reset status, forged maximum gap, forged maximum stall) are rejected without
+increasing checked jobs, schedule/arithmetic coverage or the eight-group mean.
+These expected failures are not added to the 620 passing jobs. Its UCDB remains
+separate. The existing fitted-netlist checker also passes a compatibility
+self-test with the updated shared UVM code; the full netlist evidence remains
+the earlier 117-job Stage 5 suite, not a rerun of all 620 expanded source jobs.
+
+Run from Questa with working directory `sim/`:
+
+```tcl
+do ntt_LightHD/run_uvm.do
+```
+
+Require `NTT EXPANDED UVM PASS`, zero UVM errors/fatals and the 620-job summary.
+The main raw report/database are `sim/ntt_LightHD/ntt_lighthd_coverage.rpt` and
+`ntt_lighthd_cov.ucdb`; current transcript is `uvm_expanded.log`. Inspect the
+UCDB in Questa's Coverage viewer for individual bins/RTL misses. Exact sources,
+logs, UCDB/raw report, parsed counts/misses and separate checker evidence:
+[expanded coverage checkpoint](../../../experiments/ntt_stage4/lighthd_expanded_coverage_checkpoint/README.md).
+RTL, golden arithmetic, fitted area/timing and operation cycle counts are
+unchanged. No fresh synthesis or expanded full-netlist run is claimed.
 
 ## How an observed event becomes a checked coverage hit
 
@@ -33,7 +300,7 @@ The wiring is in `ntt_env.sv`: driver -> expected FIFO, monitor -> observed FIFO
 scoreboard `checked_ap` -> coverage subscriber. There are no covergroups in
 `ntt_trace.sv`; collecting an event alone does not credit a bin.
 
-## Exact implemented UVM coverage
+## Original fourteen implemented UVM coverage groups (still 100%)
 
 All rows below are **100% in the main UVM UCDB**. Counts refer to the listed
 coverpoints/crosses, not an invented aggregate percentage.
@@ -63,7 +330,7 @@ coverpoints/crosses, not an invented aggregate percentage.
 | `cg_flow.cp_output_stall` | 16/16 | Four modes x no stall/first beat/middle beat/last beat; stalled data/last remain stable. |
 | `cg_flow.cp_pwm_boundary_gap` | 1/1 | Gap between operand A and B in a passing PWM job. |
 
-The 118 jobs are 53 standard cases + 13 bounded Pre cases + four unlike jobs
+The original 118-job subset is 53 standard cases + 13 bounded Pre cases + four unlike jobs
 without reset + four gap/stall jobs + nine reset/recovery scenarios + 32 jobs
 forming 16 bounded-random general/Pre pairs (eight eta-2, eight eta-4) +
 one directed arithmetic-boundary NTT job + one product/carry-boundary PWM job +
@@ -74,7 +341,7 @@ second output credits `cg_pre_equivalence`.
 Gap regions are classified from accepted
 input count modulo 256: first `<16`, last `>=240`, otherwise middle.
 The flow jobs insert two idle input clocks periodically in both PWM operands,
-three clocks at the A/B boundary, and two-clock stalls on output beats 0, 128,
+three clocks at the A/B boundary, and two-clock stalls on output beats 0,128,
 and 255. Coverage encodings and legal denominators are commented in
 `ntt_coverage.sv`; `ntt_lighthd_coverage.rpt` lists individual bin hit counts.
 
@@ -236,7 +503,7 @@ provide additional evidence.
 
 ### Routing checker rejection tests
 
-`run_routing_checker.do` runs separate UVM tests that deliberately flip one
+`run_uvm.do` with `NTT_TEST ntt_routing_operand_fault_test` or `ntt_routing_writeback_fault_test` runs separate UVM tests that deliberately flip one
 **observation bit inside the checker**, leaving the actual RTL and expected
 polynomial unchanged. One test corrupts a registered butterfly operand
 observation; the other corrupts a FIFO writeback observation. Each detects
@@ -268,7 +535,7 @@ operation x reset-time combinations or every possible reset pulse width.
 
 ## Pre eligibility negative tests
 
-Separate UVM tests in `ntt_tests.sv`, launched by `run_pre_eligibility.do`,
+Separate UVM tests in `ntt_tests.sv`, launched by `run_uvm.do` with `NTT_TEST ntt_pre_invalid_first_test`, `ntt_pre_invalid_middle_test`, or `ntt_pre_invalid_last_test`,
 send +5 at index 0, -5 (residue `q-5`) at index 128, and +5 at index 255.
 Each of `eligibility_first.log`, `eligibility_middle.log` and
 `eligibility_last.log` contains the exact DUT diagnostic:
@@ -280,15 +547,11 @@ the sampler/controller to guarantee eligible inputs or implement rejection.
 
 ## Failed-job coverage gate proof
 
-`run_scoreboard_gate.do` runs **a separate UVM test**, using one real passing
-DUT NTT job. It then presents five deliberately corrupted observed items to
-the scoreboard: wrong coefficient 17, only 255 beats, bad framing, missing
-trace, and a failed reset-clear check. All five are rejected; checked job count remains 1 and schedule coverage
-is unchanged. `coverage_gate_fold_pipeline.log` records **`UVM COVERAGE GATE PASS`**.
-The catcher handles only the five expected scoreboard errors in this test;
-normal regression errors are not suppressed. Its scoreboard summary is
-intentionally one pass/five failures. Its UCDB/report are separate and are
-not merged into the main DUT coverage results.
+`run_uvm.do` with `NTT_TEST ntt_coverage_gate_test` runs a separate UVM checker self-test with one real
+passing job and seven rejected observations. The current expansion additionally
+checks forged gap/stall maxima; the earlier five-fault results below are retained
+historical evidence. See the expansion section above for current counts and log.
+Its UCDB is never merged with the normal regression.
 
 ## Main UVM DUT code coverage
 
@@ -296,12 +559,12 @@ not merged into the main DUT coverage results.
 branches, conditions, expressions, FSMs and toggles. Testbench, golden model
 and UVM library are outside the code coverage denominator.
 Artifacts: `ntt_lighthd_cov.ucdb` and `ntt_lighthd_coverage.rpt` under
-`sim/ntt_LightHD/`. The old `run_uvm_code_coverage.do` is an alias to the main run.
+`sim/ntt_LightHD/`. The main script includes code coverage directly; no separate code coverage launcher is needed.
 
 | DUT instance (excluding child instances) | Statement | Branch | Condition | Expression | FSM states | FSM transitions | Toggle |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| FIFO core `/tb_top/dut/u_core` | 295/307 | 232/245 | 53/84 | 51/52 | 5/5 | 9/9 | 3405/3683 |
-| Serial wrapper `/tb_top/dut` | 51/52 | 36/37 | 6/6 | 1/1 | 8/8 | 15/15 | 298/302 |
+| FIFO core `/tb_top/dut/u_core` | 300/312 | 234/247 | 49/78 | 55/58 | 5/5 | 9/9 | 3409/3689 |
+| Serial wrapper `/tb_top/dut` | 50/51 | 38/39 | 7/7 | 1/1 | 8/8 | 15/15 | 298/302 |
 | Each butterfly | 55/55 | 17/17 | - | - | - | - | 704/704 |
 | Each modular multiplier | 45/45 | 12/12 | - | - | - | - | 1228/1418 |
 
@@ -318,6 +581,7 @@ FSM closure alone is not full code coverage.
 | Core `pre_mul` default and Pre eligibility `$fatal` | Separate first/middle/last and +8 illegal UVM runs trigger eligibility rejection; their coverage stays outside the passing regression. |
 | Core FIFO underflow/overflow `$fatal` guards | Reaching these guards would be a controller/protocol failure. Maintain assertions; do not inflate passing coverage with illegal traffic. |
 | Core FIFO3 B write route | `dest_b` is only FIFO1/2; FIFO3 receives A or Pre sum. Its unused B branch/conditions remain in raw counts. The former source_a_q word mux is removed. |
+| Registered FIFO3 B select `return_use_b_q[2]` | Always zero for legal routes: B targets FIFO1/2, FIFO3 receives A. Two new constant toggle misses remain; no exclusion. |
 | Core three untoggled scalar nodes | `source_a[1]`, `dest_b[1]` and `load_dest[1]` stay zero. Their six toggle bins remain in the raw denominator. Unused registered source copies are removed. |
 | Packed selector arrays | 136 constant-zero bits across combinational/registered masks produce 272 missed bins. All 28 variable selectors toggle both ways in both copies (112 hits). See exact arithmetic below; no exclusions. |
 | Wrapper `rx_idx[8]`, `tx_idx[8]` | Counters reset/wrap at accepted index 255; four constant toggle bins remain. |
@@ -416,7 +680,7 @@ do ntt_LightHD/run_uvm.do
 For the separate coverage gate proof:
 
 ```tcl
-do ntt_LightHD/run_scoreboard_gate.do
+set NTT_TEST ntt_coverage_gate_test; do ntt_LightHD/run_uvm.do
 ```
 
 Study in this order: `ntt_sequence.sv` -> `ntt_driver.sv` -> `ntt_monitor.sv`
@@ -740,3 +1004,145 @@ This model proves index schedule/capacity, not arithmetic or clock frequency.
 Raw counts above describe the selected RTL; historical counts below earlier
 headings retain their earlier sources. No exclusions. Fitted setup improves to
 -1.736 ns at 5 ns, but Stage 4 is still open and no netlist/FPGA result is claimed.
+
+## Return-word retiming experiments (2026-10-10, rejected)
+
+Both trials pass the main UVM 118/118 with fourteen checked functional groups
+at 100%, zero errors/fatals, and separate Python 18/18 cases, 4,608/4,608 coefficients.
+Each fresh writeback-corruption test detects the injected observation error
+while real outputs remain correct and checked_jobs=0. Fault UCDBs are separate.
+The SV golden model, mathematical references, TB timing models and FIFO sizes
+are unchanged. Neither source-correct trial improves fitted timing; both are
+rejected and the selected 148.46 MHz source is restored byte-for-byte.
+
+| Raw core metric (hits / legal bins) | Selected/restored | Compute words trial | Compute + Pre word trial |
+|---|---:|---:|---:|
+| Statements | 295/307 | 306/318 | 308/320 |
+| Branches | 232/245 | 232/245 | 232/245 |
+| Conditions | 53/84 | 53/84 | 53/84 |
+| Expressions | 51/52 | 51/52 | 51/52 |
+| FSM states/transitions | 5/5,9/9 | 5/5,9/9 | 5/5,9/9 |
+| Toggles | 3405/3683 | 4325/4603 | 4509/4787 |
+
+New source adds 11/13 hit statements and 920/1,104 hit toggle bins respectively.
+The latter represent 460/552 new signal bits toggled both ways. The same 278
+constant-bit misses remain. This denominator change is not additional
+functional feature coverage. Other DUT instance counts are unchanged; no
+exclusions. Exact reports are under each trial's experiments/ntt_stage4 folder.
+
+Fresh restored-source main UCDB/report comes from uvm_return_trials_restore.log
+and again gives 118 passing jobs, all fourteen groups 100%, and the selected raw
+counts above. Core/wrapper cycles stay 267/267/75/236 and 781/781/845/750.
+Other unchanged negative-credit/operand/GS/Pre-eligibility evidence remains
+retained and is not claimed as freshly rerun during this restoration.
+
+## Selected early write selection and prefetch checkpoint (2026-10-10)
+
+Latest main uvm_write_select_prefetch.log passes 118/118, zero UVM errors/fatals,
+with all fourteen implemented checked functional covergroup types 100%. Main
+UCDB and raw report describe this source; the primary code table above is updated.
+The control-only trial also passes 118/118 but is not selected because worst
+Fmax regresses. Both have300/312 core statements, 234/247 branches, 49/78 conditions,
+55/58 expressions, 5/5 states, 9/9 transitions, 3409/3689 toggles. Moving decode changes
+coverage categories/denominators; it does not add functional covergroup types.
+The FIFO1/2 select bits each toggle both ways; FIFO3's B-select bit stays zero,
+adding two constant misses to the previous 278. No exclusions.
+
+The selected wrapper's unconditionally prepared next address changes raw
+counts to 50/51 statements, 38/39 branches, 7/7 conditions, 1/1 expressions,
+8/8 states, 15/15 transitions, 298/302 toggles. Enabled read addresses and read edges
+are unchanged. Main UVM checks every actual output read/order and output
+coefficient, plus stalled output data/last and nine reset/recovery scenarios.
+Other DUT instance counts remain unchanged.
+
+Fresh coverage_gate_write_select_prefetch.log rejects five corrupted observed
+jobs without new checked credit. Fresh routing_writeback_write_select_prefetch.log
+detects the observed write fault despite correct real final outputs, checked_jobs=0.
+Negative UCDBs stay separate. Other unchanged operand/GS/Pre-eligibility negative
+evidence remains saved, not freshly rerun. Separate Python passes 18/18 cases,
+4608/4608 coefficients. Core/wrapper cycles remain 267/267/75/236 and781/781/845/750.
+Full exact source and evidence: lighthd_write_select_prefetch_checkpoint under
+experiments/ntt_stage4. Fitted worst Fmax 150.49 MHz and setup/hold/pulse
+-1.645/+0.152/-0.555 ns at 5 ns do not close Stage 4 or establish netlist/FPGA results.
+
+## Setup-focused delay mapping trials and restoration (2026-10-10)
+
+Both BF delay mapping trials pass 118/118 main UVM jobs and all fourteen checked
+functional covergroup types. Separate Python matches 18/18 cases and 4,608/4,608
+coefficients for each. Their fitted worst setup slacks (-2.311 and -1.959 ns)
+regress the selected -1.645 ns baseline, so both are rejected and preserved.
+A pass in source simulation does not imply a timing improvement.
+
+Active RTL is restored byte-for-byte from the 150.49 MHz checkpoint. Fresh
+`uvm_bf_delay_restore.log` is the current main UCDB/raw-report producer;
+`compare_bf_delay_restore.log` again passes all 4,608 coefficients. Raw selected
+coverage counts and cycle counts are unchanged. The trial with a separate final
+BF register block has different source denominators (60/60 statements, 19/19
+branches, 752/752 toggles per BF); its UCDB is archived separately and is not
+merged into the current restored-source database. No exclusions, golden-model
+changes or TB changes. Earlier negative-checker evidence remains retained;
+it was not freshly rerun for these mapping-only trials/restoration.
+
+Exact sources and simulation evidence are in the three corresponding
+`experiments/ntt_stage4/lighthd_bf_*` trial/restoration folders. The plan records
+both slow-corner setup/TNS, hold, resources, Fmax and the selection decision.
+
+## BF candidate/tag/write-mask trials and restoration (2026-10-10)
+
+Three setup-focused trials each pass main UVM 118/118 and separate Python
+18/18 cases / 4,608 coefficients. Fourteen checked functional covergroup types
+remain 100%. Fitted worst setup regresses to -2.622, -1.806 and -1.967 ns;
+all are rejected. A source-coverage or output-correctness pass is not a timing win.
+Complete sources, UCDBs, raw reports and timing evidence remain in the three
+named trial folders under `experiments/ntt_stage4/`.
+
+The BF candidate-register trial exposes 55 constant bits (110 missed toggle
+bins): raw BF 72/72 statements, 22/22 branches and 1,500/1,610 toggles. The
+write-mask trial changes core source denominators: 305/317 statements,
+221/233 branches, 49/78 conditions, 63/64 expressions, 3,421/3,701 toggles.
+These trial reports remain separate; no coverage exclusions or merging of
+incompatible source revisions. No golden-model, reference or TB changes.
+
+All six active RTL files are restored byte-for-byte from the selected 150.49 MHz
+checkpoint. Fresh `uvm_candidate_tag_restore.log` produces the current main
+UCDB/raw report and passes 118/118 with zero errors/fatals. Python again passes
+all 4,608 coefficients. Selected raw coverage counts and operation cycles are
+unchanged. Previous negative-checker evidence remains retained, not newly rerun.
+Restoration source/hashes and evidence are in
+`experiments/ntt_stage4/lighthd_candidate_tag_trials_restore/`.
+
+## Approved operating timing closure (2026-10-10)
+
+The user approved timing near current Fmax. All six RTL files match the selected
+checkpoint byte-for-byte; UVM 118/118 and Python 4608/4608 evidence is retained,
+not rerun. Fresh aggressive-target map/fit followed by approved 148 MHz STA
+passes all 20 checks, zero TNS, worst setup/hold/pulse +0.111/+0.152/+1.201 ns.
+No coverage bins, exclusions, checkers or golden models changed. The 200 MHz
+benchmark still fails. The operating timing gate is closed within the standalone
+internal model; overall Stage 4 needs user acceptance. See the approved 148 MHz
+section in [the plan](POST_MIDYEAR_VERIFICATION_PLAN.md) for all-corner results,
+rejected relaxed fit, commands and limits. Stage 5/netlist, board and sampler
+integration remain pending. Nothing committed.
+
+## Stage 5 functional netlist results (2026-10-11)
+
+Both distinct post-synthesis and post-fit models pass the same main UVM top:
+**117/117 jobs and 29,952/29,952 coefficients each**, zero UVM errors/fatals.
+Each gate includes 117 completions, seven aborts, eight reset witnesses and
+16 Pre/general equivalence pairs. All 109 non-reset source jobs are reused;
+eight external reset scenarios replace the nine RTL-state source scenarios.
+
+Fresh source UVM passes **118/118**, with 118 checked trace/routing witnesses,
+all fourteen functional covergroup types at 100%, and unchanged raw code counts.
+Its current transcript/report producer is `uvm_stage5_source.log`.
+Netlist mode creates no coverage subscriber and credits no internal bins or
+code coverage. It checks public behavior with the unchanged independent model.
+The separate external checker self-test rejects five corrupted observations;
+its intentional rejections are not added to the passing regression totals.
+
+No RTL or golden-model change was required. The netlist driver waits for `done`
+after the final accepted output so completion is checked before another reset
+or request. Cyclone V models are functional, without SDF; operating timing
+remains the positive 148 MHz TimeQuest result. Board and integration tests are
+pending. Commands, warning review, scope and archived evidence are in
+[the Stage 5 plan section](POST_MIDYEAR_VERIFICATION_PLAN.md#stage-5---functional-implementation-verification-completed-2026-10-11).

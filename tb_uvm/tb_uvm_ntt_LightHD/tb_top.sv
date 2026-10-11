@@ -26,6 +26,9 @@ import ntt_ref_pkg::*;
 `include "ntt_agent.sv"
 `include "ntt_env.sv"
 `include "ntt_tests.sv"
+`ifdef NTT_NETLIST
+`include "ntt_netlist.sv"
+`endif
 
 module tb_top;
 
@@ -57,6 +60,8 @@ module tb_top;
         .m_tready (vif.m_tready)
     );
 
+    // RTL-only observations are absent in technology-mapped netlists.
+`ifndef NTT_NETLIST
     assign vif.wrapper_state = dut.state;
     assign vif.core_state = dut.u_core.state;
     assign vif.core_busy = dut.core_busy;
@@ -114,6 +119,8 @@ module tb_top;
         assign vif.bf_b[lane] = dut.u_core.bf_bo[lane];
     end
 
+`endif
+
     // ---- watchdog : fail fast instead of hanging forever ---------------------
     initial begin
         #100ms;
@@ -124,7 +131,11 @@ module tb_top;
     initial begin
         uvm_config_db#(virtual ntt_if)::set(null, "uvm_test_top.env.agent.*",
                                             "ntt_vif", vif);
+`ifdef NTT_NETLIST
+        run_test("ntt_netlist_test");
+`else
         run_test("ntt_full_test");
+`endif
     end
 
 endmodule

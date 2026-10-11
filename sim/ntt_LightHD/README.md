@@ -1,19 +1,113 @@
 # LightHD NTT simulation
 
+**Current source verification (2026-10-12):** 748/748 UVM jobs,
+191,488 compared coefficients, zero UVM errors/fatals, 32 checked covergroup
+types at **90.47% overall functional type average**. Ten new groups and 128
+new tests extend the prior 620-job checkpoint. The raw bin aggregation is
+73.33%; the large transition/shape/flow cross remains only 5.47%, so this is
+an incomplete-coverage review checkpoint. Original 22 groups retain their
+>=90% gate; overall must reach >=90%, with no upper-bound failure or suppression
+of valid hits. Code counts, RTL, golden model and fit metrics are unchanged.
+See `docs/ntt_docs/post_midyear/COVERAGE.md` for exact definitions, all misses and evidence.
+Older dated counts below are historical checkpoints. Stage 6 has not begun.
+
+
 All design RTL is in `src/ntt_LightHD/`. The main UVM environment and standalone vector-capture
 SystemVerilog testbench files are in `tb_uvm/tb_uvm_ntt_LightHD/`.
 Scripts, simulation libraries and generated artifacts are here in `sim/ntt_LightHD/`.
-The saved four-bank UVM environment remains in `tb_uvm/tb_uvm_ntt/`.
+The older four-bank UVM environment is archived at
+`experiments/ntt_cleanup_archive/2026-10-12/legacy/tb_uvm/tb_uvm_ntt/`.
 
 Run the Questa commands below sequentially: they share the local `work`
 library mapping in `modelsim.ini`. Parallel simulator launches can race on it.
+
+## Questa GUI: waves, coverage and results
+
+Open Questa normally. In its Transcript, paste these commands:
+
+```tcl
+cd D:/GitHub/dilithium-hp-hw/sim
+do ntt_LightHD/run_uvm.do
+```
+
+This compiles and runs the **main UVM** regression, then leaves the simulation
+loaded for inspection. Do not append `quit -f` or `quit -sim` when using the GUI.
+The command opens:
+
+| Window | What to inspect |
+|---|---|
+| Wave | Control, input/output handshakes, FSM/stage/issue, FIFO occupancy, butterfly operands/results and routing |
+| Covergroups | Expand the UVM coverage component, then each group/coverpoint/cross to see bin hit counts and misses |
+| Instance Coverage | Select `tb_top.dut` and expand its children for statements, branches, conditions, expressions, toggles and FSM coverage |
+| Code Coverage Analysis | Select a DUT instance and coverage category to inspect covered and missed code |
+| Structure / Objects / Source | Browse DUT hierarchy, current signal values and RTL lines |
+| Transcript | Named checked jobs, final PASS, UVM error/fatal counts, automatic seven-category DUT code coverage table and report paths |
+
+The Wave window opens separately at 1280 x 720 with visible signal rows and
+section dividers. It initially shows **16 to 24 us**, the nonzero directed NTT
+job (the first two jobs intentionally use zero data). Use **Zoom Full** for the
+whole run, or zoom into another transaction. Wave history
+is recorded before running; logging is limited to the clock/interface observations
+to avoid recording every internal memory. Wave history is saved in `ntt_LightHD/ntt_full_test.wlf`; post-netlist runs use `post_synthesis.wlf` or `post_fit.wlf`. These paths avoid sharing the default WLF with another GUI session.
+
+At completion require `NTT INTERACTION UVM PASS: 748/748 jobs` and zero UVM errors/fatals.
+Files in `sim/ntt_LightHD/`: `uvm_gui.log`, `ntt_lighthd_cov.ucdb` (both coverage
+kinds), and `ntt_lighthd_coverage.rpt`. Coverage is saved immediately, not only on exit.
+The GUI retains its design even after UVM finishes.
+
+After the final UVM report, the Transcript automatically prints
+`DUT CODE COVERAGE - raw local-instance bins (testbench excluded)` with hit,
+total and percentage for statements, branches, conditions, expressions,
+toggles, FSM states and FSM transitions. Counts are calculated from the
+just-generated detailed report across DUT instances, with duplicate summary
+rows removed; no coverage percentages are hardcoded. The overall DUT code row uses summed hit
+bins divided by summed total bins across all seven categories (so toggle bins
+carry most of the weight). Functional covergroups are excluded. All rows use
+Questa `echo` to display in its Transcript, rather than Tcl terminal output. The UVM report above it
+prints the actual overall functional coverage separately.
+
+To return to the useful nonzero transaction after changing the zoom:
+
+```tcl
+view wave -undock -width 1280 -height 720
+wave zoom range 16us 24us
+```
+
+
+To reopen hidden panes without rerunning:
+
+```tcl
+view wave
+view covergroups
+view instance
+view canalysis
+view transcript
+```
+
+`do ntt_LightHD/run_uvm.do` also sets up these views when run from the GUI
+with `sim/` as the working folder. Headless `-c` runs still unload normally.
+
+## Three simulation entry points
+
+Run these from the Questa Transcript after `cd D:/GitHub/dilithium-hp-hw/sim`:
+
+| Script | Purpose |
+|---|---|
+| `do ntt_LightHD/run_uvm.do` | Main UVM with GUI, waves, functional bins and DUT code coverage |
+| `do ntt_LightHD/run_post_synthesis.do` | Functional post-synthesis UVM; GUI keeps waves/design loaded |
+| `do ntt_LightHD/run_post_fit.do` | Functional post-fit UVM; GUI keeps waves/design loaded |
+
+There are no helper `.do` dependencies. Optional checker tests use `NTT_TEST`
+on the main script and separate databases. Standalone Python vector capture
+uses `set NTT_MODE vectors; do ntt_LightHD/run_uvm.do`; it remains separate
+from the default UVM regression. No testbench or golden model was removed.
 
 ## Main UVM coverage run
 
 From the repository's `sim/` directory in PowerShell:
 
 ```powershell
-& 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_LightHD/uvm_stage4.log -do 'do ntt_LightHD/run_uvm.do; quit -f'
+& 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_LightHD/uvm_expanded.log -do 'do ntt_LightHD/run_uvm.do; quit -f'
 ```
 
 Or enter `do ntt_LightHD/run_uvm.do` in Questa with `sim/` as the working directory.
@@ -22,67 +116,75 @@ four no-reset operation changes, four input-gap/output-stall jobs,
 nine reset/recovery scenarios and 32
 bounded-random paired general/Pre jobs, one CT arithmetic-boundary job and
 one all-lane PWM product/carry-boundary job and one inverse GS-sum
-boundary job, **118 total**.
+boundary job: **118 original jobs**. It additionally runs 502 expanded jobs
+(input shapes, output ranges, PWM pairs, variable flow and transitions),
+for 620 jobs at that checkpoint. The current sequence adds another 128 interaction jobs for **748 total**, with fixed simulator seed 20261011.
 It checks every output and observed internal trace before crediting functional
 coverage. The independent `ntt_routing_trace.sv` checks coefficient pairs,
 registered operands, FIFO contents/writeback, destinations and output order.
 `CHECKED_COEFFICIENT_ROUTING` logs counts per checked job. `CHECKED_TRACE` names the passing job and its observed event masks.
-All fourteen implemented covergroups reach 100%; this is not full Stage 4 closure.
+The earlier 620-job checkpoint had 22 groups: the original fourteen remain at 100%; the average
+is 99.51%, minimum 92.36%. Each group must reach at least 90%, with misses
+visible. `CHECKED_EXTENDED` prints measured flow/shape observations.
+The scoreboard independently checks requested run counts/durations before credit.
 
 The same run instruments only the DUT for code coverage and generates:
 
 - `ntt_lighthd_cov.ucdb`: functional and DUT code coverage database.
 - `ntt_lighthd_coverage.rpt`: detailed individual bin and DUT code counts.
-- `uvm_stage4.log`: named witnesses, 118/118 summary, zero UVM errors/fatals.
+- `uvm_expanded.log`: named witnesses, 748/748 current summary, zero UVM errors/fatals.
 
-`run_uvm_code_coverage.do` is a compatibility alias for this main flow.
+There are exactly three active `.do` files: `run_uvm.do`, `run_post_synthesis.do`, and `run_post_fit.do`. Wave setup and vendor-library setup are embedded in these scripts.
 See `docs/ntt_docs/post_midyear/COVERAGE.md` for exact counts and exclusions.
 
 ## Separate UVM checker self-test
 
 ```powershell
-& 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_LightHD/coverage_gate.log -do 'do ntt_LightHD/run_scoreboard_gate.do; quit -f'
+& 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_LightHD/coverage_gate_expanded.log -do 'set NTT_TEST ntt_coverage_gate_test; do ntt_LightHD/run_uvm.do; quit -f'
 ```
 
 Require `UVM COVERAGE GATE PASS`. The test runs one real passing DUT job, then
-corrupts coefficient data, beat count, framing, trace and reset-clear checks. Five expected
+corrupts coefficient data, beat count, framing, trace, reset-clear status and
+maximum gap/stall observations. Seven expected
 scoreboard errors are caught locally; checked coverage remains unchanged.
 The failed jobs carry poisoned arithmetic masks; arithmetic bins must also
-remain unchanged.
-The one-pass/five-fail scoreboard summary is intentional for this checker test.
-Its UCDB/report remain separate from the main regression artifacts.
+remain unchanged; the eight new groups must also gain no credit.
+The one-pass/seven-fail scoreboard summary is intentional for this checker test.
+Its UCDB/report remain separate from the main regression artifacts, named after `NTT_TEST` (for example `ntt_coverage_gate_test.ucdb` and `ntt_coverage_gate_test_code.rpt`).
 
 ## Separate routing checker self-tests
 
 From `sim/` in Questa:
 
 ```tcl
-do ntt_LightHD/run_routing_checker.do
+set ROUTING_TEST ntt_routing_operand_fault_test
+set NTT_TEST $ROUTING_TEST; do ntt_LightHD/run_uvm.do
 set ROUTING_TEST ntt_routing_writeback_fault_test
-do ntt_LightHD/run_routing_checker.do
+set NTT_TEST $ROUTING_TEST; do ntt_LightHD/run_uvm.do
 ```
 
 Or from PowerShell, capture the default operand-observation test:
 
 ```powershell
-& 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_LightHD/routing_operand_gate.log -do 'do ntt_LightHD/run_routing_checker.do; quit -f'
+& 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_LightHD/routing_operand_gate.log -do 'set NTT_TEST ntt_routing_operand_fault_test; do ntt_LightHD/run_uvm.do; quit -f'
 ```
 
 Require `UVM ROUTING CHECKER PASS`. These tests each corrupt one internal
 observation, verify the real DUT output is still correct, and require zero
 checked jobs/bins. Two expected errors are caught (routing checker and
-scoreboard). Their UCDB remains separate from the normal passing regression.
+scoreboard). Their UCDB remains separate from the normal passing regression, named after the selected `NTT_TEST`.
 
 ## Separate expected-illegal Pre input tests
 
 Run from `sim/` in Questa:
 
 ```tcl
-do ntt_LightHD/run_pre_eligibility.do
+set PRE_INVALID_TEST ntt_pre_invalid_first_test
+set NTT_TEST $PRE_INVALID_TEST; do ntt_LightHD/run_uvm.do
 set PRE_INVALID_TEST ntt_pre_invalid_middle_test
-do ntt_LightHD/run_pre_eligibility.do
+set NTT_TEST $PRE_INVALID_TEST; do ntt_LightHD/run_uvm.do
 set PRE_INVALID_TEST ntt_pre_invalid_last_test
-do ntt_LightHD/run_pre_eligibility.do
+set NTT_TEST $PRE_INVALID_TEST; do ntt_LightHD/run_uvm.do
 ```
 
 The cases send +5 at coefficient 0, -5 at 128 and +5 at 255. Require the exact
@@ -93,7 +195,7 @@ do not merge their UCDB into the passing main run. The guard is simulation-only.
 ## Separate standalone vector capture
 
 ```powershell
-& 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_LightHD/vector.log -do 'do ntt_LightHD/run_vectors.do; quit -f'
+& 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_LightHD/vector.log -do 'set NTT_MODE vectors; do ntt_LightHD/run_uvm.do; quit -f'
 ```
 
 Vector capture is separate from UVM; `NTT VECTOR CAPTURE COMPLETE` alone is
@@ -281,3 +383,134 @@ compare_fold_pipeline.log passes18/18cases,4608/4608coefficients, with measured
 core267/267/75/236 and wrapper781/781/845/750. The extra stage adds one clock.
 Fresh fitted worst Fmax148.46MHz and setup-1.736ns at5ns are in the plan.
 The existing FIFO index model now checks current PIPE=10 and saved8/9 schedules.
+
+## Latest selected early-write/prefetch evidence (2026-10-10)
+
+Commands are unchanged. Current main transcript:uvm_write_select_prefetch.log
+(also refreshed uvm_stage4.log),118/118 passing, zero UVM errors/fatals, fourteen
+checked functional groups 100%. Main UCDB/report describe the selected source.
+Separate vector_write_select_prefetch.log / compare_write_select_prefetch.log
+passes 18/18 cases, 4608/4608 coefficients; core 267/267/75/236 and wrapper 781/781/845/750.
+Fresh coverage_gate_write_select_prefetch.log and
+routing_writeback_write_select_prefetch.log reject faults without new credit;
+negative UCDBs stay separate. Fitted worst Fmax 150.49 MHz, setup -1.645 ns at 5 ns.
+Exact source and full evidence:experiments/ntt_stage4/lighthd_write_select_prefetch_checkpoint.
+The earlier first-fold and control-only trials remain historical evidence.
+
+## Fresh selected-source verification after delay trials (2026-10-10)
+
+Both BF delay timing trials are rejected after full fits. The selected 150.49 MHz
+source is restored byte-for-byte; normal launch commands are unchanged.
+Current main transcript: `uvm_bf_delay_restore.log` (also `uvm_stage4.log`),
+118/118 jobs, zero errors/fatals, fourteen checked covergroup types 100%.
+Separate `vector_bf_delay_restore.log` / `compare_bf_delay_restore.log` passes
+18/18 cases, 4,608/4,608 coefficients; all operation cycles are unchanged.
+No TB, reference or golden-model change. Archived trial UCDBs are separate from
+the current main UCDB; previous negative-checker evidence remains retained,
+not newly rerun. The plan contains both rejected trials' timing comparisons.
+
+## Fresh restored baseline after candidate/tag trials (2026-10-10)
+
+The BF candidate-register, tag-register-only and tag/write-mask trials pass
+source verification but regress worst setup, so all are rejected and saved.
+All six selected RTL files are restored byte-for-byte. Fresh current source logs:
+`uvm_candidate_tag_restore.log` (also `uvm_stage4.log`),
+`vector_candidate_tag_restore.log`, `compare_candidate_tag_restore.log`.
+Main UVM: 118/118 jobs, zero errors/fatals, fourteen checked functional groups
+100%. Python: 18/18 cases, 4,608/4,608 coefficients. All operation cycles remain
+unchanged. Golden/reference and TB files are unchanged. Exact source hashes and
+complete restoration evidence are saved in
+`experiments/ntt_stage4/lighthd_candidate_tag_trials_restore/`.
+The plan records rejected timing results; no timing improvement is claimed.
+
+## Stage 5: post-synthesis and post-fit main UVM
+
+First build the main Quartus project (`ntt.qpf`, revision `ntt`) using GUI
+**Processing > Start Compilation**. Then generate both functional netlists:
+
+```powershell
+cd 'D:\GitHub\dilithium-hp-hw\quartus\ntt_LightHD'
+powershell -NoProfile -ExecutionPolicy Bypass -File .\generate_netlists.ps1
+```
+
+The exporter runs synthesis only in the generated `postsynth_build/` helper
+project, and exports post-fit from the main fitted project. It keeps the main
+fit database intact. This prevents Standard Edition from exporting the same
+fitted database twice. The helper uses the same six RTL sources and settings;
+only its relative source paths change. Its generated database is ignored.
+
+In Questa set the working directory to `sim/`, then run one at a time:
+
+```tcl
+do ntt_LightHD/run_post_synthesis.do
+do ntt_LightHD/run_post_fit.do
+```
+
+Or capture each transcript from PowerShell (working directory `sim/`):
+
+```powershell
+& 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_LightHD/post_synthesis_uvm.log -do 'do ntt_LightHD/run_post_synthesis.do; quit -f'
+& 'C:\questasim64_2024.1\win64\vsim.exe' -c -l ntt_LightHD/post_fit_uvm.log -do 'do ntt_LightHD/run_post_fit.do; quit -f'
+```
+
+Require `NTT NETLIST REGRESSION PASS`,117/117 passing jobs,29,952/29,952
+coefficients and zero UVM errors/fatals for each. A simulator exit code alone
+is not sufficient. The embedded setup in both post-netlist scripts compiles local Quartus primitives
+once, including `altera_lnsim` M10K models and encrypted Cyclone V atoms.
+
+This uses the same `tb_top.sv`, UVM agent, monitor, scoreboard, sequences and
+independent SV golden model as the source regression. `NTT_NETLIST` removes
+RTL-only hierarchy hookups; `ntt_netlist.sv` selects external-only checking.
+All 109 non-reset source cases are reused; nine RTL-state reset cases are
+replaced by eight resets witnessed through public pins (117 total). The
+scoreboard checks all 256 outputs, exact framing and stall stability; a public
+protocol checker checks input/output counts, busy/done and seven aborted jobs.
+Sixteen real Pre/general pairs and eight reset/recovery witnesses are required.
+No source internal trace or functional/code coverage is credited or merged.
+
+The separate external-checker self-test intentionally rejects five corruptions:
+
+```tcl
+set NTT_TEST ntt_netlist_gate_test
+do ntt_LightHD/run_post_fit.do
+```
+
+Require `NTT NETLIST CHECKER GATE PASS`. Its 1 pass / 5 rejections are intentional
+and separate from the 117-job regressions. Cyclone V export warning 10905 means
+the post-fit model is functional; no SDF is used. Timing remains TimeQuest's
+standalone internal signoff, not a gate-level delay or board test.
+
+### Verified Stage 5 results - 2026-10-11
+
+Post-synthesis and post-fit each pass **117/117 jobs, 29,952/29,952 coefficients**,
+zero UVM errors/fatals, sixteen equivalence pairs and eight reset witnesses.
+Fresh source `uvm_stage5_source.log` passes **118/118**, fourteen functional
+groups at 100%, unchanged raw code counts. Both separate checker self-tests
+reject their five deliberate corruptions; source failures add no coverage credit.
+Exact transcripts, source hashes, netlist provenance, UCDB/report and parsed
+results are in [the checkpoint](../../experiments/ntt_stage5/netlist_verification_checkpoint/README.md).
+No RTL or golden-model change, board result or new commit.
+
+## Current expanded coverage - 2026-10-11
+
+620/620 source jobs, 158,720 checked coefficients, 22 covergroup types.
+Functional type average 99.51%, minimum 92.36%, eight new groups mean 98.65%.
+Raw statements 98.32%, branches 96.52%, conditions 65.88%, expressions 94.92%,
+toggles 91.80%, FSM states/transitions 100%. Raw code counts are unchanged from
+Stage 5; no exclusions. Exact remaining bins, code counts, study flow and sources
+are in [COVERAGE.md](../../docs/ntt_docs/post_midyear/COVERAGE.md) and
+[the new checkpoint](../../experiments/ntt_stage4/lighthd_expanded_coverage_checkpoint/README.md).
+The current source seven-fault credit gate and netlist five-fault compatibility
+gate pass separately. Historical netlist 117-job results above are not expanded
+620-job netlist results. RTL/golden/timing/cycle counts are unchanged.
+
+## Three-script consolidation check (2026-10-12)
+
+The main GUI launcher passed 620/620 jobs and 158,720/158,720 coefficients,
+with zero UVM errors/fatals after the wave setup was embedded. Both self-contained
+post-netlist GUI launchers were checked with `ntt_netlist_gate_test`: each ran
+one real golden-compared transaction and rejected five deliberately corrupted
+observations, with zero UVM errors/fatals. These are launcher checks; the retained
+117-job post-netlist results above remain the full-suite evidence. Optional
+vector mode passed Python comparison: 18/18 cases, 4,608/4,608 coefficients.
+No RTL or golden-model changes were required for this consolidation.

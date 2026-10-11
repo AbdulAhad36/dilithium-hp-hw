@@ -1,12 +1,30 @@
 # NTT v2 Post-Midyear Plan
 
-**Status:** Stages 1 and 2 are complete as measured source/implementation work. Stage 3 has a verified, fitted four-butterfly, three-FIFO LightHD reconstruction with a bounded-secret Pre-NTT path. Its working RTL is in `src/ntt_LightHD/`, all candidate testbench `.sv` files are in `tb_uvm/tb_uvm_ntt_LightHD/`, simulation scripts and generated outputs are in `sim/ntt_LightHD/`, and the independent Quartus project is in `quartus/ntt_LightHD/`; Stage 3 experiment files remain historical evidence. It is selected for Stage 4 detailed verification and timing work; the four-bank RTL remains saved as a comparison baseline. The 5 ns setup target, Keccak/sampler integration, netlist verification, and FPGA validation remain open.
+**Current source verification (2026-10-12):** 748/748 UVM jobs,
+191,488 compared coefficients, zero UVM errors/fatals, 32 checked covergroup
+types at **90.47% overall functional type average**. Ten new groups and 128
+new tests extend the prior 620-job checkpoint. The raw bin aggregation is
+73.33%; the large transition/shape/flow cross remains only 5.47%, so this is
+an incomplete-coverage review checkpoint. Original 22 groups retain their
+>=90% gate; overall must reach >=90%, with no upper-bound failure or suppression
+of valid hits. Code counts, RTL, golden model and fit metrics are unchanged.
+See [COVERAGE.md](COVERAGE.md) for exact definitions, all misses and evidence.
+Older dated counts below are historical checkpoints. Stage 6 has not begun.
 
-**Latest selected Stage 4 checkpoint:** 148.46 MHz worst-corner Fmax, 2,490
-ALMs, 5 DSPs, 21 M10Ks; main UVM 118/118 and separate Python 4,608/4,608.
-Core NTT/INTT/PWM/Pre cycles are 267/267/75/236. Setup at 5 ns improves to
--1.736 ns but remains negative. See the latest first-fold pipeline section
-below for measured timing, area and latency tradeoffs.
+
+**Status:** Stages 1-3 established and selected the four-butterfly, three-FIFO LightHD reconstruction in `src/ntt_LightHD/`; the older four-bank design remains preserved. Expanded Stage 4 source UVM passes 748/748 with 32 checked functional groups at 90.47% type average, documented raw code holes, and positive standalone internal timing at nominal 148 MHz. **Stage 5 post-synthesis/post-fit functional UVM verification is complete: 117/117 jobs per distinct netlist.** The 200 MHz benchmark, board/UART validation and Stage 6 sampler/integration remain open.
+
+**Latest selected Stage 4 checkpoint:** nominal **148 MHz approved operating clock**,
+**150.49 MHz worst Fmax**, **2,475 ALMs, 2,414 registers, 5 DSPs, 20 M10Ks**.
+Fresh full rebuild passes all 20 timing checks with zero TNS; worst setup/hold/pulse
+**+0.111/+0.152/+1.201 ns**. Expanded source UVM passes 748/748, 32 checked
+groups average 90.47%, Python 4608/4608 and core cycles267/267/75/236. See approved 148 MHz
+closure section below. Stage 5 is now verified below; the 200 MHz benchmark is unmet.
+
+Permanent GUI constraints verified on **2026-10-11**: open `ntt.qpf`, revision
+`ntt`, and use **Processing > Start Compilation**. Fit uses 200 MHz, final STA
+uses 148 MHz automatically; no SDC edits. Fresh full compilation reproduces
+all metrics above. See the permanent GUI flow section near Stage 5 below.
 
 This is the staged plan for the `ntt_v2` development branch. The starting RTL is the historical `2_ntt` branch. Its recorded checks and Quartus results are a baseline to rerun, not evidence for future modified RTL. The active Keccak counterpart is `keccak_v2`; its dual-core SHAKE design has one shared 64-bit input, one tagged 128-bit output, and a minimum 26-cycle offset between job launches. Keccak FPGA/UART validation and the rejection sampler remain pending.
 
@@ -20,7 +38,7 @@ For every comparison, state the DUT revision, FPGA/device, operation, input/outp
 
 1. Rerun the existing reference, core, engine, and UVM checks on unmodified `ntt_v2`. Export the actual pass counts, failures, current 19-bin coverage result, and operation latencies. Do not treat a simulator exit code or a coverage percentage alone as proof of correct outputs.
 2. Check NIST's FIPS 204 and ACVP sources for public **standalone NTT/INTT/pointwise-multiply** vectors. The currently located public ML-DSA ACVP sets cover key generation, signature generation, and signature verification; no SHAKE-style standalone NTT `.rsp` set has been identified. Record the source and version of any official component vectors found. If none exist, generate NTT vectors from FIPS 204 conventions and an independently checked C/software reference, and label them **FIPS-derived reference vectors**, not “NIST NTT vectors.” Preserve source material and provenance under `FIPS204_NTT/` on `ntt_v2`. The repository's existing C reference and pure-SV model can be cross-checks, but neither should silently validate itself.
-3. Mirror the simple Keccak file flow with **one Python script**, planned as `FIPS204_NTT/ntt_vectors.py` with `prepare` and `compare` commands. `prepare` makes a single case input file and a separate expected-output file. A dedicated, fast `sim/run_ntt_vectors.do` runs only the NTT vector capture test and writes observed DUT outputs to a third file; it must not launch the full regression. `compare` matches case ID, operation, all 256 coefficients, and order, then prints exact mismatch locations and a clear PASS/FAIL total. Keep the existing SV golden model and its checks.
+3. Mirror the simple Keccak file flow with **one Python script**, planned as `FIPS204_NTT/ntt_vectors.py` with `prepare` and `compare` commands. `prepare` makes a single case input file and a separate expected-output file. The dedicated fast mode `set NTT_MODE vectors; do ntt_LightHD/run_uvm.do` (from `sim/`) runs only the NTT vector capture test and writes observed DUT outputs to a third file; it must not launch the full regression. `compare` matches case ID, operation, all 256 coefficients, and order, then prints exact mismatch locations and a clear PASS/FAIL total. Keep the existing SV golden model and its checks.
 4. Include forward NTT, inverse NTT, pointwise multiplication, round trip, and two-input polynomial multiplication checked against schoolbook multiplication. Cover zero, one, `q-1`, sparse, boundary-position, and random polynomials. Resolve FIPS/reference choices for twiddle ordering, coefficient normalization, and inverse scaling before declaring a mismatch to be an RTL defect.
 5. Create `docs/ntt_docs/post_midyear/FIPS204_NTT.md` **when the flow exists**. Explain the actual source of every vector, generated files, commands, comparison logic, case counts, and observed results. Add end-to-end official ML-DSA vectors later when the whole signer/verifier exists.
 
@@ -38,25 +56,25 @@ For every comparison, state the DUT revision, FPGA/device, operation, input/outp
 
 **Second retained change (2026-10-05):** `ntt_engine.sv` now prefetches the next synchronous-memory read when an output beat is accepted. The output remains stable during backpressure; a new directed stall case checks that behavior and final `m_tlast`. The 208/208 reference, 33/33 core, 24/24 engine, and 53/53 UVM checks passed, as did the separate 18/18 FIPS-derived cases and 4,608/4,608 output coefficients. Core cycles remained 302 NTT, 377 INTT, and 77 PWM. Complete no-stall transactions changed from **1,071 to 816 NTT**, **1,146 to 891 INTT**, and **1,102 to 847 PWM** cycles. The fit changed from the address-only checkpoint's 2,294 ALMs, 953 registers, 4 DSPs, 18 M10Ks to **2,313 ALMs, 967 registers, 4 DSPs, 18 M10Ks**. Slow 0°C Fmax decreased from 75.37 to **70.97 MHz** and worst setup slack at 5 ns from −8.267 to **−9.090 ns**; worst hold slack is **+0.126 ns**. At each fit's estimated Fmax, no-stall forward output rate increased from 75.37 million / 1,071 = 70,373 to 70.97 million / 816 = **86,973 polynomials/s** (+23.6%). This is an NTT-only estimate, not integrated Dilithium throughput. Evidence: `quartus/output_files/ntt_stage2_stream_fit.summary`, `ntt_stage2_stream_sta.rpt`, `ntt_stage2_stream_paths.log`, and `sim/ntt_stage2_stream_*.log` (generated locally, ignored by Git). The 5 ns constraint still fails; the next slow 85°C critical path goes from a core shift-register RAM through `u_bf3|u_mul` to `prod_s1`.
 
-**Third retained change (2026-10-05, uncommitted):** `ntt_core.sv` uses four drain clocks **between passes** while retaining enough final drain clocks to complete all memory writebacks before `done_o`. The dedicated capture test now reports FSM phase counts and fails if `done_o` rises with a pending writeback or RUN and SCALE/PWM attempt simultaneous writeback. A uniform four-clock drain gave correct sequentially read vector outputs but asserted `done_o` before the final writeback, so it was rejected. Three inter-pass clocks failed 7/18 output cases. Final drains one clock shorter than the retained values also failed the pending-writeback check. The retained split passed 208/208 reference, 33/33 core, 24/24 engine, 53/53 UVM, and 18/18 FIPS-derived cases with 4,608/4,608 coefficients. Core cycles are now **280 NTT, 344 INTT, 72 PWM**; no-stall external transactions are **794, 858, 842** cycles. The fit on the same Cyclone V and 5 ns constraint reports **2,325 ALMs, 992 registers, 4 DSPs, 18 M10Ks**, worst-corner slow 0°C Fmax **72.63 MHz**, worst setup slack **−8.768 ns**, and worst hold slack **+0.127 ns**. Compared with the previous stream fit, the estimated forward external rate is 72.63 million / 794 = **91,474 polynomials/s** versus 86,973/s, a **5.2%** gain; ALMs rose by 12 and registers by 25. The 5 ns setup target remains unmet. The slow 85°C critical path runs from `u_core|sc_s2` through `u_bf3|u_mul` to `prod_s1`. Evidence: `sim/ntt_stage2_splitdrain_final_*.log`, `quartus/output_files/ntt_stage2_splitdrain_fit.summary`, `ntt_stage2_splitdrain_sta.rpt`, and `ntt_stage2_splitdrain_paths.log` (local generated files, ignored by Git).
+**Third retained change (2026-10-05, uncommitted):** `ntt_core.sv` uses four drain clocks **between passes** while retaining enough final drain clocks to complete all memory writebacks before `done_o`. The dedicated capture test now reports FSM phase counts and fails if `done_o` rises with a pending writeback or RUN and SCALE/PWM attempt simultaneous writeback. A uniform four-clock drain gave correct sequentially read vector outputs but asserted `done_o` before the final writeback, so it was rejected. Three inter-pass clocks failed 7/18 output cases. Final drains one clock shorter than the retained values also failed the pending-writeback check. The retained split passed 208/208 reference, 33/33 core, 24/24 engine, 53/53 UVM, and 18/18 FIPS-derived cases with 4,608/4,608 coefficients. Core cycles are now **280 NTT, 344 INTT, 72 PWM**; no-stall external transactions are **794,858,842** cycles. The fit on the same Cyclone V and 5 ns constraint reports **2,325 ALMs, 992 registers, 4 DSPs, 18 M10Ks**, worst-corner slow 0°C Fmax **72.63 MHz**, worst setup slack **−8.768 ns**, and worst hold slack **+0.127 ns**. Compared with the previous stream fit, the estimated forward external rate is 72.63 million / 794 = **91,474 polynomials/s** versus 86,973/s, a **5.2%** gain; ALMs rose by 12 and registers by 25. The 5 ns setup target remains unmet. The slow 85°C critical path runs from `u_core|sc_s2` through `u_bf3|u_mul` to `prod_s1`. Evidence: `sim/ntt_stage2_splitdrain_final_*.log`, `quartus/output_files/ntt_stage2_splitdrain_fit.summary`, `ntt_stage2_splitdrain_sta.rpt`, and `ntt_stage2_splitdrain_paths.log` (local generated files, ignored by Git).
 
-**Fourth retained change (2026-10-05, uncommitted):** Four extra modular-multiply lanes scale the four coefficients of each **final inverse-pass tile** as its butterfly results emerge. Their delayed address tags write normalized values back to the four banks, eliminating the separate 64-cycle memory reread/SCALE issue pass. The final inverse drain is long enough to clear those new writebacks before `done_o`; the capture test checks that condition and conflicting writebacks. Exact outputs passed 18/18 cases and 4,608/4,608 coefficients; directed core/engine and UVM passed 33/33, 24/24, and 53/53. The independent reference self-check remains 208/208. Core cycles are now **280 NTT, 283 INTT, 72 PWM** and no-stall external transactions **794, 797, 842** cycles. The same-device fit reports **2,860 ALMs, 1,173 registers, 8 DSPs, 19 M10Ks**, worst-corner slow 0°C Fmax **75.06 MHz**, worst setup slack **−8.322 ns**, and worst hold slack **+0.103 ns** at 5 ns. Compared with the third change, this costs **535 ALMs, 181 registers, 4 DSPs, and 1 M10K**. Estimated inverse external rate rises from 72.63 million / 858 = **84,650** to 75.06 million / 797 = **94,178 polynomials/s** (+11.3%); forward rate is 75.06 million / 794 = **94,534 polynomials/s**. These are NTT-only no-stall estimates. The new slow 85°C worst path is inside `u_bf0|u_mul`, from `t2_q` to `r_o` through the final modular-reduction folds. The 5 ns setup target still fails. Evidence: `sim/ntt_stage2_fusedscale_*.log`, `quartus/output_files/ntt_stage2_fusedscale_fit.summary`, `ntt_stage2_fusedscale_sta.rpt`, and `ntt_stage2_fusedscale_paths.log` (local generated files, ignored by Git).
+**Fourth retained change (2026-10-05, uncommitted):** Four extra modular-multiply lanes scale the four coefficients of each **final inverse-pass tile** as its butterfly results emerge. Their delayed address tags write normalized values back to the four banks, eliminating the separate 64-cycle memory reread/SCALE issue pass. The final inverse drain is long enough to clear those new writebacks before `done_o`; the capture test checks that condition and conflicting writebacks. Exact outputs passed 18/18 cases and 4,608/4,608 coefficients; directed core/engine and UVM passed 33/33, 24/24, and 53/53. The independent reference self-check remains 208/208. Core cycles are now **280 NTT, 283 INTT, 72 PWM** and no-stall external transactions **794,797,842** cycles. The same-device fit reports **2,860 ALMs, 1,173 registers, 8 DSPs, 19 M10Ks**, worst-corner slow 0°C Fmax **75.06 MHz**, worst setup slack **−8.322 ns**, and worst hold slack **+0.103 ns** at 5 ns. Compared with the third change, this costs **535 ALMs, 181 registers, 4 DSPs, and 1 M10K**. Estimated inverse external rate rises from 72.63 million / 858 = **84,650** to 75.06 million / 797 = **94,178 polynomials/s** (+11.3%); forward rate is 75.06 million / 794 = **94,534 polynomials/s**. These are NTT-only no-stall estimates. The new slow 85°C worst path is inside `u_bf0|u_mul`, from `t2_q` to `r_o` through the final modular-reduction folds. The 5 ns setup target still fails. Evidence: `sim/ntt_stage2_fusedscale_*.log`, `quartus/output_files/ntt_stage2_fusedscale_fit.summary`, `ntt_stage2_fusedscale_sta.rpt`, and `ntt_stage2_fusedscale_paths.log` (local generated files, ignored by Git).
 
 **Rejected reduction-pipeline experiment (2026-10-05):** Splitting the modular multiplier's final reduction into two registered stages passed the source regression and 18/18 exact-output cases, but added 2/3/1 core cycles to NTT/INTT/PWM. An initial fit appeared to reach 80.21 MHz; review found that the 16-clock final inverse drain had been truncated into a four-bit constant and worked only through wraparound. After widening the counter and constants, the same checked outputs and cycle counts held, but the corrected fit was **74.29 MHz worst-corner Fmax**, **2,839 ALMs, 1,356 registers, 8 DSPs, 19 M10Ks**, worst setup slack **−8.461 ns**, and worst hold slack **+0.149 ns** at 5 ns. Its estimated forward and inverse external rates (74.29 million / 796 = **93,329/s**, 74.29 million / 800 = **92,863/s**) are lower than the fourth retained change's 94,534/s and 94,178/s. The extra pipeline and width change were reverted. The pre-fix 80.21 MHz fit is **not** a valid performance result for the corrected trial. Evidence: `sim/ntt_stage2_reduction4_widthfix_*.log`, `quartus/output_files/ntt_stage2_widthfix_fit.summary`, `ntt_stage2_widthfix_sta.rpt`, and `ntt_stage2_widthfix_paths.log` (local generated files, ignored by Git).
 
-**Fifth retained change (2026-10-06, uncommitted):** A registered butterfly input now isolates its CT/GS operand selection from the DSP input, while the final modular reduction is split across two registered stages. Butterfly latency rises from four to six clocks, and the final inverse-scale tag follows the four-clock multiplier. The drain counter and constants are explicitly five bits so the 18-clock final inverse drain cannot truncate. The standalone capture passed 18/18 FIPS-derived cases and 4,608/4,608 coefficients, including the pending-writeback and conflict checks. Reference, core, engine, and UVM checks passed 208/208, 33/33, 24/24, and 53/53; the existing narrow UVM covergroup reported 100%. Measured core counts are **284 NTT, 288 INTT, 74 PWM**; complete no-stall external transactions are **798, 802, 844** clocks. The same Cyclone V fit reports **2,925 ALMs, 1,322 registers, 8 DSPs, 19 M10Ks**. TimeQuest reports 87.34 MHz at slow 85°C and 89.70 MHz at slow 0°C, so **87.34 MHz** is the worse slow-corner Fmax. Worst setup slack at the 5 ns constraint is **−6.449 ns** (slow 85°C); worst hold slack is **+0.086 ns** (fast 0°C). Compared with the fourth change, this costs 65 ALMs and 149 registers while keeping DSP/M10K counts unchanged. Estimated no-stall external rates rise from 94,534 to **109,449 NTT polynomials/s** (87.34 million / 798), from 94,178 to **108,903 INTT polynomials/s** (87.34 million / 802), and from 89,145 to **103,483 PWM polynomials/s** (87.34 million / 844). The slow 85°C critical path now starts at `u_core|fwd`, passes through `u_bf0` modular addition/compare, and ends at the inferred shift-register RAM for writeback tags. This is a source-functional and fitted-timing result, not timing closure at 200 MHz or an integrated Dilithium benchmark. Evidence: `sim/ntt_stage2_combined_*.log`, `quartus/output_files/ntt_stage2_combined_fit.summary`, `ntt_stage2_combined_sta.rpt`, and `ntt_stage2_combined_paths.log` (local generated files, ignored by Git).
+**Fifth retained change (2026-10-06, uncommitted):** A registered butterfly input now isolates its CT/GS operand selection from the DSP input, while the final modular reduction is split across two registered stages. Butterfly latency rises from four to six clocks, and the final inverse-scale tag follows the four-clock multiplier. The drain counter and constants are explicitly five bits so the 18-clock final inverse drain cannot truncate. The standalone capture passed 18/18 FIPS-derived cases and 4,608/4,608 coefficients, including the pending-writeback and conflict checks. Reference, core, engine, and UVM checks passed 208/208, 33/33, 24/24, and 53/53; the existing narrow UVM covergroup reported 100%. Measured core counts are **284 NTT, 288 INTT, 74 PWM**; complete no-stall external transactions are **798,802,844** clocks. The same Cyclone V fit reports **2,925 ALMs, 1,322 registers, 8 DSPs, 19 M10Ks**. TimeQuest reports 87.34 MHz at slow 85°C and 89.70 MHz at slow 0°C, so **87.34 MHz** is the worse slow-corner Fmax. Worst setup slack at the 5 ns constraint is **−6.449 ns** (slow 85°C); worst hold slack is **+0.086 ns** (fast 0°C). Compared with the fourth change, this costs 65 ALMs and 149 registers while keeping DSP/M10K counts unchanged. Estimated no-stall external rates rise from 94,534 to **109,449 NTT polynomials/s** (87.34 million / 798), from 94,178 to **108,903 INTT polynomials/s** (87.34 million / 802), and from 89,145 to **103,483 PWM polynomials/s** (87.34 million / 844). The slow 85°C critical path now starts at `u_core|fwd`, passes through `u_bf0` modular addition/compare, and ends at the inferred shift-register RAM for writeback tags. This is a source-functional and fitted-timing result, not timing closure at 200 MHz or an integrated Dilithium benchmark. Evidence: `sim/ntt_stage2_combined_*.log`, `quartus/output_files/ntt_stage2_combined_fit.summary`, `ntt_stage2_combined_sta.rpt`, and `ntt_stage2_combined_paths.log` (local generated files, ignored by Git).
 
-**Sixth retained change (2026-10-06, uncommitted):** In `butterfly_unit.sv`, raw operands for the CT/GS kept result are registered before the GS modular addition. This splits the prior `fwd`-to-writeback critical path without changing the six-clock butterfly pipeline or any operation cycle count. Exact vectors passed 18/18 and 4,608/4,608 coefficients; core, engine, reference, and UVM passed 33/33, 24/24, 208/208, and 53/53. The fit is **2,834 ALMs, 1,509 registers, 8 DSPs, 19 M10Ks**. Slow-corner Fmax is **89.88 MHz** (85°C; 90.46 MHz at 0°C); worst setup/hold slack is **−6.126/+0.128 ns** at 5 ns. Relative to the fifth change, this gains 2.54 MHz and saves 91 ALMs at a cost of 187 registers. The new worst path ends at the butterfly multiplier input register. Evidence: `sim/ntt_stage2_keepstage_*.log` and `quartus/output_files/ntt_stage2_keepstage_{fit.summary,sta.rpt,paths.log}` (local generated files, ignored by Git).
+**Sixth retained change (2026-10-06, uncommitted):** In `butterfly_unit.sv`, raw operands for the CT/GS kept result are registered before the GS modular addition. This splits the prior `fwd`-to-writeback critical path without changing the six-clock butterfly pipeline or any operation cycle count. Exact vectors passed 18/18 and 4,608/4,608 coefficients; core, engine, reference, and UVM passed 33/33, 24/24,208/208, and 53/53. The fit is **2,834 ALMs, 1,509 registers, 8 DSPs, 19 M10Ks**. Slow-corner Fmax is **89.88 MHz** (85°C; 90.46 MHz at 0°C); worst setup/hold slack is **−6.126/+0.128 ns** at 5 ns. Relative to the fifth change, this gains 2.54 MHz and saves 91 ALMs at a cost of 187 registers. The new worst path ends at the butterfly multiplier input register. Evidence: `sim/ntt_stage2_keepstage_*.log` and `quartus/output_files/ntt_stage2_keepstage_{fit.summary,sta.rpt,paths.log}` (local generated files, ignored by Git).
 
 **Seventh retained change (2026-10-06, uncommitted):** The butterfly now registers the CT multiplier operand and the GS modular difference separately, then selects between those registered candidates before multiplication. Combined with the sixth change, this separates mode selection from GS subtraction and moves the fitted critical path to the coefficient-memory writeback crossbar. Exact output comparison passed **18/18 cases and 4,608/4,608 coefficients**; reference/core/engine/UVM checks passed **208/208, 33/33, 24/24, 53/53**, with zero UVM failures. Core cycles remain **284/288/74** and no-stall external cycles **798/802/844** for NTT/INTT/PWM. The Cyclone V fit uses **2,845 ALMs, 1,690 registers, 8 DSPs, 19 M10Ks**. TimeQuest reports 90.81 MHz at slow 85°C and **90.33 MHz at slow 0°C**, the worse slow-corner Fmax. Worst setup slack is **−6.071 ns** (slow 0°C) at the 5 ns constraint; worst hold slack is **+0.137 ns** (fast 0°C). Versus the sixth change, Fmax gains 0.45 MHz for 11 ALMs and 181 registers. Estimated complete no-stall rates are **113,195 NTT/s** (90.33 million / 798), **112,631 INTT/s** (90.33 million / 802), and **107,026 PWM/s** (90.33 million / 844). The rate gain over the fifth change is about 3.4% with unchanged cycles; this is NTT-only, not integrated Dilithium throughput. The 5 ns constraint still fails. Evidence: `sim/ntt_stage2_mulselect_*.log` and `quartus/output_files/ntt_stage2_mulselect_{fit.summary,sta.rpt,paths.log}` (local generated files, ignored by Git).
 
-**Eighth retained change (2026-10-06, uncommitted):** The writeback tag now carries each lane's two-bit bank ID, computed at issue time, rather than recomputing the four-way address XOR at memory writeback. The existing bank and address tags advance together, so operation cycle counts remain **284/288/74 core** and **798/802/844 complete no-stall external** for NTT/INTT/PWM. The dedicated capture passed **18/18 cases and 4,608/4,608 coefficients**; core/engine/reference/UVM checks passed **33/33, 24/24, 208/208, 53/53**. The same Cyclone V fit reports **2,843 ALMs, 1,704 registers, 8 DSPs, 19 M10Ks**, slow-corner Fmax **93.41 MHz at 85°C** (93.55 MHz at 0°C), worst setup slack **−5.705 ns** at 5 ns, and worst hold slack **+0.095 ns**. Relative to the seventh change, worst-corner Fmax rises **3.08 MHz**, ALMs fall by 2, and registers rise by 14. Estimated complete no-stall rates are **117,055 NTT/s** (93.41 million / 798), **116,471 INTT/s** (93.41 million / 802), and **110,675 PWM/s** (93.41 million / 844). This is NTT-only throughput, with the 5 ns constraint still unmet. The worst setup path still runs from a writeback tag shift-memory output through bank write routing to coefficient memory. Evidence: `sim/ntt_stage2_banktaged_*.log` and `quartus/output_files/ntt_stage2_banktaged_{fit.summary,sta.rpt,paths.log}` (local generated files, ignored by Git).
+**Eighth retained change (2026-10-06, uncommitted):** The writeback tag now carries each lane's two-bit bank ID, computed at issue time, rather than recomputing the four-way address XOR at memory writeback. The existing bank and address tags advance together, so operation cycle counts remain **284/288/74 core** and **798/802/844 complete no-stall external** for NTT/INTT/PWM. The dedicated capture passed **18/18 cases and 4,608/4,608 coefficients**; core/engine/reference/UVM checks passed **33/33, 24/24,208/208, 53/53**. The same Cyclone V fit reports **2,843 ALMs, 1,704 registers, 8 DSPs, 19 M10Ks**, slow-corner Fmax **93.41 MHz at 85°C** (93.55 MHz at 0°C), worst setup slack **−5.705 ns** at 5 ns, and worst hold slack **+0.095 ns**. Relative to the seventh change, worst-corner Fmax rises **3.08 MHz**, ALMs fall by 2, and registers rise by 14. Estimated complete no-stall rates are **117,055 NTT/s** (93.41 million / 798), **116,471 INTT/s** (93.41 million / 802), and **110,675 PWM/s** (93.41 million / 844). This is NTT-only throughput, with the 5 ns constraint still unmet. The worst setup path still runs from a writeback tag shift-memory output through bank write routing to coefficient memory. Evidence: `sim/ntt_stage2_banktaged_*.log` and `quartus/output_files/ntt_stage2_banktaged_{fit.summary,sta.rpt,paths.log}` (local generated files, ignored by Git).
 
 **Rejected early RUN-selector register (2026-10-06):** Registering RUN bank selectors one clock before data writeback retained exact output matches and passed 33/33 core, 24/24 engine, 208/208 reference, and 53/53 UVM checks. The fit dropped worst-corner Fmax to **93.05 MHz** (slow 0°C), with **2,866 ALMs, 1,737 registers, 8 DSPs, 20 M10Ks**, worst setup slack **−5.747 ns**, and worst hold slack **+0.100 ns** at 5 ns. The new worst path moved inside an inverse-scale multiplier. This is worse than the eighth retained change in worst-corner Fmax, ALMs, registers, M10Ks, and setup slack, so the experiment was reverted. The restored `ntt_core.sv` matched its pre-trial backup byte-for-byte before a comment-only edit. Its `sim/ntt_stage2_runbank_*.log` and `quartus/output_files/ntt_stage2_runbank_{fit.summary,sta.rpt,paths.log}` remain as local ignored evidence. Because this rejected trial was the last Quartus run, the generic `ntt.fit.summary` and `ntt.sta.rpt` currently describe it; use the eighth change's named snapshots for retained-RTL metrics until the next retained-RTL fit.
 
 **Rejected explicit crossbar route (2026-10-06):** Replacing the dynamic indexed write assignments with a 13-source per-bank one-hot/OR route passed 18/18 exact vector cases (4,608/4,608 coefficients), 33/33 core, 24/24 engine, 208/208 reference, and 53/53 UVM checks. The fitted worst-corner Fmax dropped from 93.41 to **92.64 MHz** while ALMs rose from 2,843 to **2,955** and registers from 1,704 to **1,718**; DSP/M10K counts stayed 8/19. Worst setup/hold slack was **−5.795/+0.094 ns** at the 5 ns constraint. The route was reverted byte-for-byte to the eighth checkpoint. Evidence: `sim/ntt_stage2_crossbar_*.log` and `quartus/output_files/ntt_stage2_crossbar_{fit.summary,sta.rpt,paths.log}` (local generated files, ignored by Git).
 
-**Ninth retained change: stable output under backpressure (2026-10-06, uncommitted):** A new directed case with varying inverse coefficients exposed that `m_tdata` changed while `m_tvalid=1` and `m_tready=0`. During output streaming, the core's synchronous RAM read ports kept returning stale tile addresses whenever `rd_en_i=0`. `ntt_core.sv` now holds the most recent external read offset while idle, so the selected RAM output stays stable until the next accepted/prefetched read. The directed monitor now drives ready before the rising edge and checks accepted beats and stall stability at that edge. The enlarged engine suite passes **30/30**, including sparse and random NTT/INTT with input gaps and output stalls. Exact vector comparison remains **18/18 cases and 4,608/4,608 coefficients**; core/reference/UVM pass **33/33, 208/208, 53/53**. Core cycles remain **284/288/74** and no-stall external cycles **798/802/844** for NTT/INTT/PWM. The fresh Cyclone V fit reports **2,873 ALMs, 1,718 registers, 8 DSPs, 19 M10Ks**. Slow-corner Fmax is **92.71 MHz at 0°C** (99.27 MHz at 85°C); worst setup slack is **−5.786 ns** at 5 ns and worst hold slack is **+0.150 ns**. Relative to the eighth checkpoint, the functional repair costs 30 ALMs, 14 registers, and 0.70 MHz worst-corner Fmax. The worst setup path is now inside `u_bf0|u_mul`, from product register to second reduction register. Estimated no-stall external rates at the measured Fmax are **116,178 NTT/s** (92.71 million / 798), **115,599 INTT/s** (92.71 million / 802), and **109,846 PWM/s** (92.71 million / 844). Evidence: `sim/ntt_stage2_stall_fix_*.log`, `sim/ntt_stage2_paced_edgefixed.log` for the pre-fix failure, and `quartus/output_files/ntt_stage2_stallfix_{fit.summary,sta.rpt,paths.log}` (local generated files, ignored by Git). The generic Quartus summary files now correspond to this retained revision.
+**Ninth retained change: stable output under backpressure (2026-10-06, uncommitted):** A new directed case with varying inverse coefficients exposed that `m_tdata` changed while `m_tvalid=1` and `m_tready=0`. During output streaming, the core's synchronous RAM read ports kept returning stale tile addresses whenever `rd_en_i=0`. `ntt_core.sv` now holds the most recent external read offset while idle, so the selected RAM output stays stable until the next accepted/prefetched read. The directed monitor now drives ready before the rising edge and checks accepted beats and stall stability at that edge. The enlarged engine suite passes **30/30**, including sparse and random NTT/INTT with input gaps and output stalls. Exact vector comparison remains **18/18 cases and 4,608/4,608 coefficients**; core/reference/UVM pass **33/33,208/208, 53/53**. Core cycles remain **284/288/74** and no-stall external cycles **798/802/844** for NTT/INTT/PWM. The fresh Cyclone V fit reports **2,873 ALMs, 1,718 registers, 8 DSPs, 19 M10Ks**. Slow-corner Fmax is **92.71 MHz at 0°C** (99.27 MHz at 85°C); worst setup slack is **−5.786 ns** at 5 ns and worst hold slack is **+0.150 ns**. Relative to the eighth checkpoint, the functional repair costs 30 ALMs, 14 registers, and 0.70 MHz worst-corner Fmax. The worst setup path is now inside `u_bf0|u_mul`, from product register to second reduction register. Estimated no-stall external rates at the measured Fmax are **116,178 NTT/s** (92.71 million / 798), **115,599 INTT/s** (92.71 million / 802), and **109,846 PWM/s** (92.71 million / 844). Evidence: `sim/ntt_stage2_stall_fix_*.log`, `sim/ntt_stage2_paced_edgefixed.log` for the pre-fix failure, and `quartus/output_files/ntt_stage2_stallfix_{fit.summary,sta.rpt,paths.log}` (local generated files, ignored by Git). The generic Quartus summary files now correspond to this retained revision.
 
 **Measured producer/backpressure sensitivity (source simulation, no sampler attached):** The 30-check directed engine test drives one idle input clock between successive coefficients as a repeatable slow-producer model, and separately holds `m_tready` low for two of every seven output-loop clocks. The directed golden-model comparison passes for each paced case. These are complete request-to-last-output counts at the same testbench boundary; the no-stall counts agree with the independent vector bench. The one-gap NTT case adds exactly 255 clocks for 255 gaps. The inverse stall pattern adds 102 clocks, and the combined case adds 255 + 102 = 357 clocks. This models handshake sensitivity, not an actual rejection-sampler acceptance rate or Keccak/NTT integrated throughput.
 
@@ -66,7 +84,7 @@ For every comparison, state the DUT revision, FPGA/device, operation, input/outp
 | INTT, output-stall pattern only | 802 | 904 | 102 |
 | INTT, input gaps plus output stalls | 802 | 1,159 | 357 |
 
-**Dual-core Keccak interface handoff:** The current `keccak_v2:src/keccak_engine/keccak_dual_interleaved.sv` has one shared 64-bit message input and a shared 128-bit SHAKE output with `output_valid_o`, `output_ready_i`, `output_bytes_o`, and `output_core_o`. The `ntt_v2:src/ntt_engine/ntt_engine.sv` sink accepts one 23-bit coefficient per `s_tvalid && s_tready` clock, with a separate operation request and 256-beat polynomial load. A future adapter therefore needs a job descriptor linking each accepted Keccak request/core tag to sampler mode and destination polynomial; byte collection across partial output beats; coefficient validity and indexing; buffering between bursty/variable sampler output and the one-coefficient NTT sink; and ready propagation back to Keccak when that buffer fills. The two SHAKE cores must remain separately tagged until their respective jobs are unpacked and sampled. The present NTT top has no descriptor or multi-coefficient load port, and no sampler is connected, so neither an actual SHAKE-wait count nor an integrated throughput claim exists yet. This is an interface contract for Stage 3 evaluation and Stage 6 integration, not a claim of completed Keccak/NTT compatibility.
+**Dual-core Keccak interface handoff:** The current `keccak_v2:src/keccak_engine/keccak_dual_interleaved.sv` has one shared 64-bit message input and a shared 128-bit SHAKE output with `output_valid_o`, `output_ready_i`, `output_bytes_o`, and `output_core_o`. The `ntt_v2:src/ntt_LightHD/ntt_engine.sv` sink accepts one 23-bit coefficient per `s_tvalid && s_tready` clock, with a separate operation request and 256-beat polynomial load. A future adapter therefore needs a job descriptor linking each accepted Keccak request/core tag to sampler mode and destination polynomial; byte collection across partial output beats; coefficient validity and indexing; buffering between bursty/variable sampler output and the one-coefficient NTT sink; and ready propagation back to Keccak when that buffer fills. The two SHAKE cores must remain separately tagged until their respective jobs are unpacked and sampled. The present NTT top has no descriptor or multi-coefficient load port, and no sampler is connected, so neither an actual SHAKE-wait count nor an integrated throughput claim exists yet. This is an interface contract for Stage 3 evaluation and Stage 6 integration, not a claim of completed Keccak/NTT compatibility.
 
 **Stage 2 handoff decision:** Source functionality, timing, resources, core phases, full transaction cycles, and a paced producer/consumer case are now measured for the retained four-bank tile. The 284/288/74 core counts still exceed the plan's 264/264/70 compute-cycle comparison by 20/24/4 cycles. The Cyclone V 5 ns setup target remains violated by 5.786 ns; no board pins or integrated sampler have been tested. Wider coefficient loading, load/compute overlap, LightHD-style FIFO scheduling, and small-secret Pre-NTT would alter the interface/schedule enough to require architecture comparison. Stage 3 will evaluate those choices on the same Cyclone V and preserve the current banked implementation as the measured reference. The Stage 2 measurement pass is complete with these explicit misses; the performance challenge is not marked achieved.
 
@@ -104,7 +122,7 @@ LightHD reports 264 cycles each for standard forward and inverse NTT (256 operat
 
 After the retained Stage 2 pipeline change, the corresponding compute-cycle gaps are **20 forward, 24 inverse, and 4 PWM**. The 284/288/74 counts include 26 RUN-drain clocks for forward NTT, 30 RUN-drain clocks for inverse NTT (three 4-cycle inter-pass waits and an 18-cycle final scaled-writeback wait), and 8 PWM-drain clocks. There is no separate inverse SCALE issue phase in the active schedule. The 5 ns fitted setup violation remains open. These are updated measurements, while the table above preserves the pre-change review baseline.
 
-**Saved reference:** The verified four-bank 2x2 tile, its RTL, output files, test logs, Quartus reports, and file hashes are preserved in `experiments/ntt_stage3/banked_baseline/`. Its measured core cycles are 284 NTT, 288 INTT, and 74 PWM; complete no-stall transactions are 798, 802, and 844 cycles. The last fit on Cyclone V `5CGXFC7C7F23C8` reports 2,873 ALMs, 8 DSPs, 19 M10Ks, 92.71 MHz worst slow-corner Fmax, and -5.786 ns setup slack at the 5 ns target. The main four-bank RTL remains active while the LightHD candidate is built separately.
+**Saved reference:** The verified four-bank 2x2 tile, its RTL, output files, test logs, Quartus reports, and file hashes are preserved in `experiments/ntt_stage3/banked_baseline/`. Its measured core cycles are 284 NTT, 288 INTT, and 74 PWM; complete no-stall transactions are 798,802, and 844 cycles. The last fit on Cyclone V `5CGXFC7C7F23C8` reports 2,873 ALMs, 8 DSPs, 19 M10Ks, 92.71 MHz worst slow-corner Fmax, and -5.786 ns setup slack at the 5 ns target. The main four-bank RTL remains active while the LightHD candidate is built separately.
 
 **Requested LightHD reconstruction:** Build from scratch around the published architecture: four butterfly units; three 92-bit FIFO stores with depths 32, 32, and 16; a signal generator; BU, twiddle, and FIFO decoders; and the NTT, INTT, and PWM schedules. The first-stage LUT and input regrouping apply only to eligible small secret polynomials; general inputs retain the standard transform. The external `ntt_engine` 23-bit wrapper may be reused to measure the same workload, but its transfer cycles must be reported separately from LightHD's compute cycles. Before synthesis, prove the FIFO coefficient-index schedule across all eight stages and compare outputs against the same independent cases and SystemVerilog reference checks.
 
@@ -190,7 +208,7 @@ checked internal traces before publishing coverage.
 `ntt_lighthd_cov.ucdb` and `ntt_lighthd_coverage.rpt` are generated by this
 main UVM run. Current code FSM transitions remain core 6/9 and wrapper 9/15;
 directed transition results below are separate supporting evidence.
-`run_scoreboard_gate.do` is a separate UVM self-test: four deliberately
+`run_uvm.do` with `NTT_TEST ntt_coverage_gate_test` is a separate UVM self-test: four deliberately
 corrupted observed items are rejected without crediting bins. Next priorities
 are reset cancellation/recovery in UVM, unique coefficient destination proof,
 Pre eligibility and code-hole review. No RTL or Quartus performance result
@@ -974,9 +992,9 @@ smaller140.69MHz checkpoints remain saved.
 
 **Next measured targets:** slow85 tick[6] -> FIFO read-enable decode;
 slow0 lane2 multiplier prod_s1 -> t1_q. Inspect controller decode/fanout and multiplier
-read alignment before adding latency. **Stage4 remains open:**200MHz setup/
+read alignment before adding latency. **Stage 4 remains open:**200MHz setup/
 pulse timing fails, raw code-hole review and hardware eligibility/integration
-remain. User acceptance precedes Stage5. No netlist/FPGA result. Nothing committed.
+remain. User acceptance precedes Stage 5. No netlist/FPGA result. Nothing committed.
 
 ### Direct FIFO route decoder trial (2026-10-10)
 
@@ -1236,9 +1254,621 @@ return write-data/control path while preserving the checked FIFO schedule.
 Setup/pulse timing at 200 MHz remains open. Stage 5 requires user acceptance;
 no netlist/FPGA claim. Nothing staged or committed.
 
-## Stage 5 — Implementation verification after result review
+### Return-word retiming trials and restoration (2026-10-10)
 
-After the user reviews and accepts the Stage 4 result, run focused **post-synthesis and post-fit functional** simulations against the same external checker and case IDs. Review synthesis warnings, resource mapping, and TimeQuest setup/hold reports. Do not call a functional post-fit simulation an SDF timing simulation where Cyclone V SDF is unavailable. Record exact pass counts and any limitations in the specification/coverage/throughput reports. FPGA/UART tests remain a separate physical-validation gate.
+The selected first-fold pipeline was committed as `c2cccd2`. Subsequent work
+tried to shorten its measured return tag[9].pwm -> FIFO2 write-data path.
+Both trials keep the 5/7/10 multiplier/BF/return pipeline, FIFO capacities,
+external interface, golden arithmetic and reference outputs unchanged.
+
+1. **Registered compute words:** preselect each FIFO's A/B compute word in
+   the existing result register using tag[8], rather than decoding PWM and
+   destination in the RAM write stage. Preserve the held result B during PWM
+   and the existing load/Pre/compute push priority.
+2. **Registered compute plus Pre word:** additionally preselect FIFO1's
+   Pre sum/difference in the existing Pre arithmetic stage using pre_upper_q0.
+   Its late write mux now selects compute, Pre or load data.
+
+| Same-device measured metric | Selected baseline | Compute words (rejected) | Compute + Pre word (rejected) |
+|---|---:|---:|---:|
+| Worst Fmax (MHz) | **148.46** | 141.80 | 139.33 |
+| Slow85 / slow0 Fmax (MHz) | 148.46 / 150.20 | 141.80 / 143.25 | 142.19 / 139.33 |
+| ALMs / registers | **2,490 / 2,396** | 2,630 / 2,581 | 2,681 / 2,668 |
+| DSP / M10K | 5 / 21 | 5 / 20 | 5 / 20 |
+| RAM bits | 37,348 | 37,325 | 37,325 |
+| Worst setup at 5 ns (ns) | **-1.736** | -2.052 | -2.177 |
+| Worst all-corner hold (ns) | +0.133 | +0.163 | +0.170 |
+| Worst pulse width at 5 ns (ns) | -0.555 | -0.555 | -0.555 |
+| Core NTT/INTT/PWM/Pre cycles | 267/267/75/236 | unchanged | unchanged |
+| No-stall wrapper cycles | 781/781/845/750 | unchanged | unchanged |
+
+First-trial slow85 worst moves to pre_v1 -> FIFO1 RAM data; slow0 limits
+at BF kept-data RAM -> BF output. With the additional Pre word, slow85 worst
+moves to inverse-tag RAM -> compute_word2_q[51], while slow0 limits at lane3
+kept-data RAM -> b_o[11]. Moving the mux did not improve whole-design timing:
+setup worsens 0.316 ns and 0.441 ns respectively against the selected baseline.
+Both are rejected. No clock relaxation or unsupported improvement claim.
+
+Fresh main UVM for each trial passes 118/118, zero errors/fatals, all fourteen
+checked functional covergroup types at 100%. Separate Python compares 18/18 cases
+and all 4,608 coefficients. Each trial's separate writeback-corruption test
+detects the observed fault with correct real final outputs and checked_jobs=0;
+failed UCDBs are not merged. Other unchanged negative tests remain preserved,
+not freshly rerun for these trials. Source changes alter code denominators:
+see exact raw counts in COVERAGE.md and archived reports; no exclusions or blanket code-coverage closure claim.
+
+Exact six-file trial RTL and complete simulation/fit evidence are preserved in
+`experiments/ntt_stage4/lighthd_return_words_trial/` and
+`experiments/ntt_stage4/lighthd_return_pre_words_trial/`. Active six RTL files
+are restored byte-for-byte from `lighthd_fold_pipeline_checkpoint/`.
+Fresh `uvm_return_trials_restore.log` passes 118/118; separate
+`vector_return_trials_restore.log` / `compare_return_trials_restore.log`
+passes 18/18 cases, 4,608/4,608 coefficients, with unchanged measured cycles.
+Restoration evidence is saved in `lighthd_return_trials_restore/`.
+Fresh `return_trials_restore_{map,fit,sta,paths}.log` reproduces **148.46 MHz**
+worst Fmax (slow0 **150.20 MHz**), **2,490 ALMs**, **2,396 registers**, **5 DSPs /
+21 M10Ks** and **37,348 RAM bits**. At unchanged 5 ns, worst setup/hold/pulse
+is **-1.736 / +0.133 / -0.555 ns**. The active Quartus database and review
+copies in `quartus/ntt_LightHD/results/` now match the restored source. Both
+slow corners again limit at tag[9].pwm -> FIFO2 RAM data. No performance
+improvement is claimed for the rejected trials.
+
+**Next Stage 4 candidate:** decode a small per-FIFO A/B write-select mask
+before the return stage and delay that control with the issue tags, keeping
+the selected A/B data registers. This targets the late PWM/destination decode
+without the trials' additional wide compute-word registers. It is unimplemented
+and unmeasured; any trial must repeat main UVM, Python and fresh Quartus timing.
+
+Stage 4 remains open; setup/pulse timing at 200 MHz is not closed. Stage 5 requires
+user acceptance. No subsequent changes are committed.
+
+### Selected early write selection and prefetch simplification (2026-10-10)
+
+Start from the selected 148.46 MHz first-fold pipeline; preserve it unchanged.
+Decode each FIFO's A/B result choice from tag[8] into three control flops in
+parallel with the existing result registers. At return, use those bits instead
+of late PWM/binary-destination decoding. Do not add wide compute-word registers.
+The independent UVM models, golden arithmetic and reference files are unchanged.
+
+The control-only trial removes the old top write-data path but reaches only
+144.72 MHz worst (slow85 149.59 MHz; slow0 144.72 MHz). Its new worst path is
+wrapper tx_idx -> terminal-count/prefetch-address decode -> FIFO1 head.
+It is not selected on its own. In the follow-up, compute index+1 throughout
+E_TX_VALID; retain the original ready AND not-last read enable. Every enabled
+read edge/address is identical. Inactive addresses during stalls/final beat
+may differ, but are not consumed. Stalled output data/last remain stable.
+First output still requests coefficient zero. No added clock or interface change.
+
+| Same-device measured metric | Prior selected pipeline | Control-only trial | New selected control + prefetch |
+|---|---:|---:|---:|
+| Worst Fmax (MHz) | 148.46 | 144.72 | **150.49** |
+| Slow85 / slow0 Fmax (MHz) | 148.46 / 150.20 | 149.59 / 144.72 | **151.79 / 150.49** |
+| ALMs / registers | 2,490 / 2,396 | 2,479 / 2,451 | **2,475 / 2,414** |
+| DSP / M10K | 5 / 21 | 5 / 20 | **5 / 20** |
+| RAM bits | 37,348 | 37,325 | **37,325** |
+| Worst setup at 5 ns (ns) | -1.736 | -1.910 | **-1.645** |
+| Worst all-corner hold (ns) | +0.133 | +0.102 | **+0.152** |
+| Worst pulse width at 5 ns (ns) | -0.555 | -0.555 | **-0.555** |
+| Core NTT/INTT/PWM/Pre cycles | 267/267/75/236 | unchanged | **unchanged** |
+| No-stall wrapper cycles | 781/781/845/750 | unchanged | **unchanged** |
+
+Against the prior selected result: worst Fmax +1.37%, setup +0.091 ns, hold
++0.019 ns; ALMs -15, registers +18, mapped M10K blocks -1, RAM bits -23.
+Coefficient FIFO capacities remain 32/32/16 words of92bits; PWM B remains 64 words.
+This is a mapping change, not a change in coefficient storage capacity.
+Same Cyclone V 5CGXFC7C7F23C8, Quartus25.1std Lite, standard fit and5ns clock.
+No constraint relaxation. Setup/pulse still fails at 200 MHz.
+
+Both trials pass main UVM 118/118, zero errors/fatals, all fourteen implemented
+checked functional covergroup types 100%. Separate Python passes 18/18 cases,
+4,608/4,608 coefficients with unchanged measured cycles. Latest selected logs:
+`uvm_write_select_prefetch.log` (also `uvm_stage4.log`),
+`vector_write_select_prefetch.log`, `compare_write_select_prefetch.log`.
+Fresh `coverage_gate_write_select_prefetch.log` rejects five deliberately
+corrupted jobs without new checked credit; fresh
+`routing_writeback_write_select_prefetch.log` detects an observed write fault
+with real outputs correct and checked_jobs=0. Failed UCDBs remain separate.
+Other unchanged operand/GS/Pre-eligibility negative evidence remains retained,
+not freshly rerun for this checkpoint. No TB or golden-model change.
+
+Current raw core coverage:300/312 statements, 234/247 branches, 49/78 conditions,
+55/58 expressions, 5/5 states, 9/9 transitions, 3409/3689 toggles. The new FIFO1/2
+select bits toggle both ways; FIFO3's B-select remains constant zero because
+B never routes to FIFO3. Its two missed bins remain visible. Wrapper raw:
+50/51 statements, 38/39 branches, 7/7 conditions, 1/1 expressions, 8/8 states,
+15/15 transitions, 298/302 toggles. Source form changes denominators; no exclusions
+or blanket raw code-coverage closure claim. Full counts are in COVERAGE.md.
+
+At 150.49 MHz, modeled NTT wrapper/core latency is 781/150.49=5.19 us and
+267/150.49=1.77 us. Latency-based rate 150.49e6/781=192,689 polynomials/s,
++1.37% with no added cycle. Excludes restart gaps, stalls and SHAKE/sampler;
+not measured sustained Dilithium throughput.
+
+Fresh `write_select_prefetch_{map,fit,sta,paths}.log` supports current review
+copies in `quartus/ntt_LightHD/results/` and the active implementation database.
+Exact six RTL files, source hashes and complete main/negative/Python/Quartus
+evidence are in `experiments/ntt_stage4/lighthd_write_select_prefetch_checkpoint/`.
+The control-only trial remains in `lighthd_write_select_trial/`; all prior
+selected/rejected alternatives remain saved. Nothing is committed.
+
+**Next measured Stage 4 targets:** slow0 now limits at packed BF kept-operand
+delay RAM -> final butterfly result. Slow85 limits at tick -> packed tag
+shift-memory input. Other reported paths include Pre input capture and Pre
+subtract. Inspect the delay-memory mapping and final BF combine without adding
+an operation clock; any candidate needs main UVM/Python and fresh timing.
+These are physical mapped-instance labels, not a changed logical lane route.
+Stage 4 remains open; Stage 5 still requires user result acceptance.
+
+### Setup-focused butterfly delay trials (2026-10-10)
+
+Keep the 5 ns constraint and judge candidates by the worst setup slack across
+both slow corners. The selected 150.49 MHz baseline limits at packed BF operand
+delay RAM -> final BF result (slow0) and tick -> tag shift RAM input (slow85).
+Two source-correct mapping experiments target the BF RAM-to-adder path without
+adding a clock or changing arithmetic. Both are rejected after full fits:
+
+| Measured metric | Selected baseline | All BF delay stages in registers | Only final BF delay stage in registers |
+|---|---:|---:|---:|
+| Slow85 / slow0 setup (ns) | -1.588 / -1.645 | -2.311 / -2.138 | -1.959 / -1.777 |
+| Worst setup at 5 ns (ns) | **-1.645** | -2.311 | -1.959 |
+| Slow85 / slow0 setup TNS (ns) | -919.242 / -1002.192 | -783.296 / -828.230 | -889.425 / -973.168 |
+| Slow85 / slow0 Fmax (MHz) | 151.79 / 150.49 | 136.78 / 140.10 | 143.70 / 147.56 |
+| ALMs / registers | 2,475 / 2,414 | 2,418 / 2,929 | 2,468 / 2,549 |
+| DSP / M10K | 5 / 20 | 5 / 17 | 5 / 20 |
+| RAM bits | 37,325 | 36,845 | 37,229 |
+| Worst all-corner hold (ns) | +0.152 | +0.129 | +0.129 |
+| Worst pulse width (ns) | -0.555 | -0.555 | -0.555 |
+
+Setup TNS is the sum of negative endpoint setup slacks within each corner.
+It is not operation latency. Both trials improve TNS but worsen the worst
+setup path, by 0.666 ns and 0.314 ns respectively, so neither is selected.
+Removing the BF delay RAM shifts the limit to Pre upper-word selection -> FIFO1
+write data. Keeping four delay stages as a 4 x 96-bit RAM and registering only
+the last stage shifts slow85 to Pre valid -> FIFO1 write data; slow0 limits at
+BF input -> GS input subtract. This shows several paths need attention;
+removing one mapped RAM path alone does not establish an overall timing win.
+The coefficient FIFO capacities and PWM B storage are unchanged.
+
+Each trial passes main UVM 118/118 with zero errors/fatals, all fourteen checked
+functional covergroup types 100%, and separate Python 18/18 cases / 4,608/4,608
+coefficients. Core cycles remain 267/267/75/236; no-stall wrapper cycles remain
+781/781/845/750. No golden-model, testbench or timing-constraint change.
+The final-stage trial has 60/60 statements, 19/19 branches and 752/752 toggles
+per BF because its separate register block adds executable structure; this
+is not a new functional-coverage feature. No code exclusions.
+
+Exact six-file RTL, hashes, UVM/UCDB/Python and fresh map/fit/STA/path evidence:
+`experiments/ntt_stage4/lighthd_bf_register_delay_trial/` and
+`experiments/ntt_stage4/lighthd_bf_tail_register_trial/`.
+Existing negative-checker evidence remains retained, not freshly rerun for these
+mapping trials. Their failed timing results are preserved for comparison.
+
+All six active RTL files are restored byte-for-byte from
+`lighthd_write_select_prefetch_checkpoint/`. Fresh restoration verification and
+Quartus rebuild evidence are collected separately in
+`lighthd_bf_delay_trials_restore/`; the selected source is unchanged.
+Fresh `bf_delay_restore_{map,fit,sta,paths}.log` reproduces 2,475 ALMs,
+2,414 registers, 5 DSPs / 20 M10Ks, 37,325 RAM bits and slow85/slow0 Fmax
+151.79/150.49 MHz. Setup is -1.588/-1.645 ns; setup TNS -919.242/-1002.192 ns;
+worst all-corner hold +0.152 ns and pulse width -0.555 ns. Fit timestamp
+2026-10-10 05:29:37. Main UVM again passes 118/118, fourteen checked groups
+100%; Python again passes 18/18 cases and 4,608 coefficients. Active RTL,
+Quartus database and current review reports now agree with the selected
+150.49 MHz source. This is a reproduced baseline, not a new improvement.
+
+Next Stage 4 investigation: measure the return/Pre FIFO write-data selection
+and the BF final modular combine together, using the baseline as the reference.
+Keep each candidate reversible and require an improvement in worst setup,
+nonnegative hold, unchanged correctness and explicitly reported cycle costs.
+Stage 4 remains open; 200 MHz setup/pulse closure is not achieved. No Stage 5,
+netlist/board claim, staging or commit.
+
+### Butterfly candidate registers and control-tag mapping (2026-10-10)
+
+Continue from the selected 150.49 MHz / -1.645 ns / 2,475 ALM checkpoint.
+First trial: register raw/biased CT sums and raw/corrected CT differences,
+then select the canonical output before the core's existing result register.
+GS operands and mode are aligned in the same BF stage. This moves the correction
+mux across an existing boundary without adding a clock. Arithmetic identities,
+seven-clock BF, ten-clock return, FIFO capacities and interface are unchanged.
+
+Fresh main UVM passes 118/118, zero errors/fatals, fourteen checked groups 100%;
+Python passes 18/18 cases and 4,608/4,608 coefficients with unchanged cycles.
+No golden-model or testbench change. Raw BF coverage is 72/72 statements,
+22/22 branches and 1,500/1,610 toggles per instance; all 110 misses correspond
+to 55 constant bias/modulus/extension/compressor bits and remain visible.
+
+Full fit rejects this candidate: slow85/slow0 Fmax 135.59/131.20 MHz, setup
+-2.375/-2.622 ns at unchanged 5 ns, setup TNS -1027.721/-1090.113 ns.
+Worst hold +0.136 ns, pulse -0.555 ns. Resources: 2,525 ALMs, 2,793 registers,
+5 DSPs / 20 M10Ks, 37,305 RAM bits. Fit timestamp 2026-10-10 18:14:15.
+The new slow85 limit is kept GS sum -> BF delay RAM input; slow0 limits at
+registered CT difference borrow -> core result through correction/scaling.
+The original path is removed, but other paths regress: worst setup is 0.977 ns
+worse. Exact six-file source, hashes and complete evidence are saved in
+`experiments/ntt_stage4/lighthd_bf_candidate_register_trial/`.
+
+Restore the baseline before the second trial. Apply automatic shift-register
+recognition OFF only to the short control-tag pipeline. The baseline slow85
+critical path is tick -> packed tag shift RAM input; coefficient FIFO/BF delay
+RAMs, arithmetic and pipeline lengths are unaffected. Synthesis recognizes
+the tag attributes and no longer infers the tag shift RAM. Main UVM again passes
+118/118 and Python 18/18 cases / 4,608 coefficients; no executable SV or raw
+coverage-count change. This trial is saved separately in
+`experiments/ntt_stage4/lighthd_tag_register_trial/`.
+Tag-only full fit is not selected: slow85/slow0 Fmax 146.93/149.52 MHz,
+setup -1.806/-1.688 ns at unchanged 5 ns; TNS -799.111/-925.742 ns.
+Worst all-corner hold +0.165 ns, pulse -0.555 ns. Resources: 2,458 ALMs,
+2,471 registers, 5 DSPs / 19 M10Ks, 37,280 RAM bits. Fit timestamp
+2026-10-10 18:22:58. Removing the tag RAM shifts slow85 to Pre valid ->
+FIFO1 write data and slow0 to tick[6] -> FIFO2 head pointer. TNS/area improve,
+but worst setup regresses 0.161 ns, so the selected baseline remains unchanged.
+
+A separate follow-up keeps tag FFs and decodes one-hot write-data masks in
+parallel with the existing result/Pre arithmetic registers. Load, Pre sum,
+Pre difference and compute A/B sources feed a masked OR, removing the serial
+late write-data control mux. FIFO enables/pointers, every enabled write value,
+arithmetic and operation clocks remain unchanged. Inactive port values may
+differ and are not consumed. Independent UVM checks every physical write and
+coefficient route, not just final outputs.
+
+Fresh `uvm_tag_write_masks.log` passes 118/118 with zero errors/fatals and
+fourteen checked groups 100%; `compare_tag_write_masks.log` passes 18/18 cases,
+4,608 coefficients. Core cycles 267/267/75/236, wrapper 781/781/845/750 unchanged.
+No TB/golden-model change. Raw core coverage is 305/317 statements, 221/233
+branches, 49/78 conditions, 63/64 expressions, 5/5 states, 9/9 transitions and
+3421/3701 toggles (280 constant misses retained); no exclusions. This differs
+from the baseline's denominators because the source expression structure changes.
+Exact six-file source and evidence are separate in
+`experiments/ntt_stage4/lighthd_tag_write_masks_trial/`.
+The follow-up is rejected: slow85/slow0 Fmax 144.89/143.53 MHz,
+setup -1.902/-1.967 ns at unchanged 5 ns; TNS -948.843/-1046.085 ns.
+Worst all-corner hold +0.152 ns, pulse -0.555 ns. Resources: 2,541 ALMs,
+2,477 registers, 5 DSPs / 19 M10Ks, 37,280 RAM bits. Fit timestamp
+2026-10-10 18:34:21. Slow85 limits at Pre valid -> FIFO2 write data; slow0
+again limits at packed BF delay RAM -> a_o. The masks pass independent
+physical-write checks, but overall worst setup regresses 0.322 ns.
+
+| Same 5 ns constraint | Selected source | BF candidates before mux | Tag FFs only | Tag FFs + write masks |
+|---|---:|---:|---:|---:|
+| Worst setup (ns) | **-1.645** | -2.622 | -1.806 | -1.967 |
+| Worst Fmax (MHz) | **150.49** | 131.20 | 146.93 | 143.53 |
+| ALMs | 2,475 | 2,525 | 2,458 | 2,541 |
+| Registers | 2,414 | 2,793 | 2,471 | 2,477 |
+| DSP / M10K | 5 / 20 | 5 / 20 | 5 / 19 | 5 / 19 |
+| Worst hold (ns) | +0.152 | +0.136 | +0.165 | +0.152 |
+
+All three trials are preserved but rejected. Each passes main UVM 118/118 and
+separate Python 4,608/4,608 coefficients with unchanged cycles. No new negative
+checker reruns are claimed; previous unchanged checker self-test evidence is
+retained separately. Golden/reference files and TB files are unchanged.
+All six active RTL files are restored byte-for-byte from the selected
+`lighthd_write_select_prefetch_checkpoint/rtl/`. Fresh UVM/Python and
+map/fit/STA/path restoration evidence is collected in
+`experiments/ntt_stage4/lighthd_candidate_tag_trials_restore/`.
+Fresh `candidate_tag_restore_{map,fit,sta,paths}.log` reproduces the selected
+result exactly. Fit completed 2026-10-10 18:42:48; timing/path reports finish at
+18:43:05. Slow85/slow0 Fmax 151.79/150.49 MHz; setup -1.588/-1.645 ns at unchanged
+5 ns, setup TNS -919.242/-1002.192 ns. Worst all-corner hold +0.152 ns,
+pulse -0.555 ns. Resources: 2,475 ALMs, 2,414 registers, 5 DSPs / 20 M10Ks,
+37,325 RAM bits, 59 physical / 0 virtual pins. Active RTL, Quartus database
+and current review reports now match the selected checkpoint. No new timing
+improvement is claimed. Earlier checkpoints and all three rejected trials remain
+saved. No new negative-checker reruns, Stage 5, staging or commit.
+
+These same-cycle local rewrites do not establish a timing win. The remaining
+investigation should consider a different BF pipeline cut with an explicitly
+measured cycle cost, while retaining the selected implementation for comparison;
+any such candidate needs full output/physical-write checks and a fresh fit.
+It is not implemented or measured by this trial sequence.
+
+Stage 4 remains open. No 200 MHz closure, Stage 5 or commit is claimed.
+
+## Stage 4 — Approved 148 MHz operating closure (2026-10-10)
+
+The user approved closing timing near current Fmax. Nominal operation is
+**148 MHz**, requested period6.756757 ns; TimeQuest uses **6.756 ns / 148.02 MHz**.
+This is an approved operating-frequency choice, not an RTL speed improvement.
+The 5 ns/200 MHz benchmark remains separate and unmet.
+
+### Historical 2026-10-10 method (superseded by permanent SDC below)
+
+A fresh relaxed-only148 MHz fit failed: 2480 ALMs, 2418 registers, 5 DSP/20 M10K;
+slow 85/slow 0 Fmax143.10/144.45 MHz, setup-0.232/-0.167 ns. It is rejected and
+archived in the checkpoint's `relaxed_fit_trial/`, not called closed.
+
+The selected flow fits at the tighter **5 ns optimization target**, restores the
+approved operating SDC, then runs full multicorner STA, paths and a separate
+explicit 200 MHz benchmark. A fresh full rebuild passed; fit summary timestamp
+**2026-10-10 19:06:08**. Run from `quartus/ntt_LightHD/`:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build_operating.ps1
+```
+
+The script restores `ntt.sdc` even on failure and prints `OPERATING_TIMING_PASS`
+only after all 20 timing-check slacks are positive and all TNS values zero.
+Use this flow instead of fitting only at the relaxed operating constraint.
+Do not run another Quartus job in this project during its temporary fit SDC change.
+
+### Fresh selected measurements
+
+**2,475 ALMs, 2,414 registers, 5 DSPs, 20 M10Ks, 37,325 RAM bits**.
+Fmax slow 85/slow 0 **151.79/150.49 MHz**; worst **150.49 MHz**.
+All four 1100mV corners pass (slacks below in ns; every TNS is0.000 ns):
+
+| Corner | Setup | Hold | Recovery | Removal | Pulse width |
+|---|---:|---:|---:|---:|---:|
+| Slow 85C | +0.168 | +0.429 | +4.090 | +1.206 | +1.201 |
+| Slow 0C | +0.111 | +0.273 | +4.200 | +1.025 | +1.201 |
+| Fast 85C | +3.504 | +0.180 | +5.500 | +0.474 | +2.168 |
+| Fast 0C | +3.888 | +0.152 | +5.646 | +0.391 | +2.160 |
+
+Worst setup/hold/pulse **+0.111/+0.152/+1.201 ns**; recovery/removal
+**+4.090/+0.391 ns**. The explicit 200 MHz analysis of this same route still fails:
+slow 85/slow 0 setup **-1.588/-1.645 ns**, minimum pulse width **-0.555 ns**.
+Worst slow 0 setup remains BF operand-delay RAM to final BF result; slow 85 is
+tick to tag shift-memory input.
+
+### Verification and evidence
+
+All six active RTL files are byte-identical to the saved write-selection/prefetch
+checkpoint. No golden model, TB source, interface or cycle changes. Retained,
+not newly rerun: `uvm_candidate_tag_restore.log` **118/118**, zero errors/fatals,
+fourteen checked groups 100%; Python `compare_candidate_tag_restore.log`
+**18/18 cases, 4608/4608 coefficients**. Raw-code holes remain as documented in
+COVERAGE.md. Core NTT/INTT/PWM/Pre **267/267/75/236** clocks; wrapper
+**781/781/845/750**. At nominal 148 MHz NTT wrapper/core latency is
+781/148=**5.277 us**, 267/148=**1.804 us**; latency-based wrapper rate
+148e6/781=**189,501 polynomials/s**, excluding gaps/stalls/SHAKE/sampler.
+
+Current review copies: `quartus/ntt_LightHD/results/`. Fresh logs:
+`operating148_aggressive_{map, fit, sta, paths, benchmark200}.log`.
+Exact RTL/hashes, constraints/scripts, fresh reports, parsed20-check gate,
+retained source verification and rejected relaxed fit:
+`experiments/ntt_stage4/lighthd_148mhz_operating_checkpoint/`.
+Original physical database is local recovery evidence under ignored
+`implementation_snapshot/`. Previous trials and four-bank RTL remain preserved.
+
+The operating timing gate is closed within this standalone internal constraint
+model. External I/O remains false-pathed; 59 physical pins are autoassigned,
+zero are virtual. Board/sampler timing is not signed off. Overall Stage 4 awaits
+user review/acceptance of coverage and implementation tradeoffs. No Stage 5
+netlist work, Stage 6 integration or new commit.
+
+## Stage 4 — Permanent GUI constraint flow (2026-10-11)
+
+The user requested a normal Quartus GUI compilation without manual SDC edits.
+The existing `ntt` revision now uses a permanent stage-specific `ntt.sdc`:
+`TimingAnalyzerInfo(nameofexecutable)` selects 5 ns for `quartus_map`/`quartus_fit`
+and 6.756757 ns for final timing analysis. This is documented in Intel's
+[Standard Edition Timing Analyzer guide, section 2.4.3](https://www.intel.com/programmable/technical-pdfs/683068.pdf).
+No separate operating revision, physical re-fit, or temporary SDC replacement
+is needed between fitter and final STA. The actual operating clock remains
+nominal 148 MHz; the 200 MHz clock remains a fitter target and separate unmet
+benchmark. RTL, golden model, UVM source and cycle counts are unchanged.
+
+GUI: **File > Open Project > quartus/ntt_LightHD/ntt.qpf**, revision **ntt**,
+then **Processing > Start Compilation**. Read fresh `output_files/` reports:
+Fitter Summary for area and final Timing Analyzer multicorner/Fmax panels for
+operating timing. Fitter's own 200 MHz timing is separate from final 148 MHz STA.
+The optional `build_operating.ps1` also uses the permanent SDC without modifying it.
+This supersedes manual-edit and temporary-copy instructions in older sections.
+
+Validation completed: fresh full `quartus_sh --flow compile ntt -c ntt`
+(the same compiler flow as GUI Start Compilation) passed synthesis, fitter,
+assembler and final timing analysis with zero errors. Fit summary timestamp
+**2026-10-11 01:29:08**. Permanent SDC contents/hash were unchanged by the build.
+All 20 final timing checks have positive slack and zero TNS:
+worst setup/hold/pulse **+0.111/+0.152/+1.201 ns**, recovery/removal
+**+4.090/+0.391 ns**. Fmax slow85/slow0 **151.79/150.49 MHz**; resources
+**2,475 ALMs,2,414 registers,5 DSPs,20 M10Ks**,37,325 RAM bits. These reproduce the
+accepted physical result. The separate 200 MHz check still has worst setup
+**-1.645 ns** and pulse **-0.555 ns**. No 200 MHz operating closure is claimed.
+
+Fresh logs: `gui_compile.log`, `gui_constraints_paths.log`,
+`gui_constraints_benchmark200.log`. Current review copies are refreshed in
+`quartus/ntt_LightHD/results/`; future GUI builds update `output_files/` only.
+The exact project/RTL/hashes and fresh reports plus a 20-check parsed timing
+gate are saved under `experiments/ntt_stage4/lighthd_gui_constraints_checkpoint/`.
+Identical RTL retains the earlier UVM 118/118 and Python 4608/4608 evidence;
+no source simulation rerun is claimed for this SDC-only change.
+Standalone internal timing scope remains unchanged. The user subsequently
+authorized Stage 5, whose results are recorded below. Nothing committed.
+
+## Stage 5 - Functional implementation verification completed (2026-10-11)
+
+The user authorized proceeding with Stage 5. Both distinct generated models
+passed the **main UVM testbench**, with zero UVM errors/fatals. Active RTL and
+`ntt_ref_pkg.sv` were unchanged; shared UVM components gained an explicit
+netlist mode and public-interface driver/monitor adapters.
+
+| Representation | Passing jobs | Compared coefficients | Completion time (local) |
+|---|---:|---:|---|
+| Post-synthesis functional | 117/117 | 29,952/29,952 | 2026-10-11 02:37:19 |
+| Post-fit functional | 117/117 | 29,952/29,952 | 2026-10-11 02:31:39 |
+| Fresh source UVM | 118/118 | 30,208/30,208 | 2026-10-11 02:37:47 |
+
+Each netlist gate additionally requires 117 observed `done` pulses, seven
+aborted jobs, eight externally witnessed reset/recovery scenarios and 16 actual
+Pre/general equivalence pairs. It checks accepted input/output counts, known
+controls/data, busy/done behavior, final-beat framing and output stability under
+backpressure. All 256 output coefficients per job must match the independent
+SV oracle. These are sampled cases, not exhaustive equivalence proofs.
+
+**Why 117 versus 118:** all 109 non-reset source cases are reused. Nine source
+reset cases target RTL states; the netlist runs replace them with eight public
+interface scenarios: idle, partial A, partial B, NTT busy, INTT busy, PWM busy,
+Pre busy and stalled output. Thus 109+8=117; source remains 109+9=118.
+
+`tb_top.sv` is the same UVM top. `NTT_NETLIST` omits RTL hierarchy hookups and
+includes `ntt_netlist.sv`; adapters reuse the agent, sequences, output monitor,
+scoreboard and golden model. Source mode still requires its independent
+internal trace before coverage credit. Netlist mode instantiates no coverage
+subscriber and publishes no checked internal trace: **no source coverage bins
+or code coverage are credited or merged from netlist simulations**.
+Fresh source UVM still has 118 checked trace/routing witnesses, all fourteen
+functional covergroup types at 100%, and unchanged raw code-coverage counts.
+Remaining code holes retain their existing explanations in `COVERAGE.md`.
+
+The first post-fit run matched all outputs but failed the completion gate:
+its driver reset some jobs after the last output, before observing `done`.
+The netlist driver now waits for that pulse before releasing the sequence item;
+the default source driver hook is empty. Both final netlist runs passed after
+this correction. The rejected completion trial is archived separately.
+The external checker self-test uses one real netlist result and rejects five
+corrupted observations (coefficient, count, framing, stability, reset status).
+Its intentional rejections are separate from the passing regression totals.
+The fresh source coverage-credit self-test also rejects its five corrupted
+observations without increasing checked coverage; both self-test logs and the
+separate source gate UCDB are archived.
+
+### Export provenance, warnings and timing scope
+
+Run `quartus/ntt_LightHD/generate_netlists.ps1` after a successful main build.
+Post-fit comes from the active fitted project (fit timestamp **01:38:46**).
+Post-synthesis comes from a separate generated `postsynth_build/` project using
+the same six RTL files/settings, running Analysis & Synthesis only, without a
+fitter database. The main fit is preserved. This avoids Standard Edition
+exporting the same fitted graph for both snapshot requests. The generated
+files differ even after removing their date header; their exact sizes/hashes
+and source hashes are recorded in the checkpoint provenance manifest.
+
+Synthesis-only export completed with zero errors and five warnings: three
+unused inferred-ROM write-port signals defaulted to zero, plus the unused
+`s_tlast` input and its summary warning. The interface intentionally counts
+256 coefficients per operand; malformed input framing is not rejected by RTL.
+Post-fit export warning 10905 confirms Cyclone V supports a functional model
+here, **without SDF**. Questa reports 38 post-fit model warnings (four protected
+width warnings, four tri0/tri1 port-coercion warnings, thirty port-width warnings); the
+synthesis model also reports one vendor `altera_lnsim` sensitivity warning,
+39 total. They are retained in logs; no warning-free or exhaustive proof is
+claimed. The observed UVM checks pass with the installed Quartus vendor models.
+
+Current fitted resources/timing remain **2,475 ALMs, 2,414 registers, 5 DSPs,
+20 M10Ks**, worst Fmax **150.49 MHz**. All 20 current TimeQuest operating checks
+remain positive with zero TNS; worst setup/hold **+0.111/+0.152 ns** at nominal
+148 MHz. Functional simulations do not establish delay behavior. External I/O
+is false-pathed, the 200 MHz benchmark remains unmet, and board/UART validation
+is still pending.
+
+### Run and evidence
+
+From Questa with working directory `sim/`, run one at a time:
+
+```tcl
+do ntt_LightHD/run_post_synthesis.do
+do ntt_LightHD/run_post_fit.do
+```
+
+Require `NTT NETLIST REGRESSION PASS` and zero UVM errors/fatals; an exit code
+alone is insufficient. Full export/GUI/headless commands and checker self-test
+are in [the simulation README](../../../sim/ntt_LightHD/README.md#stage-5-post-synthesis-and-post-fit-main-uvm).
+Exact RTL/TB/scripts, source UCDB/raw report, passing logs, rejected completion
+trial, warning/export logs and parsed gates are saved in
+[the Stage 5 checkpoint](../../../experiments/ntt_stage5/netlist_verification_checkpoint/README.md).
+The independent Python 18-case/4,608-coefficient evidence is retained from the
+identical Stage 4 RTL; it was not rerun or relabeled as netlist coverage.
+Stage 5 functional verification is complete. Stage 6 sampler/integration and
+FPGA tests have not started. No new commit.
+
+
+## Expanded source coverage after Stage 5 (2026-10-11)
+
+The main UVM regression now passes **620/620 jobs, 158,720 coefficients**, zero
+UVM errors/fatals. Eight new covergroup types bring the model to 22; each meets
+the 90% review threshold. Average across types is **99.51%**, minimum **92.36%**.
+Output ranges hit 31/32; mode/gap/stall combinations hit 133/144. The original
+fourteen groups remain 100%. No percentages are forced below 100% and no missed
+legal bins are waived. The 502 added jobs cover input shapes, prescribed
+outputs, PWM A/B range pairs, 400 reproducible variable-flow jobs and all 32
+checked operation/reset transitions. Actual measured durations are checked
+against requested profiles before coverage credit. A separate seven-fault
+checker self-test rejects corrupted observations without new credit.
+
+Raw DUT code coverage: statements **762/775 (98.32%)**, branches **388/402
+(96.52%)**, conditions **56/85 (65.88%)**, expressions **56/59 (94.92%)**,
+toggles **11,691/12,735 (91.80%)**, FSM states **13/13** and transitions **24/24**.
+Counts are unchanged from Stage 5; no exclusions or failed UCDB merges.
+Condition coverage remains below target, with reviewed guards/correlations and
+remaining review items described in [COVERAGE.md](COVERAGE.md). That document
+also lists every unhit new bin, sample/checker logic and arithmetic of totals.
+
+Run `do ntt_LightHD/run_uvm.do` from `sim/`; require `NTT EXPANDED UVM PASS`.
+Default simulator seed 20261011; new flow seed 439041101. Current log:
+`uvm_expanded.log`; main UCDB/raw-report names are unchanged. Exact evidence is
+in `experiments/ntt_stage4/lighthd_expanded_coverage_checkpoint/`.
+RTL/golden, fitted timing/resources and cycle counts are unchanged. Stage 5
+retains its archived 117-job netlist results; only its checker compatibility
+self-test was rerun with the updated UVM. No 620-job full-netlist result,
+FPGA result, Stage 6 integration or commit is claimed.
+
+## Experiment evidence cleanup (2026-10-12)
+
+Redundant simulator/Quartus caches, temporary waves, duplicate generated
+netlists and rejected trial RTL were removed from `experiments/`, freeing
+33.48 GiB. Baseline and key accepted source checkpoints, comparison reports,
+coverage evidence and Stage 5 verification logs remain. See
+`experiments/README.md` and `experiments/cleanup_manifest.json` for the retained
+inventory and removed paths. Historical references to rejected trial source
+are now records of earlier work; that source is no longer retained. NTT logs
+from the earlier cleanup archive moved from `generated/` into `evidence/`.
+All 43 saved active implementation/project hashes still match. No RTL, timing
+constraint, active simulation script or netlist changed, and no new simulation,
+synthesis or integration result is claimed.
+
+## Active-folder cleanup (2026-10-12)
+
+Only the selected LightHD reconstruction remains in the active build folders:
+
+| Folder | Retained content |
+|---|---|
+| `src/ntt_LightHD/` | Finalized six-file RTL implementation |
+| `tb_uvm/tb_uvm_ntt_LightHD/` | Main UVM, golden model, netlist adapters and standalone vector capture |
+| `tb_uvm/tb_uvm_reusable/` | Reusable UVM components |
+| `sim/ntt_LightHD/` | Three launchers, finalized libraries, logs, coverage and output capture |
+| `quartus/ntt_LightHD/` | Selected project, constraints, fitted database, reports and both netlists |
+
+Older designs, launchers and generated trial artifacts were moved, not deleted,
+to `experiments/ntt_cleanup_archive/2026-10-12/`. Its manifest records each move.
+Paths in dated historical entries below retain their original names; use the
+archive manifest to locate them. Active RTL, benches, project settings and
+netlists were checked unchanged with 43 SHA-256 hashes. Stage 6 integration
+has not started; this cleanup does not change the accepted architecture.
+
+## Future work: current NTT limitations and improvements (2026-10-12)
+
+These are remaining engineering tasks identified during the finalized Stage 4/5
+review, not observed output-correctness failures or completed improvements.
+Stage 6 integration remains pending. See [THROUGHPUT.md](THROUGHPUT.md) for
+the current comparison with LightHD.
+
+| Priority / area | Proposed work | Required evidence before accepting a change |
+|---|---|---|
+| 1. Memory utilization | Inspect RAM hierarchy, width/depth mapping, port requirements and replication behind the current 20 M10Ks / 37,325 implemented bits. Evaluate packing, sharing compatible stores or alternative memory implementations where appropriate. | Per-store logical/physical allocation; fresh fitted ALMs, registers, DSPs, M10Ks, Fmax and worst setup/hold slack; passing main UVM and independent Python comparison. |
+| 2. Serial input/output overhead | Investigate wider or multiple-coefficient transfers and direct sampler buffering. A normal transform uses 256 load beats + 256 output beats, versus 267 compute clocks and 781 complete wrapper clocks. Select interface width from measured production/consumption rates. | Separate load/compute/output/control and stall counts; coefficient ordering, framing and stable outputs under backpressure; complete-job latency and resource comparison. |
+| 3. Overlap between polynomial jobs | Evaluate ping-pong buffers or queued jobs to overlap loading the next polynomial and draining previous results with computation. Current wrapper phases do not overlap across jobs. | Measured consecutive-completion interval across multiple jobs; buffer ownership, ordering, operation changes, reset/recovery and stall checks; added storage/logic. Distinguish latency from sustained throughput. |
+| 4. Timing margin | Improve actual critical paths while preserving the approved nominal 148 MHz clock. Current worst setup/hold slack is +0.111/+0.152 ns; the 200 MHz benchmark remains unmet. | Fresh synthesis, fit, multicorner TimeQuest and critical-path reports after RTL changes; worst slack, TNS, pulse-width checks, Fmax, cycles and resources. Label operating-clock and 200 MHz results separately. |
+| 5. Pre-NTT eligibility | Upstream sampler/controller must restrict Pre-NTT to canonical residues of signed coefficients in [-4,4]. The simulation assertion is not a hardware fallback. Define explicit rejection/fallback behavior before exposing a broader contract. | Supported secret ranges, boundary values, canonical representation and mode-selection checks; unsupported-input behavior consistent with the chosen contract. Rejected jobs must not credit successful coverage. |
+| 6. Keccak/sampler/NTT integration | Implement byte collection, rejection sampling, job/core tagging, buffering and ready propagation. Keep interleaved Keccak jobs distinct; evaluate sampler-to-NTT overlap/reordering after establishing correctness. | Independent end-to-end coefficient checks; rejection boundaries, partial output beats, tags/order, stalls and reset recovery. Measure SHAKE wait, sampler rate, NTT load/compute/output time and queue occupancy before claiming integrated throughput. |
+| 7. Verification gaps | Review missed interaction crosses and code conditions; add targeted UVM tests based on requirements and risk. Current functional type average is 90.47%; raw DUT code coverage is 92.17%. | Trace requirements to stimulus, observations, scoreboard checks and bins. Report genuine misses and justified unreachable cases. Keep checker self-test databases separate. Do not suppress valid hits or invent bins to maintain a preferred percentage. |
+
+### Execution and decision gates
+
+1. Review memory allocation while specifying the Stage 6 sampler interface.
+2. Establish correct integrated buffering, tagging, eligibility and backpressure.
+3. Measure the integrated bottleneck, then evaluate wider transfers and job
+   overlap where their throughput benefit justifies their resource cost.
+4. Maintain timing closure throughout and improve margin using measured paths.
+5. Extend UVM checks with each architecture/interface change; refresh functional
+   post-synthesis/post-fit verification after the updated design is accepted.
+
+Coverage percentages do not establish exhaustive correctness. Reducing M10Ks
+alone is not a success if it worsens logic, timing or required behavior.
+Likewise, the extra three NTT/INTT clocks and five PWM clocks relative to
+LightHD are secondary performance opportunities, not functional defects.
+Judge cycle reductions together with fitted clock, complete-job throughput,
+resources and correctness. No future-work item is marked complete here.
 
 ## Stage 6 — Sampler and complete data-path integration
 

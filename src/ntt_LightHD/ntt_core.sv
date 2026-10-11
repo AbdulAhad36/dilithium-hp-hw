@@ -65,6 +65,7 @@ module ntt_core (
   bf_mode_e bf_mode [4];
   bf_mode_e bf_mode_q [4];
   logic [W-1:0] result_a, result_b;
+  logic [2:0] return_use_b_q;
 
   function automatic logic [COEFF_W-1:0] half_mod(input logic [COEFF_W-1:0] x);
     logic [COEFF_W:0] adjusted;
@@ -392,6 +393,18 @@ module ntt_core (
                          .a_o(bf_ao[lane]), .b_o(bf_bo[lane]));
   end endgenerate
 
+  // Decode each FIFO's A/B choice in parallel with the existing result
+  // registers. This is control retiming only: no additional data register,
+  // return clock, FIFO storage or change to load/Pre/compute priority.
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) return_use_b_q <= '0;
+    else begin
+      return_use_b_q[0] <= !tag[PIPE-2].pwm && tag[PIPE-2].dest_b == 0;
+      return_use_b_q[1] <= !tag[PIPE-2].pwm && tag[PIPE-2].dest_b == 1;
+      return_use_b_q[2] <= !tag[PIPE-2].pwm && tag[PIPE-2].dest_b == 2;
+    end
+  end
+
   // Result reassembly. INTT divides each stage output by two, so eight GS
   // stages incorporate the 1/256 scale without a separate scaling pass.
   always_ff @(posedge clk or posedge rst) begin
@@ -428,7 +441,7 @@ module ntt_core (
   end
 
   // The FIFO controls below allow one read and one write to each store on the
-  // same edge. Write destinations travel with the nine-clock return pipeline.
+  // same edge. Write destinations travel with the ten-clock return pipeline.
   always_comb begin
     pop1 = 0; pop2 = 0; pop3 = 0;
     push1 = 0; push2 = 0; push3 = 0;
@@ -485,9 +498,9 @@ module ntt_core (
     push_word2 = pre_v1 ? pre_diff_q : completed_word;
     push_word3 = pre_sum_q;
     if (tag[PIPE-1].valid) begin
-      push_word1 = (!tag[PIPE-1].pwm && tag[PIPE-1].dest_b == 0) ? result_b : result_a;
-      push_word2 = (!tag[PIPE-1].pwm && tag[PIPE-1].dest_b == 1) ? result_b : result_a;
-      push_word3 = (!tag[PIPE-1].pwm && tag[PIPE-1].dest_b == 2) ? result_b : result_a;
+      push_word1 = return_use_b_q[0] ? result_b : result_a;
+      push_word2 = return_use_b_q[1] ? result_b : result_a;
+      push_word3 = return_use_b_q[2] ? result_b : result_a;
     end
   end
 

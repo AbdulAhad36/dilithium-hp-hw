@@ -105,7 +105,12 @@ module ntt_engine (
     core_wr_addr  = rx_idx[LOGN-1:0];
     core_wr_data  = s_tdata;
     core_rd_en    = 1'b0;
-    core_rd_addr  = tx_idx[LOGN-1:0];
+    // Address is consumed only with core_rd_en. Precompute the next
+    // coefficient throughout TX_VALID, including stalls/final beat; this
+    // removes ready/terminal-count gating from the address carry/mux path.
+    // The existing read enable still suppresses stalled and final prefetches.
+    core_rd_addr  = (state == E_TX_VALID) ? LOGN'(tx_idx + 1'b1)
+                                        : tx_idx[LOGN-1:0];
 
     unique case (state)
       E_RX_A: begin
@@ -128,7 +133,7 @@ module ntt_engine (
         // a stalled beat holds its data and address.
         if (m_tready && tx_idx != N-1) begin
           core_rd_en   = 1'b1;
-          core_rd_addr = LOGN'(tx_idx + 1'b1);
+
         end
       end
       default: ;

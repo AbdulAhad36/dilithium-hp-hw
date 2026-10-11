@@ -1,0 +1,207 @@
+# do ntt_engine_check.do
+# QuestaSim-64 vmap 2024.1 Lib Mapping Utility 2024.02 Feb  1 2024
+# vmap work ntt_engine_work 
+# Modifying modelsim.ini
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:50:21 on Oct 06,2026
+# vlog -sv -work work ../src/ntt_engine/ntt_pkg.sv 
+# -- Compiling package ntt_pkg
+# 
+# Top level modules:
+# 	--none--
+# End time: 01:50:21 on Oct 06,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:50:21 on Oct 06,2026
+# vlog -sv -work work ../src/ntt_engine/mod_mul.sv 
+# -- Compiling package mod_mul_sv_unit
+# -- Importing package ntt_pkg
+# -- Compiling module mod_mul
+# 
+# Top level modules:
+# 	mod_mul
+# End time: 01:50:21 on Oct 06,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:50:21 on Oct 06,2026
+# vlog -sv -work work ../src/ntt_engine/butterfly_unit.sv 
+# -- Compiling package butterfly_unit_sv_unit
+# -- Importing package ntt_pkg
+# -- Compiling module butterfly_unit
+# 
+# Top level modules:
+# 	butterfly_unit
+# End time: 01:50:21 on Oct 06,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:50:21 on Oct 06,2026
+# vlog -sv -work work ../src/ntt_engine/twiddle_rom.sv 
+# -- Compiling package twiddle_rom_sv_unit
+# -- Importing package ntt_pkg
+# -- Compiling module twiddle_rom
+# 
+# Top level modules:
+# 	twiddle_rom
+# End time: 01:50:21 on Oct 06,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:50:22 on Oct 06,2026
+# vlog -sv -work work ../src/ntt_engine/ntt_core.sv 
+# -- Compiling package ntt_core_sv_unit
+# -- Importing package ntt_pkg
+# -- Compiling module ntt_core
+# 
+# Top level modules:
+# 	ntt_core
+# End time: 01:50:22 on Oct 06,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:50:22 on Oct 06,2026
+# vlog -sv -work work ../src/ntt_engine/ntt_engine.sv 
+# -- Compiling package ntt_engine_sv_unit
+# -- Importing package ntt_pkg
+# -- Compiling module ntt_engine
+# 
+# Top level modules:
+# 	ntt_engine
+# End time: 01:50:22 on Oct 06,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:50:22 on Oct 06,2026
+# vlog -sv -work work ../tb_uvm/tb_uvm_ntt/ntt_ref_pkg.sv 
+# -- Compiling package ntt_ref_pkg
+# -- Importing package ntt_pkg
+# 
+# Top level modules:
+# 	--none--
+# End time: 01:50:22 on Oct 06,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 01:50:22 on Oct 06,2026
+# vlog -sv -work work ../tb_uvm/tb_uvm_ntt/tb_ntt_engine.sv 
+# -- Compiling module tb_ntt_engine
+# -- Importing package ntt_pkg
+# -- Importing package ntt_ref_pkg
+# 
+# Top level modules:
+# 	tb_ntt_engine
+# End time: 01:50:22 on Oct 06,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -c -voptargs="+acc" work.tb_ntt_engine 
+# Start time: 01:50:22 on Oct 06,2026
+# ** Note: (vsim-3812) Design is being optimized...
+# ** Warning: (vopt-10587) Some optimizations are turned off because the +acc switch is in effect. This will cause your simulation to run slowly. Please use -access/-debug to maintain needed visibility.
+# Support of the MGLS_LICENSE_FILE and LM_LICENSE_FILE licensing environment variables will be discontinued starting with the 2025.1 release. Please update to using the SALT_LICENSE_SERVER variable.
+# Please contact Siemens EDA Customer Support (https://support.sw.siemens.com/) for assistance.
+# ** Note: (vopt-143) Recognized 1 FSM in module "ntt_core(fast)".
+# ** Note: (vopt-143) Recognized 1 FSM in module "ntt_engine(fast)".
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=1.
+# //  Questa Sim-64
+# //  Version 2024.1 win64 Feb  1 2024
+# //
+# // Unpublished work. Copyright 2024 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# Loading sv_std.std
+# Loading work.ntt_pkg(fast)
+# Loading work.ntt_ref_pkg(fast)
+# Loading work.tb_ntt_engine(fast)
+# Loading work.ntt_engine_sv_unit(fast)
+# Loading work.ntt_engine(fast)
+# Loading work.ntt_core_sv_unit(fast)
+# Loading work.ntt_core(fast)
+# Loading work.twiddle_rom_sv_unit(fast)
+# Loading work.twiddle_rom(fast)
+# Loading work.butterfly_unit_sv_unit(fast)
+# Loading work.butterfly_unit(fast)
+# Loading work.mod_mul_sv_unit(fast)
+# Loading work.mod_mul(fast)
+# ============================================================
+#  ntt_engine directed self-check  (golden model = ntt_ref_pkg)
+# ============================================================
+#   [PASS] NTT   : all-zero
+#   [PASS] NTT   : all-(q-1)
+#   [PASS] round : all-(q-1)
+# NTT_ENGINE_PACED_LATENCY operation=OP_NTT input_gap=0 output_stalls=0 launch_to_last_output_cycles=798
+#   [PASS] NTT   : delta @0
+# NTT_ENGINE_PACED_LATENCY operation=OP_INTT input_gap=0 output_stalls=0 launch_to_last_output_cycles=802
+#   [PASS] INTT  : delta @0
+#   [PASS] round : delta @0
+#   [PASS] NTT   : delta @0 with output stalls
+# NTT_ENGINE_PACED_LATENCY operation=OP_NTT input_gap=1 output_stalls=0 launch_to_last_output_cycles=1053
+#   [PASS] NTT   : delta @0 with one input gap per coefficient
+#   [FAIL] output changed while stalled at coefficient 5 held=6527626 current=8347681 last=0/0 ready=0 tx_idx=5 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 10 held=5551940 current=8347681 last=0/0 ready=0 tx_idx=10 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 15 held=5710584 current=8347681 last=0/0 ready=0 tx_idx=15 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 20 held=899302 current=8347681 last=0/0 ready=0 tx_idx=20 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 25 held=3898594 current=46690 last=0/0 ready=0 tx_idx=25 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 30 held=3798447 current=8347681 last=0/0 ready=0 tx_idx=30 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 35 held=1944987 current=3422587 last=0/0 ready=0 tx_idx=35 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 40 held=7785463 current=8347681 last=0/0 ready=0 tx_idx=40 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 45 held=8156707 current=8347681 last=0/0 ready=0 tx_idx=45 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 50 held=3022567 current=3422587 last=0/0 ready=0 tx_idx=50 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 55 held=4167059 current=3422587 last=0/0 ready=0 tx_idx=55 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 60 held=3745914 current=8347681 last=0/0 ready=0 tx_idx=60 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 65 held=6713935 current=8347681 last=0/0 ready=0 tx_idx=65 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 70 held=4680329 current=46690 last=0/0 ready=0 tx_idx=70 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 75 held=1168172 current=8347681 last=0/0 ready=0 tx_idx=75 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 80 held=2393655 current=8347681 last=0/0 ready=0 tx_idx=80 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 85 held=8004116 current=8347681 last=0/0 ready=0 tx_idx=85 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 90 held=4108340 current=8347681 last=0/0 ready=0 tx_idx=90 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 95 held=8289163 current=8347681 last=0/0 ready=0 tx_idx=95 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 100 held=1100554 current=46690 last=0/0 ready=0 tx_idx=100 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 105 held=528086 current=8347681 last=0/0 ready=0 tx_idx=105 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 110 held=2807374 current=46690 last=0/0 ready=0 tx_idx=110 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 115 held=359542 current=3422587 last=0/0 ready=0 tx_idx=115 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 120 held=5875616 current=8347681 last=0/0 ready=0 tx_idx=120 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 125 held=6473505 current=8347681 last=0/0 ready=0 tx_idx=125 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 130 held=6621410 current=8347681 last=0/0 ready=0 tx_idx=130 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 135 held=5827987 current=8347681 last=0/0 ready=0 tx_idx=135 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 140 held=7974921 current=3422587 last=0/0 ready=0 tx_idx=140 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 145 held=7517851 current=46690 last=0/0 ready=0 tx_idx=145 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 150 held=7716078 current=8347681 last=0/0 ready=0 tx_idx=150 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 155 held=2881817 current=46690 last=0/0 ready=0 tx_idx=155 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 160 held=1649088 current=8347681 last=0/0 ready=0 tx_idx=160 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 165 held=2821607 current=8347681 last=0/0 ready=0 tx_idx=165 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 170 held=2476077 current=8347681 last=0/0 ready=0 tx_idx=170 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 175 held=8345193 current=8347681 last=0/0 ready=0 tx_idx=175 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 180 held=4193402 current=8347681 last=0/0 ready=0 tx_idx=180 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 185 held=3508106 current=46690 last=0/0 ready=0 tx_idx=185 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 190 held=1548887 current=8347681 last=0/0 ready=0 tx_idx=190 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 195 held=3396579 current=8347681 last=0/0 ready=0 tx_idx=195 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 200 held=6156879 current=3422587 last=0/0 ready=0 tx_idx=200 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 205 held=750944 current=3422587 last=0/0 ready=0 tx_idx=205 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 210 held=3647242 current=8347681 last=0/0 ready=0 tx_idx=210 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 215 held=4950869 current=8347681 last=0/0 ready=0 tx_idx=215 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 220 held=3089336 current=3422587 last=0/0 ready=0 tx_idx=220 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 225 held=3242048 current=8347681 last=0/0 ready=0 tx_idx=225 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 230 held=7578292 current=46690 last=0/0 ready=0 tx_idx=230 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 235 held=5812371 current=8347681 last=0/0 ready=0 tx_idx=235 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 240 held=5665679 current=8347681 last=0/0 ready=0 tx_idx=240 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 245 held=3743755 current=8347681 last=0/0 ready=0 tx_idx=245 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 250 held=6655484 current=8347681 last=0/0 ready=0 tx_idx=250 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 255 held=7103706 current=8347681 last=1/1 ready=0 tx_idx=255 core_rd_en=0
+# NTT_ENGINE_PACED_LATENCY operation=OP_INTT input_gap=0 output_stalls=1 launch_to_last_output_cycles=904
+#   [FAIL] INTT  : delta @0 with output stalls
+#          first diff @5 : golden 6527626  dut 8347681
+#   [FAIL] output changed while stalled at coefficient 5 held=6527626 current=8347681 last=0/0 ready=0 tx_idx=5 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 10 held=5551940 current=8347681 last=0/0 ready=0 tx_idx=10 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 15 held=5710584 current=8347681 last=0/0 ready=0 tx_idx=15 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 20 held=899302 current=8347681 last=0/0 ready=0 tx_idx=20 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 25 held=3898594 current=46690 last=0/0 ready=0 tx_idx=25 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 30 held=3798447 current=8347681 last=0/0 ready=0 tx_idx=30 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 35 held=1944987 current=3422587 last=0/0 ready=0 tx_idx=35 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 40 held=7785463 current=8347681 last=0/0 ready=0 tx_idx=40 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 45 held=8156707 current=8347681 last=0/0 ready=0 tx_idx=45 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 50 held=3022567 current=3422587 last=0/0 ready=0 tx_idx=50 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 55 held=4167059 current=3422587 last=0/0 ready=0 tx_idx=55 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 60 held=3745914 current=8347681 last=0/0 ready=0 tx_idx=60 core_rd_en=0
+#   [FAIL] output changed while stalled at coefficient 65 held=6713935 current=8347681 last=0/0 ready=0 tx_idx=65 core_rd_en=0

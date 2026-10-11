@@ -1,0 +1,19 @@
+{
+  "netlists": {
+    "post_synthesis": {
+      "path": "quartus/ntt_LightHD/simulation_postsynth/ntt.vo",
+      "bytes": 8184295,
+      "sha256": "934778fa413072198e3f383b5be9f5418c8a3b1a35e7ee9b54573147b8161d3b",
+      "without_date_sha256": "99156cb2dbdf06fc0b57c7b4142683d910be36e0b2f7c88520ae9dcb0f08d88d"
+    },
+    "post_fit": {
+      "path": "quartus/ntt_LightHD/simulation_postfit/ntt.vo",
+      "bytes": 6545618,
+      "sha256": "c88ebe3aa8389c42e928590f0be11b28f31a91ddaca49cc00a08a68d5f5b3c51",
+      "without_date_sha256": "6c41cc6549645e95dccbe914507cc7920123293d9270dbd9433566c8f92c94e2"
+    }
+  },
+  "synthesis_helper_has_fit": false,
+  "rtl_matches_stage4_gui_checkpoint": true,
+  "post_fit_fit_summary": "Fitter Status : Successful - Sun Oct 11 01:38:46 2026\nQuartus Prime Version : 25.1std.0 Build 1129 10/21/2025 SC Lite Edition\nRevision Name : ntt\nTop-level Entity Name : ntt_engine\nFamily : Cyclone V\nDevice : 5CGXFC7C7F23C8\nTiming Models : Final\nLogic utilization (in ALMs) : 2,475 / 56,480 ( 4 % )\nTotal registers : 2414\nTotal pins : 59 / 268 ( 22 % )\nTotal virtual pins : 0\nTotal block memory bits : 37,325 / 7,024,640 ( < 1 % )\nTotal RAM Blocks : 20 / 686 ( 3 % )\nTotal DSP Blocks : 5 / 156 ( 3 % )\nTotal HSSI RX PCSs : 0 / 6 ( 0 % )\nTotal HSSI PMA RX Deserializers : 0 / 6 ( 0 % )\nTotal HSSI TX PCSs : 0 / 6 ( 0 % )\nTotal HSSI PMA TX Serializers : 0 / 6 ( 0 % )\nTotal PLLs : 0 / 13 ( 0 % )\nTotal DLLs : 0 / 4 ( 0 % )\n"
+}

@@ -2,7 +2,7 @@
 
 Usage from the repository root:
     py FIPS204_NTT/ntt_vectors.py prepare
-    # From sim/: vsim -c -do "do run_ntt_vectors.do; quit -f"
+    # From sim/: vsim -c -do "set NTT_MODE vectors; do ntt_LightHD/run_uvm.do; quit -f"
     py FIPS204_NTT/ntt_vectors.py compare
 
 This is an independent normal-domain arithmetic model, not an official NIST
@@ -24,7 +24,7 @@ VECTOR_DIR = Path(__file__).resolve().parent
 ROOT = VECTOR_DIR.parent
 INPUTS = VECTOR_DIR / "ntt_inputs.txt"
 EXPECTED = VECTOR_DIR / "ntt_expected.txt"
-OBSERVED = ROOT / "sim" / "ntt_dut_outputs.txt"
+OBSERVED = ROOT / "sim" / "ntt_LightHD" / "ntt_dut_outputs.txt"
 OPS = {"NTT", "INTT", "PWM", "ROUNDTRIP", "MUL"}
 HEX_COEFF = re.compile(r"[0-9a-fA-F]{1,6}\Z")
 
@@ -263,7 +263,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("prepare", "compare"))
     parser.add_argument("--observed", type=Path, default=OBSERVED,
-                        help="captured DUT output file (default: sim/ntt_dut_outputs.txt)")
+                        help="captured DUT output file (default: sim/ntt_LightHD/ntt_dut_outputs.txt)")
     args = parser.parse_args()
     if args.command == "prepare":
         prepare()

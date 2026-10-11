@@ -26,8 +26,12 @@ class ntt_transaction extends uvm_sequence_item;
     poly_t      abort_poly; // deliberately different from the fresh recovery input
     int         observed_reset_point = -1;
     bit         reset_checks_ok;
-    int         input_gap_period; // zero=continuous; otherwise insert two idle clocks
-    bit         stall_output;     // stall first, middle, last accepted output
+    int         input_gap_period; // zero=continuous; otherwise use input_gap_cycles
+    int         input_gap_cycles = 2;
+    int         pwm_boundary_gap_cycles = 3;
+    int         output_stall_cycles = 2;
+    int         output_stall_period; // zero selects first/middle/last
+    bit         stall_output;     // stall selected accepted output positions
 
     poly_t      in_poly;       // input polynomial   A (driven into the sink)
     poly_t      in_poly_b;     // input polynomial   B (only used for OP_PWM)
@@ -35,6 +39,7 @@ class ntt_transaction extends uvm_sequence_item;
     poly_t      obs_poly;      // observed output     (filled by the monitor)
     int         observed_count; // accepted output beats, not merely allocated entries
     bit         output_framing_ok; // m_tlast only on accepted coefficient 255
+    bit         output_stability_ok = 1; // externally checked even without RTL trace
     ntt_trace   trace;         // monitor-owned per-job DUT events/checks
 
     function new(string name = "ntt_transaction");

@@ -1,0 +1,107 @@
+{
+  "source": "quartus/ntt_LightHD/output_files/ntt.sta.summary",
+  "operating_nominal_MHz": 148,
+  "all_20_positive": true,
+  "checks": [
+    {
+      "check": "Slow 1100mV 85C Model Setup 'clk'",
+      "slack_ns": 0.168,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Slow 1100mV 85C Model Hold 'clk'",
+      "slack_ns": 0.429,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Slow 1100mV 85C Model Recovery 'clk'",
+      "slack_ns": 4.09,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Slow 1100mV 85C Model Removal 'clk'",
+      "slack_ns": 1.206,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Slow 1100mV 85C Model Minimum Pulse Width 'clk'",
+      "slack_ns": 1.201,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Slow 1100mV 0C Model Setup 'clk'",
+      "slack_ns": 0.111,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Slow 1100mV 0C Model Hold 'clk'",
+      "slack_ns": 0.273,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Slow 1100mV 0C Model Recovery 'clk'",
+      "slack_ns": 4.2,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Slow 1100mV 0C Model Removal 'clk'",
+      "slack_ns": 1.025,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Slow 1100mV 0C Model Minimum Pulse Width 'clk'",
+      "slack_ns": 1.201,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Fast 1100mV 85C Model Setup 'clk'",
+      "slack_ns": 3.504,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Fast 1100mV 85C Model Hold 'clk'",
+      "slack_ns": 0.18,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Fast 1100mV 85C Model Recovery 'clk'",
+      "slack_ns": 5.5,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Fast 1100mV 85C Model Removal 'clk'",
+      "slack_ns": 0.474,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Fast 1100mV 85C Model Minimum Pulse Width 'clk'",
+      "slack_ns": 2.168,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Fast 1100mV 0C Model Setup 'clk'",
+      "slack_ns": 3.888,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Fast 1100mV 0C Model Hold 'clk'",
+      "slack_ns": 0.152,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Fast 1100mV 0C Model Recovery 'clk'",
+      "slack_ns": 5.646,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Fast 1100mV 0C Model Removal 'clk'",
+      "slack_ns": 0.391,
+      "tns_ns": 0.0
+    },
+    {
+      "check": "Fast 1100mV 0C Model Minimum Pulse Width 'clk'",
+      "slack_ns": 2.16,
+      "tns_ns": 0.0
+    }
+  ]
+}

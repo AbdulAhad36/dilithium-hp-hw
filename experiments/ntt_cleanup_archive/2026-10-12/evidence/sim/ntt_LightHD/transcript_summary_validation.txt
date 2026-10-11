@@ -1,0 +1,45 @@
+cd D:/GitHub/dilithium-hp-hw/sim
+transcript file ntt_LightHD/transcript_summary_validation.log
+transcript on
+view transcript
+set NTT_REPORT ntt_LightHD/ntt_lighthd_coverage.rpt
+# Print the same raw DUT bin arithmetic documented in COVERAGE.md.
+# Count each local DUT instance/category once; omit TB and vendor coverage.
+set ntt_cov_totals [dict create]
+set ntt_cov_seen [dict create]
+set ntt_cov_instance ""
+set ntt_cov_file [open $NTT_REPORT r]
+while {[gets $ntt_cov_file ntt_cov_line]>=0} {
+  if {[regexp {^=== Instance: (\S+)} $ntt_cov_line -> ntt_cov_path]} {
+    set ntt_cov_instance $ntt_cov_path
+  }
+  if {$ntt_cov_instance ne "/tb_top/dut" && ![string match "/tb_top/dut/*" $ntt_cov_instance]} {continue}
+  if {[regexp {^\s+(Statements|Branches|Conditions|Expressions|Toggles|FSM States|FSM Transitions)\s+(\d+)\s+(\d+)\s+(\d+)\s+[0-9.]+%} $ntt_cov_line -> ntt_cov_metric ntt_cov_bins ntt_cov_hits ntt_cov_misses]} {
+    set ntt_cov_key [list $ntt_cov_instance $ntt_cov_metric]
+    if {[dict exists $ntt_cov_seen $ntt_cov_key]} {continue}
+    dict set ntt_cov_seen $ntt_cov_key 1
+    if {![dict exists $ntt_cov_totals $ntt_cov_metric]} {dict set ntt_cov_totals $ntt_cov_metric {0 0}}
+    lassign [dict get $ntt_cov_totals $ntt_cov_metric] ntt_cov_h ntt_cov_b
+    dict set ntt_cov_totals $ntt_cov_metric [list [expr {$ntt_cov_h+$ntt_cov_hits}] [expr {$ntt_cov_b+$ntt_cov_bins}]]
+  }
+}
+close $ntt_cov_file
+echo "DUT CODE COVERAGE - raw local-instance bins (testbench excluded)"
+echo "Metric                 Hit / Total       Coverage"
+set ntt_cov_all_hits 0
+set ntt_cov_all_bins 0
+foreach ntt_cov_metric {Statements Branches Conditions Expressions Toggles {FSM States} {FSM Transitions}} {
+  if {![dict exists $ntt_cov_totals $ntt_cov_metric]} {error "Missing DUT code coverage category: $ntt_cov_metric"}
+  lassign [dict get $ntt_cov_totals $ntt_cov_metric] ntt_cov_h ntt_cov_b
+  echo [format "%-18s %7d / %-7d %8.2f%%" $ntt_cov_metric $ntt_cov_h $ntt_cov_b [expr {100.0*$ntt_cov_h/$ntt_cov_b}]]
+  incr ntt_cov_all_hits $ntt_cov_h
+  incr ntt_cov_all_bins $ntt_cov_b
+}
+echo [format "OVERALL DUT CODE COVERAGE (raw bins): %d / %d = %.2f%%" $ntt_cov_all_hits $ntt_cov_all_bins [expr {100.0*$ntt_cov_all_hits/$ntt_cov_all_bins}]]
+echo "Overall = summed hits / summed enabled code bins across the seven categories; toggle bins carry most of the weight. Functional covergroups are excluded."
+echo "END DUT CODE COVERAGE"
+foreach ntt_cov_var [info vars ntt_cov_*] {unset $ntt_cov_var}
+unset ntt_cov_var
+
+echo TRANSCRIPT_SUMMARY_VALIDATED
+quit -f

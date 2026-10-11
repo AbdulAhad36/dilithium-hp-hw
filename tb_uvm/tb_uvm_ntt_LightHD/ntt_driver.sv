@@ -39,8 +39,13 @@ class ntt_driver extends uvm_driver #(ntt_transaction);
             drive_transaction(req);
             collection_done.wait_ptrigger();   // monitor done collecting
             collection_done.reset();
+            finish_transaction();
             seq_item_port.item_done();
         end
+    endtask
+
+    // Source behavior is unchanged; netlist adapter waits for public done.
+    virtual task finish_transaction();
     endtask
 
     task init_signals();
@@ -64,7 +69,7 @@ class ntt_driver extends uvm_driver #(ntt_transaction);
         end
     endtask
 
-    task drive_reset_abort(ntt_transaction req);
+    virtual task drive_reset_abort(ntt_transaction req);
         @(negedge vif.clk);
         vif.start=0; vif.s_tvalid=0; vif.s_tlast=0; vif.rst=1;
         repeat (3) @(negedge vif.clk);
@@ -136,7 +141,7 @@ class ntt_driver extends uvm_driver #(ntt_transaction);
             @(negedge vif.clk);
             if (req.input_gap_period>0 && i!=N-1 && i%req.input_gap_period==0) begin
                 vif.s_tvalid=0; vif.s_tlast=0;
-                repeat (2) @(negedge vif.clk);
+                repeat (req.input_gap_cycles) @(negedge vif.clk);
             end
         end
         vif.s_tvalid = 1'b0;
@@ -144,7 +149,7 @@ class ntt_driver extends uvm_driver #(ntt_transaction);
 
         // 4. PWM only: stream 256 coefficients of operand B
         if (req.op == OP_PWM) begin
-            if (req.input_gap_period>0) repeat (3) @(negedge vif.clk);
+            if (req.input_gap_period>0) repeat (req.pwm_boundary_gap_cycles) @(negedge vif.clk);
             while (!vif.s_tready) @(negedge vif.clk);
             for (int i = 0; i < N; i++) begin
                 vif.s_tvalid = 1'b1;
@@ -153,7 +158,7 @@ class ntt_driver extends uvm_driver #(ntt_transaction);
                 @(negedge vif.clk);
                 if (req.input_gap_period>0 && i!=N-1 && i%req.input_gap_period==0) begin
                     vif.s_tvalid=0; vif.s_tlast=0;
-                    repeat (2) @(negedge vif.clk);
+                    repeat (req.input_gap_cycles) @(negedge vif.clk);
                 end
             end
             vif.s_tvalid = 1'b0;

@@ -1,0 +1,3247 @@
+﻿[
+    {
+        "source":  "src\\ntt_engine",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\src\\ntt_engine",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "tb_uvm\\tb_uvm_ntt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\tb_uvm\\tb_uvm_ntt",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "sim\\cyclonev_sim_libs",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\cyclonev_sim_libs",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\cyclonev_sim_libs_default",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\cyclonev_sim_libs_default",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\cyclonev_sim_libs_fse",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\cyclonev_sim_libs_fse",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\dual_coverage_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\dual_coverage_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\dual_throughput_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\dual_throughput_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\dual_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\dual_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\netlist_reference_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\netlist_reference_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\nist_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\nist_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_core_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_core_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_engine_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_engine_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_lighthd_core_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_lighthd_core_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_lighthd_engine_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_lighthd_engine_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_lighthd_fifo_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_lighthd_fifo_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_lighthd_uvm_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_lighthd_uvm_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_ref_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_ref_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_vector_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_vector_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\post_fit_gate_work_default",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\post_fit_gate_work_default",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\post_synthesis_gate_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\post_synthesis_gate_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\post_synthesis_gate_work_default",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\post_synthesis_gate_work_default",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\post_synthesis_gate_work_fse",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\post_synthesis_gate_work_fse",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\post_synthesis_work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\post_synthesis_work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\work",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\work",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\__pycache__",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\__pycache__",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\direct_elaboration.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\direct_elaboration.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\direct_elaboration_2024.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\direct_elaboration_2024.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\dual_interleaved_coverage.txt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\dual_interleaved_coverage.txt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\keccak_cov.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\keccak_cov.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\keccak_dual_coverage.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\keccak_dual_coverage.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\keccak_dual_interleaved.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\keccak_dual_interleaved.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\mldsa_osh_keccak_cov.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\mldsa_osh_keccak_cov.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\netlist_reference_transcript.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\netlist_reference_transcript.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\nist_capture_transcript.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\nist_capture_transcript.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\nist_full_transcript.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\nist_full_transcript.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\nist_only_transcript.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\nist_only_transcript.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\nist_shake_dut_outputs.txt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\nist_shake_dut_outputs.txt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\nist_smoke_transcript.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\nist_smoke_transcript.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_core_check.do",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\sim\\ntt_core_check.do",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "sim\\ntt_cov.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_cov.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_dut_outputs.txt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_dut_outputs.txt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_engine_check.do",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\sim\\ntt_engine_check.do",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "sim\\ntt_lighthd_cov.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_lighthd_cov.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_ref_check.do",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\sim\\ntt_ref_check.do",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "sim\\ntt_run.do",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\sim\\ntt_run.do",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "sim\\ntt_stage1_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage1_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage1_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage1_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage1_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage1_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage1_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage1_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage1_vector.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage1_vector.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_addr_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_addr_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_addr_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_addr_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_addr_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_addr_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_addr_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_addr_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_addr_vector.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_addr_vector.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_banktaged_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_banktaged_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_banktaged_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_banktaged_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_banktaged_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_banktaged_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_banktaged_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_banktaged_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_banktaged_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_banktaged_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_combined_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_combined_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_combined_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_combined_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_combined_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_combined_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_combined_trial.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_combined_trial.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_combined_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_combined_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_crossbar_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_crossbar_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_crossbar_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_crossbar_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_crossbar_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_crossbar_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_crossbar_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_crossbar_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_crossbar_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_crossbar_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain10.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain10.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain3.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain3.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain4.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain4.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain4_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain4_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain4_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain4_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain4_pending.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain4_pending.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain4_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain4_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain5.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain5.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain6.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain6.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain7.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain7.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain8.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain8.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_drain9.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_drain9.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_fusedscale_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_fusedscale_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_fusedscale_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_fusedscale_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_fusedscale_trial.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_fusedscale_trial.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_fusedscale_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_fusedscale_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_keepstage_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_keepstage_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_keepstage_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_keepstage_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_keepstage_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_keepstage_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_keepstage_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_keepstage_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_keepstage_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_keepstage_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_mulselect_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_mulselect_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_mulselect_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_mulselect_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_mulselect_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_mulselect_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_mulselect_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_mulselect_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_mulselect_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_mulselect_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_paced_edgefixed.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_paced_edgefixed.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_paced_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_paced_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_reduction4_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_reduction4_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_reduction4_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_reduction4_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_reduction4_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_reduction4_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_reduction4_trial.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_reduction4_trial.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_reduction4_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_reduction4_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_reduction4_widthfix_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_reduction4_widthfix_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_reduction4_widthfix_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_reduction4_widthfix_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_reduction4_widthfix_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_reduction4_widthfix_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_reduction4_widthfix_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_reduction4_widthfix_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_restored_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_restored_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_restored_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_restored_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_restored_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_restored_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_restored_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_restored_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_runbank_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_runbank_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_runbank_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_runbank_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_runbank_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_runbank_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_runbank_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_runbank_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_runbank_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_runbank_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_splitdrain_final_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_splitdrain_final_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_splitdrain_final_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_splitdrain_final_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_splitdrain_final_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_splitdrain_final_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_splitdrain_final_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_splitdrain_final_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_splitdrain_final_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_splitdrain_final_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_splitdrain_min_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_splitdrain_min_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_splitdrain_short5_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_splitdrain_short5_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_splitdrain_unsafe_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_splitdrain_unsafe_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_splitdrain_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_splitdrain_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stage3_phases.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stage3_phases.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stall_debug.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stall_debug.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stall_fix_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stall_fix_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stall_fix_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stall_fix_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stall_fix_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stall_fix_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stall_fix_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stall_fix_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stall_fix_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stall_fix_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stall_isolation.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stall_isolation.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stream_core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stream_core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stream_engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stream_engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stream_ref.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stream_ref.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stream_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stream_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_stream_vector.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_stream_vector.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_stage2_vector.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_stage2_vector.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\post_fit_transcript.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\post_fit_transcript.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\post_synthesis_transcript.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\post_synthesis_transcript.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\post_synthesis_transcript_fse.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\post_synthesis_transcript_fse.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\run_ntt_vectors.do",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\sim\\run_ntt_vectors.do",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "sim\\source_after_nist_capture_transcript.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\source_after_nist_capture_transcript.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\source_after_nist_only_transcript.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\source_after_nist_only_transcript.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\source_after_nist_transcript.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\source_after_nist_transcript.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\source_elaboration_2024.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\source_elaboration_2024.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\source_rerun_transcript.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\source_rerun_transcript.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\transcript",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\transcript",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\vsim.wlf",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\vsim.wlf",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft0b8swc",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft0b8swc",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft0frf7z",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft0frf7z",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft13vczb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft13vczb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft1zznqj",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft1zznqj",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft212v4y",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft212v4y",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft24ykq1",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft24ykq1",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft27aa52",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft27aa52",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft2arnb1",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft2arnb1",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft2ek2ea",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft2ek2ea",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft2w2e1t",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft2w2e1t",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft34njkz",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft34njkz",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft3hqt72",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft3hqt72",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft4ckinr",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft4ckinr",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft4njzns",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft4njzns",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft4v8g67",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft4v8g67",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft4veam9",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft4veam9",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft5knbvg",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft5knbvg",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft67gef7",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft67gef7",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft6vkjgy",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft6vkjgy",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft7bdimf",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft7bdimf",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft7g9q56",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft7g9q56",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft888vcy",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft888vcy",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft9bbybq",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft9bbybq",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlft9i8fv4",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlft9i8fv4",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftaabdke",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftaabdke",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftcamnah",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftcamnah",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftcaw2rd",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftcaw2rd",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftcx3xjz",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftcx3xjz",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftcxmf96",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftcxmf96",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftcxvbae",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftcxvbae",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftd18cms",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftd18cms",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftdkgxib",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftdkgxib",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftdrnnqb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftdrnnqb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftfrc31x",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftfrc31x",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftg9978d",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftg9978d",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftgxyxq8",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftgxyxq8",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftgzvm1y",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftgzvm1y",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlfth0597c",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlfth0597c",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlfth7vs5g",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlfth7vs5g",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlfthcikhx",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlfthcikhx",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlfthd0teq",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlfthd0teq",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlfthhtxgm",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlfthhtxgm",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftj0m5c4",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftj0m5c4",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftjc2gwt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftjc2gwt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftjm248j",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftjm248j",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftjmxtj0",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftjmxtj0",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftjwfyyq",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftjwfyyq",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftke0y4m",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftke0y4m",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftkqna6v",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftkqna6v",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftkw4b4h",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftkw4b4h",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftmn6i3n",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftmn6i3n",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftnfci3x",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftnfci3x",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftq976mk",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftq976mk",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftria46m",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftria46m",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftsdsehh",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftsdsehh",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftt266q0",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftt266q0",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftt3z13s",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftt3z13s",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlfttdfter",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlfttdfter",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftwr301c",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftwr301c",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlfty5hn5r",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlfty5hn5r",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftybzski",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftybzski",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftyvcf7a",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftyvcf7a",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftzn95z3",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftzn95z3",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\wlftzrwswf",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\wlftzrwswf",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\db",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\db",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\dual_interleaved",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\dual_interleaved",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\incremental_db",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\incremental_db",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\output_files",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\output_files",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\.gitkeep",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\quartus\\.gitkeep",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "quartus\\keccak.qpf",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\quartus\\keccak.qpf",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "quartus\\ntt.qpf",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\quartus\\ntt.qpf",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "quartus\\ntt.qsf",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\quartus\\ntt.qsf",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "quartus\\ntt.qws",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt.qws",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt.sdc",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\quartus\\ntt.sdc",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "quartus\\report_paths.tcl",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\legacy\\quartus\\report_paths.tcl",
+        "kind":  "legacy"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\work_arithmetic",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\work_arithmetic",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\work_code",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\work_code",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\work_core",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\work_core",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\work_engine",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\work_engine",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\work_engine_code",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\work_engine_code",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\work_gate",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\work_gate",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\work_gs_gate",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\work_gs_gate",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\work_illegal",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\work_illegal",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\work_routing_gate",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\work_routing_gate",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\work_uvm_code",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\work_uvm_code",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\arithmetic_stage4.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\arithmetic_stage4.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\code_stage4.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\code_stage4.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_balanced.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_balanced.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_bf_candidates.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_bf_candidates.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_bf_delay_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_bf_delay_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_bf_register_delay.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_bf_register_delay.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_bf_tail_register.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_bf_tail_register.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_biased_add.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_biased_add.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_candidate_tag_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_candidate_tag_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_collapsed_reduce.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_collapsed_reduce.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_csa.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_csa.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_final_fold.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_final_fold.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_final_rebalance.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_final_rebalance.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_fixed_load.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_fixed_load.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_fold_parallel.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_fold_parallel.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_fold_pipeline.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_fold_pipeline.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_fold_select.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_fold_select.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_fold_trials_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_fold_trials_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_keep_bias.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_keep_bias.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_keep_bias_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_keep_bias_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_operand_boolean.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_operand_boolean.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_operand_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_operand_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_parallel_sub.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_parallel_sub.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_pre_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_pre_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_pre_parallel_sub.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_pre_parallel_sub.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_return_pre_words.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_return_pre_words.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_return_trials_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_return_trials_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_return_words.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_return_words.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_route_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_route_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_route_pre_key.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_route_pre_key.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_selected_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_selected_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_sub_qplus1.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_sub_qplus1.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_tag_register.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_tag_register.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_tag_write_masks.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_tag_write_masks.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_tw_nonzero.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_tw_nonzero.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_write_mux.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_write_mux.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_write_select.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_write_select.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\compare_write_select_prefetch.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\compare_write_select_prefetch.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\consolidated_gate_validation.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\consolidated_gate_validation.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\consolidated_gui_validation.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\consolidated_gui_validation.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\consolidated_postfit_validation.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\consolidated_postfit_validation.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\consolidated_postsynth_validation.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\consolidated_postsynth_validation.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\consolidated_vectors.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\consolidated_vectors.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\core.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\core.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\core_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\core_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\core_stage4.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\core_stage4.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_arithmetic.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_arithmetic.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_expanded.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_expanded.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_expanded_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_expanded_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_final_fold.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_final_fold.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_final_fold_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_final_fold_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_final_rebalance.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_final_rebalance.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_fold_pipeline.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_fold_pipeline.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_interactions_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_interactions_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_keep_bias.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_keep_bias.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_operand_boolean.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_operand_boolean.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_operand_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_operand_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_parallel_sub.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_parallel_sub.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_parallel_sub_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_parallel_sub_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_tw_nonzero.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_tw_nonzero.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_write_mux.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_write_mux.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_write_mux_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_write_mux_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_gate_write_select_prefetch.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_gate_write_select_prefetch.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\coverage_wave_gui_validation.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\coverage_wave_gui_validation.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\eligibility_first.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\eligibility_first.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\eligibility_last.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\eligibility_last.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\eligibility_middle.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\eligibility_middle.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\engine.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\engine.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\engine_code_stage4.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\engine_code_stage4.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\engine_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\engine_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\engine_stage4.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\engine_stage4.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\fifo_schedule_fold_pipeline.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\fifo_schedule_fold_pipeline.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\gs_sum_gate_fold_pipeline.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\gs_sum_gate_fold_pipeline.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\gs_sum_gate_keep_bias.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\gs_sum_gate_keep_bias.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\gui_validation.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\gui_validation.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\netlist_gate_expanded_compat.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\netlist_gate_expanded_compat.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\netlist_gate_expanded_compat_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\netlist_gate_expanded_compat_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_core_code.rpt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_core_code.rpt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_core_code.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_core_code.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_engine_code.rpt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_engine_code.rpt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_engine_code.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_engine_code.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_gate.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_gate.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_gate_code.rpt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_gate_code.rpt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_gs_gate.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_gs_gate.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_gs_gate_code.rpt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_gs_gate_code.rpt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_illegal.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_illegal.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_illegal_code.rpt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_illegal_code.rpt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_routing_gate.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_routing_gate.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_routing_gate_code.rpt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_routing_gate_code.rpt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_uvm_code.rpt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_uvm_code.rpt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\ntt_uvm_code.ucdb",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\ntt_uvm_code.ucdb",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\post_fit.wlf",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\post_fit.wlf",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\post_fit_checker_gate.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\post_fit_checker_gate.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\post_fit_checker_gate_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\post_fit_checker_gate_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\post_fit_completion_gate_trial.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\post_fit_completion_gate_trial.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\post_fit_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\post_fit_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\post_fit_gui.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\post_fit_gui.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\post_synthesis_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\post_synthesis_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\post_synthesis_gui.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\post_synthesis_gui.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\pre_alias_route_pre_key.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\pre_alias_route_pre_key.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\pre_invalid_alias.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\pre_invalid_alias.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\pre_invalid_alias_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\pre_invalid_alias_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\pre_invalid_alias_selected_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\pre_invalid_alias_selected_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\pre_invalid_alias_tw_nonzero.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\pre_invalid_alias_tw_nonzero.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_operand_fold_pipeline.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_operand_fold_pipeline.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_operand_gate.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_operand_gate.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_operand_operand_boolean.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_operand_operand_boolean.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_operand_operand_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_operand_operand_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_operand_route_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_operand_route_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_final_rebalance.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_final_rebalance.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_fold_pipeline.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_fold_pipeline.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_gate.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_gate.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_operand_boolean.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_operand_boolean.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_operand_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_operand_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_return_pre_words.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_return_pre_words.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_return_words.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_return_words.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_route_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_route_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_tw_nonzero.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_tw_nonzero.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_write_mux.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_write_mux.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_write_mux_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_write_mux_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_write_select.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_write_select.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\routing_writeback_write_select_prefetch.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\routing_writeback_write_select_prefetch.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_code_coverage_moved.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_code_coverage_moved.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_code_coverage_relocated.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_code_coverage_relocated.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_core_check_moved.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_core_check_moved.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_core_check_relocated.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_core_check_relocated.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_engine_check_moved.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_engine_check_moved.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_engine_check_relocated.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_engine_check_relocated.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_engine_code_coverage_moved.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_engine_code_coverage_moved.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_uvm_code_coverage_moved.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_uvm_code_coverage_moved.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_uvm_code_coverage_relocated.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_uvm_code_coverage_relocated.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_uvm_moved.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_uvm_moved.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_uvm_relocated.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_uvm_relocated.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\run_vectors_moved.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\run_vectors_moved.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\schedule.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\schedule.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\source_checker_gate_stage5.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\source_checker_gate_stage5.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\source_checker_gate_stage5_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\source_checker_gate_stage5_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\transcript_summary_startup.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\transcript_summary_startup.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\transcript_summary_validation.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\transcript_summary_validation.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\transcript_summary_validation.txt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\transcript_summary_validation.txt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_balanced.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_balanced.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_bf_candidates.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_bf_candidates.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_bf_delay_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_bf_delay_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_bf_register_delay.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_bf_register_delay.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_bf_tail_register.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_bf_tail_register.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_biased_add.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_biased_add.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_candidate_tag_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_candidate_tag_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_code_stage4.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_code_stage4.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_collapsed_reduce.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_collapsed_reduce.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_csa.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_csa.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_expanded.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_expanded.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_expanded_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_expanded_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_final_fold.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_final_fold.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_final_fold_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_final_fold_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_final_rebalance.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_final_rebalance.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_fixed_load.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_fixed_load.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_fold_parallel.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_fold_parallel.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_fold_pipeline.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_fold_pipeline.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_fold_select.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_fold_select.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_fold_trials_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_fold_trials_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_interactions_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_interactions_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_keep_bias.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_keep_bias.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_keep_bias_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_keep_bias_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_operand_boolean.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_operand_boolean.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_operand_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_operand_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_parallel_sub.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_parallel_sub.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_parallel_sub_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_parallel_sub_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_pre_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_pre_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_pre_decode_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_pre_decode_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_pre_parallel_sub.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_pre_parallel_sub.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_pre_parallel_sub_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_pre_parallel_sub_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_return_pre_words.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_return_pre_words.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_return_trials_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_return_trials_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_return_words.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_return_words.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_route_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_route_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_route_pre_key.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_route_pre_key.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_routing_stage4.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_routing_stage4.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_selected_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_selected_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_stage4.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_stage4.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_stage5_source.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_stage5_source.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_stage5_source_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_stage5_source_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_sub_qplus1.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_sub_qplus1.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_sum_split.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_sum_split.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_tag_register.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_tag_register.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_tag_write_masks.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_tag_write_masks.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_tw_nonzero.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_tw_nonzero.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_write_mux.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_write_mux.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_write_mux_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_write_mux_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_write_select.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_write_select.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\uvm_write_select_prefetch.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\uvm_write_select_prefetch.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_balanced.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_balanced.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_bf_candidates.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_bf_candidates.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_bf_delay_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_bf_delay_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_bf_register_delay.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_bf_register_delay.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_bf_tail_register.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_bf_tail_register.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_biased_add.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_biased_add.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_candidate_tag_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_candidate_tag_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_collapsed_reduce.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_collapsed_reduce.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_console.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_console.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_csa.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_csa.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_final_fold.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_final_fold.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_final_fold_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_final_fold_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_final_rebalance.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_final_rebalance.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_fixed_load.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_fixed_load.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_fold_parallel.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_fold_parallel.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_fold_pipeline.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_fold_pipeline.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_fold_select.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_fold_select.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_fold_trials_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_fold_trials_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_keep_bias.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_keep_bias.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_keep_bias_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_keep_bias_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_operand_boolean.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_operand_boolean.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_operand_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_operand_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_parallel_sub.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_parallel_sub.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_parallel_sub_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_parallel_sub_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_pre_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_pre_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_pre_decode_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_pre_decode_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_pre_parallel_sub.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_pre_parallel_sub.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_pre_parallel_sub_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_pre_parallel_sub_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_return_pre_words.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_return_pre_words.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_return_trials_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_return_trials_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_return_words.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_return_words.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_route_decode.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_route_decode.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_route_pre_key.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_route_pre_key.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_selected_restore.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_selected_restore.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_sub_qplus1.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_sub_qplus1.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_sum_split.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_sum_split.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_tag_register.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_tag_register.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_tag_write_masks.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_tag_write_masks.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_tw_nonzero.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_tw_nonzero.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_write_mux.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_write_mux.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_write_mux_launcher.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_write_mux_launcher.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_write_select.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_write_select.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\vector_write_select_prefetch.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\vector_write_select_prefetch.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "sim\\ntt_LightHD\\wave_layout_validation.txt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\sim\\ntt_LightHD\\wave_layout_validation.txt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\postsynth_build",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\postsynth_build",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\rejected_relaxed148_implementation",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\rejected_relaxed148_implementation",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\balanced_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\balanced_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\balanced_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\balanced_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\balanced_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\balanced_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\balanced_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\balanced_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_candidates_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_candidates_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_candidates_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_candidates_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_candidates_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_candidates_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_candidates_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_candidates_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_delay_restore_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_delay_restore_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_delay_restore_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_delay_restore_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_delay_restore_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_delay_restore_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_delay_restore_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_delay_restore_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_register_delay_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_register_delay_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_register_delay_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_register_delay_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_register_delay_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_register_delay_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_register_delay_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_register_delay_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_tail_register_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_tail_register_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_tail_register_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_tail_register_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_tail_register_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_tail_register_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\bf_tail_register_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\bf_tail_register_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\biased_add_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\biased_add_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\biased_add_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\biased_add_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\biased_add_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\biased_add_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\biased_add_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\biased_add_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\c5_pin_model_dump.txt",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\c5_pin_model_dump.txt",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\candidate_tag_restore_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\candidate_tag_restore_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\candidate_tag_restore_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\candidate_tag_restore_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\candidate_tag_restore_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\candidate_tag_restore_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\candidate_tag_restore_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\candidate_tag_restore_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\collapsed_reduce_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\collapsed_reduce_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\collapsed_reduce_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\collapsed_reduce_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\collapsed_reduce_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\collapsed_reduce_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\collapsed_reduce_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\collapsed_reduce_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\critical_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\critical_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\csa_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\csa_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\csa_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\csa_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\csa_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\csa_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\csa_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\csa_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\eda_help.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\eda_help.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\final_fold_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\final_fold_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\final_fold_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\final_fold_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\final_fold_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\final_fold_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\final_fold_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\final_fold_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\final_rebalance_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\final_rebalance_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\final_rebalance_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\final_rebalance_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\final_rebalance_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\final_rebalance_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\final_rebalance_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\final_rebalance_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fixed_load_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fixed_load_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fixed_load_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fixed_load_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fixed_load_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fixed_load_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fixed_load_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fixed_load_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_parallel_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_parallel_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_parallel_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_parallel_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_parallel_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_parallel_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_parallel_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_parallel_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_pipeline_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_pipeline_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_pipeline_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_pipeline_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_pipeline_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_pipeline_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_pipeline_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_pipeline_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_select_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_select_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_select_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_select_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_select_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_select_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_select_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_select_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_trials_restore_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_trials_restore_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_trials_restore_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_trials_restore_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_trials_restore_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_trials_restore_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\fold_trials_restore_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\fold_trials_restore_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\gui_compile.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\gui_compile.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\gui_constraints_benchmark200.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\gui_constraints_benchmark200.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\gui_constraints_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\gui_constraints_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\gui_constraints_precheck.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\gui_constraints_precheck.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\keep_bias_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\keep_bias_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\keep_bias_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\keep_bias_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\keep_bias_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\keep_bias_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\keep_bias_restore_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\keep_bias_restore_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\keep_bias_restore_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\keep_bias_restore_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\keep_bias_restore_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\keep_bias_restore_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\keep_bias_restore_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\keep_bias_restore_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\keep_bias_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\keep_bias_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\ntt.qws",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\ntt.qws",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operand_boolean_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operand_boolean_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operand_boolean_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operand_boolean_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operand_boolean_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operand_boolean_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operand_boolean_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operand_boolean_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operand_decode_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operand_decode_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operand_decode_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operand_decode_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operand_decode_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operand_decode_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operand_decode_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operand_decode_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operating148_benchmark200.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operating148_benchmark200.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operating148_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operating148_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operating148_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operating148_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operating148_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operating148_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operating148_precheck.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operating148_precheck.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operating148_selected_benchmark200.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operating148_selected_benchmark200.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operating148_selected_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operating148_selected_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operating148_selected_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operating148_selected_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\operating148_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\operating148_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\parallel_sub_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\parallel_sub_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\parallel_sub_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\parallel_sub_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\parallel_sub_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\parallel_sub_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\parallel_sub_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\parallel_sub_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\pre_decode_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\pre_decode_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\pre_decode_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\pre_decode_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\pre_decode_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\pre_decode_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\pre_decode_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\pre_decode_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\pre_parallel_sub_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\pre_parallel_sub_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\pre_parallel_sub_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\pre_parallel_sub_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\pre_parallel_sub_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\pre_parallel_sub_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\pre_parallel_sub_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\pre_parallel_sub_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_pre_words_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_pre_words_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_pre_words_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_pre_words_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_pre_words_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_pre_words_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_pre_words_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_pre_words_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_trials_restore_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_trials_restore_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_trials_restore_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_trials_restore_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_trials_restore_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_trials_restore_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_trials_restore_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_trials_restore_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_words_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_words_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_words_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_words_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_words_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_words_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\return_words_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\return_words_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\route_decode_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\route_decode_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\route_decode_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\route_decode_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\route_decode_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\route_decode_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\route_decode_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\route_decode_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\route_pre_key_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\route_pre_key_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\route_pre_key_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\route_pre_key_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\route_pre_key_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\route_pre_key_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\route_pre_key_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\route_pre_key_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\selected_restore_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\selected_restore_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\selected_restore_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\selected_restore_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\selected_restore_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\selected_restore_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\selected_restore_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\selected_restore_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\sub_qplus1_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\sub_qplus1_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\sub_qplus1_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\sub_qplus1_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\sub_qplus1_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\sub_qplus1_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\sub_qplus1_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\sub_qplus1_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\sum_split_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\sum_split_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\sum_split_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\sum_split_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\sum_split_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\sum_split_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\sum_split_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\sum_split_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tag_register_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tag_register_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tag_register_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tag_register_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tag_register_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tag_register_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tag_register_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tag_register_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tag_write_masks_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tag_write_masks_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tag_write_masks_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tag_write_masks_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tag_write_masks_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tag_write_masks_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tag_write_masks_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tag_write_masks_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tw_nonzero_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tw_nonzero_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tw_nonzero_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tw_nonzero_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tw_nonzero_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tw_nonzero_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\tw_nonzero_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\tw_nonzero_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_mux_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_mux_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_mux_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_mux_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_mux_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_mux_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_mux_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_mux_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_select_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_select_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_select_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_select_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_select_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_select_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_select_prefetch_fit.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_select_prefetch_fit.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_select_prefetch_map.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_select_prefetch_map.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_select_prefetch_paths.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_select_prefetch_paths.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_select_prefetch_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_select_prefetch_sta.log",
+        "kind":  "generated"
+    },
+    {
+        "source":  "quartus\\ntt_LightHD\\write_select_sta.log",
+        "destination":  "experiments\\ntt_cleanup_archive\\2026-10-12\\generated\\quartus\\ntt_LightHD\\write_select_sta.log",
+        "kind":  "generated"
+    }
+]

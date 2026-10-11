@@ -1,0 +1,276 @@
+# do ntt_ref_check.do
+# QuestaSim-64 vmap 2024.1 Lib Mapping Utility 2024.02 Feb  1 2024
+# vmap work ntt_ref_work 
+# Modifying modelsim.ini
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:56:11 on Oct 05,2026
+# vlog -sv -work work ../src/ntt_engine/ntt_pkg.sv 
+# -- Compiling package ntt_pkg
+# 
+# Top level modules:
+# 	--none--
+# End time: 02:56:11 on Oct 05,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:56:11 on Oct 05,2026
+# vlog -sv -work work ../tb_uvm/tb_uvm_ntt/ntt_ref_pkg.sv 
+# -- Compiling package ntt_ref_pkg
+# -- Importing package ntt_pkg
+# 
+# Top level modules:
+# 	--none--
+# End time: 02:56:11 on Oct 05,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:56:11 on Oct 05,2026
+# vlog -sv -work work ../tb_uvm/tb_uvm_ntt/tb_ntt_ref.sv 
+# -- Compiling module tb_ntt_ref
+# -- Importing package ntt_pkg
+# -- Importing package ntt_ref_pkg
+# 
+# Top level modules:
+# 	tb_ntt_ref
+# End time: 02:56:12 on Oct 05,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# vsim -c work.tb_ntt_ref 
+# Start time: 02:56:12 on Oct 05,2026
+# ** Note: (vsim-3812) Design is being optimized...
+# Support of the MGLS_LICENSE_FILE and LM_LICENSE_FILE licensing environment variables will be discontinued starting with the 2025.1 release. Please update to using the SALT_LICENSE_SERVER variable.
+# Please contact Siemens EDA Customer Support (https://support.sw.siemens.com/) for assistance.
+# //  Questa Sim-64
+# //  Version 2024.1 win64 Feb  1 2024
+# //
+# // Unpublished work. Copyright 2024 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# Loading sv_std.std
+# Loading work.ntt_pkg(fast)
+# Loading work.ntt_ref_pkg(fast)
+# Loading work.tb_ntt_ref(fast)
+# ============================================================
+#  NTT golden-model self-check  (ntt_ref_pkg)
+#    q = 8380417   N = 256   zeta = 1753   N_INV = 8347681
+# ============================================================
+#   [PASS] twiddle spot : tw(0)=1, tw(1)=4808194, tw(128)=1753
+#   [PASS] round-trip  : all-zero
+#   [PASS] zero->zero  : NTT(0) = 0
+#   [PASS] round-trip  : all-(q-1)
+#   [PASS] round-trip  : all-ones
+#   [PASS] round-trip  : delta @0
+#   [PASS] multiply    : x * 1  (delta identity)
+#   [PASS] multiply    : x * X  (negacyclic shift)
+#   [PASS] round-trip  : random #0
+#   [PASS] multiply    : random #0
+#   [PASS] round-trip  : random #1
+#   [PASS] multiply    : random #1
+#   [PASS] round-trip  : random #2
+#   [PASS] multiply    : random #2
+#   [PASS] round-trip  : random #3
+#   [PASS] multiply    : random #3
+#   [PASS] round-trip  : random #4
+#   [PASS] multiply    : random #4
+#   [PASS] round-trip  : random #5
+#   [PASS] multiply    : random #5
+#   [PASS] round-trip  : random #6
+#   [PASS] multiply    : random #6
+#   [PASS] round-trip  : random #7
+#   [PASS] multiply    : random #7
+#   [PASS] round-trip  : random #8
+#   [PASS] multiply    : random #8
+#   [PASS] round-trip  : random #9
+#   [PASS] multiply    : random #9
+#   [PASS] round-trip  : random #10
+#   [PASS] multiply    : random #10
+#   [PASS] round-trip  : random #11
+#   [PASS] multiply    : random #11
+#   [PASS] round-trip  : random #12
+#   [PASS] multiply    : random #12
+#   [PASS] round-trip  : random #13
+#   [PASS] multiply    : random #13
+#   [PASS] round-trip  : random #14
+#   [PASS] multiply    : random #14
+#   [PASS] round-trip  : random #15
+#   [PASS] multiply    : random #15
+#   [PASS] round-trip  : random #16
+#   [PASS] multiply    : random #16
+#   [PASS] round-trip  : random #17
+#   [PASS] multiply    : random #17
+#   [PASS] round-trip  : random #18
+#   [PASS] multiply    : random #18
+#   [PASS] round-trip  : random #19
+#   [PASS] multiply    : random #19
+#   [PASS] round-trip  : random #20
+#   [PASS] multiply    : random #20
+#   [PASS] round-trip  : random #21
+#   [PASS] multiply    : random #21
+#   [PASS] round-trip  : random #22
+#   [PASS] multiply    : random #22
+#   [PASS] round-trip  : random #23
+#   [PASS] multiply    : random #23
+#   [PASS] round-trip  : random #24
+#   [PASS] multiply    : random #24
+#   [PASS] round-trip  : random #25
+#   [PASS] multiply    : random #25
+#   [PASS] round-trip  : random #26
+#   [PASS] multiply    : random #26
+#   [PASS] round-trip  : random #27
+#   [PASS] multiply    : random #27
+#   [PASS] round-trip  : random #28
+#   [PASS] multiply    : random #28
+#   [PASS] round-trip  : random #29
+#   [PASS] multiply    : random #29
+#   [PASS] round-trip  : random #30
+#   [PASS] multiply    : random #30
+#   [PASS] round-trip  : random #31
+#   [PASS] multiply    : random #31
+#   [PASS] round-trip  : random #32
+#   [PASS] multiply    : random #32
+#   [PASS] round-trip  : random #33
+#   [PASS] multiply    : random #33
+#   [PASS] round-trip  : random #34
+#   [PASS] multiply    : random #34
+#   [PASS] round-trip  : random #35
+#   [PASS] multiply    : random #35
+#   [PASS] round-trip  : random #36
+#   [PASS] multiply    : random #36
+#   [PASS] round-trip  : random #37
+#   [PASS] multiply    : random #37
+#   [PASS] round-trip  : random #38
+#   [PASS] multiply    : random #38
+#   [PASS] round-trip  : random #39
+#   [PASS] multiply    : random #39
+#   [PASS] round-trip  : random #40
+#   [PASS] multiply    : random #40
+#   [PASS] round-trip  : random #41
+#   [PASS] multiply    : random #41
+#   [PASS] round-trip  : random #42
+#   [PASS] multiply    : random #42
+#   [PASS] round-trip  : random #43
+#   [PASS] multiply    : random #43
+#   [PASS] round-trip  : random #44
+#   [PASS] multiply    : random #44
+#   [PASS] round-trip  : random #45
+#   [PASS] multiply    : random #45
+#   [PASS] round-trip  : random #46
+#   [PASS] multiply    : random #46
+#   [PASS] round-trip  : random #47
+#   [PASS] multiply    : random #47
+#   [PASS] round-trip  : random #48
+#   [PASS] multiply    : random #48
+#   [PASS] round-trip  : random #49
+#   [PASS] multiply    : random #49
+#   [PASS] round-trip  : random #50
+#   [PASS] multiply    : random #50
+#   [PASS] round-trip  : random #51
+#   [PASS] multiply    : random #51
+#   [PASS] round-trip  : random #52
+#   [PASS] multiply    : random #52
+#   [PASS] round-trip  : random #53
+#   [PASS] multiply    : random #53
+#   [PASS] round-trip  : random #54
+#   [PASS] multiply    : random #54
+#   [PASS] round-trip  : random #55
+#   [PASS] multiply    : random #55
+#   [PASS] round-trip  : random #56
+#   [PASS] multiply    : random #56
+#   [PASS] round-trip  : random #57
+#   [PASS] multiply    : random #57
+#   [PASS] round-trip  : random #58
+#   [PASS] multiply    : random #58
+#   [PASS] round-trip  : random #59
+#   [PASS] multiply    : random #59
+#   [PASS] round-trip  : random #60
+#   [PASS] multiply    : random #60
+#   [PASS] round-trip  : random #61
+#   [PASS] multiply    : random #61
+#   [PASS] round-trip  : random #62
+#   [PASS] multiply    : random #62
+#   [PASS] round-trip  : random #63
+#   [PASS] multiply    : random #63
+#   [PASS] round-trip  : random #64
+#   [PASS] multiply    : random #64
+#   [PASS] round-trip  : random #65
+#   [PASS] multiply    : random #65
+#   [PASS] round-trip  : random #66
+#   [PASS] multiply    : random #66
+#   [PASS] round-trip  : random #67
+#   [PASS] multiply    : random #67
+#   [PASS] round-trip  : random #68
+#   [PASS] multiply    : random #68
+#   [PASS] round-trip  : random #69
+#   [PASS] multiply    : random #69
+#   [PASS] round-trip  : random #70
+#   [PASS] multiply    : random #70
+#   [PASS] round-trip  : random #71
+#   [PASS] multiply    : random #71
+#   [PASS] round-trip  : random #72
+#   [PASS] multiply    : random #72
+#   [PASS] round-trip  : random #73
+#   [PASS] multiply    : random #73
+#   [PASS] round-trip  : random #74
+#   [PASS] multiply    : random #74
+#   [PASS] round-trip  : random #75
+#   [PASS] multiply    : random #75
+#   [PASS] round-trip  : random #76
+#   [PASS] multiply    : random #76
+#   [PASS] round-trip  : random #77
+#   [PASS] multiply    : random #77
+#   [PASS] round-trip  : random #78
+#   [PASS] multiply    : random #78
+#   [PASS] round-trip  : random #79
+#   [PASS] multiply    : random #79
+#   [PASS] round-trip  : random #80
+#   [PASS] multiply    : random #80
+#   [PASS] round-trip  : random #81
+#   [PASS] multiply    : random #81
+#   [PASS] round-trip  : random #82
+#   [PASS] multiply    : random #82
+#   [PASS] round-trip  : random #83
+#   [PASS] multiply    : random #83
+#   [PASS] round-trip  : random #84
+#   [PASS] multiply    : random #84
+#   [PASS] round-trip  : random #85
+#   [PASS] multiply    : random #85
+#   [PASS] round-trip  : random #86
+#   [PASS] multiply    : random #86
+#   [PASS] round-trip  : random #87
+#   [PASS] multiply    : random #87
+#   [PASS] round-trip  : random #88
+#   [PASS] multiply    : random #88
+#   [PASS] round-trip  : random #89
+#   [PASS] multiply    : random #89
+#   [PASS] round-trip  : random #90
+#   [PASS] multiply    : random #90
+#   [PASS] round-trip  : random #91
+#   [PASS] multiply    : random #91
+#   [PASS] round-trip  : random #92
+#   [PASS] multiply    : random #92
+#   [PASS] round-trip  : random #93
+#   [PASS] multiply    : random #93
+#   [PASS] round-trip  : random #94
+#   [PASS] multiply    : random #94
+#   [PASS] round-trip  : random #95
+#   [PASS] multiply    : random #95
+#   [PASS] round-trip  : random #96
+#   [PASS] multiply    : random #96
+#   [PASS] round-trip  : random #97
+#   [PASS] multiply    : random #97
+#   [PASS] round-trip  : random #98
+#   [PASS] multiply    : random #98
+#   [PASS] round-trip  : random #99
+#   [PASS] multiply    : random #99
+# ------------------------------------------------------------
+#  RESULT:  ALL 208 CHECKS PASSED -- golden model is trusted.
+# ============================================================
+# ** Note: $finish    : ../tb_uvm/tb_uvm_ntt/tb_ntt_ref.sv(146)
+#    Time: 0 ns  Iteration: 0  Instance: /tb_ntt_ref
+# End time: 02:56:16 on Oct 05,2026, Elapsed time: 0:00:04
+# Errors: 0, Warnings: 0

@@ -1,0 +1,120 @@
+# do ntt_LightHD/run_engine_check.do
+# ../src/ntt_LightHD
+# ntt_LightHD
+# ../tb_uvm/tb_uvm_ntt
+# QuestaSim-64 vmap 2024.1 Lib Mapping Utility 2024.02 Feb  1 2024
+# vmap work ntt_LightHD/work_engine 
+# Modifying modelsim.ini
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 00:28:25 on Oct 08,2026
+# vlog -sv -work work ../src/ntt_LightHD/ntt_pkg.sv ../src/ntt_LightHD/mod_mul.sv ../src/ntt_LightHD/butterfly_unit.sv ../src/ntt_LightHD/twiddle_rom.sv ../src/ntt_LightHD/ntt_core.sv ../src/ntt_LightHD/ntt_engine.sv ../tb_uvm/tb_uvm_ntt/ntt_ref_pkg.sv ntt_LightHD/tb_ntt_engine.sv 
+# -- Compiling package ntt_pkg
+# -- Compiling package mod_mul_sv_unit
+# -- Importing package ntt_pkg
+# -- Compiling module mod_mul
+# -- Compiling package butterfly_unit_sv_unit
+# -- Compiling module butterfly_unit
+# -- Compiling package twiddle_rom_sv_unit
+# -- Compiling module twiddle_rom
+# -- Compiling package ntt_core_sv_unit
+# -- Compiling module ntt_core
+# -- Compiling package ntt_engine_sv_unit
+# -- Compiling module ntt_engine
+# -- Compiling package ntt_ref_pkg
+# -- Compiling module tb_ntt_engine
+# -- Importing package ntt_ref_pkg
+# 
+# Top level modules:
+# 	tb_ntt_engine
+# End time: 00:28:25 on Oct 08,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# vsim -c -voptargs="+acc" work.tb_ntt_engine 
+# Start time: 00:28:25 on Oct 08,2026
+# ** Note: (vsim-3812) Design is being optimized...
+# ** Warning: (vopt-10587) Some optimizations are turned off because the +acc switch is in effect. This will cause your simulation to run slowly. Please use -access/-debug to maintain needed visibility.
+# Support of the MGLS_LICENSE_FILE and LM_LICENSE_FILE licensing environment variables will be discontinued starting with the 2025.1 release. Please update to using the SALT_LICENSE_SERVER variable.
+# Please contact Siemens EDA Customer Support (https://support.sw.siemens.com/) for assistance.
+# ** Note: (vopt-143) Recognized 1 FSM in module "ntt_core(fast)".
+# ** Note: (vopt-143) Recognized 1 FSM in module "ntt_engine(fast)".
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=1.
+# //  Questa Sim-64
+# //  Version 2024.1 win64 Feb  1 2024
+# //
+# // Unpublished work. Copyright 2024 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# Loading sv_std.std
+# Loading work.ntt_pkg(fast)
+# Loading work.ntt_ref_pkg(fast)
+# Loading work.tb_ntt_engine(fast)
+# Loading work.ntt_engine_sv_unit(fast)
+# Loading work.ntt_engine(fast)
+# Loading work.ntt_core_sv_unit(fast)
+# Loading work.ntt_core(fast)
+# Loading work.twiddle_rom_sv_unit(fast)
+# Loading work.twiddle_rom(fast)
+# Loading work.butterfly_unit_sv_unit(fast)
+# Loading work.butterfly_unit(fast)
+# Loading work.mod_mul_sv_unit(fast)
+# Loading work.mod_mul(fast)
+# ============================================================
+#  ntt_engine directed self-check  (golden model = ntt_ref_pkg)
+# ============================================================
+#   [PASS] OP_NTT  : all-zero
+#   [PASS] OP_NTT  : all-(q-1)
+#   [PASS] round : all-(q-1)
+# NTT_ENGINE_PACED_LATENCY operation=OP_NTT input_gap=0 output_stalls=0 launch_to_last_output_cycles=780
+#   [PASS] OP_NTT  : delta @0
+# NTT_ENGINE_PACED_LATENCY operation=OP_INTT input_gap=0 output_stalls=0 launch_to_last_output_cycles=780
+#   [PASS] OP_INTT : delta @0
+#   [PASS] round : delta @0
+#   [PASS] OP_NTT  : delta @0 with output stalls
+# NTT_ENGINE_PACED_LATENCY operation=OP_NTT input_gap=1 output_stalls=0 launch_to_last_output_cycles=1035
+#   [PASS] OP_NTT  : delta @0 with one input gap per coefficient
+# NTT_ENGINE_PACED_LATENCY operation=OP_INTT input_gap=0 output_stalls=1 launch_to_last_output_cycles=883
+#   [PASS] OP_INTT : delta @0 with output stalls
+# NTT_ENGINE_PACED_LATENCY operation=OP_INTT input_gap=1 output_stalls=1 launch_to_last_output_cycles=1138
+#   [PASS] OP_INTT : delta @0 with input gaps and output stalls
+#   [PASS] OP_NTT  : random #0
+#   [PASS] OP_INTT : random #0
+#   [PASS] round : random #0
+#   [PASS] OP_NTT  : random #0 with input gaps and output stalls
+#   [PASS] OP_INTT : random #0 with output stalls
+#   [PASS] OP_NTT  : random #1
+#   [PASS] OP_INTT : random #1
+#   [PASS] round : random #1
+#   [PASS] OP_NTT  : random #2
+#   [PASS] OP_INTT : random #2
+#   [PASS] round : random #2
+#   [PASS] OP_NTT  : random #3
+#   [PASS] OP_INTT : random #3
+#   [PASS] round : random #3
+#   [PASS] OP_NTT  : random #4
+#   [PASS] OP_INTT : random #4
+#   [PASS] round : random #4
+#   [PASS] OP_NTT  : random #5
+#   [PASS] OP_INTT : random #5
+#   [PASS] round : random #5
+# NTT_ENGINE_PACED_LATENCY operation=OP_PRE_NTT input_gap=0 output_stalls=0 launch_to_last_output_cycles=749
+#   [PASS] OP_PRE_NTT : secret eta4 no stalls
+# NTT_ENGINE_PACED_LATENCY operation=OP_PRE_NTT input_gap=1 output_stalls=0 launch_to_last_output_cycles=1004
+#   [PASS] OP_PRE_NTT : secret eta4 input gaps
+# NTT_ENGINE_PACED_LATENCY operation=OP_PRE_NTT input_gap=0 output_stalls=1 launch_to_last_output_cycles=851
+#   [PASS] OP_PRE_NTT : secret eta4 output stalls
+# NTT_ENGINE_PACED_LATENCY operation=OP_PRE_NTT input_gap=1 output_stalls=1 launch_to_last_output_cycles=1106
+#   [PASS] OP_PRE_NTT : secret eta4 gaps and stalls
+# ------------------------------------------------------------
+#  RESULT:  ALL 34 CHECKS PASSED -- ntt_engine verified.
+# ============================================================
+# ** Note: $finish    : ntt_LightHD/tb_ntt_engine.sv(246)
+#    Time: 347195 ns  Iteration: 1  Instance: /tb_ntt_engine
+# End time: 00:28:27 on Oct 08,2026, Elapsed time: 0:00:02
+# Errors: 0, Warnings: 1

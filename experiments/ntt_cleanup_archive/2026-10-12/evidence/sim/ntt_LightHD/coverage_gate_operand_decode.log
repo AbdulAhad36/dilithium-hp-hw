@@ -1,0 +1,243 @@
+Reading pref.tcl
+
+# 2024.1
+
+# do ntt_LightHD/run_scoreboard_gate.do
+# ntt_LightHD/work_gate
+# ntt_LightHD/ntt_gate.ucdb
+# ntt_LightHD/ntt_gate_code.rpt
+# ntt_coverage_gate_test
+# ** Warning: (vlib-34) Library already exists at "ntt_LightHD/work_gate".
+# Errors: 0, Warnings: 1
+# QuestaSim-64 vmap 2024.1 Lib Mapping Utility 2024.02 Feb  1 2024
+# vmap work ntt_LightHD/work_gate 
+# Modifying modelsim.ini
+# ../src/ntt_LightHD
+# ../tb_uvm/tb_uvm_ntt_LightHD
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 00:47:05 on Oct 10,2026
+# vlog -sv -work work ../src/ntt_LightHD/ntt_pkg.sv 
+# -- Compiling package ntt_pkg
+# 
+# Top level modules:
+# 	--none--
+# End time: 00:47:05 on Oct 10,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 00:47:05 on Oct 10,2026
+# vlog -sv "+cover=sbceft" -work work ../src/ntt_LightHD/mod_mul.sv ../src/ntt_LightHD/butterfly_unit.sv ../src/ntt_LightHD/twiddle_rom.sv ../src/ntt_LightHD/ntt_core.sv ../src/ntt_LightHD/ntt_engine.sv 
+# -- Compiling package mod_mul_sv_unit
+# -- Importing package ntt_pkg
+# -- Compiling module mod_mul
+# -- Compiling package butterfly_unit_sv_unit
+# -- Compiling module butterfly_unit
+# -- Compiling package twiddle_rom_sv_unit
+# -- Compiling module twiddle_rom
+# -- Compiling package ntt_core_sv_unit
+# -- Compiling module ntt_core
+# -- Compiling package ntt_engine_sv_unit
+# -- Compiling module ntt_engine
+# 
+# Top level modules:
+# 	ntt_engine
+# End time: 00:47:06 on Oct 10,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 00:47:06 on Oct 10,2026
+# vlog -sv "+incdir+../tb_uvm/tb_uvm_ntt_LightHD" -L mtiUvm -work work ../tb_uvm/tb_uvm_ntt_LightHD/ntt_ref_pkg.sv ../tb_uvm/tb_uvm_ntt_LightHD/ntt_if.sv 
+# -- Compiling package ntt_ref_pkg
+# -- Importing package ntt_pkg
+# -- Compiling package ntt_if_sv_unit
+# -- Compiling interface ntt_if
+# 
+# Top level modules:
+# 	--none--
+# End time: 00:47:06 on Oct 10,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 00:47:06 on Oct 10,2026
+# vlog -sv "+define+NTT_FIFO" "+incdir+../tb_uvm/tb_uvm_ntt_LightHD" -L mtiUvm -work work ../tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv 
+# ** Note: (vlog-2286) ../tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv(13): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+# -- Compiling package tb_top_sv_unit
+# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+# -- Importing package ntt_pkg
+# -- Importing package ntt_ref_pkg
+# -- Compiling module tb_top
+# 
+# Top level modules:
+# 	tb_top
+# End time: 00:47:07 on Oct 10,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# vsim -coverage -voptargs="+acc" work.tb_top "+UVM_TESTNAME=ntt_coverage_gate_test" 
+# Start time: 00:47:07 on Oct 10,2026
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# ** Warning: (vopt-10587) Some optimizations are turned off because the +acc switch is in effect. This will cause your simulation to run slowly. Please use -access/-debug to maintain needed visibility.
+# Support of the MGLS_LICENSE_FILE and LM_LICENSE_FILE licensing environment variables will be discontinued starting with the 2025.1 release. Please update to using the SALT_LICENSE_SERVER variable.
+# Please contact Siemens EDA Customer Support (https://support.sw.siemens.com/) for assistance.
+# ** Note: (vopt-143) Recognized 1 FSM in module "ntt_core(fast)".
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=1.
+# //  Questa Sim-64
+# //  Version 2024.1 win64 Feb  1 2024
+# //
+# // Unpublished work. Copyright 2024 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# Loading sv_std.std
+# Loading work.ntt_pkg(fast)
+# Loading work.ntt_ref_pkg(fast)
+# Loading work.ntt_if(fast)
+# Loading mtiUvm.uvm_pkg(fast)
+# Loading work.tb_top_sv_unit(fast)
+# Loading mtiUvm.questa_uvm_pkg(fast)
+# Loading work.tb_top(fast)
+# Loading work.ntt_if_sv_unit(fast)
+# Loading work.ntt_if(fast__2)
+# Loading work.ntt_engine_sv_unit(fast)
+# Loading work.ntt_engine(fast)
+# Loading work.ntt_core_sv_unit(fast)
+# Loading work.ntt_core(fast)
+# Loading work.twiddle_rom_sv_unit(fast)
+# Loading work.twiddle_rom(fast)
+# Loading work.butterfly_unit_sv_unit(fast)
+# Loading work.butterfly_unit(fast)
+# Loading work.mod_mul_sv_unit(fast)
+# Loading work.mod_mul(fast)
+# Loading C:/questasim64_2024.1/uvm-1.1d\win64\uvm_dpi.dll
+# ----------------------------------------------------------------
+# UVM-1.1d
+# (C) 2007-2013 Mentor Graphics Corporation
+# (C) 2007-2013 Cadence Design Systems, Inc.
+# (C) 2006-2013 Synopsys, Inc.
+# (C) 2011-2013 Cypress Semiconductor Corp.
+# ----------------------------------------------------------------
+# 
+#   ***********       IMPORTANT RELEASE NOTES         ************
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_NO_DEPRECATED undefined.
+#   See http://www.eda.org/svdb/view.php?id=3313 for more details.
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_OBJECT_MUST_HAVE_CONSTRUCTOR undefined.
+#   See http://www.eda.org/svdb/view.php?id=3770 for more details.
+# 
+#       (Specify +UVM_NO_RELNOTES to turn off this notice)
+# 
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(277) @ 0: reporter [Questa UVM] QUESTA_UVM-1.2.3
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(278) @ 0: reporter [Questa UVM]  questa_uvm::init(+struct)
+# UVM_INFO @ 0: reporter [RNTST] Running test ntt_coverage_gate_test...
+# UVM_INFO @ 0: reporter [UVMTOP] UVM testbench topology:
+# ------------------------------------------------------------------
+# Name                       Type                        Size  Value
+# ------------------------------------------------------------------
+# uvm_test_top               ntt_coverage_gate_test      -     @471 
+#   env                      ntt_env                     -     @478 
+#     agent                  ntt_agent                   -     @485 
+#       driver               ntt_driver                  -     @632 
+#         drv_ap             uvm_analysis_port           -     @655 
+#         rsp_port           uvm_analysis_port           -     @647 
+#         seq_item_port      uvm_seq_item_pull_port      -     @639 
+#       monitor              ntt_monitor                 -     @663 
+#         exp_fifo           uvm_tlm_analysis_fifo #(T)  -     @678 
+#           analysis_export  uvm_analysis_imp            -     @717 
+#           get_ap           uvm_analysis_port           -     @709 
+#           get_peek_export  uvm_get_peek_imp            -     @693 
+#           put_ap           uvm_analysis_port           -     @701 
+#           put_export       uvm_put_imp                 -     @685 
+#         mon_ap             uvm_analysis_port           -     @670 
+#       sequencer            ntt_sequencer               -     @523 
+#         rsp_export         uvm_analysis_export         -     @530 
+#         seq_item_export    uvm_seq_item_pull_imp       -     @624 
+#         arbitration_queue  array                       0     -    
+#         lock_queue         array                       0     -    
+#         num_last_reqs      integral                    32    'd1  
+#         num_last_rsps      integral                    32    'd1  
+#     coverage               ntt_coverage                -     @507 
+#       analysis_imp         uvm_analysis_imp            -     @514 
+#     scoreboard             ntt_scoreboard              -     @492 
+#       checked_ap           uvm_analysis_port           -     @499 
+#       exp_fifo             uvm_tlm_analysis_fifo #(T)  -     @733 
+#         analysis_export    uvm_analysis_imp            -     @772 
+#         get_ap             uvm_analysis_port           -     @764 
+#         get_peek_export    uvm_get_peek_imp            -     @748 
+#         put_ap             uvm_analysis_port           -     @756 
+#         put_export         uvm_put_imp                 -     @740 
+#       obs_fifo             uvm_tlm_analysis_fifo #(T)  -     @780 
+#         analysis_export    uvm_analysis_imp            -     @819 
+#         get_ap             uvm_analysis_port           -     @811 
+#         get_peek_export    uvm_get_peek_imp            -     @795 
+#         put_ap             uvm_analysis_port           -     @803 
+#         put_export         uvm_put_imp                 -     @787 
+# ------------------------------------------------------------------
+# 
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(178) @ 7865000: uvm_test_top.env.coverage [CHECKED_COEFFICIENT_ROUTING] [GATE real zero NTT] pairs=1024 destinations=2048 pwm_ids=0 output_reads=256 output_coefficients=256 routing_errors=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(201) @ 7865000: uvm_test_top.env.coverage [CHECKED_TRACE] [GATE real zero NTT] op=OP_NTT inputs=256 issues=256 returns=256 twiddles=255 fifo_peak=32/32/11 occupancy=111/111/011 sources=111 destinations=111 scaling=000 pre_values=000000000/000000000/000000000 gaps=000 stalls=000 pwm_boundary_gap=0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(92) @ 7865000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] GATE real zero NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_tests.sv(174) @ 7885000: uvm_test_top [COVERAGE_GATE_TEST] fault=0 rejected; checked_jobs=1 unchanged
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_tests.sv(174) @ 7885000: uvm_test_top [COVERAGE_GATE_TEST] fault=1 rejected; checked_jobs=1 unchanged
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_tests.sv(174) @ 7885000: uvm_test_top [COVERAGE_GATE_TEST] fault=2 rejected; checked_jobs=1 unchanged
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_tests.sv(174) @ 7885000: uvm_test_top [COVERAGE_GATE_TEST] fault=3 rejected; checked_jobs=1 unchanged
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_tests.sv(174) @ 7885000: uvm_test_top [COVERAGE_GATE_TEST] fault=4 rejected; checked_jobs=1 unchanged
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_tests.sv(181) @ 7885000: uvm_test_top [COVERAGE_GATE_TEST] UVM COVERAGE GATE PASS: five deliberate failures rejected, no checked coverage added
+# UVM_INFO verilog_src/uvm-1.1d/src/base/uvm_objection.svh(1267) @ 7885000: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(253) @ 7885000: uvm_test_top.env.coverage [COEFFICIENT_ROUTING_COVERAGE] checked_pairs_destinations_PWM_output=23.64%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(254) @ 7885000: uvm_test_top.env.coverage [CHECKED_PRE_EQUIVALENCE] observed_Pre_general_equivalence=0.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(255) @ 7885000: uvm_test_top.env.coverage [CHECKED_RESET_COVERAGE] reset_cancel_and_recovery=0.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(257) @ 7885000: uvm_test_top.env.coverage [CHECKED_INTERNAL_COVERAGE] jobs=1 schedule=34.78% twiddle=33.38% fifo=26.52% scaling=0.00% pre_lookup=0.00% pwm_words=0.00% flow=4.17%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(262) @ 7885000: uvm_test_top.env.coverage [ntt_coverage] Functional Coverage: 22.22%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(266) @ 7885000: uvm_test_top.env.coverage [ntt_coverage] Checked Pre-NTT Coverage: 0.00%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_coverage.sv(269) @ 7885000: uvm_test_top.env.coverage [ntt_coverage] Checked Operation x Reset Coverage: 29.17%
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 7885000: uvm_test_top.env.scoreboard [ntt_scoreboard] 
+# =================== SCOREBOARD SUMMARY ===================
+#   Total:  6
+#   Passed: 1
+#   Failed: 5
+# ==========================================================
+# 
+# --- UVM Report catcher Summary ---
+# 
+# 
+# Number of demoted UVM_FATAL reports  :    0
+# Number of demoted UVM_ERROR reports  :    0
+# Number of demoted UVM_WARNING reports:    0
+# Number of caught UVM_FATAL reports   :    0
+# Number of caught UVM_ERROR reports   :    5
+# Number of caught UVM_WARNING reports :    0
+# 
+# --- UVM Report Summary ---
+# 
+# ** Report counts by severity
+# UVM_INFO :   22
+# UVM_WARNING :    0
+# UVM_ERROR :    0
+# UVM_FATAL :    0
+# ** Report counts by id
+# [CHECKED_COEFFICIENT_ROUTING]     1
+# [CHECKED_INTERNAL_COVERAGE]     1
+# [CHECKED_PRE_EQUIVALENCE]     1
+# [CHECKED_RESET_COVERAGE]     1
+# [CHECKED_TRACE]     1
+# [COEFFICIENT_ROUTING_COVERAGE]     1
+# [COVERAGE_GATE_TEST]     6
+# [Questa UVM]     2
+# [RNTST]     1
+# [TEST_DONE]     1
+# [UVMTOP]     1
+# [ntt_coverage]     3
+# [ntt_scoreboard]     2
+# ** Note: $finish    : C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh(430)
+#    Time: 7885 ns  Iteration: 54  Instance: /tb_top
+# Break in Task uvm_pkg/uvm_root::run_test at C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh line 430
+# Stopped at C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh line 430
+# Saving coverage database on exit...
+# End time: 00:47:11 on Oct 10,2026, Elapsed time: 0:00:04
+# Errors: 0, Warnings: 1
+#  quit -f

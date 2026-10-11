@@ -1,0 +1,525 @@
+# do ntt_LightHD/run_post_fit.do
+# post_fit
+# ../quartus/ntt_LightHD/simulation_postfit/ntt.vo
+# ntt_netlist_test
+# F:/altera/quartus/eda/sim_lib
+# ntt_LightHD/vendor_libs
+# altera_ver altera_primitives.v lpm_ver 220model.v sgate_ver sgate.v altera_mf_ver altera_mf.v altera_lnsim_ver altera_lnsim.sv cyclonev_ver cyclonev_atoms.v
+# ntt_LightHD/work_post_fit
+# QuestaSim-64 vmap 2024.1 Lib Mapping Utility 2024.02 Feb  1 2024
+# vmap work ntt_LightHD/work_post_fit 
+# Modifying modelsim.ini
+# ../src/ntt_LightHD
+# ../tb_uvm/tb_uvm_ntt_LightHD
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:28:27 on Oct 11,2026
+# vlog -sv -work work ../src/ntt_LightHD/ntt_pkg.sv 
+# -- Compiling package ntt_pkg
+# 
+# Top level modules:
+# 	--none--
+# End time: 02:28:27 on Oct 11,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:28:27 on Oct 11,2026
+# vlog -work work ../quartus/ntt_LightHD/simulation_postfit/ntt.vo 
+# -- Compiling module ntt_engine
+# 
+# Top level modules:
+# 	ntt_engine
+# End time: 02:28:28 on Oct 11,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:28:28 on Oct 11,2026
+# vlog -sv "+incdir+../tb_uvm/tb_uvm_ntt_LightHD" -L mtiUvm -work work ../tb_uvm/tb_uvm_ntt_LightHD/ntt_ref_pkg.sv ../tb_uvm/tb_uvm_ntt_LightHD/ntt_if.sv 
+# -- Compiling package ntt_ref_pkg
+# -- Importing package ntt_pkg
+# -- Compiling package ntt_if_sv_unit
+# -- Compiling interface ntt_if
+# 
+# Top level modules:
+# 	--none--
+# End time: 02:28:28 on Oct 11,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
+# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+# Start time: 02:28:28 on Oct 11,2026
+# vlog -sv "+define+NTT_FIFO" "+define+NTT_NETLIST" "+incdir+../tb_uvm/tb_uvm_ntt_LightHD" -L mtiUvm -work work ../tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv 
+# ** Note: (vlog-2286) ../tb_uvm/tb_uvm_ntt_LightHD/tb_top.sv(13): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+# -- Compiling package tb_top_sv_unit
+# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+# -- Importing package ntt_pkg
+# -- Importing package ntt_ref_pkg
+# -- Compiling module tb_top
+# 
+# Top level modules:
+# 	tb_top
+# End time: 02:28:29 on Oct 11,2026, Elapsed time: 0:00:01
+# Errors: 0, Warnings: 0
+# vsim -t 1ps -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L altera_lnsim_ver -L cyclonev_ver work.tb_top "+UVM_TESTNAME=ntt_netlist_test" "+NTT_REPRESENTATION=post_fit" 
+# Start time: 02:28:29 on Oct 11,2026
+# ** Note: (vsim-3813) Design is being optimized due to module recompilation...
+# Support of the MGLS_LICENSE_FILE and LM_LICENSE_FILE licensing environment variables will be discontinued starting with the 2025.1 release. Please update to using the SALT_LICENSE_SERVER variable.
+# Please contact Siemens EDA Customer Support (https://support.sw.siemens.com/) for assistance.
+# ** Warning: F:/altera/quartus/eda/sim_lib/mentor/cyclonev_atoms_ncrypt.v(38): (vopt-2241) Connection width does not match width of port '<protected>'.<protected>
+# ** Warning: F:/altera/quartus/eda/sim_lib/mentor/cyclonev_atoms_ncrypt.v(38): (vopt-2241) Connection width does not match width of port '<protected>'.<protected>
+# ** Warning: F:/altera/quartus/eda/sim_lib/mentor/cyclonev_atoms_ncrypt.v(38): (vopt-2241) Connection width does not match width of port '<protected>'.<protected>
+# ** Warning: F:/altera/quartus/eda/sim_lib/mentor/cyclonev_atoms_ncrypt.v(38): (vopt-2241) Connection width does not match width of port '<protected>'.<protected>
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=4.
+# //  Questa Sim-64
+# //  Version 2024.1 win64 Feb  1 2024
+# //
+# // Unpublished work. Copyright 2024 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# Loading sv_std.std
+# Loading work.ntt_pkg(fast)
+# Loading work.ntt_if_sv_unit(fast)
+# Loading work.ntt_ref_pkg(fast)
+# Loading work.ntt_if(fast)
+# Loading mtiUvm.uvm_pkg(fast)
+# Loading work.tb_top_sv_unit(fast)
+# Loading mtiUvm.questa_uvm_pkg(fast)
+# Loading work.tb_top(fast)
+# Loading work.ntt_engine(fast)
+# Loading cyclonev_ver.cyclonev_mac(fast)
+# Loading altera_lnsim_ver.altera_lnsim_functions(fast)
+# Loading altera_lnsim_ver.generic_m10k(fast)
+# Loading altera_lnsim_ver.generic_m10k(fast__1)
+# Loading altera_lnsim_ver.generic_m10k(fast__2)
+# Loading altera_lnsim_ver.generic_m10k(fast__3)
+# Loading altera_lnsim_ver.generic_m10k(fast__4)
+# Loading cyclonev_ver.cyclonev_mac(fast__1)
+# Loading altera_lnsim_ver.generic_m10k(fast__5)
+# ** Warning: (vsim-3016) Port type 'tri0' is incompatible with connection type 'tri1', coercing to 'tri1' (port 'ax').
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3016) Port type 'tri0' is incompatible with connection type 'tri1', coercing to 'tri1' (port 'ax').
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3016) Port type 'tri0' is incompatible with connection type 'tri1', coercing to 'tri1' (port 'ax').
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3016) Port type 'tri0' is incompatible with connection type 'tri1', coercing to 'tri1' (port 'ax').
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (26) for port 'az'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4326).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (18) for port 'bx'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4328).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (19) for port 'by'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4329).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (18) for port 'bz'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4330).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (2) does not match connection size (27) for port 'scanin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4332).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (64) does not match connection size (1) for port 'chainin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4333).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 12105
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (26) for port 'az'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4326).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (18) for port 'bx'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4328).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (19) for port 'by'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4329).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (18) for port 'bz'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4330).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (23) does not match connection size (27) for port 'scanin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4332).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (64) does not match connection size (1) for port 'chainin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4333).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[3].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 48275
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (26) for port 'az'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4326).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (18) for port 'bx'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4328).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (19) for port 'by'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4329).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (18) for port 'bz'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4330).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (23) does not match connection size (27) for port 'scanin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4332).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (64) does not match connection size (1) for port 'chainin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4333).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[1].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 57613
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (26) for port 'az'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4326).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (18) for port 'bx'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4328).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (19) for port 'by'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4329).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (18) for port 'bz'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4330).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (23) does not match connection size (27) for port 'scanin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4332).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (64) does not match connection size (1) for port 'chainin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4333).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[2].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 78111
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (26) for port 'az'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4326).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (18) for port 'bx'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4328).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# ** Warning: (vsim-3015) [PCDPC] - Port size (16) does not match connection size (19) for port 'by'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4329).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# ** Warning: (vsim-3015) [PCDPC] - Port size (1) does not match connection size (18) for port 'bz'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4330).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# ** Warning: (vsim-3015) [PCDPC] - Port size (23) does not match connection size (27) for port 'scanin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4332).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# ** Warning: (vsim-3015) [PCDPC] - Port size (64) does not match connection size (1) for port 'chainin'. The port definition is at: F:/altera/quartus/eda/sim_lib/cyclonev_atoms.v(4333).
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top/dut/\u_core|g_bf[0].u_bf|u_mul|Mult0~8  File: ../quartus/ntt_LightHD/simulation_postfit/ntt.vo Line: 88265
+# Loading C:/questasim64_2024.1/uvm-1.1d\win64\uvm_dpi.dll
+# ----------------------------------------------------------------
+# UVM-1.1d
+# (C) 2007-2013 Mentor Graphics Corporation
+# (C) 2007-2013 Cadence Design Systems, Inc.
+# (C) 2006-2013 Synopsys, Inc.
+# (C) 2011-2013 Cypress Semiconductor Corp.
+# ----------------------------------------------------------------
+# 
+#   ***********       IMPORTANT RELEASE NOTES         ************
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_NO_DEPRECATED undefined.
+#   See http://www.eda.org/svdb/view.php?id=3313 for more details.
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_OBJECT_MUST_HAVE_CONSTRUCTOR undefined.
+#   See http://www.eda.org/svdb/view.php?id=3770 for more details.
+# 
+#       (Specify +UVM_NO_RELNOTES to turn off this notice)
+# 
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(277) @ 0: reporter [Questa UVM] QUESTA_UVM-1.2.3
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(278) @ 0: reporter [Questa UVM]  questa_uvm::init(+struct)
+# UVM_INFO @ 0: reporter [RNTST] Running test ntt_netlist_test...
+# UVM_INFO @ 0: reporter [UVMTOP] UVM testbench topology:
+# ------------------------------------------------------------------
+# Name                       Type                        Size  Value
+# ------------------------------------------------------------------
+# uvm_test_top               ntt_netlist_test            -     @471 
+#   env                      ntt_env                     -     @482 
+#     agent                  ntt_agent                   -     @490 
+#       driver               ntt_netlist_driver          -     @622 
+#         drv_ap             uvm_analysis_port           -     @645 
+#         rsp_port           uvm_analysis_port           -     @637 
+#         seq_item_port      uvm_seq_item_pull_port      -     @629 
+#       monitor              ntt_netlist_monitor         -     @653 
+#         exp_fifo           uvm_tlm_analysis_fifo #(T)  -     @668 
+#           analysis_export  uvm_analysis_imp            -     @707 
+#           get_ap           uvm_analysis_port           -     @699 
+#           get_peek_export  uvm_get_peek_imp            -     @683 
+#           put_ap           uvm_analysis_port           -     @691 
+#           put_export       uvm_put_imp                 -     @675 
+#         mon_ap             uvm_analysis_port           -     @660 
+#       sequencer            ntt_sequencer               -     @513 
+#         rsp_export         uvm_analysis_export         -     @520 
+#         seq_item_export    uvm_seq_item_pull_imp       -     @614 
+#         arbitration_queue  array                       0     -    
+#         lock_queue         array                       0     -    
+#         num_last_reqs      integral                    32    'd1  
+#         num_last_rsps      integral                    32    'd1  
+#     scoreboard             ntt_scoreboard              -     @497 
+#       checked_ap           uvm_analysis_port           -     @504 
+#       exp_fifo             uvm_tlm_analysis_fifo #(T)  -     @725 
+#         analysis_export    uvm_analysis_imp            -     @764 
+#         get_ap             uvm_analysis_port           -     @756 
+#         get_peek_export    uvm_get_peek_imp            -     @740 
+#         put_ap             uvm_analysis_port           -     @748 
+#         put_export         uvm_put_imp                 -     @732 
+#       obs_fifo             uvm_tlm_analysis_fifo #(T)  -     @772 
+#         analysis_export    uvm_analysis_imp            -     @811 
+#         get_ap             uvm_analysis_port           -     @803 
+#         get_peek_export    uvm_get_peek_imp            -     @787 
+#         put_ap             uvm_analysis_port           -     @795 
+#         put_export         uvm_put_imp                 -     @779 
+# ------------------------------------------------------------------
+# 
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 7875000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [DIR all-zero NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 7875000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-zero NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 15765000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [DIR all-zero INTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 15765000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-zero INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 23655000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [DIR all-(q-1) NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 23655000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-(q-1) NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 31545000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [DIR all-(q-1) INTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 31545000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR all-(q-1) INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 39435000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [DIR delta@0 NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 39435000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR delta@0 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 47325000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [DIR delta@0 INTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 47325000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR delta@0 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 55855000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [DIR PWM zero o zero] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 55855000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR PWM zero o zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 64385000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [DIR PWM max  o max] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 64385000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR PWM max  o max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 72915000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [DIR PWM delta o delta] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 72915000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] DIR PWM delta o delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 80805000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 0 NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 80805000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 88695000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 0 INTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 88695000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 96585000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 0 round] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 96585000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 105115000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 0 PWM] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 105115000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 0 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 113005000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 1 NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 113005000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 120895000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 1 INTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 120895000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 128785000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 1 round] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 128785000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 137315000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 1 PWM] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 137315000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 1 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 145205000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 2 NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 145205000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 153095000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 2 INTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 153095000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 160985000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 2 round] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 160985000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 169515000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 2 PWM] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 169515000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 2 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 177405000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 3 NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 177405000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 185295000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 3 INTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 185295000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 193185000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 3 round] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 193185000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 201715000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 3 PWM] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 201715000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 3 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 209605000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 4 NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 209605000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 217495000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 4 INTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 217495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 225385000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 4 round] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 225385000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 233915000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 4 PWM] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 233915000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 4 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 241805000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 5 NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 241805000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 249695000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 5 INTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 249695000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 257585000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 5 round] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 257585000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 266115000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 5 PWM] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 266115000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 5 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 274005000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 6 NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 274005000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 281895000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 6 INTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 281895000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 289785000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 6 round] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 289785000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 298315000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 6 PWM] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 298315000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 6 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 306205000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 7 NTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 306205000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 NTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 314095000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 7 INTT] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 314095000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 INTT
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 321985000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 7 round] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 321985000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 round
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 330515000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [STRESS 7 PWM] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 330515000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] STRESS 7 PWM
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 338405000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV OP_NTT zero] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 338405000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 346295000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV OP_NTT max] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 346295000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 354185000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV OP_NTT delta] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 354185000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 362075000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV OP_NTT random] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 362075000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_NTT random
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 369965000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV OP_INTT zero] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 369965000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 377855000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV OP_INTT max] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 377855000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 385745000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV OP_INTT delta] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 385745000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 393635000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV OP_INTT random] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 393635000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV OP_INTT random
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 402165000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV PWM zero] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 402165000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM zero
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 410695000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV PWM max] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 410695000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM max
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 419225000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV PWM delta] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 419225000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM delta
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 427755000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [COV PWM random] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 427755000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] COV PWM random
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 435335000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE uniform -4] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 435335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -4
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 442915000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE uniform -3] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 442915000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -3
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 450495000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE uniform -2] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 450495000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -2
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 458075000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE uniform -1] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 458075000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform -1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 465655000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE uniform 0] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 465655000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 0
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 473235000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE uniform 1] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 473235000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 480815000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE uniform 2] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 480815000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 2
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 488395000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE uniform 3] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 488395000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 3
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 495975000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE uniform 4] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 495975000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE uniform 4
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 503555000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE eta2 mixed] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 503555000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE eta2 mixed
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 511135000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE eta4 mixed] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 511135000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE eta4 mixed
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 518715000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE negative at first] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 518715000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE negative at first
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 526295000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [PRE positive at last] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 526295000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] PRE positive at last
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 534145000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [REPEAT NTT no reset] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 534145000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT NTT no reset
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 541995000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [REPEAT INTT no reset] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 541995000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT INTT no reset
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 550485000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [REPEAT PWM no reset] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 550485000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT PWM no reset
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 558025000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [REPEAT PRE no reset] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 558025000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REPEAT PRE no reset
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 566375000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [FLOW NTT gaps/stalls] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 566375000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] FLOW NTT gaps/stalls
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 574725000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [FLOW INTT gaps/stalls] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 574725000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] FLOW INTT gaps/stalls
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 584145000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [FLOW PWM gaps/stalls] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 584145000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] FLOW PWM gaps/stalls
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 592185000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [FLOW PRE gaps/stalls] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 592185000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] FLOW PRE gaps/stalls
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_netlist.sv(171) @ 592305001: uvm_test_top.env.agent.monitor [NETLIST_RESET_OBSERVED] target=0 observed=0 accepted_inputs=0 cleared=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 600145000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [NETLIST RESET recovery after idle] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 600145000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] NETLIST RESET recovery after idle
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_netlist.sv(171) @ 600445001: uvm_test_top.env.agent.monitor [NETLIST_RESET_OBSERVED] target=1 observed=1 accepted_inputs=17 cleared=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 608285000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [NETLIST RESET recovery after partial operand A] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 608285000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] NETLIST RESET recovery after partial operand A
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_netlist.sv(171) @ 611145001: uvm_test_top.env.agent.monitor [NETLIST_RESET_OBSERVED] target=2 observed=2 accepted_inputs=273 cleared=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 618985000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [NETLIST RESET recovery after partial operand B] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 618985000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] NETLIST RESET recovery after partial operand B
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_netlist.sv(171) @ 621835001: uvm_test_top.env.agent.monitor [NETLIST_RESET_OBSERVED] target=3 observed=3 accepted_inputs=256 cleared=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 629675000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [NETLIST RESET recovery after NTT busy] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 629675000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] NETLIST RESET recovery after NTT busy
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_netlist.sv(171) @ 632525001: uvm_test_top.env.agent.monitor [NETLIST_RESET_OBSERVED] target=4 observed=4 accepted_inputs=256 cleared=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 640365000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [NETLIST RESET recovery after INTT busy] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 640365000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] NETLIST RESET recovery after INTT busy
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_netlist.sv(171) @ 645775001: uvm_test_top.env.agent.monitor [NETLIST_RESET_OBSERVED] target=5 observed=5 accepted_inputs=512 cleared=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 653615000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [NETLIST RESET recovery after PWM busy] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 653615000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] NETLIST RESET recovery after PWM busy
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_netlist.sv(171) @ 656465001: uvm_test_top.env.agent.monitor [NETLIST_RESET_OBSERVED] target=6 observed=6 accepted_inputs=256 cleared=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 664305000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [NETLIST RESET recovery after Pre busy] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 664305000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] NETLIST RESET recovery after Pre busy
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_netlist.sv(171) @ 669715001: uvm_test_top.env.agent.monitor [NETLIST_RESET_OBSERVED] target=7 observed=7 accepted_inputs=256 cleared=1
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 677555000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [NETLIST RESET recovery after stalled output] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 677555000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] NETLIST RESET recovery after stalled output
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 685405000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 0 eta2 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 685405000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 0 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 692945000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=0 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 692945000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 0 eta2 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 692945000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 0 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 700795000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 1 eta2 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 700795000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 1 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 708335000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=1 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 708335000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 1 eta2 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 708335000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 1 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 716185000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 2 eta2 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 716185000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 2 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 723725000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=2 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 723725000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 2 eta2 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 723725000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 2 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 731575000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 3 eta2 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 731575000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 3 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 739115000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=3 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 739115000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 3 eta2 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 739115000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 3 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 746965000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 4 eta2 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 746965000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 4 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 754505000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=4 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 754505000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 4 eta2 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 754505000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 4 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 762355000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 5 eta2 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 762355000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 5 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 769895000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=5 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 769895000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 5 eta2 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 769895000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 5 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 777745000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 6 eta2 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 777745000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 6 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 785285000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=6 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 785285000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 6 eta2 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 785285000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 6 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 793135000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 7 eta2 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 793135000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 7 eta2 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 800675000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=7 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 800675000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 7 eta2 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 800675000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 7 eta2 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 808525000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 8 eta4 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 808525000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 8 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 816065000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=8 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 816065000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 8 eta4 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 816065000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 8 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 823915000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 9 eta4 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 823915000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 9 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 831455000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=9 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 831455000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 9 eta4 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 831455000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 9 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 839305000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 10 eta4 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 839305000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 10 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 846845000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=10 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 846845000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 10 eta4 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 846845000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 10 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 854695000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 11 eta4 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 854695000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 11 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 862235000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=11 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 862235000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 11 eta4 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 862235000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 11 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 870085000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 12 eta4 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 870085000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 12 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 877625000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=12 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 877625000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 12 eta4 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 877625000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 12 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 885475000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 13 eta4 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 885475000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 13 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 893015000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=13 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 893015000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 13 eta4 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 893015000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 13 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 900865000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 14 eta4 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 900865000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 14 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 908405000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=14 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 908405000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 14 eta4 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 908405000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 14 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 916255000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 15 eta4 general] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 916255000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 15 eta4 general
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(85) @ 923795000: uvm_test_top.env.scoreboard [PRE_EQUIVALENCE] pair=15 observed Pre/general outputs match all 256 coefficients
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 923795000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [EQUIV 15 eta4 Pre] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 923795000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] EQUIV 15 eta4 Pre
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 931685000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [ARITH CT addition/subtraction boundaries] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 931685000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] ARITH CT addition/subtraction boundaries
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 940215000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [REDUCE product/carry boundaries] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 940215000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] REDUCE product/carry boundaries
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(105) @ 948105000: uvm_test_top.env.scoreboard [NETLIST_EXTERNAL_CHECKED] [ARITH GS sum/carry boundaries] 256 coefficients, framing, stability and requested reset checks passed; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(108) @ 948105000: uvm_test_top.env.scoreboard [ntt_scoreboard] [PASS] ARITH GS sum/carry boundaries
+# UVM_INFO verilog_src/uvm-1.1d/src/base/uvm_objection.svh(1267) @ 948330000: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_netlist.sv(244) @ 948330000: uvm_test_top [NETLIST_GATE] NTT NETLIST REGRESSION PASS: post_fit 117/117 jobs, 29952/29952 coefficients, 16 equivalence pairs, 8 reset witnesses; no internal coverage credited
+# UVM_INFO ../tb_uvm/tb_uvm_ntt_LightHD/ntt_scoreboard.sv(124) @ 948330000: uvm_test_top.env.scoreboard [ntt_scoreboard] 
+# =================== SCOREBOARD SUMMARY ===================
+#   Total:  117
+#   Passed: 117
+#   Failed: 0
+# ==========================================================
+# 
+# --- UVM Report Summary ---
+# 
+# ** Report counts by severity
+# UVM_INFO :  265
+# UVM_WARNING :    0
+# UVM_ERROR :    0
+# UVM_FATAL :    0
+# ** Report counts by id
+# [NETLIST_EXTERNAL_CHECKED]   117
+# [NETLIST_GATE]     1
+# [NETLIST_RESET_OBSERVED]     8
+# [PRE_EQUIVALENCE]    16
+# [Questa UVM]     2
+# [RNTST]     1
+# [TEST_DONE]     1
+# [UVMTOP]     1
+# [ntt_scoreboard]   118
+# ** Note: $finish    : C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh(430)
+#    Time: 948330 ns  Iteration: 54  Instance: /tb_top
+# Break in Task uvm_pkg/uvm_root::run_test at C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh line 430
+# Stopped at C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh line 430
+# End time: 02:31:39 on Oct 11,2026, Elapsed time: 0:03:10
+# Errors: 0, Warnings: 38
+#  quit -f

@@ -345,6 +345,124 @@ class ntt_inverse_sum_boundary_seq extends ntt_base_seq;
 endclass
 
 // Combined regression: directed + stress + coverage closure.
+// Broad regression with reproducible independent flow profiles, not bin chasing.
+class ntt_extended_seq extends ntt_base_seq;
+    `uvm_object_utils(ntt_extended_seq)
+    int unsigned rng=32'h1a2b3c4d;
+    function new(string name="ntt_extended_seq");super.new(name);endfunction
+    function int unsigned next_random();
+        rng^=rng<<13;rng^=rng>>17;rng^=rng<<5;return rng;
+    endfunction
+    function int duration(int category);
+        case(category)
+            0:return 0;1:return 1;2:return 2;
+            3:return 3+next_random()%5;
+            4:return 8+next_random()%8;
+            default:return 16+next_random()%48;
+        endcase
+    endfunction
+    function poly_t pattern(int shape,bit bounded);
+        poly_t p;
+        coeff_t secrets[9]='{0,1,2,3,4,Q-4,Q-3,Q-2,Q-1};
+        for(int i=0;i<N;i++) begin
+            case(shape)
+                0:p[i]=0;
+                1:p[i]=Q-1;
+                2:p[i]=(i==0)?1:0;
+                3:p[i]=(i%2)?Q-1:1;
+                4:p[i]=bounded?secrets[(i*9)/N]:coeff_t'(i*30000);
+                5:p[i]=bounded?secrets[((N-1-i)*9)/N]:coeff_t'((N-1-i)*30000);
+                6:p[i]=coeff_t'((i%5+Q-2)%Q);
+                default:p[i]=bounded?secrets[next_random()%9]:coeff_t'(next_random()%Q);
+            endcase
+        end
+        if(shape==7 && bounded) begin p[0]=3;p[1]=Q-4;p[2]=1;end
+        return p;
+    endfunction
+    task job(string name,ntt_op_e operation,poly_t a,poly_t b,bit do_reset,
+             int gap=0,int stall=0,int stride=0);
+        ntt_transaction tx=ntt_transaction::type_id::create("extended_tx");
+        start_item(tx);
+        tx.test_name=name;tx.op=operation;tx.in_kind=(operation==OP_PRE_NTT)?IK_ETA4:IK_RANDOM;
+        tx.in_poly=a;tx.in_poly_b=b;tx.reset_before=do_reset;
+        tx.input_gap_period=(gap>0)?13:0;tx.input_gap_cycles=gap;
+        tx.pwm_boundary_gap_cycles=gap;
+        tx.stall_output=(stall>0);tx.output_stall_cycles=stall;tx.output_stall_period=stride;
+        tx.exp_poly=(operation==OP_PWM)?pwm(a,b):((operation==OP_INTT)?ntt_inv(a):ntt_fwd(a));
+        finish_item(tx);
+    endtask
+    task body();
+        ntt_op_e ops[4]='{OP_NTT,OP_INTT,OP_PWM,OP_PRE_NTT};
+        coeff_t representatives[8]='{0,1,3,2048,100000,Q/2+100,Q-3,Q-1};
+        poly_t a,b,target;
+        void'($value$plusargs("NTT_EXT_SEED=%d",rng));
+        if(rng==0) `uvm_fatal("EXT_SEED","Nonzero xorshift seed required")
+        `uvm_info("EXT_SEED",$sformatf("502 additional jobs, flow RNG seed=%0d",rng),UVM_NONE)
+        // 32 actual input shapes, across all four modes.
+        for(int mode=0;mode<4;mode++) for(int shape=0;shape<8;shape++)
+            job($sformatf("EXT SHAPE mode%0d shape%0d",mode,shape),ops[mode],
+                pattern(shape,ops[mode]==OP_PRE_NTT),pattern(7,0),1);
+        // Three prescribed result polynomials, each with all eight value ranges.
+        for(int i=0;i<N;i++)target[i]=representatives[i%8];
+        job("EXT OUTPUT ranges NTT",OP_NTT,ntt_inv(target),pattern(0,0),1);
+        job("EXT OUTPUT ranges INTT",OP_INTT,ntt_fwd(target),pattern(0,0),1);
+        job("EXT OUTPUT ranges PWM",OP_PWM,target,make_const(coeff_t'(1)),1);
+        // Bounded impulses make exact bounded positive/negative Pre outputs.
+        a=make_const(coeff_t'(0));a[0]=2;
+        job("EXT OUTPUT Pre positive",OP_PRE_NTT,a,pattern(0,0),1);
+        a[0]=Q-2;
+        job("EXT OUTPUT Pre negative",OP_PRE_NTT,a,pattern(0,0),1);
+        // All 8*8 A/B range combinations on every one of four lanes.
+        for(int x=0;x<8;x++)for(int y=0;y<8;y++)for(int lane=0;lane<4;lane++)begin
+            a[(x*8+y)*4+lane]=representatives[x];
+            b[(x*8+y)*4+lane]=representatives[y];
+        end
+        job("EXT PWM range Cartesian",OP_PWM,a,b,1);
+        // 400 flow jobs: profile classes selected independently, without querying coverage.
+        for(int test_id=0;test_id<400;test_id++)begin
+            int mode,gap,stall,stride;
+            bit reset_job;
+            mode=test_id%4;gap=duration(next_random()%6);stall=duration(next_random()%6);
+            stride=(next_random()%2)?17:0;reset_job=next_random()%2;
+            a=pattern(7,ops[mode]==OP_PRE_NTT);b=pattern(7,0);
+            job($sformatf("EXT FLOW %0d mode%0d gap%0d stall%0d",test_id,mode,gap,stall),
+                ops[mode],a,b,reset_job,gap,stall,stride);
+        end
+        // 32 transitions (4*4*2), two golden-checked jobs per transition.
+        for(int prior=0;prior<4;prior++)for(int current=0;current<4;current++)
+            for(int reset_bit=0;reset_bit<2;reset_bit++)begin
+                job($sformatf("EXT TRANSITION prepare %0d",prior),ops[prior],
+                    pattern(7,ops[prior]==OP_PRE_NTT),pattern(7,0),1);
+                job($sformatf("EXT TRANSITION %0d to%0d reset%0d",prior,current,reset_bit),ops[current],
+                    pattern(7,ops[current]==OP_PRE_NTT),pattern(7,0),bit'(reset_bit));
+            end
+    endtask
+endclass
+
+class ntt_interaction_seq extends ntt_extended_seq;
+    `uvm_object_utils(ntt_interaction_seq)
+    function new(string name="ntt_interaction_seq");super.new(name);endfunction
+    task body();
+        ntt_op_e ops[4]='{OP_NTT,OP_INTT,OP_PWM,OP_PRE_NTT};
+        rng=32'h6d2b79f5;
+        `uvm_info("INTERACTION_SEED","128 interaction jobs: 64 shape/flow plus 64 PWM shape pairs; seed=1831565813",UVM_NONE)
+        for(int mode=0;mode<4;mode++) for(int shape=0;shape<8;shape++)
+            for(int trial=0;trial<2;trial++) begin
+                int gap,stall;
+                gap=duration(1+(shape+trial)%5);
+                stall=duration(1+(shape+2*trial+mode)%5);
+                job($sformatf("INTERACTION mode%0d shape%0d trial%0d",mode,shape,trial),
+                    ops[mode],pattern(shape,ops[mode]==OP_PRE_NTT),
+                    pattern((shape+trial+mode)%8,0),bit'(trial),gap,stall,17);
+            end
+        // Each independently classified A/B polynomial-shape pairing in PWM.
+        // No gaps here: isolate operand interactions from the flow stress above.
+        for(int a_shape=0;a_shape<8;a_shape++)for(int b_shape=0;b_shape<8;b_shape++)
+            job($sformatf("INTERACTION PWM shapes A%0d B%0d",a_shape,b_shape),
+                OP_PWM,pattern(a_shape,0),pattern(b_shape,0),1);
+    endtask
+endclass
+
 class ntt_full_seq extends ntt_base_seq;
     `uvm_object_utils(ntt_full_seq)
 
@@ -361,6 +479,8 @@ class ntt_full_seq extends ntt_base_seq;
         ntt_arithmetic_boundary_seq arithmetic_seq;
         ntt_reduction_boundary_seq reduction_seq;
         ntt_inverse_sum_boundary_seq inverse_sum_seq;
+        ntt_extended_seq extended_seq;
+        ntt_interaction_seq interaction_seq;
 `ifdef NTT_FIFO
         ntt_pre_seq      p_seq;
         ntt_repeat_seq   r_seq;
@@ -391,6 +511,10 @@ class ntt_full_seq extends ntt_base_seq;
         reduction_seq.start(m_sequencer);
         inverse_sum_seq=ntt_inverse_sum_boundary_seq::type_id::create("inverse_sum_seq");
         inverse_sum_seq.start(m_sequencer);
+        extended_seq=ntt_extended_seq::type_id::create("extended_seq");
+        extended_seq.start(m_sequencer);
+        interaction_seq=ntt_interaction_seq::type_id::create("interaction_seq");
+        interaction_seq.start(m_sequencer);
 `endif
     endtask
 endclass

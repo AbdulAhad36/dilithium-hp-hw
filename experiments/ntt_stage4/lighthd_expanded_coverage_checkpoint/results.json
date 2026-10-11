@@ -1,0 +1,520 @@
+{
+  "jobs": 620,
+  "coefficients": 158720,
+  "added_jobs": 502,
+  "uvm_errors": 0,
+  "uvm_fatals": 0,
+  "simulator_seed": 20261011,
+  "extended_flow_seed": 439041101,
+  "group_type_count": 22,
+  "functional_group_type_mean_percent": 99.51073232323233,
+  "functional_groups": {
+    "cg_schedule": {
+      "hits": 2944,
+      "bins": 2944,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_twiddle": {
+      "hits": 764,
+      "bins": 764,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_fifo": {
+      "hits": 54,
+      "bins": 54,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_scaling": {
+      "hits": 3,
+      "bins": 3,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_pre_lookup": {
+      "hits": 27,
+      "bins": 27,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_pwm_schedule": {
+      "hits": 64,
+      "bins": 64,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_flow": {
+      "hits": 33,
+      "bins": 33,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_reset_abort": {
+      "hits": 9,
+      "bins": 9,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_pre_equivalence": {
+      "hits": 2,
+      "bins": 2,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_coefficient_routing": {
+      "hits": 10112,
+      "bins": 10112,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_ntt": {
+      "hits": 19,
+      "bins": 19,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_pre": {
+      "hits": 3,
+      "bins": 3,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_restart": {
+      "hits": 14,
+      "bins": 14,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_butterfly_arithmetic": {
+      "hits": 10,
+      "bins": 10,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_input_range": {
+      "hits": 37,
+      "bins": 37,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_output_range": {
+      "hits": 31,
+      "bins": 32,
+      "percent": 96.875,
+      "missed_bins": [
+        "classes[23]"
+      ]
+    },
+    "cg_pwm_pairs": {
+      "hits": 256,
+      "bins": 256,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_input_gap_duration": {
+      "hits": 60,
+      "bins": 60,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_output_stall_duration": {
+      "hits": 60,
+      "bins": 60,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_flow_combination": {
+      "hits": 133,
+      "bins": 144,
+      "percent": 92.36111111111111,
+      "missed_bins": [
+        "combinations[10]",
+        "combinations[18]",
+        "combinations[37]",
+        "combinations[41]",
+        "combinations[46]",
+        "combinations[58]",
+        "combinations[91]",
+        "combinations[103]",
+        "combinations[115]",
+        "combinations[132]",
+        "combinations[142]"
+      ]
+    },
+    "cg_operation_transition": {
+      "hits": 32,
+      "bins": 32,
+      "percent": 100.0,
+      "missed_bins": []
+    },
+    "cg_polynomial_shape": {
+      "hits": 32,
+      "bins": 32,
+      "percent": 100.0,
+      "missed_bins": []
+    }
+  },
+  "code_coverage": {
+    "Statements": {
+      "hits": 762,
+      "bins": 775,
+      "percent": 98.3225806451613,
+      "misses": 13
+    },
+    "Toggles": {
+      "hits": 11691,
+      "bins": 12735,
+      "percent": 91.80212014134275,
+      "misses": 1044
+    },
+    "Branches": {
+      "hits": 388,
+      "bins": 402,
+      "percent": 96.51741293532338,
+      "misses": 14
+    },
+    "Conditions": {
+      "hits": 56,
+      "bins": 85,
+      "percent": 65.88235294117646,
+      "misses": 29
+    },
+    "Expressions": {
+      "hits": 56,
+      "bins": 59,
+      "percent": 94.91525423728814,
+      "misses": 3
+    },
+    "FSM States": {
+      "hits": 13,
+      "bins": 13,
+      "percent": 100.0,
+      "misses": 0
+    },
+    "FSM Transitions": {
+      "hits": 24,
+      "bins": 24,
+      "percent": 100.0,
+      "misses": 0
+    }
+  },
+  "code_by_instance": {
+    "/tb_top/dut/u_core/g_bf[3]/u_tw": {
+      "Statements": {
+        "bins": 3,
+        "hits": 3,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 64,
+        "hits": 64,
+        "misses": 0,
+        "percent": 100.0
+      }
+    },
+    "/tb_top/dut/u_core/g_bf[3]/u_bf/u_mul": {
+      "Branches": {
+        "bins": 12,
+        "hits": 12,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Statements": {
+        "bins": 45,
+        "hits": 45,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 1418,
+        "hits": 1228,
+        "misses": 190,
+        "percent": 86.6
+      }
+    },
+    "/tb_top/dut/u_core/g_bf[3]/u_bf": {
+      "Branches": {
+        "bins": 17,
+        "hits": 17,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Statements": {
+        "bins": 55,
+        "hits": 55,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 704,
+        "hits": 704,
+        "misses": 0,
+        "percent": 100.0
+      }
+    },
+    "/tb_top/dut/u_core/g_bf[2]/u_tw": {
+      "Statements": {
+        "bins": 3,
+        "hits": 3,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 64,
+        "hits": 64,
+        "misses": 0,
+        "percent": 100.0
+      }
+    },
+    "/tb_top/dut/u_core/g_bf[2]/u_bf/u_mul": {
+      "Branches": {
+        "bins": 12,
+        "hits": 12,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Statements": {
+        "bins": 45,
+        "hits": 45,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 1418,
+        "hits": 1228,
+        "misses": 190,
+        "percent": 86.6
+      }
+    },
+    "/tb_top/dut/u_core/g_bf[2]/u_bf": {
+      "Branches": {
+        "bins": 17,
+        "hits": 17,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Statements": {
+        "bins": 55,
+        "hits": 55,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 704,
+        "hits": 704,
+        "misses": 0,
+        "percent": 100.0
+      }
+    },
+    "/tb_top/dut/u_core/g_bf[1]/u_tw": {
+      "Statements": {
+        "bins": 3,
+        "hits": 3,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 64,
+        "hits": 64,
+        "misses": 0,
+        "percent": 100.0
+      }
+    },
+    "/tb_top/dut/u_core/g_bf[1]/u_bf/u_mul": {
+      "Branches": {
+        "bins": 12,
+        "hits": 12,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Statements": {
+        "bins": 45,
+        "hits": 45,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 1418,
+        "hits": 1228,
+        "misses": 190,
+        "percent": 86.6
+      }
+    },
+    "/tb_top/dut/u_core/g_bf[1]/u_bf": {
+      "Branches": {
+        "bins": 17,
+        "hits": 17,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Statements": {
+        "bins": 55,
+        "hits": 55,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 704,
+        "hits": 704,
+        "misses": 0,
+        "percent": 100.0
+      }
+    },
+    "/tb_top/dut/u_core/g_bf[0]/u_tw": {
+      "Statements": {
+        "bins": 3,
+        "hits": 3,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 64,
+        "hits": 64,
+        "misses": 0,
+        "percent": 100.0
+      }
+    },
+    "/tb_top/dut/u_core/g_bf[0]/u_bf/u_mul": {
+      "Branches": {
+        "bins": 12,
+        "hits": 12,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Statements": {
+        "bins": 45,
+        "hits": 45,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 1418,
+        "hits": 1228,
+        "misses": 190,
+        "percent": 86.6
+      }
+    },
+    "/tb_top/dut/u_core/g_bf[0]/u_bf": {
+      "Branches": {
+        "bins": 17,
+        "hits": 17,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Statements": {
+        "bins": 55,
+        "hits": 55,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Toggles": {
+        "bins": 704,
+        "hits": 704,
+        "misses": 0,
+        "percent": 100.0
+      }
+    },
+    "/tb_top/dut/u_core": {
+      "Branches": {
+        "bins": 247,
+        "hits": 234,
+        "misses": 13,
+        "percent": 94.73
+      },
+      "Conditions": {
+        "bins": 78,
+        "hits": 49,
+        "misses": 29,
+        "percent": 62.82
+      },
+      "Expressions": {
+        "bins": 58,
+        "hits": 55,
+        "misses": 3,
+        "percent": 94.82
+      },
+      "FSM States": {
+        "bins": 5,
+        "hits": 5,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "FSM Transitions": {
+        "bins": 9,
+        "hits": 9,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Statements": {
+        "bins": 312,
+        "hits": 300,
+        "misses": 12,
+        "percent": 96.15
+      },
+      "Toggles": {
+        "bins": 3689,
+        "hits": 3409,
+        "misses": 280,
+        "percent": 92.4
+      }
+    },
+    "/tb_top/dut": {
+      "Branches": {
+        "bins": 39,
+        "hits": 38,
+        "misses": 1,
+        "percent": 97.43
+      },
+      "Conditions": {
+        "bins": 7,
+        "hits": 7,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Expressions": {
+        "bins": 1,
+        "hits": 1,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "FSM States": {
+        "bins": 8,
+        "hits": 8,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "FSM Transitions": {
+        "bins": 15,
+        "hits": 15,
+        "misses": 0,
+        "percent": 100.0
+      },
+      "Statements": {
+        "bins": 51,
+        "hits": 50,
+        "misses": 1,
+        "percent": 98.03
+      },
+      "Toggles": {
+        "bins": 302,
+        "hits": 298,
+        "misses": 4,
+        "percent": 98.67
+      }
+    }
+  },
+  "raw_code_counts_unchanged_from_stage5": true,
+  "rtl_and_golden_unchanged": true,
+  "end_time": "03:49:02 on Oct 11,2026, Elapsed time: 0:00:21",
+  "source_credit_gate": {
+    "passed": true,
+    "intentional_rejections": 7
+  },
+  "netlist_compatibility_gate": {
+    "passed": true,
+    "intentional_rejections": 5
+  }
+}

@@ -1,0 +1,306 @@
+{
+  "/tb_top/dut/u_core/g_bf[3]/u_tw": {
+    "Statements": {
+      "bins": 3,
+      "hits": 3,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 64,
+      "hits": 64,
+      "misses": 0,
+      "percent": 100.0
+    }
+  },
+  "/tb_top/dut/u_core/g_bf[3]/u_bf/u_mul": {
+    "Branches": {
+      "bins": 12,
+      "hits": 12,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Statements": {
+      "bins": 45,
+      "hits": 45,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 1418,
+      "hits": 1228,
+      "misses": 190,
+      "percent": 86.6
+    }
+  },
+  "/tb_top/dut/u_core/g_bf[3]/u_bf": {
+    "Branches": {
+      "bins": 17,
+      "hits": 17,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Statements": {
+      "bins": 55,
+      "hits": 55,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 704,
+      "hits": 704,
+      "misses": 0,
+      "percent": 100.0
+    }
+  },
+  "/tb_top/dut/u_core/g_bf[2]/u_tw": {
+    "Statements": {
+      "bins": 3,
+      "hits": 3,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 64,
+      "hits": 64,
+      "misses": 0,
+      "percent": 100.0
+    }
+  },
+  "/tb_top/dut/u_core/g_bf[2]/u_bf/u_mul": {
+    "Branches": {
+      "bins": 12,
+      "hits": 12,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Statements": {
+      "bins": 45,
+      "hits": 45,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 1418,
+      "hits": 1228,
+      "misses": 190,
+      "percent": 86.6
+    }
+  },
+  "/tb_top/dut/u_core/g_bf[2]/u_bf": {
+    "Branches": {
+      "bins": 17,
+      "hits": 17,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Statements": {
+      "bins": 55,
+      "hits": 55,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 704,
+      "hits": 704,
+      "misses": 0,
+      "percent": 100.0
+    }
+  },
+  "/tb_top/dut/u_core/g_bf[1]/u_tw": {
+    "Statements": {
+      "bins": 3,
+      "hits": 3,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 64,
+      "hits": 64,
+      "misses": 0,
+      "percent": 100.0
+    }
+  },
+  "/tb_top/dut/u_core/g_bf[1]/u_bf/u_mul": {
+    "Branches": {
+      "bins": 12,
+      "hits": 12,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Statements": {
+      "bins": 45,
+      "hits": 45,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 1418,
+      "hits": 1228,
+      "misses": 190,
+      "percent": 86.6
+    }
+  },
+  "/tb_top/dut/u_core/g_bf[1]/u_bf": {
+    "Branches": {
+      "bins": 17,
+      "hits": 17,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Statements": {
+      "bins": 55,
+      "hits": 55,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 704,
+      "hits": 704,
+      "misses": 0,
+      "percent": 100.0
+    }
+  },
+  "/tb_top/dut/u_core/g_bf[0]/u_tw": {
+    "Statements": {
+      "bins": 3,
+      "hits": 3,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 64,
+      "hits": 64,
+      "misses": 0,
+      "percent": 100.0
+    }
+  },
+  "/tb_top/dut/u_core/g_bf[0]/u_bf/u_mul": {
+    "Branches": {
+      "bins": 12,
+      "hits": 12,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Statements": {
+      "bins": 45,
+      "hits": 45,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 1418,
+      "hits": 1228,
+      "misses": 190,
+      "percent": 86.6
+    }
+  },
+  "/tb_top/dut/u_core/g_bf[0]/u_bf": {
+    "Branches": {
+      "bins": 17,
+      "hits": 17,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Statements": {
+      "bins": 55,
+      "hits": 55,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Toggles": {
+      "bins": 704,
+      "hits": 704,
+      "misses": 0,
+      "percent": 100.0
+    }
+  },
+  "/tb_top/dut/u_core": {
+    "Branches": {
+      "bins": 247,
+      "hits": 234,
+      "misses": 13,
+      "percent": 94.73
+    },
+    "Conditions": {
+      "bins": 78,
+      "hits": 49,
+      "misses": 29,
+      "percent": 62.82
+    },
+    "Expressions": {
+      "bins": 58,
+      "hits": 55,
+      "misses": 3,
+      "percent": 94.82
+    },
+    "FSM States": {
+      "bins": 5,
+      "hits": 5,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "FSM Transitions": {
+      "bins": 9,
+      "hits": 9,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Statements": {
+      "bins": 312,
+      "hits": 300,
+      "misses": 12,
+      "percent": 96.15
+    },
+    "Toggles": {
+      "bins": 3689,
+      "hits": 3409,
+      "misses": 280,
+      "percent": 92.4
+    }
+  },
+  "/tb_top/dut": {
+    "Branches": {
+      "bins": 39,
+      "hits": 38,
+      "misses": 1,
+      "percent": 97.43
+    },
+    "Conditions": {
+      "bins": 7,
+      "hits": 7,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Expressions": {
+      "bins": 1,
+      "hits": 1,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "FSM States": {
+      "bins": 8,
+      "hits": 8,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "FSM Transitions": {
+      "bins": 15,
+      "hits": 15,
+      "misses": 0,
+      "percent": 100.0
+    },
+    "Statements": {
+      "bins": 51,
+      "hits": 50,
+      "misses": 1,
+      "percent": 98.03
+    },
+    "Toggles": {
+      "bins": 302,
+      "hits": 298,
+      "misses": 4,
+      "percent": 98.67
+    }
+  }
+}

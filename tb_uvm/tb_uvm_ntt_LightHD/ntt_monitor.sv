@@ -10,6 +10,7 @@ class ntt_monitor extends uvm_monitor;
     `uvm_component_utils(ntt_monitor)
 
     virtual ntt_if vif;
+    bit netlist_mode;
     uvm_analysis_port #(ntt_transaction)        mon_ap;
     uvm_tlm_analysis_fifo #(ntt_transaction)    exp_fifo;   // expected from driver
     uvm_event collection_done;
@@ -24,6 +25,7 @@ class ntt_monitor extends uvm_monitor;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
+        void'(uvm_config_db#(bit)::get(this, "", "netlist_mode", netlist_mode));
         if (!uvm_config_db#(virtual ntt_if)::get(this, "", "ntt_vif", vif))
             `uvm_fatal(get_type_name(), "Failed to get ntt_vif from config DB")
     endfunction
@@ -52,7 +54,7 @@ class ntt_monitor extends uvm_monitor;
     // Observe the targeted reset edge, then settled controls/counts/tag state
     // during reset and for three quiet clocks after deassertion. Aborted work
     // gets no normal trace bins; only the later golden-checked job may credit reset.
-    task collect_reset_abort(ntt_transaction exp_tx, output int observed_point,
+    virtual task collect_reset_abort(ntt_transaction exp_tx, output int observed_point,
                              output bit ok);
         int accepted_inputs;
         int wrapper_state, core_state;
@@ -123,29 +125,33 @@ class ntt_monitor extends uvm_monitor;
         obs_tx.exp_poly  = exp_tx.exp_poly;
         obs_tx.observed_count = 0;
         obs_tx.output_framing_ok = 1'b1;
-        obs_tx.trace = ntt_trace::type_id::create("trace");
+        if (!netlist_mode) obs_tx.trace = ntt_trace::type_id::create("trace");
 
         idx     = 0;
         timeout = 0;
         last_stall_index=-1; stall_remaining=0; previous_stall=0;
         while (idx < N) begin
             @(negedge vif.clk);
-            if (exp_tx.stall_output && (idx==0 || idx==N/2 || idx==N-1) &&
+            if (exp_tx.stall_output && (idx==0 || idx==N/2 || idx==N-1 ||
+                (exp_tx.output_stall_period>0 && idx%exp_tx.output_stall_period==0)) &&
                 idx!=last_stall_index && vif.m_tvalid) begin
                 last_stall_index=idx;
-                stall_remaining=2;
+                stall_remaining=exp_tx.output_stall_cycles;
             end
             vif.m_tready=(stall_remaining==0);
             if (stall_remaining>0) stall_remaining--;
             @(posedge vif.clk);
-            obs_tx.trace.sample(vif, exp_tx.op);
+            if (!netlist_mode) obs_tx.trace.sample(vif, exp_tx.op);
             if (previous_stall && (vif.m_tvalid!==1'b1 ||
                 vif.m_tdata!==held_data || vif.m_tlast!==held_last))
-                obs_tx.trace.errors++;
+            begin
+                obs_tx.output_stability_ok=0;
+                if (!netlist_mode) obs_tx.trace.errors++;
+            end
             previous_stall=vif.m_tvalid && !vif.m_tready;
             if (previous_stall) begin
                 held_data=vif.m_tdata; held_last=vif.m_tlast;
-                obs_tx.trace.output_stalls[(idx==0) ? 0 : ((idx==N-1) ? 2 : 1)]=1;
+                if (!netlist_mode) obs_tx.trace.output_stalls[(idx==0) ? 0 : ((idx==N-1) ? 2 : 1)]=1;
             end
             timeout++;
             if (timeout > TIMEOUT_CYCLES) begin

@@ -1,0 +1,71 @@
+{
+  "post_fit": {
+    "passed_jobs": 117,
+    "coefficients": 29952,
+    "completed_jobs": 117,
+    "aborted_jobs": 7,
+    "reset_witnesses": 8,
+    "equivalence_pairs": 16,
+    "uvm_errors": 0,
+    "uvm_fatals": 0,
+    "internal_coverage_credited": false,
+    "end_time": "02:31:39 on Oct 11,2026, Elapsed time: 0:03:10",
+    "warnings": {
+      "vopt-2241": 4,
+      "vsim-3016": 4,
+      "vsim-3015": 30
+    },
+    "simulator_summary": [
+      "0",
+      "38"
+    ]
+  },
+  "post_synthesis": {
+    "passed_jobs": 117,
+    "coefficients": 29952,
+    "completed_jobs": 117,
+    "aborted_jobs": 7,
+    "reset_witnesses": 8,
+    "equivalence_pairs": 16,
+    "uvm_errors": 0,
+    "uvm_fatals": 0,
+    "internal_coverage_credited": false,
+    "end_time": "02:37:19 on Oct 11,2026, Elapsed time: 0:05:27",
+    "warnings": {
+      "vopt-2241": 4,
+      "vopt-13162": 1,
+      "vsim-3015": 30,
+      "vsim-3016": 4
+    },
+    "simulator_summary": [
+      "0",
+      "39"
+    ]
+  },
+  "source": {
+    "passed_jobs": 118,
+    "coefficients": 30208,
+    "checked_trace_witnesses": 118,
+    "checked_routing_witnesses": 118,
+    "functional_covergroup_types": 14,
+    "functional_covergroup_percent": 100,
+    "raw_code_counts_unchanged": true,
+    "uvm_errors": 0,
+    "uvm_fatals": 0,
+    "end_time": "02:37:47 on Oct 11,2026, Elapsed time: 0:00:12"
+  },
+  "netlist_checker": {
+    "passed": true,
+    "real_jobs": 1,
+    "intentional_rejections": 5,
+    "separate_from_regression": true,
+    "end_time": "02:38:20 on Oct 11,2026, Elapsed time: 0:00:06"
+  },
+  "source_coverage_checker": {
+    "passed": true,
+    "real_jobs": 1,
+    "intentional_rejections": 5,
+    "separate_from_regression": true,
+    "end_time": "02:39:00 on Oct 11,2026, Elapsed time: 0:00:08"
+  }
+}

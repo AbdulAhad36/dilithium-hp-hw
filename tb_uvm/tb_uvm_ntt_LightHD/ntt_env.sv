@@ -8,6 +8,7 @@
 class ntt_env extends uvm_env;
     `uvm_component_utils(ntt_env)
 
+    bit netlist_mode;
     ntt_agent      agent;
     ntt_scoreboard scoreboard;
     ntt_coverage   coverage;
@@ -18,16 +19,17 @@ class ntt_env extends uvm_env;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
+        void'(uvm_config_db#(bit)::get(this, "", "netlist_mode", netlist_mode));
         agent      = ntt_agent     ::type_id::create("agent",      this);
         scoreboard = ntt_scoreboard::type_id::create("scoreboard", this);
-        coverage   = ntt_coverage  ::type_id::create("coverage",   this);
+        if (!netlist_mode) coverage = ntt_coverage  ::type_id::create("coverage",   this);
     endfunction
 
     function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
         agent.driver.drv_ap.connect(scoreboard.exp_fifo.analysis_export);
         agent.monitor.mon_ap.connect(scoreboard.obs_fifo.analysis_export);
-        scoreboard.checked_ap.connect(coverage.analysis_export);
+        if (!netlist_mode) scoreboard.checked_ap.connect(coverage.analysis_export);
     endfunction
 
 endclass

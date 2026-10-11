@@ -16,3 +16,15 @@ work_gate/
 work_illegal/
 work_routing_gate/
 work_gs_gate/
+
+vendor_libs/
+
+work_post_synthesis/
+
+work_post_fit/
+
+# Optional UVM test libraries.
+work_ntt_*_test/
+*.wlf
+wave_layout_validation.txt
+transcript_summary_validation.txt
