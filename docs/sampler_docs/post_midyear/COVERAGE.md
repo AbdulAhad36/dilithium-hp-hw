@@ -33,7 +33,7 @@ not solely stimulus improvements. All remaining code gaps stay unwaived.
 Fresh R implementation:3537 placed ALMs,164.74MHz,setup+0.430ns/hold+0.141ns
 at6.5ns;all4 corners0 setup/hold TNS. High-performance mode is enabled,but
 physical register retiming is explicitly OFF. All original64-bit mask/secret
-guards,140-bit commit payload and128 sign bits pass unchanged. No current-build functional netlist run is claimed.
+guards,140-bit commit payload and128 sign bits pass unchanged. Current-build functional netlist checks passed; see Stage 5 below.
 
 ### Functional coverage:1652/1721=95.99%,69 unhit bins
 
@@ -115,4 +115,47 @@ tests and proof limits see C01-C14 in SAMPLER_VERIFICATION_TESTPLAN.md.
 
 ## Acceptance and remaining work
 
-The user accepted Stage4.9r on 2026-10-19. The 69 functional gaps and 706 code misses remain open, not waived. Stage 5 will report current-build netlist checks separately from RTL code coverage.
+The user accepted Stage4.9r on 2026-10-19. The 69 functional gaps and 706 code misses remain open, not waived. Stage 5 current-build netlist checks passed and are reported separately below.
+
+## Stage 5 accepted-build verification ? 2026-10-19
+
+The accepted RTL and Quartus constraints were not changed. Synthesis used a
+separate helper with no fitted database; post-fit export used the retained
+accepted fitted database. SHA256 hashes confirm the netlists are distinct.
+Export provenance and frozen results are in SAMPLER_NETLIST_RESULTS.json;
+self-contained evidence is evidence/sampler_stage5.zip with its SHA256 sidecar.
+
+| Check | Post-synthesis | Post-fit |
+|---|---:|---:|
+| Total jobs |184|184|
+| Complete polynomials |156|156|
+| Expected errors / reset aborts |24 /4|24 /4|
+| Independently checked coefficients |39936|39936|
+| UVM errors / fatals |0 /0|0 /0|
+| Python capture jobs / coefficient matches |104 /19456|104 /19456|
+| Raw functional coverage |1255/1721 =72.92%|1255/1721 =72.92%|
+
+Each includes104 file jobs plus80 additional successful SV-checked jobs.
+The 104-job source/synthesis/fit captures are byte-identical and independently
+match Python. Fresh source main regression also passes621 complete,182 expected
+errors,51 reset aborts and159628 comparisons. Python/C48 cases/12288 values and
+checker self-test12/12 pass. The retained96-case performance CSV is byte-identical
+to the accepted archive; it was not rerun or claimed as a new measurement.
+
+SAMPLER_NETLIST disables source-only occupancy/FSM/pipeline observations, not
+external value/tag/index/last/status/stall/refusal/reset-recovery checks.
+reset_recovery (internal phase snapshots),pipeline_activity,challenge_states and
+completion_arbitration groups remain unsampled. External scheduling/error/
+lifecycle and extended rejection/stall combinations also have unhit bins. These
+are visible limitations, not waivers. No netlist/source coverage is merged;
+RTL code remains15093/15799=95.53%,source functional1652/1721=95.99%.
+
+Fresh TimeQuest/structural revalidation confirms the retained internal fit:
+3537 placed ALMs,164.74MHz worst Fmax,+0.430ns setup,+0.141ns hold at6.500ns;
+all four corners have zero setup/hold TNS and positive minimum pulse width.
+Original payload/sign/ownership guards pass. Cyclone V warning10905 means the
+post-fit netlist is functional-only; no SDF or timing-simulation claim.
+Virtual-pin I/O,board/UART,integration and security signoff remain pending.
+
+Next: Stage6 integration planning,requiring separate branch/import authorization.
+No new commit or integration was performed as part of Stage5.

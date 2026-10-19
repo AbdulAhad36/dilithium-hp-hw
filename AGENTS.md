@@ -16,13 +16,17 @@ checker12,performance96 and five zero-credit fault gates PASS. Source checks
 reuse byte-identical O after26 hashes;R has fresh fit/timing/structural evidence.
 All96 performance rows match the preceding selected implementation.
 
-Next is Stage5:verify DISTINCT accepted-build synthesis and fit netlists with
-the MAIN UVM and independent Python captures. Current-build netlist results
-are pending;old results must not be presented as current. CycloneV netlists
-are functional only;TimeQuest is timing evidence. No board/I/O/security signoff.
-Continue the user's cleanup first;do not launch new netlist simulations until
-instructed. Integration,branch changes,module imports and commits require
-explicit instruction. Do not advance automatically to Stage6.
+Stage5 completed on2026-10-19 using DISTINCT current synthesis/fit netlists.
+Each main-UVM run:184 jobs,156 complete,24 expected errors,4 reset aborts,
+39936 checks,zero errors/fatals. All104-job source/synthesis/fit captures match
+byte-for-byte and Python19456 values. Fresh source621/159628,P/C48/12288,
+checker12 pass. Source functional95.99%,code95.53%;netlists1255/1721=72.92%,
+source-only groups unsampled. Timing/structural refresh passes unchanged.
+Read SAMPLER_NETLIST_RESULTS.json and evidence/sampler_stage5.zip. Preserve
+both accepted R and Stage5 evidence. The96 performance CSV rows match accepted
+archive;not rerun. CycloneV netlists are functional only;TimeQuest is timing.
+Next Stage6 requires separate integration-branch/import authorization. Do not
+start integration,change branches,import modules or commit without instruction.
 
 RTL:src/sampler;UVM:tb_uvm/tb_uvm_sampler;common templates:tb_uvm/tb_uvm_reusable;
 simulation:sim/sampler;Quartus:quartus/sampler;docs:docs/sampler_docs/post_midyear.
@@ -42,6 +46,6 @@ Frozen Stage4.9r JSON/ZIP/SHA are immutable;never overwrite them. Its recorded
 acceptance-pending field predates the explicit user acceptance. Mutable docs
 record that acceptance. User-confirmed cleanup on2026-10-19 removed obsolete
 checkpoint records/archives and leftover sim/ntt_LightHD and quartus/ntt_LightHD
-folders. Only Stage4.9r result JSON/archive/checksum remain. All49 protected
+folders. Stage4.9r evidence remains,with the new Stage5 result/archive/checksum added. All49 protected
 source/model/settings/evidence files passed before/after hash checks. Two Python
 analysis/checkpoint helpers remain after automatic review rejected their deletion.

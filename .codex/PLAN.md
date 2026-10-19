@@ -1,3 +1,19 @@
+# Stage5 complete ? 2026-10-19
+
+Accepted Stage4.9r unchanged:3537 placed ALMs,164.74MHz,+0.430ns setup,
++0.141ns hold at6.500ns. User authorized Stage5;both distinct current-build
+netlists pass184 main-UVM jobs/39936 comparisons each (156 complete,24 errors,
+4 aborts). All104-job captures(source/synth/fit) byte-identical and match Python
+19456 values. Fresh source621/159628,C48/12288,checker12 pass. Source coverage
+95.99% functional/95.53% code;netlists72.92%,internal source groups unsampled.
+Timing/structural guards refreshed;96-case CSV preserved hash-identical,not rerun.
+Read docs/sampler_docs/post_midyear/SAMPLER_NETLIST_RESULTS.json and
+SAMPLER_PLAN.md. Freeze evidence in evidence/sampler_stage5.zip+SHA256.
+Next is Stage6 planning;no integration/branch/import/commit without instruction.
+Prior handoff below is historical and preserved unchanged.
+
+---
+
 # Current acceptance and cleanup status ? 2026-10-19
 
 User accepted Stage4.9r:3537 placed ALMs,164.74MHz,+0.430ns setup,+0.141ns

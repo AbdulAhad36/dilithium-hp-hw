@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "run_id": "32921dfce72b45edbba8e2953c647392",
+  "run_id": "e748ea83728540dd9a9e6976dabb8a79",
   "provenance": "locally generated FIPS-derived; not official standalone NIST vectors",
   "official_sources_checked": "2026-10-16",
   "official_discovery": "ACVP KeyGen/SigGen/SigVer; no standalone sampler suite identified in reviewed sources",
@@ -66,8 +66,8 @@
     "sim/sampler/run_uvm.do": "8c1d2d72d025493d206c4f7633315675949e3c5f9b49d973a041b09450ca79cd"
   },
   "vector_hashes": {
-    "sampler_inputs.txt": "ae80c40e11857dc624b815e1679cfbf98bb1fad9ce11cef1eff8a6e5871aaf6f",
-    "sampler_expected.txt": "7f465787a5163bc078c2fc6e7e60194c1f151d9360a4af1df941b3b66c1d120c"
+    "sampler_inputs.txt": "bf82382ff78e4e039ed0b8a8e63171dae2ce67c11f4578e25644cc9357f70769",
+    "sampler_expected.txt": "d3f1b6b0b64eb6f751969caa6acc27d1854906296666f1c0543a23bb7987e632"
   },
   "cases": [
     {

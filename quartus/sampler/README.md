@@ -21,10 +21,11 @@ preserves the pipeline register structure checked by report_paths.tcl.
 
 No SDC or QSF edits are needed. The constraint is153.85MHz/6.500ns;Fmax is a
 separate fitted estimate. Virtual data I/O are excluded from standalone timing;
-no physical board integration or new functional netlist run is claimed.
+no physical board integration is claimed. Stage5 functional netlists passed.
 Evidence:docs/sampler_docs/post_midyear/STAGE4_9R_RESULTS.json.
 
 
 Accepted by user on2026-10-19. Current fit database and reports are retained.
-Old synthesis-helper builds/netlists were removed. Stage5 will regenerate
-distinct synthesis-only and fitted functional netlists from this accepted build.
+Old synthesis-helper builds/netlists were removed. Stage5 generated distinct synthesis-only and fitted functional netlists and both
+passed main UVM/Python checks. generate_netlists.ps1 records source/settings and
+netlist hashes in netlist_provenance.json. See SAMPLER_NETLIST_RESULTS.json.

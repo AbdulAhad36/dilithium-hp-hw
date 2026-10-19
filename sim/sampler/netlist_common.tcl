@@ -5,7 +5,7 @@ if {![file exists $SAMPLER_NETLIST]} {error "Generate netlists using quartus/sam
 set check_script {
 import hashlib,json,pathlib
 root=pathlib.Path('..')
-record=root/'docs/sampler_docs/post_midyear/SAMPLER_NETLIST_RESULTS.json'
+record=root/'quartus/sampler/netlist_provenance.json'
 if not record.exists():raise SystemExit('Stage 5 current-build netlist provenance is pending; generate and record distinct accepted-build netlists first.')
 r=json.loads(record.read_text())
 files={n:h for n,h in r['source_hashes'].items() if n.startswith('src/sampler/') or (n.startswith('quartus/sampler/') and n.endswith(('.qsf','.qpf','.sdc')))}

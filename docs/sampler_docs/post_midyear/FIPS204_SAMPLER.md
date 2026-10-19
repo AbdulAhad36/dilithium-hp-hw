@@ -29,7 +29,47 @@ observations. The main regression remains a separate default test selection.
 
 ## 2. Run it yourself
 
-Current-build post-synthesis/post-fit comparisons are the next Stage 5 task. Old generated netlists/results were removed during cleanup.
+### Stage 5: post-synthesis and post-fit
+
+First compile `quartus/sampler/sampler.qpf` in Quartus GUI using **Processing >
+Start Compilation**. Keep the existing QSF/SDC settings. From the repository root:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File quartus/sampler/generate_netlists.ps1
+python FIPS204_SAMPLER/sampler_vectors.py prepare
+```
+
+The export script checks accepted RTL/settings, creates a separate synthesis-only
+helper, exports the fitted database, and records distinct netlist SHA256 hashes in
+`quartus/sampler/netlist_provenance.json`. Export completion is not a simulation PASS.
+The process-local execution-policy option does not change the machine policy.
+
+In a fresh Questa GUI session, working directory `sim/`, run one at a time:
+
+```tcl
+do sampler/run_post_synthesis.do
+# Finish that run before launching the other:
+do sampler/run_post_fit.do
+```
+
+Then compare each capture from the repository root:
+
+```powershell
+python FIPS204_SAMPLER/sampler_vectors.py compare --outputs sim/sampler/post_synthesis_outputs.txt
+python FIPS204_SAMPLER/sampler_vectors.py compare --outputs sim/sampler/post_fit_outputs.txt
+```
+
+Each launcher uses the same main UVM, independent scalar scoreboard and vendor
+libraries. Require the `SAMPLER NETLIST UVM PASS` marker and a separate Python
+`SAMPLER COMPARE PASS`. The 104 file jobs are captured for Python; another 80
+successful jobs remain checked by the SV scoreboard. Waves and functional
+coverage appear in Questa. Source-only hierarchy probes are unsampled; no RTL
+code coverage or SDF timing claim is made for these functional netlists.
+Cyclone V warning 10905 is expected; TimeQuest supplies the timing evidence.
+
+Do not rerun `prepare` between capture and comparison: it creates a fresh run ID.
+Results and frozen evidence for this accepted-build run are recorded in
+`SAMPLER_NETLIST_RESULTS.json` after all checks passed.
 
 ### A. Prepare - terminal at the repository root
 
@@ -233,3 +273,46 @@ THROUGHPUT.md and the stage-specific result manifests. The original Stage2 code
 counts above are historical; current RTL changes require fresh prepare/capture/
 compare, and current raw code totals are in THROUGHPUT.md. These vectors alone make no
 area/Fmax, netlist, board or real subsystem-integration claim. Nothing was committed.
+
+## Stage 5 accepted-build verification ? 2026-10-19
+
+The accepted RTL and Quartus constraints were not changed. Synthesis used a
+separate helper with no fitted database; post-fit export used the retained
+accepted fitted database. SHA256 hashes confirm the netlists are distinct.
+Export provenance and frozen results are in SAMPLER_NETLIST_RESULTS.json;
+self-contained evidence is evidence/sampler_stage5.zip with its SHA256 sidecar.
+
+| Check | Post-synthesis | Post-fit |
+|---|---:|---:|
+| Total jobs |184|184|
+| Complete polynomials |156|156|
+| Expected errors / reset aborts |24 /4|24 /4|
+| Independently checked coefficients |39936|39936|
+| UVM errors / fatals |0 /0|0 /0|
+| Python capture jobs / coefficient matches |104 /19456|104 /19456|
+| Raw functional coverage |1255/1721 =72.92%|1255/1721 =72.92%|
+
+Each includes104 file jobs plus80 additional successful SV-checked jobs.
+The 104-job source/synthesis/fit captures are byte-identical and independently
+match Python. Fresh source main regression also passes621 complete,182 expected
+errors,51 reset aborts and159628 comparisons. Python/C48 cases/12288 values and
+checker self-test12/12 pass. The retained96-case performance CSV is byte-identical
+to the accepted archive; it was not rerun or claimed as a new measurement.
+
+SAMPLER_NETLIST disables source-only occupancy/FSM/pipeline observations, not
+external value/tag/index/last/status/stall/refusal/reset-recovery checks.
+reset_recovery (internal phase snapshots),pipeline_activity,challenge_states and
+completion_arbitration groups remain unsampled. External scheduling/error/
+lifecycle and extended rejection/stall combinations also have unhit bins. These
+are visible limitations, not waivers. No netlist/source coverage is merged;
+RTL code remains15093/15799=95.53%,source functional1652/1721=95.99%.
+
+Fresh TimeQuest/structural revalidation confirms the retained internal fit:
+3537 placed ALMs,164.74MHz worst Fmax,+0.430ns setup,+0.141ns hold at6.500ns;
+all four corners have zero setup/hold TNS and positive minimum pulse width.
+Original payload/sign/ownership guards pass. Cyclone V warning10905 means the
+post-fit netlist is functional-only; no SDF or timing-simulation claim.
+Virtual-pin I/O,board/UART,integration and security signoff remain pending.
+
+Next: Stage6 integration planning,requiring separate branch/import authorization.
+No new commit or integration was performed as part of Stage5.

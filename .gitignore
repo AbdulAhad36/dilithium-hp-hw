@@ -108,3 +108,4 @@ sim/sampler/transcript
 sim/sampler/*_console.log
 quartus/sampler/*.bak
 quartus/sampler/*.qsf.bak
+quartus/sampler/netlist_provenance.json

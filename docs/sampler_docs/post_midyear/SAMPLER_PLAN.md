@@ -22,8 +22,8 @@ this later user acceptance supersedes that status without rewriting evidence.
 Source checks were reused from byte-identical Stage4.9o after 26 file hashes
 matched; the retained build has fresh fit, timing and structural checks.
 
-Next: Stage 5 implementation verification. Current-build post-synthesis and
-post-fit functional verification is pending. No board, integration or security
+Stage 5 implementation verification passed on 2026-10-19 for distinct current
+post-synthesis and post-fit functional netlists; see SAMPLER_NETLIST_RESULTS.json. No board, integration or security
 signoff is claimed. Native 128-bit processing is not active: accepted 128-bit
 beats issue ordered 64-bit chunks internally.
 
@@ -36,7 +36,7 @@ beats issue ordered 64-bit chunks internally.
 | 2 | Independent Python/C vectors and file comparison | Passing; FIPS-derived, not standalone NIST vectors |
 | 3 | Standalone synthesis and performance baseline | Measured; superseded by accepted Stage4.9r |
 | 4 | Pipeline, area/timing optimization and broader UVM | Accepted by user on 2026-10-19 |
-| 5 | Accepted-build synthesis/fit functional netlist verification | Next; pending |
+| 5 | Accepted-build synthesis/fit functional netlist verification | PASS, 2026-10-19 |
 | 6 | Keccak → sampler → NTT integration | Separate authorization required |
 
 ## Functional scope and retained architecture
@@ -147,7 +147,50 @@ paths exist. Label intermediate subsystem models explicitly.
 ## Handoff
 
 Read SAMPLER_PLAN.md, SPECIFICATION.md, COVERAGE.md, THROUGHPUT.md and
-STAGE4_9R_RESULTS.json. Stage4.9r is accepted. Finish directory cleanup, then
-perform Stage 5 when instructed. Keep the accepted RTL/settings fixed while
+STAGE4_9R_RESULTS.json. Stage4.9r is accepted. Directory cleanup and Stage 5 are complete.
+The next stage is separately authorized integration planning. Keep the accepted RTL/settings fixed while
 validating distinct generated implementations. Do not reuse historical netlist
 PASS claims for the current build. Do not start integration automatically.
+
+## Stage 5 accepted-build verification ? 2026-10-19
+
+The accepted RTL and Quartus constraints were not changed. Synthesis used a
+separate helper with no fitted database; post-fit export used the retained
+accepted fitted database. SHA256 hashes confirm the netlists are distinct.
+Export provenance and frozen results are in SAMPLER_NETLIST_RESULTS.json;
+self-contained evidence is evidence/sampler_stage5.zip with its SHA256 sidecar.
+
+| Check | Post-synthesis | Post-fit |
+|---|---:|---:|
+| Total jobs |184|184|
+| Complete polynomials |156|156|
+| Expected errors / reset aborts |24 /4|24 /4|
+| Independently checked coefficients |39936|39936|
+| UVM errors / fatals |0 /0|0 /0|
+| Python capture jobs / coefficient matches |104 /19456|104 /19456|
+| Raw functional coverage |1255/1721 =72.92%|1255/1721 =72.92%|
+
+Each includes104 file jobs plus80 additional successful SV-checked jobs.
+The 104-job source/synthesis/fit captures are byte-identical and independently
+match Python. Fresh source main regression also passes621 complete,182 expected
+errors,51 reset aborts and159628 comparisons. Python/C48 cases/12288 values and
+checker self-test12/12 pass. The retained96-case performance CSV is byte-identical
+to the accepted archive; it was not rerun or claimed as a new measurement.
+
+SAMPLER_NETLIST disables source-only occupancy/FSM/pipeline observations, not
+external value/tag/index/last/status/stall/refusal/reset-recovery checks.
+reset_recovery (internal phase snapshots),pipeline_activity,challenge_states and
+completion_arbitration groups remain unsampled. External scheduling/error/
+lifecycle and extended rejection/stall combinations also have unhit bins. These
+are visible limitations, not waivers. No netlist/source coverage is merged;
+RTL code remains15093/15799=95.53%,source functional1652/1721=95.99%.
+
+Fresh TimeQuest/structural revalidation confirms the retained internal fit:
+3537 placed ALMs,164.74MHz worst Fmax,+0.430ns setup,+0.141ns hold at6.500ns;
+all four corners have zero setup/hold TNS and positive minimum pulse width.
+Original payload/sign/ownership guards pass. Cyclone V warning10905 means the
+post-fit netlist is functional-only; no SDF or timing-simulation claim.
+Virtual-pin I/O,board/UART,integration and security signoff remain pending.
+
+Next: Stage6 integration planning,requiring separate branch/import authorization.
+No new commit or integration was performed as part of Stage5.

@@ -5,8 +5,8 @@ Accepted RTL:Stage4.9r. Keep exactly three launchers:
 | Launcher | Purpose |
 |---|---|
 | run_uvm.do | Main UVM,GUI waves,functional and DUT code coverage |
-| run_post_synthesis.do | Main UVM against synthesis netlist (Stage5 pending) |
-| run_post_fit.do | Main UVM against fitted functional netlist (Stage5 pending) |
+| run_post_synthesis.do | Main UVM against synthesis netlist (Stage5 PASS) |
+| run_post_fit.do | Main UVM against fitted functional netlist (Stage5 PASS) |
 
 From sim/ in Questa GUI Transcript:
 
@@ -27,5 +27,6 @@ returning to regression. Full instructions:docs/sampler_docs/post_midyear/FIPS20
 
 Current source verification outputs remain here. Trial logs,caches and old
 netlists have been removed;compiled libraries regenerate on demand. Do not use
-historical post-fit results as proof of this implementation. Stage5 must create
-and verify fresh distinct netlists before those launchers can run successfully.
+historical post-fit results as proof of this implementation. Stage5 generated and verified fresh distinct netlists. Each passes184 jobs/39936
+checks;the104-job captures match Python and source exactly. Export provenance
+is checked before each netlist run. See FIPS204_SAMPLER.md for commands.

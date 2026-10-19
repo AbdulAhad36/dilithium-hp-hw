@@ -28,6 +28,7 @@ Functional coverage95.99%;raw DUT code coverage95.53%,with gaps left visible.
 
 Start with [SAMPLER_PLAN.md](docs/sampler_docs/post_midyear/SAMPLER_PLAN.md).
 Frozen evidence: [STAGE4_9R_RESULTS.json](docs/sampler_docs/post_midyear/STAGE4_9R_RESULTS.json)
-and its self-contained evidence archive. Stage 5 accepted-build netlist verification
-is next; Keccak/sampler/NTT integration follows separately. Native128 processing
+and its self-contained evidence archive. Stage 5 accepted-build synthesis/fit verification passed:184 jobs and39936
+coefficient checks per netlist;104-job captures match Python and source exactly.
+See docs/sampler_docs/post_midyear/SAMPLER_NETLIST_RESULTS.json; Keccak/sampler/NTT integration follows separately. Native128 processing
 is not active;the128-bit interface issues64-bit chunks internally.

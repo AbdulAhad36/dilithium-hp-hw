@@ -22,8 +22,8 @@ this later user acceptance supersedes that status without rewriting evidence.
 Source checks were reused from byte-identical Stage4.9o after 26 file hashes
 matched; the retained build has fresh fit, timing and structural checks.
 
-Next: Stage 5 implementation verification. Current-build post-synthesis and
-post-fit functional verification is pending. No board, integration or security
+Stage 5 implementation verification passed on 2026-10-19 for distinct current
+post-synthesis and post-fit functional netlists; see SAMPLER_NETLIST_RESULTS.json. No board, integration or security
 signoff is claimed. Native 128-bit processing is not active: accepted 128-bit
 beats issue ordered 64-bit chunks internally.
 
@@ -172,6 +172,6 @@ These tables retain the test requirements; accepted totals above supersede earli
 
 The main UVM uses sampler_uvm_pkg.sv and sampler_ref_pkg.sv with the existing stage test extensions. sampler_coverage.svh and sampler_outcome_coverage.svh sample independently checked observations. C14 mismatch gating now includes value/index/tag/last/status: each gets zero of 1721 bins and empty checked witness CSVs. All 69 current functional misses and 706 code misses remain unwaived; see COVERAGE.md. Source-only internal observations must remain unsampled in netlist runs. No merged RTL/netlist coverage percentage.
 
-## Stage 5 pending checks
+## Stage 5 implementation checks ? PASS
 
-Use sampler_netlist_test with the main driver, monitor and independent scoreboard. Its existing scope is 104 file jobs plus 80 additional successes: 156 complete, 24 expected errors, 4 aborts and 39936 coefficient checks. Python compares the 104-job capture (19456 values). These are required counts, not current-build PASS claims. Generate distinct synthesis/fit netlists, verify reset and initialized memories, compare both captures independently and with each other, and document source-only probe exclusions.
+Use sampler_netlist_test with the main driver, monitor and independent scoreboard. Its existing scope is 104 file jobs plus 80 additional successes: 156 complete, 24 expected errors, 4 aborts and 39936 coefficient checks. Python compares the 104-job capture (19456 values). Both current-build runs met these exact counts with zero UVM errors/fatals. Generate distinct synthesis/fit netlists, verify reset and initialized memories, compare both captures independently and with each other, and document source-only probe exclusions.

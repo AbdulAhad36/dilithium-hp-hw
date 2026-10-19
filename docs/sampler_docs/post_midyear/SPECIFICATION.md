@@ -22,8 +22,8 @@ this later user acceptance supersedes that status without rewriting evidence.
 Source checks were reused from byte-identical Stage4.9o after 26 file hashes
 matched; the retained build has fresh fit, timing and structural checks.
 
-Next: Stage 5 implementation verification. Current-build post-synthesis and
-post-fit functional verification is pending. No board, integration or security
+Stage 5 implementation verification passed on 2026-10-19 for distinct current
+post-synthesis and post-fit functional netlists; see SAMPLER_NETLIST_RESULTS.json. No board, integration or security
 signoff is claimed. Native 128-bit processing is not active: accepted 128-bit
 beats issue ordered 64-bit chunks internally.
 
