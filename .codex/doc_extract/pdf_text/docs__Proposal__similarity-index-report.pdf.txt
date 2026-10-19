@@ -1,0 +1,65 @@
+thesis-proposal_rev1.pdf
+ORIGINALITY REPORT
+
+
+
+
+9     %
+SIMILARITY INDEX
+                           6%
+                           INTERNET SOURCES
+                                              7%
+                                              PUBLICATIONS
+                                                             %
+                                                             STUDENT PAPERS
+
+
+PRIMARY SOURCES
+
+
+
+
+ 1
+         www.mdpi.com
+         Internet Source                                                  3%
+ 2
+         "Quantum Protocols in Blockchain Security",
+         Springer Science and Business Media LLC,
+                                                                          3%
+         2025
+         Publication
+
+
+
+ 3
+         link.springer.com
+         Internet Source                                                  1%
+ 4
+         Bhupendra Singh, Mohankumar Mylsamy,
+         Thamaraimanalan Thangarajan. "Quantum
+                                                                          1%
+         Algorithms and Their Applications in
+         Cryptology - A Practical Approach", CRC Press,
+         2025
+         Publication
+
+
+
+ 5
+         pages.cpsc.ucalgary.ca
+         Internet Source                                                  1%
+ 6
+         Benjamin Bowes, Tzvetan Metodi, Samuel
+         Gasster, Leo Marcus, Stephen Reed. "Impact
+                                                                          1%
+         of Quantum Information Technology on
+         Future National Security Space", AIAA SPACE
+         2011 Conference & Exposition, 2011
+         Publication
+
+
+
+ 7
+         dmt.neduet.edu.pk
+         Internet Source                                                  1%
+

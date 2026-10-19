@@ -1,0 +1,21 @@
+Monthly Progress Update (April 2026) & May Goals
+
+Work Completed in April 2026:
+- Implemented and developed a strong understanding of Keccak algorithm
+- Developed a UVM testbench for Keccak verification
+- Conducted literature review focusing on recent (2026) research papers related to post-quantum
+cryptography and hardware implementations
+
+Goals for 2nd Week of May:
+- Complete verification of Keccak implementation
+- Begin implementation of Number Theoretic Transform (NTT)
+- Explore recent research and potential optimizations to improve Keccak and/or Dilithium
+implementations
+
+Overall Goals Before Midyear Evaluation:
+- Complete verification of Keccak
+- Complete NTT implementation
+- Synthesize Keccak on Intel Quartus
+- Strengthen literature review by identifying new optimization approaches from recent research
+- Begin structured thesis writing
+

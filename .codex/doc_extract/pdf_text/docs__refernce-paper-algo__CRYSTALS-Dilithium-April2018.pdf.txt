@@ -1,0 +1,352 @@
+                CRYSTALS
+      (Cryptographic Suite for Algebraic Lattices)
+
+                      CCA KEM: Kyber
+                Digital Signature: Dilithium
+
+Roberto Avanzi – ARM       Vadim Lyubashevsky – IBM Research
+Joppe Bos – NXP            John Schanck – U. Waterloo
+Leo Ducas – CWI            Peter Schwabe – U. Radboud
+Eike Kiltz – RUB           Gregor Seiler – IBM Research
+Tancrede Lepoint – SRI     Damien Stehle – ENS Lyon
+
+                   www.pq-crystals.org
+Lattice Cryptography
+         Easy Problem
+
+
+   A             y                z mod p
+
+
+
+         Given (A,z), find y
+
+Easy! Just invert A and multiply by z
+                                        3
+           Hard Problem
+
+
+      A               y          e          z mod p
+
+
+         Small coefficients to enforce uniqueness
+           Given (A,z), find (y,e)
+
+Seems hard (would have many positive non-
+ cryptographic applications if it were easy).
+                                                    4
+             Hard Problem
+
+                                                mod p
+
+
+
+
+             Given (A,z), find (y,e)
+
+                Seems hard.
+Even when A is over Zp[X]/(f(X)) for certain f(X).   5
+     Why is this “Lattice” Crypto?
+                𝒚𝒚
+  All solutions    to Ay+e=z mod p form a “shifted” lattice.
+                𝒆𝒆
+
+We want to find the point closest to the origin (BDD Problem).
+                        Brief History
+• Lattices studied algorithmically at least since 1982 (LLL)
+
+• Algebraic lattices since at least 1996 (NTRU)
+
+• Lattices over Zp[X]/(Xn+1) since at least 2008 (SWIFFT)
+
+• Last 10 years – one of the hottest area in cryptography. Lots of
+  attention and some interesting algorithms discovered
+
+     But … 0 attacks against lattice crypto based on (Module-) SIS / LWE
+
+     Parameters were increased (around 50%) due to conservative
+      considerations of “sieving” attacks requiring exponential space
+CRYSTALS Math
+                     Operations
+Only two main operations needed (and both are very fast):
+
+   1. Evaluations of SHAKE256 (can use another XOF too)
+   2. Operations in the polynomial ring R = Zp[X]/(X256+1)
+      prime p = 213 – 29 + 1 (for Kyber)
+      prime p = 223 – 213 + 1 (for Dilithium)
+
+       Very easy to adjust security because the same
+             hardware/software can be reused
+          Ring Choice Rationale
+• 256-dimensional rings are “just right”
+  Large enough to efficiently encrypt 256-bit keys
+  Allow for a large enough challenge space for signatures
+  Allow for enough “granularity” to get the security we
+   want
+
+
+• Zp[X]/(Xn+1), for a prime p, has been the
+  most widely-used ring in the literature
+  Very easy to use and the most efficient one
+  Has a lot of properties that are useful in more advanced
+   constructions
+                    Operations
+Basic Computational Domain:
+       Polynomial ring Zp[x]/(x256+1)
+
+Operations used in the schemes:
+                          small coefficients
+                   Modular Security
+
+ 768-dim
+
+
+
+
+ to increase the security margin
+
+
+
+1024-dim
+
+
+
+
+                Just do more of the same operation
+CRYSTALS-Dilithium
+                          Vadim Lyubashevsky – IBM Research
+ Leo Ducas – CWI
+                          Peter Schwabe – U. Radboud
+ Eike Kiltz – RUB
+                          Gregor Seiler – IBM Research
+ Tancrede Lepoint – SRI
+                          Damien Stehle – ENS Lyon
+       [HHPSW ‘03]             Digital Signatures                       [Lyu ‘09]
+   Use NTRU trapdoor for
+        Signatures
+                                   Overview                    “Fiat-Shamir with Aborts”
+                                                                    Digital Signature
+
+
+
+
+                                         [Lyu ‘12]
+         [GPV ‘08]                                                      [GLP ‘12]
+                                    Gaussian Rejection
+     Made it Secure via                                                  [BG ‘14]
+                                         Sampling
+     Gaussian Sampling                                           Signature Compression
+                                     SIS + LWE Based
+
+
+
+
+                                     BLISS [DDLL ‘13]                  Dilithium
+          FALCON                    Bimodal Gaussian             Public Key + Signature
+                                        Sampling                     Compression
+
+
+                        Based on NTRU                     Based on (Module-) LWE / SIS
+                Uses Discrete Gaussian Sampling              Uses Uniform Sampling
+Additionally useful for IBE                              Additionally useful for ZK-Proofs
+
+
+                               Signature Size
+Signatures with Uniform Sampling
+       [Lyu ‘09]  …  [BG ‘14]
+
+
+
+
+        Public key          Secret key           Public key
+       A:=XOF(seed)          s1, s2 with         t:=As1+s2
+      uniform mod p   coefficients in {-5,…,5}
+    Signatures with Uniform Sampling
+                 [Lyu ‘09]  …  [BG ‘14]
+                        As1+s2=t
+Sign(μ)                              Verify(z, c, μ)
+
+y  Coefficients in [-γ, γ]
+c := H(high(Ay), μ)                       Check that |z| ≤ γ – β
+z := y + cs1          Needed for security         and
+If |z| > γ – β or |low(Ay - cs2)|> γ – β   c=H(high(Az - ct) , μ)
+    restart
+Signature = (z, c)                                 Ay - cs2
+    Signatures with Uniform Sampling
+                 [Lyu ‘09]  …  [BG ‘14]
+                        As1+s2=t
+Sign(μ)                               Verify(z, c, μ)
+
+y  Coefficients in [-γ, γ]
+c := H(high(Ay), μ)                        Check that |z| ≤ γ – β
+z := y + cs1          Needed for correctness       and
+If |z| > γ – β or |low(Ay - cs2)|> γ – β    c=H(high(Az - ct) , μ)
+    restart
+Signature = (z, c)              max(|cs2|)          Ay - cs2
+
+   Because |low(Ay - cs2)| ≤ γ – β,    high(Ay - cs2) = high(Ay)
+      Chopping off Low-Order PK bits
+                   As1+s2=t0+bt1
+Sign(μ)                                    Verify(z, c, μ)
+
+y  Coefficients in [-γ, γ]
+c := H(high(Ay), μ)                            Check that |z| ≤ γ – β
+z := y + cs1                                            and
+If |z| > γ – β or |low(Ay - cs2)|> γ – β       c=H(high(Az - cbt1) , μ)
+    restart
+Signature = (z, c)                                      Ay - cs2 + ct0
+
+               Want high(Ay - cs2) = high(Ay - cs2 + ct0)
+                    The Carry Hint Vector
+                   Want high(Ay - cs2) = high(Ay - cs2 + ct0)
+
+
+        The signer knows Ay - cs2 + ct0 and ct0
+        The verifier knows Ay - cs2 + ct0
+                                     Each 23-bit coefficient
+Ay - cs2 + ct0
+- ct0
+
+Ay - cs2
+                                                                 Carry bit
+
+                  High Bits    Low Bits              High Bits
+                                 Dilithium
+                          (high-level overview)
+                       As1+s2=t0+bt1
+Sign(μ)
+
+y  Coefficients in [-γ, γ]              Verify(z, c, μ)
+c := H(high(Ay), μ)
+z := y + cs1
+If |z| > γ – β or |low(Ay - cs2)|> γ – β     Check that |z| ≤ γ – β
+    restart                                            and
+Create carry bit hint vector h            c=H(high(h “+” Az - cbt1) , μ)
+Signature = (z, h, c)
+                                                  high(Ay - cs2)
+Hint h
+• adds 100 – 200 bytes to the signature
+• Saves ≈ 2KB in the public key
+    Parameters for CRYSTALS-Dilithium
+                        ( > 128-bit quantum security)
+
+
+
+
+                                                     5 x 4 matrices   6 x 5 matrices
+Public Key                                              ≈ 1.5 KB        ≈ 1.8 KB
+Signature                                                ≈ 2.7 KB       ≈ 3.4 KB
+Public key generation / verification: > 10,000 per second
+Signing : > 3,000 per second
+Security Reductions
+                      Signature Scheme Security
+      (Proof framework for Fiat-Shamir Schemes in the ROM)
+
+
+    Math Problem
+                        ≤          Hybrid 1             ≤        Real Signature
+                                                                    Scheme
+
+
+1. A3 gets math problem     1. A2 gets the public key        1. A1 gets the public key
+2. A3 solves math problem      and access to hash H             and access to hash H
+                            2. A2 forges a signature         2. A1 asks signature
+                                                                queries
+                                                             3. A1 forges a signature
+    Non-Interactive
+                                Non-Interactive                   Interactive
+    and no hash H
+                                        • Reduction in the QROM [Unr ‘17]
+                                        • Tight reduction in the QROM if the
+                                          signing is deterministic [KLS ‘18]
+                       Dilithium Security
+
+     Non-tight in the ROM                               Tight in the QROM
+
+
+
+                                       ≤
+Input: random A, t                           Input: random A, t, and an XOF H
+Output: short s1, s2 and c such that         Output: short s1, s2, c and μ such that
+          As1 + s2 - tc =0                             H(As1 + s2 - tc, μ) = c
+
+   (Module)-SIS + (Module)-LWE                    Hybrid 1 (Self-Target SIS)
+
+
+
+
+                           Non-tight reduction in the
+                             ROM using rewinding
+      The Same as Schnorr Signatures
+
+     Non-tight in the ROM                          Tight in the QROM
+
+
+
+                                       ≤
+Input: random A, t                         Input: random A, t, and an XOF H
+Output: short s1, s2 and c such that       Output: short s1, s2, c and μ such that
+          As1 + s2 - tc =0                           H(As1 + s2 - tc, μ) = c
+
+   (Module)-SIS + (Module)-LWE                  Hybrid 1 (Self-Target SIS)
+
+
+
+
+                                       ≤
+Input: random g,h                          Input: random g, h, and an XOF H
+Output: x, c such that                     Output: x, c and μ such that
+              gxhc = 1                                  H(gx hc, μ) = c
+
+           Discrete Log                         “Self-Target Discrete Log”
+  Is the “Self-Target” Assumption
+      Worrisome in the QROM?
+• We believe not
+
+• No example where using “rewinding” in the proof
+  left the scheme vulnerable to a quantum attacker
+
+• Analogous to computationally-binding classical
+  commitments not having a proof in the QROM
+   (and there is no NIST competition for post-quantum
+   commitments)
+Base on (Module-)LWE in the QROM?
+                                           Dilithium
+                                                  recommended      high
+Public Key                                             ≈ 1.5 KB   ≈ 1.8 KB
+Signature                                              ≈ 2.7 KB   ≈ 3.4 KB
+
+
+
+
+“Katz-Wang” Tight Dilithium [AFLT ‘12, ABB+ ‘15, Unr ‘17, KLS ‘18]
+
+                                                  recommended      high
+Public Key              5X larger                      ≈ 7.7 KB   ≈ 9.6 KB
+Signature              2X larger                       ≈ 5.7 KB   ≈ 7.1 KB
+
+            Also significantly ( > 10X) slower
+    Basis for Our Parameter Settings
+
+LWE parameters (i.e. secret key recovery)
+     used the recently en vogue sieving analysis
+
+SIS parameters (i.e. message forgery) –
+       the same analysis + improved (potential) algorithm
+       for l∞ - SIS
+                   Possible Trade-Offs
+          (open to community suggestions)
+• Smaller secret key coefficients e.g. {-5,…,5}  {-1,0,1}
+   • Signatures will be smaller
+   • Makes combinatorial hybrid attacks more likely and gets further away from
+     WC-AC parameters
+
+
+• Module-LWE  Module-LWR
+   • (Maybe) a slight reduction in the key size
+   • Probably nothing goes wrong with security if sk coefficients are large enough
+
+
+• Increase the rejection probability
+   • Slower, but smaller signatures
+

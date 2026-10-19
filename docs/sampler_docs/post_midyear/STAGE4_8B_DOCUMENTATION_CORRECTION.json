@@ -1,0 +1,9 @@
+{
+  "scope": "Documentation-only correction after4.8b freeze;RTL/tests/build/evidence unchanged",
+  "document": "docs/sampler_docs/post_midyear/THROUGHPUT.md",
+  "old_document_sha256": "f5dff9b3861499a3e0539aeee41ea55b6e1511ecdca1a56bf77ac5e1b96daaef",
+  "corrected_document_sha256": "9a35f0c1ae03483787a569160085fde0eed978255ea6a45e1feadfaebac28f14",
+  "correction": "Continuous single-job mask output bubbles are1 in both4.7s and4.8a,not2 to1.",
+  "proof": "All6 stall-free single-job mask rows in each immutable archive have last_output_cycle-first_output_cycle-255=1.",
+  "immutable_archives_unchanged": true
+}

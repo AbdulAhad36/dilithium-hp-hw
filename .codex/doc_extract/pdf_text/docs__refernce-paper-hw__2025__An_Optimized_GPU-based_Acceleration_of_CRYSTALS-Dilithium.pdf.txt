@@ -1,0 +1,320 @@
+                                                                                                                                                                                                           An Optimized GPU-based Acceleration of
+ICASSP 2025 - 2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) | 979-8-3503-6874-1/25/$31.00 ©2025 IEEE | DOI: 10.1109/ICASSP49660.2025.10890327
+
+
+
+
+                                                                                                                                                                                                                   CRYSTALS-Dilithium
+                                                                                                                                                                                                           Zhao Chen∗ , Weimin He∗ , Jiafei Wu† , Jingjie Liu, Boqin Xu, Xiaoning Bian, and Zhe Liu†
+                                                                                                                                                                                                                        Research Center for Data Hub and Security, Zhejiang Lab, Hangzhou, China
+                                                                                                                                                                                                                 Email: {chenzhao, heweimin, wujiafei, liujingjie, xuboqin, bian, zhe.liu}@zhejianglab.org
+
+
+                                                                                                                                                                                               Abstract—CRYSTALS-Dilithium has recently been selected as                GPU-based acceleration in Dilithium [5]–[8]. However, sev-
+                                                                                                                                                                                            one of the next generation post-quantum signature algorithm                 eral challenges remain, including optimizing memory usage,
+                                                                                                                                                                                            standards. However, due to the extensive volume of data el-                 balancing workloads among GPU cores, and reducing latency.
+                                                                                                                                                                                            ements and the high complexity of operations, post-quantum
+                                                                                                                                                                                            cryptographic algorithms commonly face significant performance                 In this paper, we propose an optimized GPU-based acceler-
+                                                                                                                                                                                            challenges, for which GPU acceleration has proven to be an                  ation of Dilithium from three dimensions: inter-thread, intra-
+                                                                                                                                                                                            effective hardware solution. This paper presents an optimized               thread, and inter-block, where inter-thread optimization is the
+                                                                                                                                                                                            GPU-based implementation of Dilithium, accelerating the algo-               focus of our research to improve the overall performance by
+                                                                                                                                                                                            rithm across three dimensions: inter-thread, intra-thread, and              enhancing collaboration methods between threads. In addition,
+                                                                                                                                                                                            inter-block. Specifically, we propose shared memory and loop
+                                                                                                                                                                                            unrolling techniques to optimize the most time consuming num-               for the most time consuming Number Theoretic Transform
+                                                                                                                                                                                            ber theoretic transform operation. Meanwhile, we employ a PTX               (NTT) operation, we applied optimization techniques such as
+                                                                                                                                                                                            assembly implementation of Montgomery modular multiplication                shared memory and loop unrolling. Moreover, we employ a
+                                                                                                                                                                                            for frequent dot product computations. Experimental results                 PTX assembly implementation of Montgomery modular multi-
+                                                                                                                                                                                            indicate that, compared to the NIST standard implementation,                plication for frequent dot product computations. Experimental
+                                                                                                                                                                                            our implementations of Dilithium across all three parameter sets
+                                                                                                                                                                                            achieve speedups of up to 143x for Gen, 255x for Sign, and 152x             results demonstrate that our optimization strategy significantly
+                                                                                                                                                                                            for Verify on the GPU 4090. On the GPU A100, the speedups                   improves the performance of Dilithium.
+                                                                                                                                                                                            reach 114x for Gen, 158x for Sign, and 124x for Verify.                        The remainder of this paper is organized as follows. Section
+                                                                                                                                                                                               Index Terms—Dilithium, post-quantum cryptography, GPU,                   II reviews related works and introduces Dilithium algorithm
+                                                                                                                                                                                            number theoretic transform                                                  and GPUs. The proposed method is elaborated in Section III,
+                                                                                                                                                                                                                                                                        while the experimental results are presented in Section IV. Our
+                                                                                                                                                                                                                    I. INTRODUCTION
+                                                                                                                                                                                                                                                                        final remarks are summarized in Section V .
+                                                                                                                                                                                               Digital signature is a cryptographic primitive that ensures
+                                                                                                                                                                                            data integrity and verifies identities in various applications,                                   II. PRELIMINARIES
+                                                                                                                                                                                            including e-commerce, email, and blockchain. However, the                   A. Related works
+                                                                                                                                                                                            advent of quantum computing technologies poses a significant                   The optimized implementations of the Dilithium algorithm
+                                                                                                                                                                                            threat to the security of traditional digital signature algorithms,         have been studied across various platforms, including FPGA
+                                                                                                                                                                                            such as the Rivest-Shamir-Adleman (RSA) signature [1] and                   [9]–[11], ARM [12], [13], RISC [14], and AVX [15]. A
+                                                                                                                                                                                            the Elliptic Curve Digital Signature Algorithm (ECDSA) [2].                 comparison of cycle counts for these implementations is
+                                                                                                                                                                                            These algorithms rely on discrete logarithm and large integer               summarized in Table I. Each platform has made advancements
+                                                                                                                                                                                            prime factorization problems, which can be efficiently solved               due to its unique capabilities. FPGAs [9] utilize parallelization
+                                                                                                                                                                                            by Shor’s algorithm [3]. Therefore, developing post-quantum                 to reduce cycle counts and increase operational frequencies.
+                                                                                                                                                                                            cryptography (PQC) to withstand quantum attacks is essential                Cortex-M3 and Cortex-M4 processors [12] enhance poly-
+                                                                                                                                                                                            for ensuring future data security.                                          nomial multiplication through NTT and its inverse (INTT).
+                                                                                                                                                                                               To address quantum threats, in 2016, the National Insti-                 Cortex-A72 and M1 [13] processors efficiently combine Mont-
+                                                                                                                                                                                            tute of Standards and Technology (NIST) launched a global                   gomery multiplication with Barrett reduction using Neon vec-
+                                                                                                                                                                                            competition to standardize PQC algorithms and Dilithium                     tor instructions. RISC-V [14] employs a hardware/software
+                                                                                                                                                                                            [4] has been selected as one of the final signature stan-                   co-design approach with adaptable hardware accelerators for
+                                                                                                                                                                                            dards. However, like other PQC algorithms, Dilithium faces                  Dilithium schemes. AVX2 and AVX-512 [15] instructions also
+                                                                                                                                                                                            performance challenges due to its computational complexity,                 improve the efficiency of NTT operations and the processing
+                                                                                                                                                                                            which can increase processing time and resource consumption.                of polynomial coefficients, leading to better performance.
+                                                                                                                                                                                            Graphical Processing Unit (GPU) acceleration is frequently                     Despite these advancements, research on GPU-based im-
+                                                                                                                                                                                            utilized to address these challenges, leveraging the parallel               plementations of Dilithium remains relatively limited. GPUs
+                                                                                                                                                                                            processing capabilities of GPUs to optimize cryptographic                   possess substantial parallel processing power, providing the
+                                                                                                                                                                                            computations. So far, there are many studies focus on the                   potential to accelerate the computationally intensive operations
+                                                                                                                                                                                               * Both authors contributed equally to this research.                     associated with Dilithium. Some studies [5]–[8] have explored
+                                                                                                                                                                                               † Jiafei Wu and Zhe Liu are the corresponding authors.                   this area, where Seo et al. [8] introduced several optimization
+
+
+
+
+                                                                                                                                                                                         Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:18:31 UTC from IEEE Xplore. Restrictions apply.
+                                TABLE I
+            C YCLE COUNTS WITH RELATED WORKS FOR D ILITHIUM 3
+
+         Ref      Platform            Gen         Sign       Verify
+          [9]     FPGA Virtex 7       18193       21033      15032
+          [12]    ARM Cortex-M4       2013        6053       6053
+          [13]    Apple M1            152435      365248     104821
+          [14]    RISC-V PULPino      1067824     3253378    1126938
+          [15]    AVX-512             43102       146636     146636
+
+   techniques, including a warp divergence reduction method
+   based on dummy operations, a parallel implementation of
+   NTT-based polynomial multiplication, and an optimized re-
+   jection sampling process utilizing a rejection sequence table,
+   which improve the efficiency of Sign and Verify processes.
+   B. CRYSTALS-Dilithium
+      Dilithium is a lattice-based digital signature scheme that
+   based on the Module Learning With Errors [4] problem.
+   It emerged as a leading candidate in the Round-3 of the                                    Fig. 1. Parallel design in GPU environment.
+   NIST PQC competition and advanced to the Draft Federal                      CUDA programming is the data transfer between the host and
+   Information Processing Standard (FIPS) 204 [16] stage in                    the device. The host initializes and transfers data to the device
+   2023. Following a rigorous review and testing process, NIST                 memory, where the GPU conducts the necessary computations.
+   has recently published the final FIPS 204 standard [17].                    Upon completion, the results are sent back to the host for
+      Dilithium consists of three polynomial-time algorithms:                  further processing or storage. This division of labor allows
+   Gen, Sign, and Verify, see the NIST supporting documentation                CUDA to fully utilize the immense parallelism inherent in
+   for details [18]. The algorithm Gen outputs Public Key (pk)                 GPUs, significantly accelerating computational tasks.
+   and Secret Key (sk). In the signature phase, the message
+   is hashed and combined with sk to produce the signature.                                               III. METHOD
+   The verification phase employs pk to validate the authenticity                 We deploy multiple blocks on the GPU, each block using
+   of the signature. For these three algorithms, the performance               k threads, and each group of k threads processing multiple
+   bottlenecks mainly occurs in polynomial multiplication, par-                Sign/Verify procedures, see Fig. 1. According to this model,
+   ticularly during the NTT/INTT operations. To address these                  we employ three types of optimization methods: inter-thread
+   computationally intensive operations, GPU acceleration offers               optimization within a single block, intra-thread optimization,
+   a novel solution. By leveraging the parallel processing capa-               and optimization across multiple blocks. Among these, inter-
+   bilities of GPUs, significant improvements in efficiency can                thread optimization within a single block is our primary focus,
+   be achieved, thereby enhancing the performance of Dilithium.                aiming to enhance the collaboration methods between threads
+   This advancement not only reduces the latency associated                    to improve overall performance. Intra-thread optimization
+   with polynomial operations but also highlights the potential                seeks to increase the execution speed of individual threads.
+   of hardware acceleration in optimizing PQC algorithms.                      Inter-block optimization involves adjusting the number of
+                                                                               parallel blocks and finding suitable parameters to ensure
+   C. GPU architecture and CUDA programming
+                                                                               that the GPU operates at full capacity while also preventing
+      GPUs [19], [20] are meticulously crafted for high-                       performance degradation due to block scheduling.
+   throughput parallel processing, distinguishing them from tra-
+   ditional Central Processing Units (CPUs) that are optimized                 A. Inter-thread optimization within a single block
+   for sequential task execution. A typical GPU is composed                       The NTT is the most time-consuming operation in Dilithium
+   of thousands of smaller, efficient cores capable of executing               implementation, thus we focus on optimizing the NTT. Given
+   numerous threads simultaneously, rendering them particularly                that Dilithium processes only the 256-point NTT, our analysis
+   suitable for computation-intensive tasks such as graphics ren-              is restricted to this specific case.
+   dering, scientific simulations, and cryptographic operations.                  In the unoptimized implementation version, we first use 128
+      Compute Unified Device Architecture (CUDA) [21], [22]                    threads per block to process a single NTT operation, see Fig.
+   is a powerful parallel computing platform and programming                   2. At each level, each thread processes only 2 points. Since
+   model that enables developers to leverage the computational                 the point-pairs are different at each level, the threads first read
+   capabilities of NVIDIA GPUs. Within the CUDA program-                       data from global memory and writes the data back to global
+   ming model, the system is divided into the host (CPU) and the               memory after processing, resulting in a significant amount of
+   device (GPU). The host runs the main program and manages                    data that needs to be synchronized. Furthermore, to ensure
+   the overall execution flow, while the device executes parallel              effective data synchronization, thread synchronization within
+   kernels—functions performed on the GPU. A critical aspect of                the block is required after writing data at each level. Note
+
+
+
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:18:31 UTC from IEEE Xplore. Restrictions apply.
+                                                                                                          TABLE II
+                                                                                   T HROUGHPUT OF C AND AVX2 IMPLEMENTATIONS FOR NTT
+                                                                               OPERATIONS ON CPU, OUR IMPLEMENTATIONS ON GPU A100 AND GPU
+                                                                                  RTX4090. T HE METRIC IS THE OPERATIONS PER MILLISECOND .
+
+                                                                                 Ref    AVX2     A100 ntt128    A100 ntt32    4090 ntt128    4090 ntt32
+                                                                                 522    3582       446332         448652        500218        482659
+                                                                                  (-)    (-)       (855×)         (859×)        (958×)        (924×)
+
+                                                                               method for improving the efficiency of modular multiplication.
+                                                                               During the butterfly processing of NTT, Montgomery modular
+                                                                               multiplication is frequently utilized. Therefore, we replace the
+                                                                               C code implementation of Montgomery modular multiplica-
+                                                                               tion with PTX assembly to maximize instruction performance.
+                                                                                  Additionally, within the NTT processing function, there are
+                                                                               small loops with lengths of 8 and 4. To reduce the number of
+                                                                               instructions executed, we employ loop unrolling techniques to
+                                                                               remove instructions related to the calculation and checking
+                                                                               of loop variables, thereby enhancing intra-thread execution
+                                                                               performance. CUDA provides preprocessor directives that al-
+                                                                               low the nvcc compiler to automatically perform loop unrolling
+                                                                               optimizations when compiling C code into machine code.
+                                                                               C. Inter-block optimization
+                                                                                  Currently, there is no additional optimization has been
+   Fig. 2. NTT implementation on GPU. Memory read/write is a time-consuming
+                                                                               implemented across multiple blocks, the only adjustment made
+   operation. We focus on optimizing memory read/write.                        is the number of parallel blocks. By identifying appropriate
+                                                                               parameters, it is possible to ensure that the GPU operates at
+   that the data in global memory is synchronized through the                  full capacity, thereby preventing performance degradation that
+   L1 Cache, if the L1 Cache remains valid, synchronization                    may arise from block scheduling.
+   can occur only within the L1 Cache without needing to
+   update global memory each time. However, during the actual                                  IV. EXPERIMENTAL RESULTS
+   implementation, it is not guaranteed that the L1 Cache will                   We compile the C/C++ code using g++ 11.4.0 and the
+   remain valid, which affects data synchronization performance.               GPU implementations with CUDA 12.4 on an Arch Linux
+      Since CUDA provides a shared memory mechanism that                       system with kernel 5.10. Our optimized implementations were
+   does not rely on the L1 Cache for automatic data synchro-                   deployed and tested on two GPUs: the NVIDIA Tesla A100
+   nization. In the optimized implementation version, we can                   80G and the NVIDIA GeForce RTX4090.
+   preallocate shared memory for 256 integers and first copy                     The CPU baseline is the NIST standard reference C im-
+   the data from global memory to shared memory. During the                    plementation [23], the performance of which is obtained
+   intermediate eight levels of computation, data is synchronized              on an Intel(R) Core(TM) i9-13900K CPU with 24 cores.
+   through shared memory, and finally the data is copied from                  To evaluate the three procedures of Dilithium, we measure
+   shared memory back to global memory.                                        performance in terms of operations per second (OP/s). The
+      Additionally, to further reduce the number of data synchro-              reported performance results are the medians of 10 executions,
+   nization, we considered another approach by reducing the 128                where each execution batches multiple tasks.
+   threads to 32 threads. In this case, each thread in each level                Since we mainly optimize the most time consuming NTT
+   processes 8 points. By carefully designing the organization of              operations, we design two test sets. The first test set presents
+   these points, we can processes these 8 points at levels 1/2/3               the performance of individual NTT operations in Dilithium
+   without requiring inter-thread data synchronization. Similarly,             implementation. The second test set presents the performance
+   levels 4/5/6 do not require data synchronization, nor do levels             of Dilithium, including Gen, Sign and Verify procedures.
+   7 and 8. Consequently, only 3 inter-thread data synchroniza-
+   tion is required. Furthermore, the 32 threads conform to the                A. Number-Theoretic Transform
+   thread warp scheduling mechanism of GPU, allowing for warp                     We design three NTT versions: (1) ntt128 uses 128 threads
+   synchronization instead of block-level thread synchronization.              for NTT calculation; (2) ntt128 sm uses shared memory to
+                                                                               share the calculation results of 128 threads on the basis of
+   B. Intra-thread optimization                                                ntt128; (3) ntt32 uses 32 threads for NTT calculation. Note that
+     Within a single thread, we enhance algorithm performance                  although ntt32 version has a low thread parallelism, it reduces
+   by employing PTX assembly and loop unrolling techniques.                    the number of data synchronization times, and it also uses
+   Modular arithmetic in Montgomery form is a widely used                      shared memory to synchronize data. We also design different
+
+
+
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:18:31 UTC from IEEE Xplore. Restrictions apply.
+                                 Fig. 3. NTT implementations on a100 and 4090, the metric is the operations per millisecond.
+                                                                  TABLE III
+    T HROUGHPUT OF C AND AVX2 IMPLEMENTATIONS FOR DILITHIUM ON CPU, OUR OPTIMIZED IMPLEMENTATIONS ON GPU A100 AND GPU RTX4090,
+       AND RELATED WORKS ON NVIDIA J ETSON AGX X AVIER [8], ARM C ORTEX -A72 [13], AND FPGA [11]. T HE METRIC IS THE OPERATIONS PER
+                       SECOND (OP/ S ). T HE SPEEDUPS REFER TO THE COMPARISON WITH CPU REFERENCE IMPLEMENTATION .
+
+
+                                                         Dilithium2                       Dilithium3                       Dilithium5
+                                                 Gen        Sign       Verify     Gen       Sign        Verify     Gen        Sign      Verify
+                    CPU          Ref [23]       12679       2893      11636       6792       1825       7455       4650         1477     4515
+                                 AVX2 [6]       67188      23678      67084      41510      15415      42210      26421        12728    26839
+                                 RTX 4090      1626223    644632      1671963    975188    456003      1072122    661193       377480   687617
+                   Our                          (128×)    (222×)       (143×)    (143×)    (249×)       (143×)    (142×)       (255×)   (152×)
+              Implementations       A100       1368549    422011      1449826    777750    289507       885427    494006       216128   529930
+                                                (107×)    (145×)       (124×)    (114×)    (158×)       (118×)    (106×)       (146×)   (117×)
+                                     [8]        84993      33965      67738      51099      14875      44502      31800        20396    27511
+               Related Works        [13]        5561       2310       5498        2908       1377       3352       1916         1044     1961
+                                    [11]        23217       3448      21904      16555       2167      15671      11051         1977    10716
+
+   blocks and compare the number of NTT operations that can                     C version and AVX2 version for dilithium on the CPU (i9-
+   be performed per millisecond.                                                13900k). For the related work [8], [11], [13], we use the
+      In Fig. 3, we compare the performance of individual NTT                   reported results from their papers. Compared to the CPU
+   operations on A100 with the number of parallel blocks be-                    baseline, on the GPU RTX4090, our implementations achieve
+   tween 1000 and 2000. When blocks is less than 1750, ntt32 is                 128×-143× improvement for Gen, 222×-255× improvement
+   better than ntt128. When blocks is greater than 1750, ntt128                 for Sign, and 143×-152× improvement for Verify. On the
+   is better than ntt32. In this case, ntt32 will use more register             GPU A100, our implementations achieve 106×-114× im-
+   resources, but when the register resources are insufficient,                 provement for Gen, 145×-158× improvement for Sign, and
+   it will exchange register data through the global memory,                    117×-124× improvement for Verify.
+   resulting in performance degradation. Meanwhile, we compare
+   the performance of NTT operations on RTX4090 with the                                                 V. CONCLUSION
+   number of parallel blocks between 1000 and 3000. In this                        This paper presents an optimized GPU-based acceleration
+   range, ntt32 is better than ntt128. When parallel blocks are                 of Dilithium from three dimensions: inter-thread, intra-thread
+   1100, ntt32, ntt128 and ntt128 sm all have the maximum                       and inter-block optimization. For inter-thread optimization, we
+   processing capacity.                                                         adopt a fine-grained NTT approach combined with shared
+      Meanwhile, we also implement the standard reference C                     memory to reduce data copy latency. For intra-thread opti-
+   version and AVX2 version for NTT operations on the CPU                       mization, we use PTX assembly and loop unrolling techniques
+   (i9-13900k), see Table II. From Fig. 3, our optimal im-                      to enhance modular multiplication efficiency. For inter-block
+   plementations demonstrates throughputs of 448k and 500k                      optimization, we adjust the number of parallel blocks and
+   operations per millisecond on GPU A100 and GPU RTX4090,                      apply optimal parameters to maximize parallel efficiency. Ex-
+   respectively, corresponding to 859× and 958× speedups over                   perimental results demonstrate that our optimization strategy
+   a single-thread CPU implementation.                                          significantly improves the performance of Dilithium. Thus, this
+                                                                                effort contributes to the ongoing development and application
+   B. Performance on Different GPUs for Dilithium
+                                                                                of PQC algorithms in the future.
+     The Table III shows the performance of our implementations
+   and the comparisons. We implement the standard reference
+
+
+
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:18:31 UTC from IEEE Xplore. Restrictions apply.
+                                 R EFERENCES
+    [1] R. L. Rivest, A. Shamir, and L. Adleman, “A method for obtaining digital
+        signatures and public-key cryptosystems,” Communications of the ACM,
+        vol. 21, no. 2, pp. 120–126, 1978.
+    [2] D. Johnson, A. Menezes, and S. Vanstone, “The elliptic curve digital sig-
+        nature algorithm (ecdsa),” International journal of information security,
+        vol. 1, pp. 36–63, 2001.
+    [3] P. W. Shor, “Polynomial-time algorithms for prime factorization and
+        discrete logarithms on a quantum computer,” SIAM review, vol. 41, no. 2,
+        pp. 303–332, 1999.
+    [4] L. Ducas, E. Kiltz, T. Lepoint, V. Lyubashevsky, P. Schwabe, G. Seiler,
+        and D. Stehlé, “Crystals-dilithium: A lattice-based digital signature
+        scheme,” IACR Transactions on Cryptographic Hardware and Embedded
+        Systems, pp. 238–268, 2018.
+    [5] X. Zhao, B. Wang, Z. Zhao, Q. Qu, and L. Wang, “Highly efficient
+        parallel design of dilithium on gpus,” 2022.
+    [6] S. Shen, H. Yang, W. Dai, Z. Liu, and Y. Zhao, “High-
+        throughput GPU implementation of dilithium post-quantum digital
+        signature,” CoRR, vol. abs/2211.12265, 2022. [Online]. Available:
+        https://doi.org/10.48550/arXiv.2211.12265
+    [7] S. Shen, H. Yang, W. Li, and Y. Zhao, “cuml-dsa: Optimized signing
+        procedure and server-oriented gpu design for ml-dsa,” Cryptology ePrint
+        Archive, 2023.
+    [8] S. C. Seo and S. An, “Parallel implementation of crystals-dilithium for
+        effective signing and verification in autonomous driving environment,”
+        ICT Express, vol. 9, no. 1, pp. 100–105, 2023.
+    [9] S. Ricci, L. Malina, P. Jedlicka, D. Smékal, J. Hajny, P. Cibik,
+        P. Dzurenda, and P. Dobias, “Implementing crystals-dilithium signature
+        scheme on fpgas,” in Proceedings of the 16th International Conference
+        on Availability, Reliability and Security, 2021, pp. 1–11.
+   [10] L. Beckwith, D. T. Nguyen, and K. Gaj, “High-performance hardware
+        implementation of crystals-dilithium,” in 2021 International Conference
+        on Field-Programmable Technology (ICFPT). IEEE, 2021, pp. 1–10.
+   [11] C. Zhao, N. Zhang, H. Wang, B. Yang, W. Zhu, Z. Li, M. Zhu,
+        S. Yin, S. Wei, and L. Liu, “A compact and high-performance hardware
+        architecture for crystals-dilithium,” IACR Transactions on Cryptographic
+        Hardware and Embedded Systems, pp. 270–295, 2022.
+   [12] D. O. Greconici, M. J. Kannwischer, and A. Sprenkels, “Compact
+        dilithium implementations on cortex-m3 and cortex-m4,” IACR Trans-
+        actions on Cryptographic Hardware and Embedded Systems, pp. 1–24,
+        2021.
+   [13] H. Becker, V. Hwang, M. J. Kannwischer, B.-Y. Yang, and S.-Y. Yang,
+        “Neon NTT: Faster Dilithium, Kyber, and Saber on Cortex-A72 and
+        Apple M1,” Cryptology ePrint Archive, 2021.
+   [14] P. Karl, J. Schupp, T. Fritzmann, and G. Sigl, “Post-quantum signatures
+        on risc-v with hardware acceleration,” ACM Transactions on Embedded
+        Computing Systems, vol. 23, no. 2, pp. 1–23, 2024.
+   [15] R. Xu, D. He, M. Luo, C. Peng, and X. Zeng, “Optimizing dilithium
+        implementation with avx2/-512,” ACM Transactions on Embedded Com-
+        puting Systems, 2024.
+   [16] National Institute of Standards and Technology (NIST), “Draft federal
+        information processing standard (fips) 204: Crystals-dilithium,” National
+        Institute of Standards and Technology, Tech. Rep., 2023, available at
+        https://csrc.nist.gov/publications/detail/fips/204/draft.
+   [17] NIST, “Module-lattice-based digital signature standard,” https://nvlpubs.
+        nist.gov/nistpubs/FIPS/NIST.FIPS.204.pdf, accessed: 2024-08-22.
+   [18] S. Bai, L. Ducas, E. Kiltz, T. Lepoint, V. Lyubashevsky,
+        P. Schwabe, G. Seiler, and D. Stehlé, “Crystals-dilithium
+        algorithm specifications and supporting documentation (version
+        3.1),” 2021. [Online]. Available: https://pq-crystals.org/dilithium/data/
+        dilithium-specification-round3-20210208.pdf
+   [19] J. D. Owens, M. Houston, D. Luebke, S. Green, J. E. Stone, and J. C.
+        Phillips, “Gpu computing,” Proceedings of the IEEE, vol. 96, no. 5, pp.
+        879–899, 2008.
+   [20] J. Nickolls and W. J. Dally, “The gpu computing era,” IEEE micro,
+        vol. 30, no. 2, pp. 56–69, 2010.
+   [21] S. Cook, CUDA programming: a developer’s guide to parallel comput-
+        ing with GPUs. Newnes, 2012.
+   [22] D. Guide, “Cuda c programming guide,” NVIDIA, July, vol. 29, p. 31,
+        2013.
+   [23] NIST, “Crystals-dilithium,” https://github.com/pq-crystals/dilithium/.
+
+
+
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:18:31 UTC from IEEE Xplore. Restrictions apply.
+

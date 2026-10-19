@@ -1,0 +1,685 @@
+Unified FPGA Design of Kyber and Dilithium with
+           Provable Fault Tolerance
+                Siddhartha Chowdhury, Nimish Mishra, Sarani Bhattacharya, Debdeep Mukhopadhyay
+                                      Department of Computer Science and Engineering
+                                 Indian Institute of Technology Kharagpur, West Bengal, India
+                               siddhartha.chowdhury92@gmail.com, neelam.nimish@gmail.com,
+                           bhattacharya.sarani.iitkgp@gmail.com, debdeepmukhopadhyay@gmail.com
+
+
+   Abstract—Efficient and secure hardware implementations of          programmable design supporting multiple parameter sets. Key
+post-quantum cryptographic schemes are critical for real-world        components like sampling, polynomial arithmetic, and round-
+adoption. In this work, we propose a unified FPGA-based               ing were logic-shared where possible. A flexible polynomial
+architecture for Kyber and Dilithium that combines flexibil-
+ity, lightweight design, and fault tolerance. The architecture        multiplier achieved excellent area-time trade-offs. The archi-
+adopts a microcoded, programmable datapath supporting both            tecture, prototyped on a NEXYS 4 DDR FPGA, outperformed
+schemes with minimal area overhead, enabling seamless in-             existing designs in both resource efficiency and throughput.
+tegration of modules such as SHAKE, sampling, and coeffi-                While efficient, such architectures remain vulnerable to
+cient rounding. To enhance resilience against propagation-based
+fault attacks—which exploit effective/ineffective fault behavior in
+                                                                      physical attacks—especially fault attacks. Recent studies have
+public-domain computations—we embed a probabilistic verifica-         shown that single-bit leakages from faults in Kyber and
+tion mechanism using rejection sampling. This countermeasure          Dilithium can recover sensitive data via fault propagation,
+transforms deterministic operations into cryptographically con-       often without effective hardware countermeasures.
+strained probabilistic processes that remain efficient under nor-
+                                                                         To address this, we extend our prior architecture with a cryp-
+mal conditions while significantly degrading under adversarial
+faults. The result is a robust and compact design that not only       tographically grounded rejection sampling mechanism that de-
+supports both a lattice-based KEM and signature scheme, but           tects and halts faulty operations. By introducing probabilistic
+also provides the first unified fault countermeasure architecture     checks on otherwise deterministic processes (e.g., sampling,
+for Kyber and Dilithium, maintaining low retry counts and             rounding), our design ensures fault-induced deviations trigger
+minimal performance degradation in fault-free environments.
+                                                                      high-probability rejections. For correct executions, the retry
+   Index Terms—FPGA, Kyber, Dilithium, Fault-Tolerance.
+                                                                      count remains low (typically 2–3), keeping performance within
+                       I. I NTRODUCTION                               acceptable bounds.
+                                                                         We adopt the rejection sampling approach from [MM24],
+   Modern public-key cryptography (PKC) relies on hard                adapting it for lightweight hardware. Lookup-based compara-
+problems like integer factorization and discrete logarithms.          tors verify whether sampled or decoded values lie within
+However, Shor’s algorithm makes these problems efficiently            valid statistical bounds, mitigating faults at key stages like
+solvable on quantum computers, rendering traditional PKC              poly_tomsg in Kyber and y-generation in Dilithium. Inte-
+insecure. In response, the cryptographic community, through           grated into the datapath using compact tables, this logic pro-
+the NIST standardization process, has advanced post-quantum           vides reliable detection at minimal cost and energy overhead.
+cryptography (PQC), with lattice-based schemes emerging as
+                                                                         Our design is, to the best of our knowledge, the first unified,
+leading candidates due to their worst-case hardness guarantees
+                                                                      programmable, and fault-tolerant hardware architecture for
+and efficient implementations. Notably, five of NIST’s seven
+                                                                      both KEM and signature lattice-based PQC. It generalizes to
+final candidates are based on structured lattices.
+                                                                      other deterministic public-domain algorithms, enabling wide
+   Despite strong theoretical foundations, deploying PQC
+                                                                      applicability without ad hoc countermeasures. The rejection
+in constrained and performance-critical environments—such
+                                                                      logic integrates cleanly with our microcoded base, preserving
+as automotive, industrial control, and embedded sys-
+                                                                      agility and efficiency.
+tems—remains challenging. Practical implementations must
+balance lightweight design, execution efficiency, and algo-              In summary, our contributions are:
+rithmic agility. Area and energy constraints demand compact            1) A unified, microcoded, and fault-tolerant hardware ar-
+designs; real-time applications require speed; and evolving               chitecture for Kyber and Dilithium PQC acceleration in
+standards necessitate support for multiple schemes with min-              constrained environments.
+imal redesign effort.                                                  2) A novel probabilistic execution framework using rejection
+   Our earlier work introduced a unified, lightweight hard-               sampling to resist propagation-based fault attacks.
+ware architecture supporting Kyber (KEM) and Dilithium                 3) Integration of the countermeasure into our prior design
+(signature)—two lattice-based NIST finalists. Their structural            with minimal area overhead and constant-time unfaulted
+similarities enabled shared datapaths, leading to a microcoded,           execution.
+ 4) FPGA-based validation demonstrating improved fault re-          all over Rq . To reduce public key size, A is replaced by a seed
+    silience alongside high efficiency and flexibility.             ρ that deterministically generates A. Additionally, the lower d
+                                                                    bits of coefficients in t are stored in the secret key instead of
+                      II. P RELIMINARIES                            the public key.
+  In this subsection, we describe the post-quantum primitives          Signature Generation:
+and the basic components used in this work.                         A masking vector y with coefficients in [−γ1 , γ1 ) is sampled
+                                                                    to compute
+A. Kyber                                                                                         w = Ay,
+   Kyber is an IND-CCA secure key encapsulation mechanism
+(KEM) based on the Module-LWE problem. It has three main            which is rounded as
+algorithms: key generation, encryption, and decryption. Key
+                                                                                            w = w1 · 2γ2 + w0 ,
+parameters include the polynomial degree n = 256, prime
+modulus q = 3329, binomial distribution parameters η1 , η2 ,        with |w0 | ≤ γ2 . The challenge polynomial c, sparse with τ
+and an integer k defining the dimension k · n of the LWE            coefficients in {−1, 1}, is hashed from the message and w1 .
+problem. Security levels Kyber512, Kyber768, and Kyber1024          The candidate signature is
+differ by k = 2, 3, 4, η1 = 3, 2, 2, and η2 = 2, 2, 2.
+   Key Generation:                                                                              z = y + cs1 .
+Starting from a 32-byte seed, the algorithm generates a k ×
+                                                                    Rejection sampling prevents secret leakage by repeating the
+k matrix A with ring polynomials in Rq . Secret and error
+                                                                    process if checks fail. Since only the upper bits of t are public,
+polynomial vectors s, e are sampled from a centered binomial
+                                                                    carry bits (“hints”) h are computed to aid verification. The
+distribution. The public key polynomial vector is
+                                                                    signature returned is (c, z, h).
+                          t = As + e.                                  Signature Verification:
+                                                                    The verifier computes
+The public key is (t, ρ), where ρ is a random seed, and the
+secret key encodes s along with hashes of the public key and                               w1′ = round(Az − ct),
+seed.
+  Key Encapsulation:                                                using hints h to compensate for missing lower bits of t. The
+Given a message m and public key, the algorithm regenerates         challenge c is recomputed from the message and w1′ and
+A and samples random polynomials r, e1 , e2 from the bino-          compared with the signature’s c. Additionally, z is checked
+mial distribution. It computes                                      for norm validity consistent with signing constraints.
+
+               u = Ar + e1 ,   v = t⊤ r + e2 + m.                   C. Propagation Based Fault Attacks
+
+These are compressed into ciphertext components c1 , c2 and            Many fault attacks on KEMs [KCS+ 24], [HMS+ 23],
+concatenated as ciphertext c, used to derive the shared secret.     [PP21], [HPP21], [Del21], [FJKK+ 22] follow a common
+   Key Decapsulation:                                               pattern: ⃝1 inject a fault during the decapsulation phase, and
+Using ciphertext c and secret key s, decompress u, v, then          ⃝2 observe whether the derived key K from the decapsulation
+recover                                                             phase results in a decryption failure. A failure (Line 8)
+                                                                    indicates an effective fault, otherwise (Line 6) it is ineffective.
+                       m′ = v − s⊤ u.
+                                                                    The primary difference across these works lies in the fault
+The decapsulation checks ciphertext validity by re-encrypting       model.
+and comparing outputs, finally producing the shared secret.            We briefly describe the attack in [PP21] on Kyber1 , illus-
+                                                                    trated in Fig. 1. During decryption, ciphertexts for plaintext
+B. Dilithium                                                        bit 0 are centered around 0, while those for bit 1 are near 2q .
+   Dilithium is a signature scheme based on Lyubashevsky’s          The decoding involves: ⃝  1 multiply by 2, ⃝2 add 2q , ⃝ 3 extract
+Fiat-Shamir with aborts framework and hard problems in              the LSB.
+module lattices. It consists of three algorithms: key generation,
+signing, and verification. The main parameters include polyno-
+mial degree n = 256, prime modulus q = 8380417, and public
+matrix dimensions k and l. Dilithium defines three security
+levels with parameter pairs (k, l) = (4, 4), (6, 5), (8, 7).
+   Key Generation:
+The algorithm generates a k × l matrix A with polynomials
+in Rq . Secret vectors s1 , s2 with coefficients in [−η, η] are
+sampled. The public key’s second part is computed as                          Fig. 1: Fault attack on Kyber from [PP21].
+
+                         t = As1 + s2 ,                               1 A NIST Round-3 lattice-based KEM finalist.
+   An instruction skip omits step 2, shifting the distribution left                Unlike our design, the Saber-focused architecture
+by 2q , which affects decoding. Based on success or failure, the                in [AMJ+ 21] lacks such agility, supporting only LightSaber
+attacker infers:                                                                due to its fixed lifted prime, and cannot scale to higher
+                                                                                security levels like FireSaber.
+                                     (
+       D       E D         E          ≥ 0, ineffective                           III. P ROPOSED A RCHITECTURE AND D ESIGN D ECISIONS
+        r[i], e − e1 [i], s + e2 [i]
+                                      < 0, effective                               A unique feature of the proposed architecture is a unified
+                                                                                NTT-based polynomial multiplier coupled with a specially
+  Here, r, e, e1 , e2 are polynomials from the key generation
+                                                                                integrated Keccak core that is commonly available to both
+phase, i is the faulted coefficient, and ⟨·⟩ denotes dot product.
+                                                                                Kyber and Dilithium execution. The Keccak core is capable of
+Knowing r, e1 , and e2 , the attacker builds inequalities over
+                                                                                computing both SHAKE and SHA3, and is primarily used for
+multiple faults to recover the secret s.
+                                                                                both pseudo-random number generation and hash computation.
+  Similar strategies apply to Masked Kyber [KCS+ 24] and
+                                                                                Sharing these two compute-intensive modules responsible for
+NewHope [PAA+ 19], omitted here for brevity.
+                                                                                core processing tasks require a combined and highly optimized
+D. Rejection Sampling in Lattice-based Cryptography                             co-processor architecture. Additionally, there are a few auxil-
+                                                                                iary blocks that are further optimized to accelerate both Kyber
+  Rejection sampling [VN63] samples from a target distri-
+                                                                                and Dilithium. In this section, we shall elaborate design details
+bution f using a source g, and is key to lattice-based sig-
+                                                                                and strategies of the combined architecture.
+natures [Lyu12], [DDLL13], including Dilithium [LDK+ 20],
+[DKL+ 18]. We restate the core result from [Lyu12]:                             A. High Level Overview of the Shared Architecture of Kyber
+Lemma 1 (Rejection Sampling). Let V be a set, h : V → R,                        and Dilithium
+f : Zm → R, and {gv } be distributions over Zm such that                           The complete hardware architecture of the proposed design
+M · gv (x) ≥ f (x) for all v ∈ V , x ∈ Zm . Then, the following                 is shown in Figure 2, illustrating the combined datapath for
+two are statistically close:                                                    Kyber and Dilithium along with instruction and data memory.
+  1) v ← h, x ← gv , output (x, v) with prob. Mfg(x)                            Instructions stored in the instruction memory control the
+                                                  v (x)
+                                              1                                 execution sequence for either scheme. The datapath integrates
+  2) v ← h, x ← f , output (x, v) with prob. M
+                                                                                logic and functional modules necessary for both.
+ver                                                                                Figure 2 highlights the unified NTT multiplier and Keccak
+  Note: Rejection sampling ensures x is statistically indepen-                  core, shared across Kyber and Dilithium. This sharing signifi-
+dent of v, which is often treated as secret material.                           cantly reduces the area-time product and offers speedups over
+                                                                                software implementations, as hardware modules like Encode
+E. Keeping it Agile                                                             and Decode (rewiring operations) incur negligible latency.
+   Apart from optimizing the area-time product, agility2 is                        Dilithium’s Power2Round module splits a value r ∈ Zq
+crucial for automotive and cryptographic systems. Our archi-                    as r = r1 · 2d + r0 , where r0 = r mod ±2d and r1 = (r −
+tecture achieves this via a microcoded framework, enabling                      r0 )/2d , using shifts and bit extractions in hardware. Modules
+protocol and security-level reconfiguration. The datapath is                    like Decompose, MakeHint, and UseHint use lightweight
+composed of discrete compute units controlled by 106-bit                        combinational logic for constant-based add/subtract/multiply
+instructions (40 bits for control, 66 for operand addresses).                   operations, depending on the security level. Their outputs are
+Custom instruction classes include:                                             routed through multiplexers, selecting values based on control
+   Polynomial Arithmetic: Configure the NTT multiplier and                      signals. Further details on the unified NTT and Keccak blocks
+control addition, subtraction, and point-wise multiplication.                   are presented in subsequent sections.
+   Keccak Operations: Manage SHA3/SHAKE phases via the                          B. Design of Unified NTT Multiplier
+Keccak wrapper.
+   Read/Write: Govern data transfers between compute blocks                        Polynomial multiplication is one of the most computation-
+and memory.                                                                     ally intensive tasks in both Kyber and Dilithium.
+   Kyber Functions: Encode/Decode as per [21a].                                    To unify their multiplier architecture, we exploit the struc-
+                                                                                ture of their field primes. Although both use NTT-friendly
+   Dilithium Functions: Power2Round, MakeHint, UseHint,
+                                                                                primes, Kyber’s prime has only a 256’th root of unity, while
+etc., as per [21b].
+                                                                                Dilithium’s has both 256’th and 512’th roots, supporting 7
+   Arithmetic units are reused across security levels by up-
+                                                                                and 8 levels of NTT respectively. We use incomplete NTT for
+dating instruction sequences and operand addresses (e.g., 896
+                                                                                both, producing n/2 degree-1 polynomials. Multiplication of
+instructions for Kyber-k = 2, 1344 for k = 3). Switching
+                                                                                these degree-1 polynomials occurs in the ring Zq [x]/(x2 −ω i ),
+between Kyber and Dilithium is managed via instruction-
+                                                                                where ω is the n-th root of unity and i depends on the
+controlled prime selection using multiplexers.
+                                                                                coefficient index. These polynomials cannot be multiplied
+  2 https://semiengineering.com/the-battle-for-post-quantum-security-will-be-   coefficient-wise. Below, we explain how we combined Kyber
+won-by-agility/                                                                 and Dilithium polynomial multiplication on common ground.
+                                                                   HASH Unit
+
+    Data Mem                                                                     Keccak-f 1600
+                                                                      Keccak
+                                              Wrapper     Buffer                  Permutation
+                                                                       State
+                                                                                   Functions
+
+
+
+    Instruction                                           CBD Sampler
+       Mem
+                     Data Bus
+
+
+                                Control Bus
+     Program
+     Counter
+                                                             Modulus
+     Decompose
+                                                         NTT Multiplier
+
+    Power2Round                                           BRAM 0
+                                              Twiddle                   2 Butterfly
+                                               Factor                      Units
+         Pack                                             BRAM 1
+                                                                                                                Fig. 3: Reduction Circuit of Kyber
+       Unpack
+
+                                                        Encode         Compress
+      MakeHint
+                                                                                                 KRED2 algorithm takes input integer c and outputs D such
+                                                                                                 that D ≡ k 2 · C (mod q).
+       UseHint
+                                                        Decode        Decompress
+                                                                                                 Algorithm 1 KRED2 for Dilithium
+    SampleInBall
+                                                                                                 Require: A binary number C = (c45 , ..., c0 )2 , k = 1023, m = 13, q =
+                                                          Rejection Core                           8380417 = k · 2m + 1
+    Rejection Core                                                                               Ensure: C ” = k2 · C mod q
+                                                                                                   Cl = (c12 , ..., c0 )2
+                                                                                                   Ch = (c45 , ..., c13 )2
+                                                                                                     ′
+  Fig. 2: Hardware architecture of the crypto co-processor                                         C = k · Cl − Ch
+                                                                                                     ′     ′         ′
+                                                                                                   Cl = (c12 , ..., c0 )2
+                                                                                                     ′     ′          ′
+                                                                                                   Ch = (c33 , ..., c8 )2
+                                                                                                     ′′         ′       ′
+                                                                                                   C = k · Cl − Ch
+Unification Based on Root of Unity. We use the 256’th root
+of unity for both schemes, reducing Dilithium’s NTT levels
+from 8 to 7 and lowering total multiplications. For point-                                          KRED2 Algorithm. The KRED2 algorithm [BNAMK21]
+wise multiplication at seven NTT levels, we adopt Karatsuba’s                                    implementing the reduction is given in Algorithm 1. The extra
+method as in [XL21]. The basecase multiplication (from Kyber                                     factor k 2 can be removed by incorporating k −2 into the stored
+specification [21a]) is:                                                                         twiddle factors. To optimize modulo operations, we decom-
+                                                                                                 pose k as (16 − 3) for Kyber and (1024 − 1) for Dilithium.
+                                                                                                 Thus, C ′ is expressed as C ′ = ((Cl ≪ 4) − (3 · Cl + Ch )) for
+      h2i + h2i+1 X = (f2i + f2i+1 X) · (g2i + g2i+1 X)                                          Kyber and C ′ = ((Cl ≪ 10) − (Cl + Ch )) for Dilithium, re-
+                                              mod (X 2 − ζ 2br(i)+1 )                            alizable with combinational logic. Our modular reduction unit
+                                                                                                 includes these combinational blocks followed by a multiplexer
+Naively, this requires 5 multiplications, but Karatsuba reduces                                  selecting output for Kyber or Dilithium, reducing latency at a
+it to 4 as shown in Equation 1.                                                                  small area cost. The reduction circuit for Kyber is shown in
+                                                                                                 Figure 3.
+   h2i = f2i g2i + f2i+1 g2i+1 · ζ 2br(i)+1                                                         Although Dilithium’s prime supports 512-th roots of unity,
+                                                                                                 we use the 256-th root to perform only 7 NTT levels, lowering
+h2i+1 = (f2i + f2i+1 )(g2i + g2i+1 ) − (f2i g2i + f2i+1 g2i+1 )
+                                                                                                 multiplication counts with Karatsuba (details later). We imple-
+                                                            (1)
+                                                                                                 ment NTT multipliers using Cooley-Tukey for forward NTT
+Multiplying two Dilithium polynomials using the 512’th root                                      and Gentleman-Sande for inverse NTT, avoiding bit-reversal.
+of unity requires 3328 multiplications, while the Karatsuba                                      This approach, common in prior works, applies Decimation in
+method with the 256’th root requires only 3200. This reduces                                     Time and Decimation in Frequency, respectively.
+the overall latency of scheme execution.                                                         NTT Computation. We use Cooley-Tukey (Decimation in
+Reduction Architecture Based on Prime Structure. Kyber’s                                         Time) for forward NTT and Gentleman-Sande (Decimation in
+prime is of the form q = k · 2m + 1 with k = 13 and                                              Frequency) for reverse NTT to avoid bit-reversal. A similar
+m = 8 (k < 2m ). Prior Kyber hardware [BNAMK21] uses this                                        design was proposed in [XL21], but our fast reduction tech-
+structure for KRED2 reduction. We observe that Dilithium’s                                       nique achieves significantly lower latency. Figure 4 depicts the
+prime shares this form with k = 1023 and m = 13 and                                              butterfly unit processing two coefficients simultaneously.
+implement KRED2 as in Algorithm 1. Exploiting this, we                                              The NTT multiplier includes 2 butterfly units, process-
+apply KRED2 reduction to both Kyber and Dilithium. The                                           ing 4 polynomial coefficients per iteration. It uses two
+                                                                  a                            b           ages core selection and operation. Both matrix-vector and
+      Reconfigurable Butterfly
+                                                                                                           secret key coefficients are generated via uniform rejection
+                                                                    Modular             Modular
+                                                                                                           sampling.
+                                  a[n-1:1]                          Subract              Adder
+
+                                                                                                           D. Programmable Keccak Core
+
+
+
+
+                                                              1
+
+
+
+
+                                                                         0
+                  0
+
+
+
+
+                                                                                          1
+
+
+
+
+                                                                                                     0
+                        0
+
+                                   Modular                        Mux                         Mux             The Keccak core [15] is used for hashing and pseudo-
+                            Mux
+
+
+
+
+                                                         S0
+
+
+
+
+                                                                                   S0
+                                    Adder
+        (P+1)/2         1
+                                                                                                           random number generation in both Kyber and Dilithium.
+                             S0
+
+
+
+                        a[0]                                      Div2                                     Kyber operates in four Keccak modes—SHA3-256, SHA3-
+                                                                                              Div2         512, SHAKE-128, and SHAKE-256—while Dilithium uses
+                      clk rst     clk rst                     Modular
+                                                              Multiplier       c                           SHAKE-128 and SHAKE-256. All modes are implemented
+                        DSP48          DSP48
+                                                                                                           using the Keccak sponge construction based on the Keccak-
+                                                                    Modular             Modular
+                                                                    Subract              Adder             f[1600] permutation. A single core is reused across all modes
+                                                                                                           using distinct wrappers and buffers, which are selected via
+                                         KRED2
+                                                              1
+
+
+
+
+                                                                         0
+
+
+
+
+                                                                                          1
+
+
+
+
+                                                                                                     0
+                        Modular
+                         Adder
+                                        Modular
+                                       Reducation                 Mux                         Mux
+                                                                                                           micro-coded control signals, as discussed in Section II-E.
+                                                         S0
+
+
+
+
+                                                                                   S0
+                                                                                                              Mode selection defines the rate r and the domain-specific
+                                                                                                           padding suffix. Wrappers extract appropriate r-bit blocks from
+                                                                                                           the 1600-bit state, while the FSM and instruction memory
+                        Fig. 4: Re-configurable butterfly unit
+                                                                                                           manage the absorb and squeeze phases. The core continues
+                                                                                                           to absorb input until sufficient data is available, and then
+       BRAM 0                 BRAM 1            BRAM 0   BRAM 1               BRAM 0              BRAM 1
+                                                                                                           transitions to hashing using the f inish signal.
+                                                                                                              This unified Keccak design directly feeds the NTT and
+ 64
+                                                                                                           rejection sampling modules, reducing communication latency
+                                                                                                           and saving resources. Although the Keccak unit consumes
+                                                                                                           10879 LUTs on Artix-7, the multiplexed architecture supports
+        48 bits
+                                                                                                           all security levels of both Kyber and Dilithium efficiently.
+      Fig. 5: NTT multiplier scheduling in the NTT RAM                                                     The full Keccak-f[1600] requires 48 clock cycles per hash
+                                                                                                           operation.
+
+BRAMs storing pairs of coefficients indexed by s ∈                                                         E. Modifications to the Architecture for Fault Attack Counter-
+{128, 64, 32, 16, 8, 4, 2} to feed the butterflies. Moreover, the                                          measure
+twiddle factors and the address for the coefficients are stored                                               In our architecture, we implement lightweight fault-
+in Block-ROMs. Thus, each unit receives coefficients j, j + s,                                             tolerance mechanisms for both Kyber and Dilithium by lever-
+j + 1, and j + s + 1 simultaneously for j ∈ [0, 255].                                                      aging the rejection sampling framework proposed in [MM24].
+Figure 5 shows the execution schedule with coefficients ai .                                               This framework introduces a principled approach to prevent
+Both forward and reverse NTT take 448 clock cycles.                                                        fault propagation attacks by enforcing probabilistic verification
+   The butterfly unit in Figure 4 operates in three modes:                                                 of input distributions at vulnerable stages of cryptographic
+Forward NTT, Inverse NTT, and point-wise multiplication,                                                   computations.
+controlled by MUX select lines. Input c switches between                                                      For Kyber, we apply this methodology during the
+twiddle factors or polynomial coefficients based on mode.                                                  poly_tomsg routine in the decryption phase, which is a
+These are governed by polynomial multiplier instructions (Sec-                                             known target for propagation-based fault attacks. We design a
+tion II-E), enabling agility across security levels and schemes.                                           hardware comparator that cross-verifies the decoded message
+Our fast reduction technique further reduces the design’s area-                                            coefficients against a precomputed lookup table of valid output
+time product.                                                                                              values derived from the expected distribution of correctly
+                                                                                                           decoded messages. These allowed values for the decoded
+C. Sampling                                                                                                output were emulated from the valid distribution described
+Kyber Sampler. Kyber employs a binomial sampler to draw                                                    in [MM24], ensuring that only correctly distributed message
+integers from a centered binomial distribution. We implement                                               values proceed through the cryptographic flow, effectively
+two samplers, S1 and S2 , for η = 2 and η = 3, respectively.                                               blocking fault-induced biases.
+S1 uses 16 parallel adder cores to generate and buffer 16                                                     For Dilithium, we utilize a similar principle during the gen-
+samples per cycle, while S2 processes three 64-bit input words                                             eration of the intermediate vector y, which plays a crucial role
+to yield 32 two-byte samples across cycles. Instruction controls                                           in the signing operation. Following [LDK+ 20], the coefficients
+(Section II-E) enable dynamic selection based on the required                                              of y are sampled from a discrete distribution defined as
+security level.
+                                                                                                           G = {q+γ1 −1−vj | vj ∈ {0, . . . , 2γ1 −2}, j ∈ {0, . . . , 255}},
+Dilithium Sampler. Dilithium employs three rejection sam-
+pling cores, directly fed by the KECCAK unit using a lookup-                                               where q and γ1 are constants in Dilithium’s parameterization.
+based approach. Instruction-level control (Section II-E) man-                                              This “safe” set G represents all coefficients of y that effectively
+hide the secret-dependent information in z = y + sc. We               2) Polynomial Serialize and Deserialize Unit: In Kyber,
+emulate the allowed values of y from this set as described         each polynomial contains 256 coefficients modulo q = 3329,
+in [MM24] and implement a simple hardware comparator               with each 12-bit coefficient compactly stored in a 384-byte
+to enforce that only coefficients within this safe domain are      format. Two coefficients are packed into three bytes: the first
+accepted, while all others are rejected. This prevents leakage     holds the lower 8 bits of the first coefficient, the second
+of secret-dependent information under faulted conditions.          combines the upper 4 bits of the first and the lower 4 bits of
+   This results in a fault-tolerant yet efficient design, as       the second, and the third holds the upper 8 bits of the second.
+the hardware cost of the comparator logic is minimal, and             The serialization unit employs conditional adders and bit-
+the probabilistic nature of the mechanism aligns well with         wise logic under iterative control to efficiently pack coeffi-
+the original protocol semantics. Overall, our fault-tolerance      cients in hardware, ensuring low area and high throughput.
+architecture, guided by the rejection sampling framework              Deserialization recovers two 12-bit coefficients from every
+of [MM24], provides robust protection against a broad class of     three bytes using shift and mask operations:
+active physical attacks with negligible area and performance
+overhead.                                                           t0 = a[3i] | (a[3i + 1] ≪ 8),        t0 = t0 & 0xFFF
+                                                                    t1 = (a[3i + 1] ≫ 4) | (a[3i + 2] ≪ 4),           t1 = t1 & 0xFFF
+F. Auxiliary building blocks
+                                                                      This fully combinational, multiplier-free logic supports both
+   Alongside core functional blocks, the design includes aux-
+                                                                   streaming and parallel modes.
+iliary modules for optimized computation. The data memory
+                                                                      3) Auxiliary Function in Dilithium: Dilithium em-
+outputs two coefficients per cycle. Pack and Unpack modules
+                                                                   ploys four auxiliary arithmetic functions—power2round,
+efficiently handle rewiring and basic arithmetic. Modules like
+                                                                   decompose, make_hint, and use_hint—to enable effi-
+Power2Round, MakeHint, UseHint, Encoder, Decoder, and
+                                                                   cient rounding, compression, and error correction during sig-
+Decomposer implement constant-based combinational logic
+                                                                   nature generation and verification. These functions manipulate
+tailored to Kyber and Dilithium [21a], [21b]. The polynomial
+                                                                   polynomial coefficients through simple bitwise operations and
+arithmetic unit supports non-blocking add/subtract operations
+                                                                   are lightweight by design.
+for parallelism with the NTT.
+                                                                      The power2round function splits a coefficient a into a
+   1) Polynomial Compression and Decompression: Kyber
+                                                                   coarse part a1 and a fine part a0 , such that a = a1 · 2D + a0 ,
+employs polynomial compression to reduce coefficient bit-
+                                                                   enabling high-precision encoding. The decompose function
+widths d for efficient transmission, using the mapping:
+                                                                   performs a similar task with a different granularity, producing
+                                                                   a1 and a0 such that a = a1 · ALPHA + a0 , with special care
+                              $             %
+                                2d · x + 2q
+          Compressq (x, d) =                  mod 2d ,             to handle symmetric boundaries and exceptional cases based
+                                     q
+                                                                   on GAMMA2 values, which vary across security levels.
+where q = 3329 and x ∈ Zq is first mapped to a positive               The make_hint function generates a single-bit indicator
+representative via x ← x + ((x ≫ 15) ∧ q). To avoid                denoting whether a0 overflows into a1 during rounding, while
+costly division in hardware, fixed-point arithmetic is used        use_hint reconstructs or adjusts a1 based on this hint during
+with precomputed constants. For example, when d = 4, the           verification.
+compressed output is:                                                 These functions can be efficiently implemented on FPGAs
+                                                                   for all Dilithium security levels using only shifts, additions,
+       t = (((x ≪ 4) + 1665) · 80635) ≫ 28 mod 16,                 and conditional logic. Furthermore, lookup tables (LUTs) can
+                                                                   be employed for decompose and use_hint, where the
+where 1665 approximates q/2 and 80635 is a scaling factor.         limited range of valid a1 values (e.g., ≤ 15 or 43) enables
+For d = 1 (used in poly_tomsg), this simplifies to a               fast, precomputed access without complex control flow. This
+single-bit output. A combinational circuit computes one d-         makes these functions ideal for pipelined and parallel hardware
+bit compressed coefficient per cycle using shift-and-add logic,    architectures.
+enabling efficient byte packing (e.g., r[i] = t2i | (t2i+1 ≪ 4)
+for d = 4).                                                        G. Prototype for Proposed Architecture
+   Decompression restores coefficients using:                         We have chosen a lightweight Xilinx board NEXYS 4 DDR
+                                                                   which houses an Artix-7 FPGA and a soft-core microprocessor
+                           a · q + 2d−1
+                                       
+                     r=                   ,                        Microblaze which are recently being promoted for automotive
+                                 2d                                contexts3 . In order to achieve a stand-alone design, we have
+where a ∈ [0, 2d − 1]. For d = 4, two 4-bit values are             applied the reset signal to our hardware design using the
+extracted from each byte and scaled; for d = 5, 5-bit groups       softcore Microblaze microprocessor available on our target
+arescaledsimilarly; and for d = 1, each bit a ∈ {0, 1} maps      platform. Figure 6 illustrates the handshake between the Mi-
+to a·q+1   . Hardware decompression uses masking, shifting,        croblaze and our crypto co-processor.
+       2
+fixed multipliers or shift-add structures, and supports parallel     3 https://www.xilinx.com/support/documentation/white papers/wp501-
+units for high-throughput Kyber implementations.                   microblaze.pdf
+           Hardware Secure Module          Crypto Co-processor
+                                                                                             70
+                                                                                                                            Kyber-512 - Dilithium II
+                                         Instruction
+                                           Memory        Kyber                               60                             Kyber-768 - Dilithium III
+                                                           and                                                              Kyber-1024 - Dilithium V
+                                  rst                   Dilithium
+
+
+
+
+                                                                         Area-time product
+                                                        Datapath
+                                                                                             50
+            Microblaze Softcore          Memory File
+                                                        Elements
+                processor                                                                    40
+
+     Fig. 6: Overall architecture of the prototype HSM                                       30            25.7                 25.26
+
+                                                                                             20                                                         18.6
+TABLE I: Total area utilization of the different components in                                                                                     13
+
+the unified architecture                                                                     10                                              7.9
+
+                                                                                                  0    0                0   0
+      Algorithm         Components           LUTs      DSPs      BRAMs                        0
+                   Decompose                  504       -           -                             Artifact-I           Artifact-II          Our-Design
+                   MakeHint                    80       -           -
+                   UseHint                    708       -           -    Fig. 7: Comparison of area-time product with existing designs
+                   Powe2Round                  75       -           -
+                   Pack                       658       -           -
+      Dilithium    Unpack                     325       -           -
+                   Encode                     354       -           -
+                   Decode                     160       -           -    compact Kyber implementation, whereas our design achieves
+                   SampleInBall               485       -           -    superior latency through a balanced high-speed architecture.
+                   Verify                      16       -           -
+                   Rejection Core             718       -           -    While [GL23] demonstrates impressive latency and low re-
+                   Compress/Decompress        258       -           -    source usage through innovative conflict-free memory access,
+                   Encode                     581       -           -
+                   Decode                     268       -           -    our unified architecture not only maintains a competitive area-
+       Kyber       COPY                        30       -           -    delay product but also introduces fault tolerance—particularly
+                   CMOV                        35       -           -
+                   Rejection Core             185       -           -    when integrated with the state-of-the-art Dilithium hardware.
+                   Verification Core           98       -           -       By combining Kyber from [GL23] with Dilithium
+                   KECCAK                    10879      -           -
+                   Data Memory                  -       -          19    from [GJCJ23] (Artifact I) or [ZZW+ 21] (Artifact II), and
+      Common
+                   NTT Multiplier             2899      4           5    comparing the cumulative AT product, our design consistently
+                   Controller                 2618      -           5
+                    Total                    22125      4          29    performs better, as shown in Figure 7.
+
+                                                                                                                  V. C ONCLUSION
+                  IV. R ESULTS AND C OMPARISON                             This paper presents a unified, microcoded, and fault-tolerant
+   In this section, we evaluate the performance of our proposed          hardware architecture for Kyber and Dilithium. Extending
+architecture against state-of-the-art designs. It utilizes 22125         our previous work, we incorporate a lightweight rejection
+LUTs, 12531 FFs, 4 DSPs, and 29 BRAMs, achieving a                       sampling mechanism to counter fault attacks with minimal
+maximum frequency of 161 MHz. Detailed resource usage and                overhead. The design preserves agility across parameter sets
+latency for Kyber and Dilithium are presented in Table III               while improving robustness and efficiency. FPGA validation
+and Table II, based on the Artix-7 platform. Figure 7 and                confirms its suitability for secure, resource-constrained envi-
+Table IV show a comparison of the area-time (AT) product                 ronments.
+(LUT × latency × 10−6 ), where our design significantly out-
+performs existing combined Kyber-Dilithium architectures. Ta-                                                VI. ACKNOWLEDGEMENT
+ble I presents the component-wise area breakdown, highlight-
+                                                                           The authors would like to thank the Department of Science
+ing KECCAK and the NTT multiplier as the most resource-
+                                                                         & Technology (DST), Government of India, and the Center for
+intensive blocks. Moreover this is the first reported unified
+                                                                         Development of Telematics (C-DOT) for partially funding this
+design of Kyber and Dilithium to achieve fault tolerance.
+                                                                         work through the project entitled “Development of Tamper-
+   The design in [AMI+ 23] also integrates Kyber and
+                                                                         Proof SCA/FI-Resistant 10 Gbps Post-Quantum In-Line IP
+Dilithium but uses a Zynq Ultrascale+ board, separate KEC-
+                                                                         Network Encryptor, Post-Quantum TLS ASIC (PQ-TLS), and
+CAK and NTT cores, and lacks an application-focused per-
+                                                                         TLS Accelerator PCIe Card Using PQ-TLS ASIC for TLS
+spective. In [GJCJ23], the design achieves very low resource
+                                                                         Offloading in Servers,” under the “National Quantum Mission
+consumption at the cost of high latency of execution. Our
+                                                                         (NQM)” initiative and the “C-DOT STAR PhD Scholarship
+optimized Dilithium scheduling achieves lower latency with
+                                                                         Program.”
+fewer resources. The authors of [ZZW+ 21] reduce latency
+using multiple butterfly units in a pipeline with optimised
+                                                                                                                    R EFERENCES
+rejection sampling modules, increasing area; we outperform
+them in AT product on Artix-7.                                           [AMI+ 23]                    Aikata Aikata, Ahmet Can Mert, Malik Imran, Samuel
+   In Kyber-specific designs, [19] focuses on RISC-V-based                                            Pagliarini, and Sujoy Sinha Roy. Kali: A crystal for post-
+                                                                                                      quantum security using kyber and dilithium. IEEE Transactions
+low-power implementations but incurs higher latency due to                                            on Circuits and Systems I: Regular Papers, 70(2):747–758,
+hardware/software co-design. Similarly, [XL21] presents a                                             2023.
+               TABLE II: Comparison of resource utilization and timing details of Dilithium with existing architecture
+                                                                  Max Freq       Keygen                Sign                Verify                      Fault
+    Works         Algorithm      LUTs     FF      DSP     BRAM                                                                           AT Product
+                                                                   (MHz)     cycles     µs      cycles        µs      cycles      µs                  Tolerant
+                 Dilithium II    29998   10366    10        11      96.9      4172    43.05     28091       289.89     4422      45.63       10         No
+  [ZZW+ 21]      Dilithium III   29998   10366    10        11      96.9      5851    60.38     44706       461.36     6181      63.78      15.7        No
+                 Dilithium V     29998   10366    10        11      96.9      8765    90.45     48996       505.63     9039      93.28      17.9        No
+   [GJCJ23]      Dilithium V     13975   6845     4         35      163      63.2K     387      113.9K       699      67.9K       416       15.5        No
+                 Dilithium II    22125   12531    4         29      161      16112     100      32168        200      18178       113        6.9        Yes
+  Our Design     Dilithium III   22125   12531    4         29      161      32102    199.4     56294        350      29084       181       11.7        Yes
+                 Dilithium V     22125   12531    4         29      161      49102     305      80420        500      43627       270       17.03       Yes
+
+
+                TABLE III: Comparison of resource utilization and timing details of Kyber with existing architecture
+                                                                  Max Freq       Keygen             Encaps               Decaps                        Fault
+    Works        Algorithm       LUTs    FF      DSP     BRAM                                                                            AT Product
+                                                                   (MHz)     cycles     µs      cycles     µs        cycles     µs                    Tolerant
+                 Kyber-512       15K      3K     11        14        25       75K     3000      132K     5280        142K     5680          164.4       No
+     [19]        Kyber-768       15K      3K     11        14        25      112K     4480      178K     7120        191K     7640          221.4       No
+                 Kyber-1024      15K      3K     11        14        25      149K     5960      223K     8920        241K     9640          278.4       No
+                 Kyber-512        7K      5K     2          3       161        4K     24.8        5K     31.05         7K     43.47          0.5        No
+    [XL21]       Kyber-768        7K      5K     2          3       161        6K     37.2        8K     49.68        10K     62.11         0.77        No
+                 Kyber-1024       7K      5K     2          3       161        9K     55.9       11K     68.32        14K     89.95         1.07        No
+                 Kyber-512       7.3K    3.2K    4          5       200       2.4K    12.1        3K       15         4.2K     21.2         0.26        No
+    [GL23]       Kyber-768       7.3K    3.2K    4          5       200       4.2K    21.2        5K      25.2         7K      34.9         0.43        no
+                 Kyber-1024      7.3K    3.2K    4          5       200       6.8K    34.1        8K      40.9       10.2K     51.1         0.67        No
+                 Kyber-512       22K     12K     4         29       161       2.5K    15.85      3.4K    21.27        4.2K    26.32         1.05        Yes
+ Our Design      Kyber-768       22K     12K     4         29       161       3.5K    21.9       4.3K    27.11        5.1K    31.85         1.304       Yes
+                 Kyber-1024      22K     12K     4         29       161       4.4K    27.5       5.3K    33.11        6.4K    39.89         1.61        Yes
+
+                              TABLE IV: Comparison of Area-Time Product computation with existing designs
+                                                                                    Sign      Verify    Encaps       Decaps
+                          Artifacts                   Algorithm          LUTs                                                    AT Product
+                                                                                    (µs)       (µs)       (µs)        (µs)
+                   [ZZW+ 21]+ [GL23]       Dilithium-V + Kyber-1024      37298     505.63     93.28       40.9        51.1          25.7
+                    [GJCJ23]+ [GL23]       Dilithium-V + Kyber-1024      21275      699        416        40.9        51.1          25.67
+                                           Dilithium-II + Kyber-512      22125      200        113       21.27       26.32           7.9
+                        Our Design         Dilthium-III + Kyber-768      22125      350        181       27.11       31.85          13.0
+                                           Dilithium-V + Kyber-1024      22125      500        270       33.11       39.89          18.6
+
+
+
+[AMJ+ 21]  Aikata Aikata, Ahmet Can Mert, David Jacquemin, Amitabh                            reduction: Security estimates for error-tolerant key recovery
+           Das, Donald Matthews, Santosh Ghosh, and Sujoy Sinha Roy.                          from decryption errors. Cryptology ePrint Archive, 2023.
+           A unified cryptoprocessor for lattice-based signature and key-       [HPP21]       Julius Hermelink, Peter Pessl, and Thomas Pöppelmann. Fault-
+           exchange. Cryptology ePrint Archive, Paper 2021/1461, 2021.                        enabled chosen-ciphertext attacks on kyber. In Progress in
+[BNAMK21] Mojtaba Bisheh-Niasar, Reza Azarderakhsh, and Mehran                                Cryptology–INDOCRYPT 2021: 22nd International Conference
+           Mozaffari-Kermani. High-speed NTT-based polynomial multi-                          on Cryptology in India, Jaipur, India, December 12–15, 2021,
+           plication accelerator for CRYSTALS-kyber post-quantum cryp-                        Proceedings 22, pages 311–334. Springer, 2021.
+           tography. Cryptology ePrint Archive, Paper 2021/563, 2021.           [KCS+ 24]     Suparna Kundu, Siddhartha Chowdhury, Sayandeep Saha, Ang-
+[DDLL13]   Léo Ducas, Alain Durmus, Tancrède Lepoint, and Vadim                             shuman Karmakar, Debdeep Mukhopadhyay, and Ingrid Ver-
+           Lyubashevsky. Lattice signatures and bimodal gaussians. In                         bauwhede. Carry your fault: A fault propagation attack
+           Annual Cryptology Conference, pages 40–56. Springer, 2013.                         on side-channel protected lwe-based kem. arXiv preprint
+[Del21]    Jeroen Delvaux. Roulette: A diverse family of feasible fault                       arXiv:2401.14098, 2024.
+           attacks on masked kyber. Cryptology ePrint Archive, 2021.            [LDK+ 20]     Vadim Lyubashevsky, Léo Ducas, Eike Kiltz, Tancrède Lepoint,
+[DKL+ 18] Léo Ducas, Eike Kiltz, Tancrede Lepoint, Vadim Lyubashevsky,                       Peter Schwabe, Gregor Seiler, Damien Stehlé, and Shi Bai.
+           Peter Schwabe, Gregor Seiler, and Damien Stehlé. Crystals-                        Crystals-dilithium. Algorithm Specifications and Supporting
+           dilithium: A lattice-based digital signature scheme. IACR                          Documentation, 2020.
+           Transactions on Cryptographic Hardware and Embedded Sys-             [Lyu12]       Vadim Lyubashevsky. Lattice signatures without trapdoors. In
+           tems, pages 238–268, 2018.                                                         Annual International Conference on the Theory and Applica-
+[FJKK+ 22] Michael Fahr Jr, Hunter Kippen, Andrew Kwong, Thinh                                tions of Cryptographic Techniques, pages 738–755. Springer,
+           Dang, Jacob Lichtinger, Dana Dachman-Soled, Daniel Genkin,                         2012.
+           Alexander Nelson, Ray Perlner, Arkady Yerukhimovich, et al.
+                                                                                [MM24]        Nimish Mishra and Debdeep Mukhopadhyay. Probabilistic
+           When frodo flips: End-to-end key recovery on frodokem via
+                                                                                              algorithms with applications to countering fault attacks on
+           rowhammer. In Proceedings of the 2022 ACM SIGSAC Confer-
+                                                                                              lattice based post-quantum cryptography. Cryptology ePrint
+           ence on Computer and Communications Security, pages 979–
+                                                                                              Archive, Paper 2024/551, 2024.
+           993, 2022.
+[GJCJ23]   Naina Gupta, Arpan Jati, Anupam Chattopadhyay, and Gautam            [PAA+ 19]     T Poppelmann, E Alkim, R Avanzi, J Bos, L Ducas, A de la
+           Jha. Lightweight hardware accelerator for post-quantum digital                     Piedra, P Schwabe, D Stebila, MR Albrecht, E Orsini, et al.
+           signature crystals-dilithium. IEEE Transactions on Circuits and                    Newhope-submission to the nist post-quantum cryptography
+           Systems I: Regular Papers, 70(8):3234–3243, 2023.                                  standardization project. NIST National Institute of Standards
+[GL23]     Wenbo Guo and Shuguo Li. Highly-efficient hardware archi-                          and Technology, 2019.
+           tecture for crystals-kyber with a novel conflict-free memory         [PP21]        Lukas Prokop and Peter Peßl. Fault attacks on cca-secure lattice
+           access pattern. IEEE Transactions on Circuits and Systems I:                       kems. IACR Transactions on Cryptographic Hardware and
+           Regular Papers, 70(11):4505–4515, 2023.                                            Embedded Systems, 2021(2):37–60, 2021.
+[HMS+ 23] Julius Hermelink, Erik Mårtensson, Simona Samardjiska, Peter         [15]          Guido Bertoni et al. Keccak. IACR eprint, 2015.
+           Pessl, and Gabi Dreo Rodosek. Belief propagation meets lattice       [19]          Utsav Banerjee et al. Sapphire: A configurable crypto-
+            processor for post-quantum lattice-based protocols (extended
+            version). IACR eprint, 2019.
+[21a]       Roberto Avanzi et al. Crystals-kyber. Proposal to NIST PQC
+            ´ Standardization, Round3, 2021.
+[21b]       S. Bai et al. Crystals-dilithium. Proposal to NIST PQC ´
+            Standardization, Round3, 2021.
+[VN63]      John Von Neumann. Various techniques used in connection
+            with random digits. John von Neumann, Collected Works,
+            5:768–770, 1963.
+[XL21]      Yufei Xing and Shuguo Li. A compact hardware implemen-
+            tation of cca-secure key exchange mechanism crystals-kyber
+            on fpga. IACR Transactions on Cryptographic Hardware and
+            Embedded Systems, 2021(2):328–356, Feb. 2021.
+[ZZW+ 21]   Cankun Zhao, Neng Zhang, Hanning Wang, Bohan Yang, Wen-
+            ping Zhu, Zhengdong Li, Min Zhu, Shouyi Yin, Shaojun Wei,
+            and Leibo Liu. A compact and high-performance hardware
+            architecture for crystals-dilithium. IACR Transactions on Cryp-
+            tographic Hardware and Embedded Systems, 2022(1):270–295,
+            Nov. 2021.
+

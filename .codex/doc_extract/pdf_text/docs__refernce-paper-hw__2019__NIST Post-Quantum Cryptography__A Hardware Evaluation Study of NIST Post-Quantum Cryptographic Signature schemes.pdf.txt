@@ -1,0 +1,348 @@
+         A Hardware Evaluation Study of NIST
+     Post-Quantum Cryptographic Signature schemes
+                         Deepraj Soni1 , Kanad Basu1 , Mohammed Nabeel2 , and Ramesh Karri1
+                                      1 New York University, New York, NY, USA
+                                 2 New York University - Abu Dhabi, Abu Dhabi, UAE
+
+
+
+   Abstract—As we are moving into the quantum era, classical         is no standardization procedure regarding the hardware imple-
+cryptography is under risk, since quantum computers can break        mentation of Round-2 PQC algorithms. This is the frst paper
+these complex cryptographic algorithms [1]. Researchers are          that implements and explores the design-space of multiple
+developing the post-quantum cryptographic (PQC) algorithms
+to secure the system against quantum computers. The National         signature schemes in hardware using HLS and compares the
+Institute of Standards and Technology (NIST) started a public        results.
+evaluation process to standardize quantum-resistant public key          We report a hardware-implementation comparison of
+algorithms. The objective of this study to provide hardware-based    qTESLA and CRYSTALS-Dilithium NIST round-2 PQC sig-
+comparison of the NIST Round-2 PQC signature schemes. For
+this, we use a High-Level Synthesis (HLS)-based hardware design
+                                                                     nature schemes. The contributions of this study are:
+methodology to map high-level C specifcations of signature-based       1) Developed systematic FPGA design fows for PQC
+PQC algorithms into FPGA implementations.                                 evaluation, starting from a C specifcation.
+                                                                       2) Implemented HLS-based hardware design for 2 PQC
+                      I. I NTRODUCTION
+                                                                          signature schemes.
+   The fundamental security protocol for any form of elec-             3) Improved the latency of PQC implementations using
+tronic communication is public key cryptography. The two                  optimizations such as loop unrolling and loop pipelining.
+main cryptographic functions are: (a) Public Key Encryption            4) Design-space exploration of key generation, signature
+and (b) Digital Signature [2]. Classical public key algorithms            generation and signature verifcation for PQC signature
+depend upon a non-polynomial time diffcult problem (i.e.,                 algorithms.
+integer factorisation or discrete log problem). Peter Shor from
+                                                                       5) Performed a detailed study of two signature algorithms
+Bell Labs showed that quantum computers can solve these
+                                                                          to explore area vs performance vs security trade-offs.
+problems in polynomial time. Hence, quantum computers can
+decrypt the communication secured by classical public key
+cryptography algorithms [1]. For secure digital communica-                      II. P OST-Q UANTUM C RYPTOGRAPHY
+tions in the future, scientists are developing secure alternatives
+known as Post-Quantum Cryptography (PQC) algorithms.                    Scientists are developing cryptographic algorithms that are
+   NIST PQC standardization process is consolidating the             robust against quantum computers. Based on the underlying
+candidates that are inscribed by the cryptographic commu-            mathematical problem, the PQC algorithms are classifed in:
+nity and organisations. Each candidate in this ongoing NIST          Lattice-based Cryptography, Code-based Cryptography, Mul-
+process implements one of two functions: digital signature or        tivariate polynomial cryptography, Hash-based digital signa-
+key encapsulation mechanism (KEM). The frst round of this            tures, isogeny-based and other methods. This paper focuses on
+process had 82 submissions. 17 KEM and 9 Signature schemes           lattice-based signature schemes across different security levels.
+are chosen for round-2 based on the security strength and
+performance. In the ongoing round-2, the algorithms are tested
+                                                                     A. Lattice-based cryptography
+and benchmarked for different attacks, software performance,
+and hardware performance. Security guarantees, performance              These algorithms can challenge the best known alternatives
+on software/hardware, power utilization, and area overhead are       [5] Lattice-based cryptography builds on the hardness of the
+the yardsticks for algorithm selection.                              shortest vector problem (SVP), Closest Vector Problem (CVP)
+   Hardware realizations of PQC algorithms can be performed          or Shortest Independent Vectors Problem (SIVP). SVP tries
+by either manual RTL or HLS-based implementation. Recent             to fnd minimal possible Euclidian length of an n-dimensional
+research has shown that HLS-based approaches can compete             lattice vector. Therefore, breaking a lattice-based cryptography
+with the RTL-based implementations [3]. HLS has been used            algorithm is the equivalent of solving SVP. Even with a
+in evaluating classical cryptographic algorithms in CAESAR           quantum computer, SVP is shown to be polynomial in n [2].
+competition [4]. For AES cryptographic core, implemented             Other lattice cryptography algorithms are based on the Short
+in HLS, latency and area overhead are 20% more and 3%                Integer Solutions (SIS). If the SVP is hard in the worst-case,
+less compared to RTL-based implementation. Till date, there          SIS is secure in the average case [6].
+B. Digital signature                                                                        C. Performance metrics
+   The digital signatures identify the authenticity of the sender                              We consider latency, area and security as performance
+who has a secret key. Sender generates both secret key                                      indicators. Latency is the number of clock cycles needed
+and public key. The receiver uses the public key to verify                                  to produce the output from the time the input is provided.
+the signature signed by the sender with the secret key. An                                  Throughput of a system is measured with initiation interval
+attacker cannot replicate the signed message without the secret                             (II). II is the minimum number of clock cycles between
+key. The PQC digital signature algorithms consist of three                                  two successive inputs. The PQC algorithms are verifed with
+functions: key-pair generation, signature generation and sig-                               Known Answer Tests (KAT). The latency and II are the same
+nature verifcation. According to NIST standard, the key-pair                                for a single test case. Therefore, a design with lower latency
+generation is realized in the function “crypto sign keypair”                                indicates better throughput.
+which generates the public key pk and the secret key sk.                                       We use latency to measure the performance of the designs.
+Signature generation is realized in the function “crypto sign”                              We use Flip-Flops and Look-up Tables (LUTs) for resource
+which takes secret key sk, the message m plus its length                                    utilisation of FPGA implementations. NIST security categories
+mlen as inputs and outputs the signature sm and signature                                   are used for security strength of the PQC algorithm.
+length sml en. Signature verifcation is realized in the function
+                                                                                                                IV. R ESULTS AND A NALYSIS
+“crypto sign open” which takes public key pk, signature sm
+and signature length smlen as inputs and outputs message m                                  A. Baseline hardware implementations
+and its length mlen.
+                                                                                             Scheme       Sec.     Optimi-         FF     LUT      Clock     Latency
+                                                                                                          Level    sation                          (nsec)
+          III. PQC H ARDWARE A SSESSMENT                                                                           Baseline      22456   108764     12.65     622681
+A. HLS-based Assessment Methodology                                                                         1      Unrolling     31491   125942     12.65     604123
+                                                                                                                   Pipelining    22450   108880     12.65     616527
+                                                                                                                   Baseline      31325   127311   14.179    18759797
+                     HLS                                                                                    2      Unrolling     32707   129840   14.179    18655029
+                    tunings                                                                                        Pipelining   173157   333958      15.1   17612174
+                                 Modiﬁed
+   C Design
+                                 C Design
+                                                                                             qTESLA                Baseline      23393   111001     12.65    3642422
+                                                                                                            3      Unrolling     30994   124724     12.65    3608070
+                                                   C/RTL
+                                   HLS          Co-Simulation
+                                                                                                                   Pipelining    23398   111122     12.65    3608510
+                                                                                                                   Baseline      23820   114021     12.65   32358252
+                                                                                                            5      Unrolling     31752   128554     12.65   32057906
+                              Synthesized RTL                                                                      Pipelining    23837   114152     12.65   32039615
+             Directives                                                                                            Baseline      17783    86465     8.375     114822
+         for Optimization                                                                                   1      Unrolling     31401   127045     9.682     116256
+                                                                       No                                          Pipelining    17310    86662   33.153       88293
+                                 Critical               Optimization
+                                                                            Final RTL
+                              Modules/Loops              Possible?                                                 Baseline      17627    86458     8.375     172819
+                                                                                                            2      Unrolling     31491   127224     9.682     173847
+                                                        Yes                                  CRYSTALS              Pipelining    17634    86656     8.375     167694
+                                                                                             -Dilithium            Baseline      17666    86448     8.375     241102
+                                                                                                            3      Unrolling     31582   127196     9.682     241106
+ Fig. 1: HLS-based design exploration of PQC algorithms.                                                           Pipelining    17674    86646     8.375     233420
+                                                                                                                   Baseline      17864    87340     8.623     316543
+                                                                                                            4      Unrolling     31843   128026     9.682     315626
+   The HLS design exploration fow for PQC algorithms is                                                            Pipelining    17872    87538     8.623     305794
+shown in Figure 1. We modify the original NIST-submitted
+C code to make it HLS-suitable (e.g., replace library func-                                 TABLE I: Description: Security versus area versus the timing
+tion, change complex hierarchy of structure, modify variable                                of PQC Key Generation algorithms for baseline, loop unrolling
+length array and pointers to a fxed dimension arrays, remove                                and loop pipelining optimisations.
+recursions, etc.). Next, we perform HLS on the synthesizable
+C code to generate RTL using Xilinx Vivado HLS. Vivado                                         We defne baseline implementation as the HLS-based hard-
+provides a synthesis report identifying which modules/loops                                 ware implementation of a PQC algorithm. The only optimiza-
+in the design results in longest latency. If there are loops or                             tion, if at all, performed at this stage is with the area (i.e., allo-
+functions with a latency of large number of clock cycles, we                                cation and inline) to ft in the Artix-7 board. Tables I–Table III
+optimize them using loop unrolling and pipelining. Vivado                                   report the hardware and timing overhead for implementing
+reports the estimated clock period for synthesized designs. The                             the keypair generation, signature generation and signature
+tool estimates the clock period based on worst-case delay.                                  verifcation algorithms, respectively, when synthesized with
+                                                                                            only area constraints for both PQC algorithms. Flip-fops (FFs)
+B. PQC Algorithms in this Study                                                             and Look-up Tables (LUTs) are a measure of the area overhead
+   We evaluated keypair generation, signature generation and                                along with BRAM (Block RAM). For qTESLA, resource
+signature verifcation of 2 NIST PQC algorithms–qTESLA and                                   utilisation and latency increase as the security strength of
+CRYSTALS-Dilithium. Other PQC algorithms are under the                                      algorithm increases, except security level-2. For CRYSTALS-
+same design-fow process at different stages [7]. As a target de-                            Dilithium, the area increases slightly with higher security level.
+vice, we chose Xilinx Artix-7 FPGA, a standard FPGA board                                   Hence, the design trade-off should be checked for latency and
+accepted by PQC community for hardware implementation.                                      security level.
+
+
+
+
+                                                                                        2
+   CRYSTALS-Dilithium and qTESLA can be compared for                           Scheme       Sec.    Optimi-        FF     LUT      Clock    Latency
+common security category 1–3. CRYSTALS-Dilithium pro-                                       Level   sation                         (nsec)
+                                                                                                    Baseline     17683    86095   12.667      95968
+vides less resource utilisation and smaller clock period                                     1      Unrolling    25609   101108   12.667      65488
+compared to qTESLA for all the three components. Simi-                                              Pipelining   17690    86160   12.667      65450
+                                                                                                    Baseline     37840   145720   14.179    1921185
+larly, CRYSTALS-Dilithium provides better performance than                                   2      Unrolling    37642   145576   14.179    1920929
+qTESLA, except security level-1 signature verifcation and                                           Pipelining   37840   145720   14.179    1921185
+                                                                                                    Baseline     17597    84765   12.667     250425
+security level-3 signature generation. CRYSTALS-Dilithium                      qTESLA        3      Unrolling    25804   100572   12.667     152889
+security level-1 keypair has 10 times faster implementation                                         Pipelining   17604    84834   12.667     152027
+                                                                                                    Baseline     17885    87858   12.667     728419
+than the qTESLA security level-1 keypair.                                                    5      Unrolling    26324   120906   12.667     356563
+                                                                                                    Pipelining   17967    87963   12.667     353516
+B. Optimisations                                                                                    Baseline     15073    64930     8.738    146740
+                                                                                             1      Unrolling    43915   122802      9.83    118128
+                                                                                                    Pipelining   15080    65147     8.738    143662
+  Scheme       Sec.    Optimi-        FF     LUT      Clock    Latency                              Baseline     15141    65074     8.738    214832
+               Level   sation                         (nsec)                                 2      Unrolling    44323   123447      9.83    176480
+                                                                               CRYSTALS             Pipelining   15148    65293     8.738    209707
+                       Baseline     23143   110287   12.667     661369
+                                                                               -Dilithium           Baseline     15161    65055     8.738    292782
+                1      Unrolling    27004   120471   12.667     417529
+                                                                                             3      Unrolling    44329   123500      9.83    242901
+                       Pipelining   23150   110370   12.667     415145
+                                                                                                    Pipelining   15169    65274     8.738    285100
+                       Baseline     39086   137559   14.179    3696400
+                                                                                                    Baseline     15179    65141     8.738    380536
+                2      Unrolling    38797   137363   14.179    3696144
+                                                                                             4      Unrolling    44474   123746      9.83    317256
+  qTESLA               Pipelining   39086   137559   14.179    3696400
+                                                                                                    Pipelining   15187    65360     8.738    369787
+                       Baseline     25977   125921   12.667    1030252
+                3      Unrolling    27092   128486   12.667     615532
+                       Pipelining   25984   126008   12.667     587461       TABLE III: Description: Security versus area versus the
+                       Baseline     26324   128265   12.667    5307613
+                5      Unrolling    26829   129520   12.667    3176029       timing of PQC signature verifcation algorithms of baseline,
+                       Pipelining   26332   128359   12.667    2870347       loop unrolling and loop pipelining optimisations.
+                       Baseline     20912    89709     8.738    485793
+                1      Unrolling    41295   129989     8.738    417219
+                       Pipelining   20980    90266     8.738    476751
+                       Baseline     21023    89933     8.738   1259801
+                2      Unrolling    41617   130632     8.738   1158183       requirement. A server which requires faster communication,
+  CRYSTALS             Pipelining   21094    90506     8.738   1232141       can choose the design variant with best performance from the
+  -Dilithium           Baseline     21089    89991     8.738   1659851
+                3      Unrolling    42828   132103     8.738   1565100       various alternatives presented in design space exploration.
+                       Pipelining   21160    90567     8.738   1618319          We will explore the design-space for qTESLA and
+                       Baseline     21265    91098     8.738   1133399
+                4      Unrolling    43764   134037     8.738   1006900       CRYSTALS-Dilithium. Different loop unrolling and pipelining
+                       Pipelining   21322    91605     8.738   1106053       optimizations create different level of parallelism of the design.
+                                                                             Enumerating all possible loop unrolling and pipelining options
+TABLE II: Description: Security versus area versus the timing
+                                                                             will generate a series of latency, area and security level vectors.
+of PQC Signature Generation algorithms for baseline, loop
+                                                                             Each vector is a unique point in 3-dimension design space of
+unrolling and loop pipelining optimisations.
+                                                                             latency, area and security. Figure 2 shows the design space ex-
+   In this section, we will analyze Loop unrolling and Loop                  ploration points for qTESLA. For keypair generation, security
+pipelining optimization techniques to reduce the overall la-                 level 2 and 5 have much high latency than security level 1 and
+tency of the PQC algorithms. First, we fnd out and examine                   3 for all design variants. The latency saturates after initial loop
+the critical functions that results in high latency of the overall           unrolling optimization. For CRYSTALS-Dilithium security
+PQC component. Given a specifc loop scheduling and pipelin-                  level-1 keypair generation, the loop unrolling optimization is
+ing optimization, a design variant is synthesized. We try to                 reported in Table I. If the further optimization is performed, the
+ft the loop unrolling and pipelining optimizations in Artix-                 FFs and LUTs are increased 2 times but the latency remains
+7 board (by performing additional area optimizations). These                 the same. Even if the area overhead is increased signifcantly,
+loop unrolling and pipelining optimization are incorporated                  the latency does not improve. Figure 2 shows that the latency
+in the design along with baseline optimizations. With these                  increases linearly as the security level increases except for sub-
+constraints, Table I–Table III report the design variant for                 optimal security level-2. Figure 3 presents the design space
+loop unrolling and pipelining with minimum latency. Both                     exploration points for CRYSTALS-Dilithium. For all the three
+optimizations improve the performance. While loop unrolling                  components, as the security level increases, the increase in
+reduces the latency with an increase in area, loop pipelining                latency is linear and gradual. However, the area overhead
+reduces the latency keeping the LUTs and FFs similar as the                  remains same for all the security level.
+baseline implementation.
+C. Design Space Exploration
+                                                                                                    V. K EY TAKEAWAYS
+   Each system has a different PQC hardware design require-
+ment based on the usage: small IoT devices require mini-                        In this study, we have implemented 2 PQC signature
+mum area, servers require faster performance, and sensitive                  schemes using a common design framework and a common
+communication must have highest security strength. Design-                   target FPGA platform. In the end of this ongoing study, we
+space exploration helps to fnd the design variant based on the               expect to the design-space exploration 26 NIST PQC Compe-
+
+
+
+
+                                                                         3
+         Security level
+
+
+
+
+                                                                                                                                                                                                                   Security level
+                                                                                                             Security level
+                          4                                                                                                   4                                                                                                     4
+
+
+
+
+                          2                                   Security Level-1                                                2                                                                                                     2
+                                                                                                                                                                    Security Level-1                                                                                            Security Level-1
+                                                              Security Level-2                   1                                                                  Security Level-2                       1                                                                                                 1
+                                                                                                                                                                                                                                                                                Security Level-2
+                                                              Security Level-3                                                                                      Security Level-3                                                                                            Security Level-3
+                          0                                   Security Level-5
+                                                                                                     rea                      0                                     Security Level-5
+                                                                                                                                                                                                        re
+                                                                                                                                                                                                               a                    0
+                                                                                                                                                                                                                                                                                Security Level-5
+                                                                                                                                                                                                                                                                                                              re
+                                                                                                                                                                                                                                                                                                                  a
+                                                                                                 A                                  2                                                                  A                                                                                                     A
+                                                                                          d                                                                                                       ed                                                                                                     d
+                                                                                       ize                                                                                                                                                                                                           ize
+                                      20                                   2                                                                                                         2                                                          10                                     2
+                                                                                                                                                                                                iz
+                                                                                                                                             4
+                              Norm                                                                                                Norm                                                                                                  Norm
+                                     alize         40                              al                                                    alize          6                                  al                                                alize             20                               al
+                                          d La                                  m                                                              d                                       m                                                             d La                                   m
+                                                 tenc                      or                                                                        Late
+                                                                                                                                                            ncy
+                                                                                                                                                                    8
+                                                                                                                                                                                     or                                                                       tenc                     or
+                                                        y                 N                                                                                                     N                                                                                   y                 N
+
+                                                  (a)                                                                                                   (b)                                                                                                    (c)
+
+Fig. 2: Design-space exploration of qTesla, normalised with baseline security level-1 LUT and latency for functions: (a) Key
+Generation, (b) Signature Generation and (c) Signature Verifcation.
+         Security level
+
+
+
+
+                                                                                                             Security level
+
+
+
+
+                                                                                                                                                                                                                   Security level
+                          4                                                                                                   4                                                                                                     4
+
+
+
+
+                          2                                                                                                   2                                                                                                     2                                   Security Level-1
+                                                            Security Level-1                         1                                                                                                                                                                  Security Level-2
+                                                            Security Level-2                                                                                      Security Level-1                                                                                      Security Level-3
+                                                            Security Level-3                             a                                                                                                   a                                                                                                     a
+                                                                                                     re
+                          0                                                                                                   0                                   Security Level-2                                                  0                                   Security Level-4
+                                                            Security Level-5       2             A                                                                Security Level-3
+                                                                                                                                                                                           5
+                                                                                                                                                                                                           re                                                                                    5
+                                                                                                                                                                                                                                                                                                                 re
+                               1                                                                                                   1                                                                   A                                 1                                                                   A
+                              Norm                                                     iz   ed                                    Norm
+                                                                                                                                                                  Security Level-4
+                                                                                                                                                                                               ed                                       Norm                                                         e  d
+                                                                                                                                                                                            liz                                                                                                  liz
+                                             2                                                                                                   2                                                                                                     2
+                                     alize                                          al                                                  alize                3                             a                                                   alize                3                           a
+                                           d La      3                             m                                                          d La                                        m                                                            d La                                  m
+                                                                              or
+                                                                                                                                                                           10                                                                                                    10
+                                                                                                                                                                                     or                                                                                                    or
+                                                                    3
+                                               tenc                       N                                                                            tenc                                                                                                tenc
+                                                   y                                                                                                          y                 N                                                                                   y                 N
+
+                                                  (a)                                                                                                   (b)                                                                                                    (c)
+
+Fig. 3: Design-space exploration of CRYSTALS-Dilithium, normalised with baseline security level-1 LUT and latency for
+functions: (a) Key Generation, (b) Signature Generation and (c) Signature Verifcation.
+
+
+tition Round-2 algorithms. Key takeaways of this preliminary                                                                                                               with the optimizations. Loop unrolling changes signature
+study are:                                                                                                                                                                 verifcation frequency from ∼114MHz to ∼102MHz.
+                                                                                                                                                                        6) CRYSTALS-Dilithium has less area requirement com-
+  1) For qTESLA, higher the security strength, higher the                                                                                                                  pared to qTESLA for security levels 1-3, for key gener-
+     latency and timing overhead except for security level-                                                                                                                ation, signature and verifcation.
+     2. Section IV-A mentions that qTesla security level-
+     2 has ineffcient software implementation. Hence, the                                                                                                                                                                           R EFERENCES
+     hardware implementation has high area and high latency.                                                                                                       [1] P. W. Shor, “Polynomial-time algorithms for prime factorization and
+  2) For qTESLA, for all PQC functions, the optimization                                                                                                               discrete logarithms on a quantum computer,” SIAM Review, vol. 41, no. 2,
+                                                                                                                                                                       pp. 303–332, 1999.
+     techniques follow a similar trend. Loop pipelining has                                                                                                        [2] L. Chen, L. Chen, S. Jordan, Y.-K. Liu, D. Moody, R. Peralta, R. Perlner,
+     better performance than both loop unrolling and baseline                                                                                                          and D. Smith-Tone, Report on post-quantum cryptography. US Depart-
+     implementations. The area overhead for loop pipelining                                                                                                            ment of Commerce, National Institute of Standards and Technology, 2016.
+                                                                                                                                                                   [3] E. Homsirikamol and K. Gaj, “Can high-level synthesis compete against
+     is less than loop unrolling, while it is almost similar to                                                                                                        a hand-written code in the cryptographic domain? a case study,” in 2014
+     area overhead of the baseline implementation. Hence,                                                                                                              International Conference on ReConFigurable Computing and FPGAs,
+     loop pipelining is a better optimization technique for                                                                                                            2014.
+                                                                                                                                                                   [4] E. Homsirikamol and K. G. George, “Toward a new hls-based methodol-
+     qTESLA.                                                                                                                                                           ogy for fpga benchmarking of candidates in cryptographic competitions:
+  3) For CRYSTALS-Dilithium, loop unrolling provides                                                                                                                   The caesar contest case study,” in 2017 International Conference on Field
+     slightly better performance than loop pipelining across                                                                                                           Programmable Technology (ICFPT), pp. 120–127, IEEE, 2017.
+                                                                                                                                                                   [5] D. Micciancio, “Lattice-based cryptography,” in Encyclopedia of Cryp-
+     the security level, for all PQC functions. However, the                                                                                                           tography and Security, pp. 713–715, Springer, 2011.
+     area overhead is at least 10% higher for loop unrolling.                                                                                                      [6] R. Cramer, L. Ducas, and B. Wesolowski, “Short stickelberger class rela-
+     Hence, loop pipelining is better optimization technique                                                                                                           tions and application to ideal-svp,” in Annual International Conference on
+                                                                                                                                                                       the Theory and Applications of Cryptographic Techniques, pp. 324–348,
+     for both signature schemes used in this study.                                                                                                                    Springer, 2017.
+  4) With an increase in security strength, latency of designs                                                                                                     [7] K. Basu, D. Soni, M. Nabeel, and R. Karri, “Nist post-quantum
+     increase signifcantly, but not the area overhead.                                                                                                                 cryptography- a hardware evaluation study.” Cryptology ePrint Archive,
+                                                                                                                                                                       Report 2019/047, 2019. https://eprint.iacr.org/2019/047.
+  5) For CRYSTALS-Dilithium, the clock period increases
+
+
+
+
+                                                                                                                                                            4
+

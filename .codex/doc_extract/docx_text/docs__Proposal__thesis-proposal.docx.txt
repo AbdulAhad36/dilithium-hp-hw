@@ -1,0 +1,586 @@
+﻿NED University of Engineering & Technology
+
+Department of Electronics
+
+Proposal for M.Engg Electronics - Specialization in Integrated Circuit Design
+
+Thesis (EL-5002)
+
+“Hardware Design and Verification of Dilithium – Post Quantum Digital Signature Algorithm”
+
+Student Name 
+
+ Muhammad Abdul Ahad S/o Muhammad Azeem 
+
+Roll No/Batch 
+
+EL-25B5008 
+
+Program 
+
+M.Engg Electronics - Specialization in Integrated Circuit Design (Evening) 
+
+Name of Supervisor 
+
+Dr. Fahim Ul Haq (Assistant Professor Telecommunication Department NEDUET) 
+
+Duration 
+
+Spring 2026 to Fall 2026 
+
+Hardware Design and Verification of Dilithium – Post Quantum Digital Signature Algorithm
+
+Table of Contents
+
+ Abstract 3
+
+ Introduction and Motivation 3
+
+ Literature Review 4
+
+ Proposed Research Work 6
+
+ Research Methodology 6
+
+ Work Schedule 8
+
+ References 9
+
+Abstract
+
+Post-quantum cryptographic approaches are becoming increasingly important to ensure long-term security in digital systems and embedded platforms, as traditional public-key cryptography may be compromised by the emergence of quantum computers. One of the post-quantum signature schemes standardized by the National Institute of Standards and Technology is CRYSTALS-Dilithium, which is built on lattice-based cryptographic principles and offers strong security guarantees with practical efficiency. However, the algorithm involves heavy computational workloads, especially in polynomial arithmetic and Number Theoretic Transform calculations., which can significantly reduce the efficiency of implementations that rely only on software.
+
+This thesis investigates the design and implementation of CRYSTALS-Dilithium at the register- transfer level (RTL). The proposed design focuses on accelerating the main computational components of the algorithm, including polynomial processing, Number Theoretic Transform operations, and cryptographic hashing functions. The implementation is developed in Verilog by analyzing the reference C implementation and translating its functional components into specialized hardware modules. The functional correctness of the design is verified through simulation-based validation. The study demonstrates that hardware acceleration can significantly improve the practicality of deploying CRYSTALS-Dilithium in security-sensitive and long-lifetime embedded systems.
+
+ Introduction and Motivation
+
+Modern digital platforms rely heavily on cryptographic techniques to provide secure communication, maintain data integrity, and support authentication mechanisms. Functions such as secure boot, firmware verification, digital certificates, and protected communication channels depend on signature schemes to establish trust and detect unauthorized modifications. Widely deployed asymmetric cryptographic methods, such as RSA and Elliptic Curve Cryptography, are commonly used to support these security requirements. The protection offered by these schemes is based on the computational difficulty of solving certain mathematical problems using conventional computing systems
+
+Recent advancements in quantum computing have raised serious concerns about the long-term reliability of currently deployed cryptographic systems. Certain quantum algorithms are expected to solve computational problems such as integer factorization and discrete logarithms far more efficiently than classical algorithms. Since the security of schemes like RSA and Elliptic Curve Cryptography depends on the hardness of these problems, the emergence of large-scale quantum computers could significantly weaken their security. This potential risk has motivated extensive research into Post-Quantum Cryptography, a field focused on developing new cryptographic methods designed to remain secure even in the presence of quantum-capable attackers.
+
+One of the major results of ongoing research in quantum-resistant security is the development of the CRYSTALS-Dilithium signature scheme, which has been standardized by the National Institute of Standards and Technology within its program for next-generation cryptographic standards. Dilithium is built on lattice-based cryptographic techniques and offers strong security properties together with relatively efficient implementation characteristics. Nevertheless, the algorithm relies heavily on polynomial computations and repeated Number Theoretic Transform operations, which may introduce performance challenges when the scheme is implemented entirely in software.
+
+This work aims to address these challenges by implementing the Dilithium signature scheme using a hardware-oriented design. Dedicated modules are developed for the algorithm’s most computationally demanding operations in order to enhance processing efficiency and lower power consumption compared to conventional software implementations. Such optimizations are especially valuable for embedded platforms that operate under strict resource constraints while requiring long- term cryptographic protection. Furthermore, the proposed design may provide a useful basis for subsequent studies in hardware acceleration of cryptographic algorithms, energy-efficient security architectures, and the development of side-channel-resistant post-quantum systems.
+
+ Literature Review
+
+Advances in quantum computing have created serious concerns about the long-term reliability of currently deployed asymmetric cryptographic systems. Certain quantum algorithms, most notably Shor's Algorithm, indicate that future large-scale quantum computers may be capable of solving computational problems such as integer factorization and discrete logarithms far more efficiently than classical machines. Since the security of widely deployed schemes including RSA and Elliptic Curve Cryptography depends on the hardness of these problems, the emergence of quantum computing threatens the security assumptions on which these systems are built. Consequently, researchers have focused on developing alternative cryptographic techniques whose security is expected to remain reliable even in the presence of quantum-capable adversaries [1].
+
+Among the various approaches proposed for quantum-resistant security, lattice-based cryptography has gained substantial attention due to its solid mathematical foundations and favorable implementation characteristics. A comprehensive survey by Daniel J. Bernstein and collaborators highlighted several post-quantum cryptographic constructions and identified lattice-based methods as particularly promising candidates for long-term security [1]. These schemes are typically derived from difficult lattice problems, including the Learning With Errors problem, for which efficient solving techniques using either classical or quantum computers are not currently known.
+
+In order to establish secure cryptographic standards suitable for the quantum era, the National Institute of Standards and Technology launched an international multi-year program dedicated to the evaluation and standardization of post-quantum cryptographic algorithms [2]. Candidate schemes were analyzed through several rounds of evaluation, where their security properties, computational performance, and practical implementation aspects were carefully assessed. Following this process, CRYSTALS-Dilithium was selected as one of the standardized signature algorithms for post-quantum applications. The decision was influenced by its strong security assurances, relatively straightforward design, and competitive performance compared with alternative lattice-based signature constructions.
+
+The design principles and security evaluation of the Dilithium signature scheme were originally presented by Léo Ducas and co-authors [3]. Their work demonstrated that the scheme achieves strong unforgeability guarantees while maintaining practical key sizes and signature lengths. The algorithm relies extensively on polynomial arithmetic operations, with efficient polynomial multiplication performed using the Number Theoretic Transform. Although optimized software implementations are available, these operations can still impose considerable computational overhead when executed on general-purpose processors, particularly in embedded environments with limited processing capability.
+
+Several studies have therefore evaluated the performance of Dilithium implementations on microcontrollers and other embedded platforms. These investigations highlight practical challenges related to execution latency, memory consumption, and energy usage. In applications that require strict real-time performance or operate under low-power constraints, purely software-based implementations may not provide adequate efficiency, motivating the exploration of hardware- accelerated solutions.
+
+To overcome these challenges, researchers have explored specialized hardware architectures for accelerating lattice-based cryptographic algorithms. For example, Sujoy Sinha Roy and colleagues developed an FPGA-based implementation of CRYSTALS-Dilithium that demonstrated notable improvements in throughput and latency relative to software implementations [4]. Their design emphasized accelerating the computational stages that dominate the algorithm’s execution time, particularly the Number Theoretic Transform. Likewise, Utsav Banerjee and collaborators investigated optimized hardware architectures for NTT processing and showed that architectural techniques such as pipelining and parallelism can significantly enhance the efficiency of lattice-based cryptographic computations [5].
+
+More recent research has also explored hardware–software co-design strategies to balance flexibility with computational performance. Yiming Mao and co-authors proposed a configurable co-design architecture for Dilithium in which the most computationally intensive components are implemented in hardware while other tasks remain in software [6]. This approach enables improved performance while maintaining adaptability across different hardware platforms.
+
+Beyond performance-focused implementations, some studies emphasize open and reproducible hardware designs for post-quantum cryptographic systems. Pieter Norga introduced an open-source hardware design known as ML-DSA-OSH, which provides an efficient implementation of the ML- DSA signature algorithm closely related to Dilithium [7]. Such open architectures allow researchers to experiment with, validate, and further optimize hardware implementations of post-quantum cryptographic primitives.
+
+Overall, prior studies indicate that dedicated hardware realizations of lattice-based cryptographic algorithms can provide substantial improvements in processing speed and energy efficiency when compared with implementations executed on general-purpose processors. However, many existing designs emphasize platform-specific optimizations or incorporate sophisticated countermeasures against side-channel attacks, which often increases architectural complexity.
+
+Therefore, there remains a need for hardware implementations that emphasize modularity, resource efficiency, and clear architectural organization while maintaining functional correctness. The objective of this work is to develop a register-transfer-level implementation of the CRYSTALS- Dilithium signature algorithm that can act as a baseline architecture for future optimization and security enhancement.
+
+ Proposed Research Work
+
+Research Problem
+
+Software based implementations of CRYSTALS Dilithium suffer from high computational complexity, increased latency, and elevated power consumption, limiting their suitability for embedded and real time security applications.
+
+Objectives
+
+The objectives of this research are to design an efficient hardware architecture for Dilithium, implement key cryptographic modules including polynomial arithmetic and Number Theoretic Transform, verify functional correctness through simulation, and evaluate performance in terms of latency, area, and power consumption.
+
+Scope
+
+This research focuses on hardware implementation of Dilithium signing and verification modules using Verilog. The study includes architectural optimization and performance evaluation but excludes physical chip fabrication.
+
+Limitations
+
+The work is limited to a selected parameter set of Dilithium and does not address advanced countermeasures related to comprehensive side channel attack protection.
+
+ Research Methodology
+
+The research will follow a structured methodology consisting of algorithm analysis, architectural decomposition, module level RTL design, integration of cryptographic blocks, and functional verification using simulation tools. The study will begin with analysis of the reference C implementation to identify computational bottlenecks. Key modules including polynomial multiplication, Number Theoretic Transform, hashing, and control logic will be mapped to dedicated hardware blocks.
+
+The design will be implemented using Verilog and verified through testbench driven simulation. Performance metrics including execution latency, resource utilization, and power estimation will be collected using FPGA synthesis tools. The research hypothesis is that hardware acceleration significantly improves Dilithium performance compared to software implementations on embedded processors.
+
+316991316991
+Flow of Work:
+
+1334364176517
+
+ Work Schedule (Gantt Representation)
+
+Work Breakdown 
+
+Months 
+
+ 
+
+TH 1 
+
+TH 2 
+
+ 
+
+1 
+
+2 
+
+3 
+
+4 
+
+5 
+
+6 
+
+7 
+
+8 
+
+9 
+
+10 
+
+11 
+
+12 
+
+Literature study and algorithm understanding 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Requirement analysis and architecture design 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Design and Verification of Hashing module 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Design and Verification of polynomial arithmetic module 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Design and Verification of Number Theoretic Transform module 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Complete hardware design Testbench development and verification 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Performance evaluation and optimization 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+Documentation and thesis writing 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ References
+
+ Bernstein, D. J., Buchmann, J., and Dahmen, E., Post Quantum Cryptography, Springer, Berlin, 2009.
+
+ National Institute of Standards and Technology, Post Quantum Cryptography Standardization Project, NIST, 2022.
+
+ Ducas, L., Kiltz, E., Lepoint, T., Lyubashevsky, V., Schwabe, P., Seiler, G., and Stehlé, D., CRYSTALS Dilithium: Algorithm Specifications and Supporting Documentation, NIST PQC Round 3, 2020.
+
+ Roy, S., Vercauteren, F., Verbauwhede, I., and Mentens, N., “High Performance Hardware Implementation of CRYSTALS Dilithium,” IEEE Transactions on Computers, vol. 70, no. 9,
+
+pp. 1459–1473, 2021.
+
+ Banerjee, U., Pöppelmann, T., and Gaj, K., “Efficient Number Theoretic Transform Architectures for Lattice Based Cryptography,” IEEE International Symposium on Hardware Oriented Security and Trust, 2020.
+
+ Mao, G., Chen, D., Li, G., and Dai, W., “High-performance and Configurable SW/HW Co- design of Post-quantum Signature CRYSTALS-Dilithium,” City University of Hong Kong / Zhejiang Lab ,2023.
+
+ Norga, Q., Kundu, S., and Verbauwhede, I., “ML-DSA-OSH: An Efficient, Open-Source Hardware Implementation of ML-DSA (Full Version).”, 2025.
+
+thesis-proposal_rev1.pdf
+
+524257161542
+
+9
+
+9ORIGINALITY REPORT
+
+%
+
+SIMILARITY INDEX
+
+6%
+
+INTERNET SOURCES
+
+7%
+
+PUBLICATIONS
+
+%
+
+STUDENT PAPERS
+
+PRIMARY SOURCES
+
+524257192124
+
+ 1 
+
+ 1 536965628816
+
+3
+
+3www.mdpi.com
+
+ 
+Internet Source 
+%
+
+ 536965628816
+
+3%
+
+3%
+ 
+2
+ 
+ "Quantum Protocols in Blockchain Security", Springer Science and Business Media LLC,
+
+2025
+
+Publication
+
+524257192124
+
+ 3 
+
+ 3 536965628816
+
+1
+
+1link.springer.com
+
+ 
+Internet Source 
+%
+
+ 536965628816
+
+1%
+
+1%
+ 
+4
+ 
+ Bhupendra Singh, Mohankumar Mylsamy, Thamaraimanalan Thangarajan. "Quantum
+
+Algorithms and Their Applications in Cryptology - A Practical Approach", CRC Press, 2025
+
+Publication
+
+524257192123
+
+ 5 
+
+ 5 536965628816
+
+1
+
+1pages.cpsc.ucalgary.ca
+
+ 
+Internet Source 
+%
+
+ 536965628816
+
+1%
+
+1%
+ 
+6
+ 
+ Benjamin Bowes, Tzvetan Metodi, Samuel Gasster, Leo Marcus, Stephen Reed. "Impact of Quantum Information Technology on
+
+Future National Security Space", AIAA SPACE 2011 Conference & Exposition, 2011
+
+Publication
+
+524257192123
+
+ 7 
+
+ 7 536965628816
+
+1
+
+1dmt.neduet.edu.pk
+
+ 
+
+412192301653
+
+4121921056222
+Internet Source 
+%
+
+I certify that the above M.Engg thesis proposal is prepared by me under the guidance of my supervisor and/or co-supervisor. I will carry out this research project with academic integrity, research ethics and punctuality. If my performance is found unsatisfactory in the mid-year evaluation or any time during this research project, my enrollment in M.Engg thesis may be cancelled.
+
+Signature of Student with date
+
+I certify that the above M.Engg thesis proposal is prepared by me under the guidance of my supervisor and/or co-supervisor. I will carry out this research project with academic integrity, research ethics and punctuality. If my performance is found unsatisfactory in the mid-year evaluation or any time during this research project, my enrollment in M.Engg thesis may be cancelled.
+
+Signature of Student with date
+
+For Office Use Only
+
+Recommendations / Comments
+
+ Supervisor and/or Co-Supervisor:
+
+838835150907
+
+I / We agree to supervise the above-mentioned student. I / We verify that the M.Engg thesis proposal was prepared by the student with my / our consultation and the similarity index of this proposal is less than 20%.
+
+Supervisor Signature with date
+
+Co-Supervisor Signature with date
+
+I / We agree to supervise the above-mentioned student. I / We verify that the M.Engg thesis proposal was prepared by the student with my / our consultation and the similarity index of this proposal is less than 20%.
+
+Supervisor Signature with date
+
+Co-Supervisor Signature with date
+
+ Post Graduate Coordinator (PGC):
+
+842010153658
+
+I certify that the above student has / has not achieved the minimum requirement /eligibility to enroll in M.Engg thesis (EL-5002) as defined in the postgraduate regulations of NED University of Engineering & Technology.
+
+The above student may / may not be recommended to enrolled in M.Engg thesis.
+
+PGC Signature with date
+
+I certify that the above student has / has not achieved the minimum requirement /eligibility to enroll in M.Engg thesis (EL-5002) as defined in the postgraduate regulations of NED University of Engineering & Technology.
+
+The above student may / may not be recommended to enrolled in M.Engg thesis.
+
+PGC Signature with date
+
+ Chairperson:
+
+835025154703
+
+This proposal is / is not recommended to be discussed in BoS.
+
+Chairman Signature with date
+
+This proposal is / is not recommended to be discussed in BoS.
+
+Chairman Signature with date
+
+ BoS Recommendation:
+
+841692156862
+
+This proposal is discussed in the BoS held,
+
+ . This proposal is recommended to be Approved / Approved with correction / Rejected.
+
+Chairman Signature with date
+
+This proposal is discussed in the BoS held,
+
+ . This proposal is recommended to be Approved / Approved with correction / Rejected.
+
+Chairman Signature with date
+
+
+370941510085350
+
+ PAGE 2
+
+ PAGE 2
+

@@ -1,0 +1,618 @@
+      High-Performance Hardware Implementation of
+                 CRYSTALS-Dilithium
+                                          Luke Beckwith, Duc Tri Nguyen, Kris Gaj
+                                              George Mason University, USA
+                                           {lbeckwit, dnguye69, kgaj}@gmu.edu
+
+
+   Abstract—Many currently deployed public-key cryptosystems         the Register Transfer Level (RTL) using Verilog. In particular,
+are based on the difficulty of the discrete logarithm and integer    we make the following contributions:
+factorization problems. However, given an adequately sized quan-
+                                                                       • We present the first combined architecture capable of
+tum computer, these problems can be solved in polynomial time
+as a function of the key size. Due to the future threat of quantum        performing key generation, signature generation, and sig-
+computing to current cryptographic standards, alternative algo-           nature verification and selecting between security levels
+rithms that remain secure under quantum computing are being               at runtime.
+evaluated for future use. One such algorithm is CRYSTALS-              • Our design achieves the lowest latency for all operations
+Dilithium, a lattice-based digital signature scheme, which is
+a finalist in the NIST Post Quantum Cryptography (PQC)                    while maintaining a smaller area than existing high-
+competition. As a part of this evaluation, high-performance im-           performance implementations.
+plementations of these algorithms must be investigated. This work      • We present a new signature generation implementation
+presents a high-performance implementation of CRYSTALS-                   approach based on splitting the signature generation re-
+Dilithium targeting FPGAs. In particular, we present a design             jection loop into a two-stage pipeline to balance latency
+that achieves the best latency for an FPGA implementation to
+date. We also compare our results with the most-relevant previous         and area utilization.
+work on hardware implementations of NIST Round 3 post-
+                                                                                         II. P REVIOUS W ORK
+quantum digital signature candidates.
+   Index Terms—Post-Quantum Cryptography, Digital Signature,            The existing hardware and software/hardware implementa-
+Number Theoretic Transform, FPGA                                     tions of digital signatures schemes qualified to Round 3 of
+                                                                     the NIST PQC standardization process are summarized in
+                      I. I NTRODUCTION                               Table I. It is worth noting that GeMSS and FALCON are
+   Current public key cryptographic standards, such as RSA           also candidates still under consideration, but they lack any
+and ECC, rely on the difficulty of the integer factoriza-            reported hardware implementations and thus are not included
+tion and the discrete logarithm problem. However, with a             in our comparisons. Hardware design may focus either on
+sufficiently large quantum computer, Shor’s algorithm [1]            maximizing performance or minimizing the area and power
+can be applied to solve these problems in superpolynomial            the design consumes. These approaches lead to substantial
+run time [2]. While there is no known quantum computer               differences in hardware architecture, and thus both types
+capable of running Shor’s algorithm to break current public-         of implementations are important to measure an algorithm’s
+key standards, the process of selecting, standardizing, and          performance in hardware. Therefore, the implementations in
+deploying a new public-key cryptosystems may take a sub-             Table I are split into High-Speed or Lightweight. However,
+stantial amount of time. In 2016, NIST announced the Post-           the dividing line is not always apparent as designs may seek
+Quantum Cryptography (PQC) standardization process aimed             to make area/performance trade offs. These labels are to help
+at developing new public-key standards resistant against quan-       differentiate the results of various implementations, but should
+tum computers. In July 2020, NIST selected seven third-              not be considered absolute.
+round finalists, including two lattice-based digital signature          There are currently two existing full hardware designs for
+schemes: CRYSTALS-Dilithium and FALCON. All remaining                Dilithium. In [3], a high-performance design for Dilithium
+candidates are currently being evaluated in terms of their           version 2 [10] is described. The authors report area for
+security, key and ciphertext/signature size, performance in          individual modules instantiated for level 3 and performance
+both software and hardware, and several other criteria. While        for security levels 1-4. They utilized a 2 × 2 NTT butterfly
+software implementations are relatively easy to develop and          arrangement to calculate two layers of the NTT at a time.
+benchmark, hardware implementations require a lot of time            This NTT module is duplicated several times within the key
+and design effort to determine their efficiency in terms of          generation, sign, and verify modules to improve performance
+speed, area, power, and energy. FPGA implementations of              through parallelization. Another implementation, [6], describes
+PQC submissions are necessary to provide insight into the            a mid-range implementation for version 3.1 of Dilithium,
+cost and performance of these algorithms in hardware.                which focuses on achieving the best performance possible with
+Contributions. In this work, we present a high-performance           reasonable resource utilization. This design consists of three
+FPGA implementation of CRYSTALS-Dilithium designed at                top-level modules each capable of performing all operations
+TABLE I: Hardware implementations reported for Round 3               Algorithm 1: Dilithium Key Generation
+digital signature schemes
+                                                                      Input: ζ ∈ {0, 1}256
+           Algorithms          High-Speed         Lightweight         Output: pk = (ρ, t1 ), sk = (ρ, K, tr, s1 , s2 , t0 )
+                                                                    1 (ρ, σ, K) ← H(ζ)
+                          Lattice-based
+                                                                    2 A ←ExpandA(ρ)         s1 , s2 ←ExpandS([(σ, 0), (σ, l)])
+      CRYSTALS-Dilithium       [3]                [4], [5]∗ , [6]
+                                                                    3 t ← A · s1 + s2
+                          Multivariate                              4 (t0 , t1 ) ← Power2Round(t, d)
+                                                                                    256
+      Rainbow                  [7]∗∗              –                 5 tr ← {0, 1}       := H(ρ||t1 )
+                        Symmetric-based
+      Picnic                   [8]                –
+      SPHINCS+                 [9]                –
+                                                                    signature creation and verification. To generate the signature,
+                      ∗ extended version of [4]                     the inputs are the private key and message of the sender. Then,
+           ∗∗ only for Round 1 and Round 2 parameter sets           the receiver can use the public key of the sender and the
+                                                                    message to verify the signature.
+                                                                       As seen in Algorithm 1, key generation closely resembles
+at a single security level, as well as individual module which      the description of the M-LWE problem with (A, t) serving
+only perform a single operation at a single security level.         as the public key with two optimizations: the seed ρ is used
+                      III. BACKGROUND                               instead of the actual A matrix, and only the upper bits of t
+                                                                    are included. This second change nearly halves the size of the
+A. Number Theoretic Transform
+                                                                    key, but requires that a small hint is added to the signature.
+   The Number Theoretic Transform (NTT) is a form of                The only modifications to the secret key are the inclusion of
+the Fast Fourier Transform (FFT) which can be efficiently           the lower bits of t and two byte-arrays K, tr used in sign.
+performed over the ring Rq = Zq [x]/(xn + 1) in O(n log n),
+where n is power of 2 and q ≡ 1(mod 2n). Polynomial                   Algorithm 2: Dilithium Signature Generation
+multiplication can be efficiently calculated using the NTT as
+                                                                       Input: sk = (ρ, K, tr, s1 , s2 , t0 ), M ∈ {0, 1}∗
+follows: a × b = N T T −1 (N T T (a) ◦ N T T (b)), where ◦ is
+                                                                       Output: σ = (ĉ, z, h)
+point-wise multiplication of the polynomial coefficients. This
+                                                                     1 A ←ExpandA(ρ)           µ ← H(tr||M ) ρ0 ← H(K||µ)
+approach reduces the complexity of polynomial multiplication
+                                                                     2 k ←0       abort ← 1
+from O(n2 ) to O(n log n). By default, Dilithium uses Number
+                                                                     3 while abort do
+Theoretic Transform (NTT) as a part of MatrixVectorMul
+                                                                     4    abort ← 0
+(matrix-by-vector) A · s and InnerProd (vector-by-vector)
+                                                                     5    y ←ExpandMask(ρ0 , k)
+s · s0 multiplication. With (s, s0 ) ∈ Rq and A ∈ Rqk×l , where
+                                                                     6    w ←A·y
+k × l denote the dimensions of matrix A.
+                                                                     7    w1 ←HighBitsq (w, 2γ2 )
+B. Dilithium Overview                                                8    ĉ ← H(µ||w1 )
+   Dilithium is a member of the Cryptographic Suite for Alge-        9    c ←SampleInBall(ĉ)
+braic Lattices (CRYSTALS) along with the Key Encapsulation          10    z ← y + c · s1
+Mechanism (KEM) Kyber. The core operations of Dilithium             11    r0 =LowBits(w − c · s2 , 2γ2 )
+are the arithmetic of polynomial matrices and vectors. Unlike       12    if ||z||∞ ≥ γ1 − β or ||r0 ||∞ ≥ γ2 − β then
+many other Module Learning with Errors (M-LWE) cryptosys-           13         abort ← 1
+tems, all polynomials in Dilithium are uniformly sampled,           14    else
+which greatly simplifies polynomial generation. As described        15         h ←MakeHint(−c · t0P      , w − c · s2 + c · t0 , 2γ2 )
+in [11], Dilithium is a Fiat-Shamir with Aborts [12], [13] style    16         if ||c · t0 ||∞ ≥ γ2 or      hi > ω then
+signature scheme, and bases its security upon the M-LWE             17              abort ← 1
+and Shortest Integer Solution (SIS) problems. The M-LWE             18    k =k+l
+problem can be briefly described as follows: Let A ∈ Rqk×l be
+uniformly chosen, s1 ∈ Rql , and s2 ∈ Rqk . Then, the standard         In Algorithm 2, signature generation is described. This is
+M-LWE problem is to distinguish (A, A · s1 + s2 ) from (A, u)       the most complex and costly operation of Dilithium. The goal
+where u is a uniformly chosen vector. The SIS problem can           when signing is to generate a polynomial pair (c, z = y + cs1 )
+be briefly described as follows: Let A be a uniformly chosen        using the secret key and message. However, since the z is
+Rqk×l matrix, then find a non-zero vector x ∈ Rql such that the     closely related to the s1 , the algorithm must check that the
+norm of x is less than β for some β and A · x = 0.                  signature does not leak information about this secret value.
+   The three core algorithms of Dilithium are key gener-            This is done by checking that the max norm of the polynomial
+ation, signature generation, and signature verification. Key        is within an acceptable predefined range. If it is not, the
+generation creates a public and secret key pair composed of         signature must be rejected, and a new attempt is made. The
+polynomials and byte-array seeds. These keys are used for           max norm of a vector is represented as ||x||∞ and is the
+ Algorithm 3: Dilithium Signature Verification                      TABLE II: Dilithium parameters for version 3.1 at all security
+                                                                    levels 2, 3, 5.
+  Input: pk = (ρ, t1 ), M ∈ {0, 1}∗ , σ = (ĉ, z, h)
+  Output: Valid or Invalid                                                                                         Value
+                                                                                     Parameter
+                                                                                                            2        3       5
+1 A ←ExpandA(ρ)
+                                                                                      q [modulus]              223 − 213 + 1
+2 µ ← H(H(ρkt1 )kM )                                                            d [dropped bit from t]              13
+3 c ←SampleInBall(ĉ)                                                             τ [# of +/- 1’s in c]     39      49      60
+                                           d                                   ω [max # of 1’s in hint]     80      55      74
+4 (w1 , w0 ) ←UseHint(h, A · z − c · t1 · 2 )
+                                            P                                 (k, l) [Vector Dimensions]   (4,4)   (6,5)   (8,7)
+5 if ||z||∞ < γ1 − β & ĉ = H(µ||w1 ) &        hi ≤ ω then                          η [secret range]         2       4       2
+6      return Valid
+7 return Invalid
+                                                                    implementation and scheduling of the design. The high-level
+                                                                    block diagram is shown in Fig. 3.
+                                                                       Within Dilithium, there is a substantial amount of data
+coefficient in the polynomial vector with the largest absolute
+                                                                    dependence between operations, which allows little room for
+value. As discussed in key generation, a hint is also needed to
+                                                                    high-level parallelization. To improve performance: 1. We
+ensure the signature can be verified. The hint specifies which
+                                                                    optimize our polynomial arithmetic units as much as possible
+coefficients of t1 require a carry bit during the verification
+                                                                    to decrease the latency of any individual operation; 2. We split
+algorithm. This adds another rejection condition, since there
+                                                                    the rejection loop in the signature generation unit into a two-
+is a maximum number of hints that the signature can support.
+                                                                    stage pipeline similar to the work performed in Beckwith et
+Depending on the security level, between 3 and 5 attempts are
+                                                                    al. [16]. We also parallelize the other submodules as needed
+required on average to generate a valid signature.
+                                                                    to minimize the stall and wait delays in polynomial arithmetic
+   In Algorithm 3, verification attempts to recreate the ĉ seed
+                                                                    modules.
+using the message, public key, and signature. Presuming all
+inputs are valid, w1 can be recreated as follows:                   A. Polynomial Arithmetic
+       w = A · z − c · t = A · (y + c · s1 ) − c · (A · s1 + s2 )      In our design, the polynomial arithmetic unit, PolyArith,
+                                                                    is responsible for polynomial multiplication (including the
+ =⇒ w = A · y − c · s2
+                                                                    NTT), addition, and subtraction. The NTT operation is used
+The higher order bits of this value can then be hashed with µ       to accelerate the polynomial multiplication operation as ap-
+which is generated using the public key and message. Since          propriate. For multiplication, Barrett reduction is used as it
+s2 and c have small coefficients, it will not contribute to the     can be implemented efficiently in hardware through the use
+upper bits and the hash will match the value generated in           of shifts and additions in place of constant multiplication. Our
+sign. In practice, the polynomials are not sent directly in their   design utilizes four butterfly units, each capable of performing
+polynomial form but are instead serialized into a byte array to     the basic arithmetic operation as well as the Cooley-Tukey and
+more efficiently pack the keys and signatures.                      Gentlemen-Sande butterfly operations. This design choice was
+                                                                    centered around the NTT as it is the most costly and complex
+C. Dilithium Parameters                                             polynomial operation. With four butterflies, our design can
+   First submitted to the PQC competition as [14], Dilithium        make use of a 2 × 2 butterfly arrangement, which reduces
+has gone through several parameter modifications during the         the cost of memory access in the NTT by processing two
+NIST PQC standardization process. The current version de-           layers at once. Between every layer, the NTT pipeline must
+tailed in [11] was adjusted to better fit the NIST security         be stalled to wait for the write back to complete. Our 2 × 2
+levels than the previous round 2 submission [10], primarily         arrangement reduces the number of write-back conflicts and
+by adjusting the k, l dimension parameters. The parameters          is further combined with coefficient rearrangement, reducing
+for the current version can be seen in Table II. All versions       stall lengths. This is an optimal tradeoff, as it provides better
+of Dilithium make use of the SHAKE128 and SHAKE256                  performance than processing a single layer at once but does
+operation modes of the Keccak hash function, standardized in        not utilize excessive resources. The next viable arrangement
+[15]. These functions are used for two applications: generation     would be to use 16 butterflies in a 4×4 arrangement. However,
+of pseudorandom data for all uniform sampling of polynomials        this would increase the area by a factor of 4 and only provide
+and for hashing. SHAKE128 is used for sampling of the A             minimal performance improvement as our 2 × 2 approach
+matrix and SHAKE256 for all other sampling and hashing.             removes almost all stalls. Since the butterfly hardware is
+                                                                    reused for all polynomial arithmetic, four coefficients are
+                  IV. H ARDWARE D ESIGNS                            processed in parallel for all operations.
+   We present architectures for key generation, signature gen-         1) 2 × 2 NTT: Our design for the 2 × 2 NTT unit, shown
+eration, and signature verification. All operations are supported   in Fig. 1, builds upon the pipelined NTT design by Nguyen et
+at security levels 2, 3, and 5, as defined in Bai et al. [11] and   al. [17], [18], which processed 4 coefficients per clock cycle
+Table II. This section will discuss the main subcomponents          and 2 NTT layers at once. The ideal cost of Forward and
+used to implement the Dilithium algorithms and the high-level       Inverse NTT is n4 · log2 n clock cycles, where n is the degree
+         Inverse NTT ROM:                                                      Address     TAddr     Read                           Addr_FIFO                                4xFIFO
+            [ 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60,     Resolver              Address                                        Wb_TAddr
+                                                                                                                                                                      Fin                 Fout
+              1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57, 61,
+                                                                                                                      TAddr
+                                                                                            6                                  6                6
+              2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62,               Wb_TAddr Write
+              3, 7, 11, 15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55, 59, 63 ]
+
+ RAddr                                                                                       6
+                                                                                                   Address               Fin       Fout
+   6
+                             6                                                             Wb_Data                                                                                     Wb_Data
+           [ 0, 16, 32, 48, 1, 17, 33, 49, 2, 18, 34, 50, 3, 19, 35, 51,                             Din       Dout
+             4, 20, 36, 52, 5, 21, 37, 53, 6, 22, 38, 54, 7, 23, 39, 55,
+            8, 24, 40, 56, 9, 25, 41, 57, 10, 26, 42, 58, 11, 27, 43, 59,
+            12, 28, 44, 60, 13, 29, 45, 61, 14, 30, 46, 62, 15, 31, 47, 63 ]
+                                                                                                     RAM:
+         Forward NTT ROM:                                                                                                                            buttefly units         Fin Fout
+
+                                     Fig. 1: 2 × 2 NTT with Address Resolver, 4×FIFO for data, Addr FIFO for indices
+
+
+of the polynomial. The BRAM stores 4 coefficients per row                                                              Algorithm 4: Address Resolver ROM calculation
+and uses n/4 rows. In case of Dilithium n = 256. Thus, the                                                              Input: Representation address (RAddr) i
+polynomial configuration is 64 × 4 coefficients, corresponding                                                          Output: True address (TAddr)
+to the 64 × 96-bit RAM. Instead of multiplying with n−1                                                               1 if mode = Forward NTT then
+in the last stage of Inverse NTT, we incorporate the divide-                                                          2     return (i mod 4) × 16 + i/4
+by-2 technique [19] into the four 2 × 2 butterfly units at                                                            3 else if mode = Inverse NTT then
+every level of the Inverse NTT. Each butterfly unit is deeply                                                         4     return (i mod 16) × 4 + i/16
+pipelined and uses DSP units to improve critical path. Please                                                         5 else
+note that the Forward and the Inverse NTT use Decimation-                                                             6     return i
+In-Frequency (DIF) and Decimation-In-Time (DIT) variant of
+NTT, respectively. Hence, all butterfly units in our design must
+support both DIF and DIT, so that a single 2 × 2 NTT unit is
+                                                                                                                      a 4 × 4 matrix of intermediate data. This transpose operation
+capable of performing both Forward and Inverse NTT.
+                                                                                                                      must be executed before data enters the butterfly unit in
+   2) Address Resolver: The Address Resolver unit, shown                                                              Forward NTT (DIF) and after it exits this unit in Inverse
+in Fig. 1, is responsible for converting the Representation                                                           NTT (DIT). The same 4×FIFO unit is used for both of these
+Address (RAddr) in the NTT algorithm to True Address                                                                  operations. Internally, this unit is composed of registers and an
+(TAddr) at the first time read in RAM. It does so by using                                                            output MUX. It is capable of storing data in rows and reading
+two 64 × 6 ROMs to map the address or by passing the input                                                            them in columns, and vice versa.
+without any change when performing an operation which does
+not need any address resolving. Contents of the respective                                                            B. BRAM Configuration
+ROMs, Forward NTT ROM and Inverse NTT ROM, are shown                                                                     As discussed in previous sections, the polynomial arithmetic
+Fig. 1. To determine the contents of ROMs, we examined the                                                            modules process four coefficients per clock cycle. Thus, the
+order of indices before and after the NTT transform, such                                                             bandwidth requirement is 96 = 4 × 24 bits. The smallest
+that the conversion between RAddr and TAddr guarantees                                                                true dual port BRAM configuration that can accommodate
+that the RAM words RAddr refers to are always correct.                                                                this width in today’s Xilinx FPGAs is composed of three 36-
+The construction of the mapping tables depends only on the                                                            kbit BRAMs, each configured as 1024x36 memory [20]. This
+parameter n and the writeback pattern of the FIFO buffer,                                                             configuration can efficiently store two vectors of polynomials
+which are fixed at runtime. We decided to use ROM-based                                                               at the security level 5, with the 4 · 24/3 · 36 = 89% utilization
+approach since the entire ROM content is able to fit in a single                                                      of each memory row. This structure allows us to efficiently
+6-input LUT. It should be noted that the ROM content can also                                                         utilize BRAM for polynomial storage, leading to lower BRAM
+be computed on the fly using the Algorithm 4. With Address                                                            utilization than previously reported implementations.
+Resolver unit, we completely eliminate the execution time
+of a shuffle and re-ordering at the cost of the negligible amount                                                     C. Polynomial Samplers
+of extra memory.                                                                                                         In Dilithium, the polynomials composing the vectors and
+   3) FIFO buffer: One challenge in DIT and DIF NTT is to                                                             matrices are independently sampled using a constant seed
+satisfy the distance between indices for all NTT levels. Hence,                                                       value and an appended incriminating nonce value as the
+we improved from the NTT design by Nguyen et al. [17],                                                                input to either SHAKE128 or SHAKE256. This allows par-
+[18] by allocating five linear shift register-based FIFO units to                                                     allel sampling of polynomials if multiple Keccak cores are
+prepare addresses and data for the next NTT levels. As shown                                                          used. A single Keccak core consumes a substantial amount
+in Fig. 1, the tiles inside FIFO units are 24-bit and 6-bit for                                                       of resources as shown in Table III. However, Dilithium
+FIFO data and address, respectively. The Addr_FIFO unit is                                                            requires a large amount of pseudorandom data to perform
+responsible for delaying TAddr by 4 clock cycles (which is                                                            polynomial sampling. For example, at security level 5, the
+the depth of the pipeline). The remaining 4 registered-based                                                          matrix A has dimension 8 × 7, with each sample requiring
+FIFOs (sharing the same unit) are responsible for transposing                                                         24 bits of pseudorandom data, which amounts to at least
+8 × 7 × n × 24 = 56 × 256 × 24 = 344-kbit in total,                 The purpose of this design is to reduce the latency between
+not taking into account the rejection rate of each sampling.        signature attempts. Initially, Precomputation and Stage0 are
+Producing that amount of pseudorandomness quickly becomes           run in parallel as shown in Fig. 4. After they complete their
+the performance bottleneck in high-performance designs. To          respective calculation, Stage0 and Stage1 run in parallel acting
+improve the performance of sampling, we propose to use three        as a 2-stage pipeline. Whenever Stage1 completes, it checks
+Keccak cores. Two of them are primarily used for sampling of        if any component of the signature has violated a rejection
+the matrix A and the third is used for the remaining hashing        condition and, if so, it restarts with the new results from
+and sampling. The Keccak cores are taken from the existing          Stage0. If not, Stage1 signals Stage0 to halt and unloads
+implementation [21], which has a 64-bit datapath. In addition,      the signature. The computation of the ŷ and w vectors was
+we add multiple rejection lanes for vectors and matrices to         determined to be the best place to split the pipeline because it
+process the pseudorandom data in parallel. The number of            minimizes the number of polynomials that must be handed off
+rejection lanes is chosen to be the minimum number that             to the next stage of the pipeline while maintaining a reasonably
+maximizes utilization of the corresponding Keccak core. For         well balance pipeline for all security levels. For security level
+example, sampling a coefficient of A requires 24 bits, while        3 and 5 the vector NTT and matrix multiplication operations
+Keccak is capable of producing 64-bits per cycle. Therefore         become the dominant operations and thus splitting the number
+three rejection lanes are used, so that their combined through-     of these operations evenly between the two stages keeps the
+put (72-bits/cc) is higher than the Keccak core’s throughput.       pipeline balanced.
+This prevents the Keccak core from having to stall during              We found that splitting computations into two stages gives
+sampling. Either 2 or 3 coefficients are processed per clock        better average-case performance for signature generation. The
+cycle, allowing the Keccak core to operate at maximum               straightforward approach would be to linearly accelerate op-
+throughput. A similar approach is used for the y vector. The        erations in the rejection loop by improving the performance
+only exception to this approach is the c polynomial which           of the individual operations. For example, this acceleration
+must be sampled using the Fisher-Yates shuffle [11].                could be done by using multiple polynomial arithmetic units to
+                                                                    perform computations on different elements of a single vector
+                V. O PERATION S CHEDULING                           to achieve lower latency. However, there are two drawbacks
+   Thoroughly designed and optimized scheduling of opera-           to the linear acceleration approach. First, it substantially
+tions is crucial for efficient hardware implementations. Cre-       complicates the BRAM utilization since more parallel access
+ating a high-performance design with an acceptable design           to vector coefficients is required. A single vector would
+area is only possible with high utilization of components and       need to be split between multiple BRAM modules, making
+constant progress on the critical path of the operation. As         it more difficult to efficiently utilize BRAM. Second, some
+such, we have highly optimized our operation scheduling to          operations are not possible to parallelize, such as the sampling
+maximize utilization of the polynomial arithmetic units, which      of c. In the linear approach, both the polynomial arithmetic
+are the core of our design and are responsible for the majority     units would have to stall during this operation. The linear
+of the operations in Dilithium.                                     approach does have a better best-case performance where the
+                                                                    signature is accepted on the first attempt. However, the average
+A. Key Generation                                                   number of repetitions required for the rejection loop is 3.85-
+   The schedule of operations for key generation can be seen in     5.1 depending on the security level [11]. Therefore, the shorter
+Fig. 2. The longest path for key generation is the computation,     latency for the rejection loop in the pipelined approach gives
+packing, and hashing of the polynomial vector t. As such,           better average-case and worst-case performance.
+our schedule aims to minimize any delays in the computation
+of t by immediately sampling s1 and matrix A so the NTT             C. Signature Verification
+transform of vector ŝ1 and t̂ = Â · ŝ1 can be performed as
+                                                                       The verification schedule is shown in Fig. 6. The longest
+soon as possible. t is then encoded and hashed in parallel
+                                                                    path for verification is the calculation and hashing of w. Sim-
+with the addition operation so no additional time is needed
+                                                                    ilarly to key generation, z and t1 are immediately unpacked
+to calculate tr. Pack_t1 and Pack_t0 correspond to the
+                                                                    in parallel with the generation of A so that calculation of w0
+function Power2Round called in line 4 of Algorithm 1.
+                                                                    and w00 can be performed as soon at the polynomial arithmetic
+B. Signature Generation                                             unit completes the NTT operations. Once w is calculated, the
+                                                                    hint is applied to the higher-order bits so that it can be hashed
+   The schedule for the signature generation is split into two
+                                                                    with µ and compared with the challenge seed c0 to determine
+sections: the precomputation stage in Fig. 4 and the rejection
+                                                                    if the signature is valid.
+loop stage, where multiple signature attempts are run in
+parallel, in Fig. 5. Our design can be thought of as executing
+                                                                                             VI. R ESULTS
+three unique stages: 1. Precomputation is the stage where the
+secret key values are unpacked and transformed into the NTT-          All results were generated using Xilinx Vivado 2020.2.
+domain 2. Stage0 computes the y and w vectors, and 3. Stage1        Maximum clock frequencies were determined using the Min-
+uses the results of Stage0 to generate the z vector and the hint.   erva hardware optimization tool [22]. The critical path of the
+                                                                                                                                                             cycles
+          0                       1000                             2000                      3000                       4000                  5000
+
+
+
+                                         Fig. 2: Schedule of Key Generation for security level 2
+
+
+                                              Decoder
+                                                                                        TABLE III: Resource utilization of submodules in the com-
+                                                                                        bined architecture
+                                                                                                                     Resource Utilization                 % of Total
+  RAM4         RAM6       RAM5   RAM3                                                      Submodule
+                                                                                                            LUT            FF        DSP      BRAM         (LUT)
+                                                                                         96 × 1024 RAM             0            0        0     3×6                 0
+                                                                                         96 × 4096 RAM             0            0        0       11                0
+                                                                                            MakeHint           2,389          740        0        0              4.5
+                                                                                             UseHint           6,453        2,808        0        0             12.1
+                                                                          64    AXI
+                                                         MakeHint              Stream        Encoder           1,626          461        0        0              3.1
+                                 PolyArith0                                      In          Decoder           2,189          239        0        0              4.1
+                                                               64
+                                                                                           Decomposer          1,437          680        0        0              2.7
+                                                                                          NTT/PolyArith   4, 509 × 2   3, 146 × 2       16        0             16.9
+                                     Encoder
+                                               64
+                                                                                AXI
+                                                                                            SampleA            1,793          619        0        0              3.4
+                      UseHint
+                                                                               Stream        SampleS           1,755          396        0        0              3.2
+Decomposer                                                                      Out         SampleY            2,220          630        0        0              4.2
+                                                                                            SampleC            1,856          868        0        0              3.5
+                                                                                              Keccak      5, 483 × 3   4, 451 × 3        0        0             30.1
+                      RAM2                                                                    Other            6,002        1,231        0        0             11.3
+                                    SampleC         64                                      Combined
+                                                         Keccak1                                               53,187          28,318   16           29        100.0
+                                                                                           Architecture
+                      RAM0                          64
+                                    SampleA
+                                                         Keccak0
+  PolyArith1                                                                            TABLE IV: Resource utilization of top-level modules imple-
+                      RAM1                          64
+                                     SampleS             Keccak2                        menting major operations of CRYSTALS-Dilithium for all
+                                    SampleY                                             security levels
+                                                                                                     Module       LUT            FF     DSP    BRAM
+Fig. 3: Block diagram for the combined architecture of                                               Keygen      29,021        18,952     8      18.5
+CRYSTALS-Dilithium. Bus widths are 96 bits unless shown                                               Sign       42,440        24,419    16        29
+                                                                                                     Verify      39,341        22,743     8        20
+otherwise.                                                                                          Combined     53,187        28,318    16        29
+
+
+
+design is within the interconnect for the shared Keccak mod-                            results for both our combined architecture and the individual
+ules. Since our design targets high performance, we primarily                           modules that only perform one major operation.
+report our results for Virtex Ultrascale+. However, we also                                There is a substantial amount of resource sharing possible
+include selected results for the Artix-7 and Kintex-7 FPGAs                             between the implementations of three major operations, with
+to perform fair comparison with previous work.                                          the combined architecture only consuming 48% of the sum of
+   The detailed resource utilization of our implementations is                          the LUTs of the individual modules. The limited area increase
+summarized in Tables III and IV. Table III reports the area                             over the most complex signature generation module is due to
+breakdown of the submodules used in our design and the                                  specific units only being required for certain operations, such
+percentage of the total LUTs they consume in the combined                               as the secret sample, SampleS, which is only utilized by key
+architecture. The entry ”Other” represents the entire control                           generation. However, many modules such as the Keccak cores,
+logic of the top-level module and minor components of the                               polynomial arithmetic modules, and RAMs can be fully shared
+datapath not listed explicitly in the table. Table IV shows the                         between the different operations.
+                                                                                                                                      To Rejeciton
+                                                                                                                                         Loop
+
+
+
+
+  cycles   0                                                    2000                                                        4000
+
+                        Fig. 4: Schedule of the precomputation stage of Signature Generation at security level 2
+
+
+
+
+                                                                                                                          Rejection
+                                                                                                                            Loop
+
+
+
+
+             From
+           Precomp
+
+
+
+
+       cycles   4000                            6000                              8000                            10000
+
+
+
+
+                       Fig. 5: Schedule of the signature rejection loop for Signature Generation at security level 2
+
+
+   The performance results and comparison with existing im-            additional attempt requires 5.8K cycles for security level 2,
+plementations is detailed in Table V. For this work (TW) and           8.1K cycles for level 3, and 10.8K cycles for level 5.
+the paper by Land et al. [6], we list the best and average               Ricci et al. [3] report the number of clock cycles for all
+execution time for each of the major operation. The grouping           security levels but the maximum clock frequency and area
+by security level is based on the NIST-defined PQC security            only for security level 2. The area is reported individually for
+levels. In Dilithium, the clock cycle cost of each operation           each operation, so we will compare against the area results for
+generally increases by 50% as the security level increases             our individual modules. Compared to this high-performance
+due to the larger vector dimensions. The one exception to              implementation, our implementation achieves performance im-
+this rule is the average case for signature generation, which          provements with a lower utilization in all metrics except for
+largely depends on the average number of attempts needed to            BRAM in key generation and verification. In terms of latency,
+generate a valid signature. According to the specification [11],       we achieve 1.9-3.7× improvement in clock cycles and 1.5-
+on average, level 2 requires 4.25 attempts, level 3 5.1 attempts,      3.7× better results in terms of latency in microseconds. Our
+and level 5 3.85 attempts. In our pipelined design, each               designs utilize 38%-46% fewer LUTs, 25%-72% fewer FFs,
+                                                                                                                                                                                         c' == c''
+
+
+
+
+ cycles   0                              1000                              2000                              3000                              4000                           5000                         6000
+
+
+
+
+                                                    Fig. 6: Schedule of Signature Verification for security level 2
+
+TABLE V: Full hardware implementations of digital signature schemes qualified as finalists to Round 3 of the NIST PQC
+standardization process. TW denotes This Work. Notation for FPGA families - A7: Artix-7, K7: Kintex-7, VUS+: Virtex
+UltraScale+
+                                      Max Freq.                                                                                   Keygen                  Verify                     Sign
+ Design            Algorithm                               LUT                      FF                 DSP           BRAM                                                                                Family
+                                       (MHz)                                                                                    cycles   µs           cycles     µs        cycles               µs
+                                                                                             Security Level 1
+  [8]             Picnic-L1-FS                91                  90,535                  23,516              0          52.5        -     -          29,600     326           31,300              344    A7
+  [3]             Dilithium-II1                -                       -                       -              -             -   12,600     -          10,546       -           18,338                -   VUS+
+  [9]         SPHINCS+ -128f-simple   250 & 5003                  47,991                  72,505              1          11.5        -     -               -      16                -            1,010    A7
+                                                                                             Security Level 2
+  [6]             Dilithium-II                163                 27,433                  10,681             45            15   18,761   115          19,687     121    29,057/76,613         178/470     A7
+  [3]            Dilithium-III1,2     350/333/158   54,183/68,461/61,738    25,236/86,295/34,963 182/965/316        15/145/18   18,193    52          15,032      97         21,033/-             63/-   VUS+
+  TW              Dilithium-II                256                 53,907                  28,435             16            29    4,875    19           6,582      26    10,945/29,876          43/117    VUS+
+                                                                                             Security Level 3
+  [6]             Dilithium-III              145                  30,900                  11,372             45           21    33,102   228          32,050     221   45,068/123,218         310/850     A7
+  [9]         SPHINCS+ -192f-simple   250 & 5003                  48,398                  73,476              1           17         -     -               -      19                 -          1,170     A7
+  [3]             Dilithium-IV1                -                       -                       -              -            -    22,981     -          20,221       -          22,362/-              -    VUS+
+  TW              Dilithium-III              256                  53,907                  28,435             16           29     8,291    32           9,724      39    16,178/49,437          63/193    VUS+
+                                                                                             Security Level 5
+  [6]              Dilithium-V               140                  44,653                  13,814             45           31    50,982   363       52,712        377   70,376/145,912       503/1,042     A7
+  [9]         SPHINCS+ -256f-simple   250 & 5003                  51,009                  74,539              1          22.5              -            -         21                -           2,520     A7
+  TW               Dilithium-V               116                  53,187                  28,318             16           29    14,037   121       14,642        126    24,358/55,070        210/475      A7
+  [8]             Picnic-L5-FS               125                 167,530                  33,164              0           99         -     -      146,600      1,173          154,500           1,236     K7
+  TW               Dilithium-V               173                  54,468                  28,639             16           29    14,037    81       13,642         85    23,358/55,070        141/318      K7
+  TW               Dilithium-V               256                  53,907                  28,435             16           29    14,037    55       13,642         57    23,358/55,070         95/215     VUS+
+
+1 Uses Round 2 parameter set 2 Area reported separately for Key Generation, Sign, and Verify 3 Split frequency domain: Keccak at 500 MHz, other units at
+250 MHz
+
+
+
+and 96%-98% fewer DSP. Our implementation of signature                                                 at the cost of moderate increases in LUTs and FFs. Since this
+generation also uses 80% fewer BRAMs.                                                                  design includes results reported for modules that perform all
+   Our area and performance improvements are enabled by                                                operations at a single security level, we will compare with our
+our efficient NTT design and optimized operation scheduling.                                           combined module implemented for Artix-7. As our combined
+The NTT design reported in [3] requires 48 DSP units for the                                           module is capable of selecting between all operations at all
+forward NTT and 84 for the inverse NTT, while our design                                               security levels at runtime, we will compare with with their
+utilizes only 8. This allows our design to use multiple instances                                      level 5 implementation.
+without drastically increasing the area. Our splitting of the                                             The design by Land et al. [6] employs some parallelization,
+rejection loop in signing also leads to a much lower area.                                             such as the use of multiple butterfly units in their NTT, but
+Ricci et al. [3] duplicate modules so that there are 18 parts                                          does not use as much parallelization as our design. They
+running in parallel, including 11 NTT instances. This requires                                         also utilize different operation modes of FPGA DSPs in their
+a large amount of BRAM to buffer data between modules and                                              design, such as pre-addition and Single Instruction Multiple
+leads to a much larger implementation of signature generation.                                         Data (SIMD) addition. This allows their NTT to achieve an
+One benefit of this level of parallelization and DSP usage is                                          impressive maximum frequency of 311 MHz, but also results
+that it does allow a high clock frequency, however our lower                                           in very high DSP usage. However, this high frequency NTT
+clock cycle count still leads to better latency in time units.                                         core is not able to improve overall performance since it reside
+   Compared to the mid-range implementation by Land et                                                 in the same clock domain as the rest of the design, forcing it
+al. [6], our design achieves substantially better performance                                          to run at a lower clock rate. Our polynomial arithmetic unit
+is optimized so that it is not the critical path of the design,    algorithm is also very efficient. However, signature generation
+but also seeks to minimize DSP usage and cycle latency.            is substantially slower than Dilithium which may cause issues
+This allows our design to achieve higher NTT performance           in certain applications.
+in the application of Dilithium with a much lower DSP count.          These results suggest that the lattice-based Dilithium cryp-
+In particular, their NTT requires 533/536 clock cycles for         tosystem is more efficient in hardware than Picnic and
+the forward and inverse operation while our design is able         SPHINCS+. However, more investigation is required for a
+to complete the same operations in 300/294 cycles. The             definitive ranking.
+additional cycles on top of the ideal of 256 cycles come from
+                                                                                        VII. C ONCLUSIONS
+the pipeline depth. Further, their approach does not reorder
+the coefficients during the forward and inverse NTT. This             This paper presents a high-performance implementation of
+means that they must split their coefficients across multiple      CRYSTALS-Dilithium, which achieves the best-known latency
+true dual port BRAM to have sufficient memory bandwidth.           and a smaller area than the best previously reported high-
+Our reordering process means we only need a single simple          performance design. The implementation includes both a com-
+dual port BRAM, which greatly simplifies the mapping of            bined module capable of performing three major operations
+coefficients to memory leading to lower BRAM usage.                at all security levels and individual modules supporting one
+   We achieve between 2.6 − 3.6× improvement in terms of           operation each. In all modules, each of the three NIST security
+clock cycles and 2.2 − 3× lower latency in microseconds.           levels can be selected at run-time. The rejection loop latency in
+These improvements come at the cost of 19% more LUTs and           the signature generation is optimized by splitting it into a two-
+100.5% more FFs, but our design uses 64.6% fewer DSP units         stage pipeline, which minimizes the average-case signature
+and 6.5% fewer BRAMs. Our DSP unit utilization is lower            generation time.
+because we chose to use LUTs to implement simple arithmetic                                 R EFERENCES
+operations like addition and subtraction. Our number of LUTs
+also increases due to certain decisions supporting paralleliza-     [1]   P. Shor, “Algorithms for quantum computation: Discrete
+tion, such as the use of multiple Keccak cores. However, these            logarithms and factoring,” in Proceedings 35th An-
+design choices enable much more parallelization, which has                nual Symposium on Foundations of Computer Science,
+allowed our design to obtain much lower latency with only a               Santa Fe, NM, USA: IEEE Comput. Soc. Press, 1994,
+moderate area increase.                                                   pp. 124–134.
+   Software implementations of Dilithium for embedded de-           [2]   L. Chen, S. Jordan, Y.-K. Liu, D. Moody, R. Per-
+vices are substantially slower than hardware. For exam-                   alta, R. Perlner, and D. Smith-Tone, “Report on Post-
+ple, a recent optimized implementation on Cortex-M4 takes                 Quantum Cryptography,” National Institute of Standards
+1.35M/3M/1.26M clock cycles for key Generation, Signing,                  and Technology, Tech. Rep. NIST IR 8105, Apr. 2016,
+and Verifying at security level 2 [23]. Their implementation              NIST IR 8105.
+was tested on an STM32F407 with a 24 MHz clock, so                  [3]   S. Ricci, L. Malina, P. Jedlicka, D. Smekal, J. Hajny,
+our hardware implementation has 2961×/1071×/2042× lower                   P. Cibik, and P. Dobias, “Implementing CRYSTALS-
+latency.                                                                  Dilithium Signature Scheme on FPGAs,” Cryptology
+   In comparison with high-end CPUs, the highly optimized                 ePrint Archive 2021/108, Jan. 2021.
+NEON implementation on ARMv8 Apple M1 Firestorm core                [4]   U. Banerjee, T. S. Ukyab, and A. P. Chandrakasan,
+at 3.2 GHz, reported by Becker et al. [24] for Dilithium-III              “Sapphire: A Configurable Crypto-Processor for Post-
+takes 51/36µs for Key generation and Verifying. Our hardware              Quantum Lattice-based Protocols,” IACR Transactions
+implementation is 1.60×/0.92× faster in two mentioned above               on Cryptographic Hardware and Embedded Systems,
+operations. Due to rejected loop in Singing operation, it takes           vol. 2019, no. 4, Aug. 2019.
+149µs for average case in Apple M1, while our hardware is           [5]   ——, “Sapphire: A Configurable Crypto-Processor for
+0.77× and 2.36× faster in average and best case, respectively.            Post-Quantum Lattice-based Protocols (Extended Ver-
+   Table V also provides some basic insights into the compar-             sion),” Cryptology ePrint Archive 2019/1140, Sep.
+ison between Dilithium and other digital signature schemes                2020.
+in terms of performance in hardware. In particular, the Picnic      [6]   G. Land, P. Sasdrich, and T. Guneysu, “A Hard Crystal -
+implementation at security level 5 [8] has substantially lower            Implementing Dilithium on Reconfigurable Hardware,”
+performance than the Dilithium algorithms. While it consumes              Cryptology ePrint Archive 2021/355, Mar. 2021.
+no DSP units, it requires approximately 3× more LUTs and            [7]   A. Ferozpuri and K. Gaj, “High-speed FPGA Imple-
+BRAMs.                                                                    mentation of the NIST Round 1 Rainbow Signature
+   Multiple SPHINCS+ implementations for different param-                 Scheme,” in 2018 International Conference on ReCon-
+eter sets are reported in [9]. We selected the parameters with            Figurable Computing and FPGAs (ReConFig), Cancun,
+the best performance to compare to our design since we target             Mexico: IEEE, Dec. 2018, pp. 1–8.
+high performance. While this implementation uses more FFs
+than our design, its LUTs utilization is comparable, and its use
+of BRAMs and DSPs is substantially smaller. The verification
+ [8]   D. Kales, S. Ramacher, C. Rechberger, R. Walch,                 IACR Transactions on Cryptographic Hardware and
+       and M. Werner, “Efficient FPGA Implementations of               Embedded Systems, pp. 49–72, Mar. 2020.
+       LowMC and Picnic,” in The Cryptographers’ Track at         [20] “7 Series FPGAs Memory Resources User Guide,”
+       the RSA Conference 2020, CT-RSA 2020, San Fran-                 2019.
+       cisco: Springer, Feb. 2020.                                [21] CERG, SHAKE, https://github.com/GMUCERG/SHAK
+ [9]   D. Amiet, L. Leuenberger, A. Curiger, and P. Zbinden,           E, 2021.
+       “FPGA-based SPHINCS+ Implementations: Mind the             [22] F. Farahmand, A. Ferozpuri, W. Diehl, and K. Gaj,
+       Glitch,” en, in 2020 23rd Euromicro Conference on               “Minerva: Automated hardware optimization tool,” in
+       Digital System Design (DSD), Kranj, Slovenia: IEEE,             2017 International Conference on ReConFigurable
+       Aug. 2020, pp. 229–237.                                         Computing and FPGAs, ReConFig 2017, Cancun:
+[10]   L. Ducas, E. Kiltz, T. Lepoint, V. Lyubashevsky,                IEEE, Dec. 2017, pp. 1–8.
+       P. Schwabe, G. Seiler, and D. Stehlé, “CRYSTALS-          [23] D. O. C. Greconici, M. J. Kannwischer, and D.
+       Dilithium: Algorithm Specifications and Supporting              Sprenkels, “Compact Dilithium Implementations on
+       Documentation,” NIST Round 2, Mar. 2019.                        Cortex-M3 and Cortex-M4,” en, IACR Transactions
+[11]   S. Bai, L. Ducas, E. Kiltz, T. Lepoint, V. Lyubashevsky,        on Cryptographic Hardware and Embedded Systems,
+       P. Schwabe, G. Seiler, and D. Stehlé, “CRYSTALS-               pp. 1–24, Dec. 2020. [Online]. Available: https://tches.
+       Dilithium: Algorithm Specifications and Supporting              iacr.org/index.php/TCHES/article/view/8725 (visited
+       Documentation (Version 3.1),” Tech. Rep., Feb. 2021.            on 08/01/2021).
+[12]   Ö. Dagdelen, M. Fischlin, and T. Gagliardoni, “The        [24] H. Becker, V. Hwang, M. J. Kannwischer, B.-Y. Yang,
+       Fiat–Shamir Transformation in a Quantum World,” in              and S.-Y. Yang, “Neon NTT: Faster Dilithium, Kyber,
+       Advances in Cryptology - ASIACRYPT 2013, ser. LNCS,             and Saber on Cortex-A72 and Apple M1,” Cryptology
+       vol. 8270, Berlin, Heidelberg: Springer Berlin Heidel-          ePrint Archive 2021/986, Jul. 2021.
+       berg, 2013, pp. 62–81.
+[13]   V. Lyubashevsky, “Fiat-Shamir with Aborts: Applica-
+       tions to Lattice and Factoring-Based Signatures,” in
+       Advances in Cryptology – ASIACRYPT 2009, vol. 5912,
+       Berlin, Heidelberg: Springer Berlin Heidelberg, 2009,
+       pp. 598–616.
+[14]   L. Ducas, T. Lepoint, V. Lyubashevsky, P. Schwabe,
+       G. Seiler, and D. Stehlé, “CRYSTALS – Dilithium:
+       Digital Signatures from Module Lattices,” Cryptology
+       ePrint Archive 2017/633, 2017, p. 17.
+[15]   National Institute of Standards and Technology, FIPS
+       PUB 202: SHA-3 Standard: Permutation-Based Hash
+       and Extendable-Output Functions. Aug. 2015.
+[16]   L. Beckwith and W. Diehl, “New Directions for
+       NewHope: Improving Performance of Post-Quantum
+       Cryptography through Algorithm-level Pipelining,” in
+       2020 International Conference on Field-Programmable
+       Technology (ICFPT), Maui, HI, USA: IEEE, Dec. 2020,
+       pp. 120–128.
+[17]   D. T. Nguyen, V. B. Dang, and K. Gaj, “A High-Level
+       Synthesis Approach to the Software/Hardware Code-
+       sign of NTT-Based Post-Quantum Cryptography Al-
+       gorithms,” in 2019 International Conference on Field-
+       Programmable Technology (ICFPT), Tianjin, China:
+       IEEE, Dec. 2019, pp. 371–374.
+[18]   ——, “High-Level Synthesis in Implementing and
+       Benchmarking Number Theoretic Transform in
+       Lattice-based Post-Quantum Cryptography using
+       Software/Hardware Codesign,” in 16th International
+       Symposium on Applied Reconfigurable Computing,
+       ARC 2020, Apr. 2020.
+[19]   N. Zhang, B. Yang, C. Chen, S. Yin, S. Wei, and
+       L. Liu, “Highly Efficient Architecture of NewHope-
+       NIST on FPGA using Low-Complexity NTT/INTT,”
+

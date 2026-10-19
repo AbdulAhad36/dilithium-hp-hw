@@ -1,0 +1,50 @@
+Research Gap from Literature
+
+The research gap is not the absence of Dilithium or ML-DSA accelerators. Recent
+papers already report fast full accelerators, compact designs, hardware/software
+co-designs, open-source ML-DSA hardware, and newer pipeline optimizations.
+
+The actual gap is how to build a practical FPGA implementation path that balances
+speed, area, memory usage, Keccak/NTT/sampler dataflow, verification, and
+integration complexity, especially when moving toward FIPS-204 ML-DSA.
+
+Paper-Based Gap Summary
+
+| Paper | Gap or problem identified |
+|---|---|
+| Beckwith et al., 2021 | Need high-performance full Dilithium hardware; at that time, full FPGA designs were still few and hardware evaluation required major RTL design effort. |
+| Zhao et al., 2022 | Prior Dilithium hardware had high resource use and low efficiency; a fully optimized Dilithium-specific architecture was still missing. |
+| Mao et al., 2023 | Speed and design flexibility still needed evaluation; focuses on configurable HW/SW co-design and reducing processor-to-accelerator transfer overhead. |
+| Wang et al., 2024 | Efficient Kyber/Dilithium support on practical RISC-V SoC FPGA platforms was needed while keeping flexibility, instead of only pursuing pure RTL speed. |
+| ML-DSA-OSH, 2025 | After FIPS-204, complete ML-DSA FPGA RTL was still rare, and almost no complete open-source ML-DSA hardware existed. Also highlights future work in side-channel and fault research. |
+| Area-Time Efficient Dilithium, 2025 | Prior NTT designs either underused pipelines, traded performance for low area, or were generic/unified and not fully optimized for Dilithium polynomial arithmetic. |
+| MDC-NTT Dilithium, 2025 | Previous work focused mostly on resource saving or balanced efficiency, leaving a gap for high-speed and high-performance Dilithium accelerators. |
+| PALS, 2025 | Major system bottleneck: incompatible data formats between modules interrupt the pipeline. Sampler-to-NTT reordering causes BRAM buffering delay, so module-level speed alone is not enough. |
+| LightHD, 2026 | Existing methods still had limited suitability for resource-constrained devices and relatively low performance; Keccak and scheduling were major bottlenecks. |
+| Unified Kyber/Dilithium Fault Tolerance, 2026 | Efficient accelerators remain vulnerable to fault attacks; performance alone is not enough for secure deployment. |
+
+Thesis Research Gap
+
+Although recent works have improved full Dilithium and ML-DSA accelerator
+performance, there remains a practical FPGA design gap in developing modular,
+independently verified Keccak and NTT hardware blocks with clear area/speed
+trade-offs, then using those verified blocks as the basis for a future integrated
+ML-DSA accelerator where the main unresolved challenge is sampler-Keccak-NTT
+dataflow and pipeline compatibility.
+
+Short Slide Version
+
+The gap is not absence of Dilithium accelerators. The gap is a practical,
+modular FPGA implementation path where the dominant ML-DSA blocks,
+Keccak/SHAKE and NTT, are designed, verified, synthesized, and prepared for
+integration while addressing the dataflow bottlenecks identified in recent
+full-accelerator papers such as PALS and LightHD.
+
+Examiner Answer
+
+Recent papers already solve many performance problems, so this work is
+positioned as a modular implementation and verification foundation. Keccak and
+NTT are implemented and verified first because they dominate Dilithium
+computation. The next research step is integration, especially rejection
+sampling and sampler-to-NTT data reordering, which PALS identifies as a major
+system-level bottleneck.

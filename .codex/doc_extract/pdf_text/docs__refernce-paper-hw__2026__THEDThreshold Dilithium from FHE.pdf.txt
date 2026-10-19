@@ -1,0 +1,1553 @@
+                                   THED: Threshold Dilithium from FHE
+
+                Jai Hyun Park                            Alain Passelègue                      Damien Stehlé
+         CryptoLab Inc., Lyon, France              CryptoLab Inc., Lyon, France          CryptoLab Inc., Lyon, France
+
+
+
+Abstract—We describe THED, a threshold version of the               references below). Given that Dilithium is standardized,
+Dilithium signature scheme (ML-DSA), whose issued signa-            a particularly desirable property of a threshold Dilithium
+tures are valid for the genuine Dilithium verification algorithm.   protocol would be its verification interchangeability with
+The signing protocol has two rounds of communication, one of        non-threshold Dilithium: a signature produced by executing
+which that lends itself to preprocessing. The scheme supports       the threshold Dilithium protocol must be accepted as valid
+arbitrary number of users and threshold parameter.                  by Dilithium’s verification algorithm.
+    The construction consists in running Dilithium’s signing             Dilithium is an optimized version of Lyubashevsky’s
+algorithm under Threshold Fully Homomorphic Encryption              lattice-based signature scheme [Lyu09, Lyu12]. The latter
+(ThFHE), except for the computation of the signing challenge        follows a Fiat-Shamir blueprint like Schnorr’s signature
+that happens in clear. Due to the type of operations performed,     and consists of a linear step, a challenge-building step
+we rely on the CKKS scheme for homomorphic computations.            based on a hash function evaluation, another linear step
+However, a number of challenges remain, for which we develop        and a rejection test. Many threshold signature schemes
+new tools. In particular, we describe a CKKS-BFV continuum          have been built by modifying Lyubashevsky’s signature,
+that helps for modular operations in the context of other non-      but most of them do not handle Dilithium’s optimizations
+arithmetic operations, a hybrid-format homomorphic compar-          and are not verification interchangeable [CS19, TPCZ23,
+ison when the input is the sum of a bit-decomposed integer          GKS24, dPKM+ 24, KRT24, EKT24, CATZ24, BKL+ 25]
+and a small integer, and a modulus-thrifty homomorphic com-
+                                                                    (see also [DOTT21, Che23, ADP24] for the restricted n-out-
+                                                                    of-n case where all users must collaborate to produce valid
+parison of larger non-bit-decomposed integers. Furthermore,
+                                                                    signatures, and [VSW21, LSV22, SVL24] for the n = 2
+to ensure the protocol is communication efficient, we developed
+                                                                    subcase). The main difficulties in obtaining a threshold
+a new threshold decryption method for CKKS providing more
+                                                                    signature scheme that is interchangeable with Dilithium are
+compact decryption shares.
+                                                                    the signature and verification key compression techniques
+    Our proof-of-concept implementation of the FHE compo-
+                                                                    introduced in [BG14] and [DKL+ 18].
+nents of the signing protocol runs in 1.343s on an RTX-5090
+                                                                         A few interchangeable schemes have been proposed
+GPU, with 23.6KB of communication per party for the NIST            very recently. Using secure multi-party computation (MPC),
+level-2 Dilithium variant. Most of the computation can be run       Dufka et al. [DKLS25] obtained a solution for t = n = 2.
+in an offline phase without the message to be signed, the online    Still using MPC, Bienstock et al. [BdCE+ 26] obtained a
+cost then shrinks to 0.202s. Apart from the two decryption          solution for arbitrary t and n, but with tens of rounds and
+steps, this computation is entirely public and can be delegated     MBs of communication per user. A more direct adaptation
+to a server with more powerful hardware.                            of ML-DSA was proposed in [BCdP+ 25], with only three
+                                                                    rounds of communication, but it is limited to t, n ≤ 6.
+1. Introduction                                                          From a theoretical point of view, it was shown
+                                                                    in [BGG+ 18] that any (deterministic) signature scheme can
+    Following its selection by NIST as the primary algo-            be turned into a 1-round threshold version thereof. This uni-
+rithm for post-quantum signing [AAC+ 22], Dilithium/ML-             versal thresholdizer relies on threshold fully homomorphic
+DSA [DKL+ 18, BDK+ 21] is being rapidly deployed in                 encryption. Threshold-FHE is a variant of fully homomor-
+various environments. As for all signature schemes, the             phic encryption (FHE) introduced in [AJL+ 12, BGG+ 18]
+signing key is particularly sensitive and requires dedicated        where the ability to decrypt is distributed across parties:
+protection. Threshold signatures provide a classical ap-            a 1-round protocol run by the decryptors allows them to
+proach to strengthen the availability and security of signature     open the ciphertext. The threshold signature construction
+issuance, by distributing the signing key among multiple            from [BGG+ 18] provides all users with an FHE encryp-
+parties [DF89]: if too few parties participate in the execution     tion of the signing key so that, given a message to be
+of the protocol, then they must be unable to produce a              signed, all users can locally compute an FHE encryption
+signature that passes verification; if sufficiently many par-       of a common signature of the message. To produce a
+ties collaborate, then they should be able to produce valid         cleartext signature, the parties run the threshold-FHE de-
+signatures. For this reason, threshold versions of Dilithium        cryption protocol. This generic construction produces sig-
+are actively being looked after (see, e.g., [BP25] and the          natures that are interchangeable with the original signature
+scheme, and could hence be applied to Dilithium. Such                 arbitrarily close to 1.
+an approach has been considered in [ASY22] for a basic
+version of Lyubashevsky’s signature scheme, focusing on               Comparison. We now provide a comparison to the other
+removing its use of rejection sampling. Using the construc-           existing approaches for threshold Dilithium [DKLS25,
+tion from [BGG+ 18] directly on Dilithium is challenging as           BdCE+ 26, BCdP+ 25]. Our FHE-based solution has the
+its signing algorithm involves different types of operations          following advantages.
+(modular arithmetic, integer arithmetic, bit arithmetic) and
+FHE can prove cumbersome for general-purpose compu-                      •    It works for every t and n and scales well with them.
+tations. Further, Dilithium signing involves a while loop,                    The main impact is the decryption modulus (ap-
+which is cumbersome for the FHE circuit-based model of                        pearing at both rounds): it increases pre-decryption
+computation.                                                                  computation and communication complexity. It has
+                                                                              been significantly reduced in [BFM+ 25], and, if
+Contributions. We describe THED, the first concrete FHE-                      we assume that the decryptors are aware of who
+based threshold signature scheme that is verification in-                     they are, this dependency can be almost entirely
+terchangeable with Dilithium. We argue that its concrete                      removed [MBH23]. Most of the computation is in-
+security (in the selective and passive model) is identical to                 dependent of t and n and so is the number of rounds.
+Dilithium’s. The construction relies on the universal thresh-            •    It requires only 2 rounds: this is to be compared
+oldizer from [BGG+ 18], which we modify and instantiate to                    to 3 rounds for [BCdP+ 25] and more than 20 rounds
+achieve practical efficiency in 2 rounds of communication.                    for the MPC-based approaches from [DKLS25,
+    For the efficient homomorphic evaluation of Dilithium                     BdCE+ 26]. Note that these can benefit from trade-
+signing, we exploit both CKKS and BFV schemes                                 offs between communication amount and the number
+by introducing the concept of the CKKS-BFV con-                               of rounds, but communication is already in the MBs
+tinuum (Section 4.1). Specifically, we utilize the BFV                        without minimizing the number of rounds. In terms
+scheme for the efficient arithmetic over the Dilithium                        of communication volume, our solution involves tens
+ring Z8380417 [X]/(X 256 + 1) (Section 4.3), and we leverage                  of KB per party, which is similar to [BCdP+ 25]
+the CKKS scheme for the fast arithmetic with various preci-                   when t ≤ 3 and significantly less otherwise.
+sions (Section 4.4). On the CKKS side, we further introduce              •    Almost all the computations can be performed pub-
+multiple methods for high-precision homomorphic compari-                      licly: only the threshold-FHE decryption keys and
+son: a general one from extending [CKK20] and [CCK+ 24]                       decryption steps are secret. The computations can
+(Section 4.2) and another tailored specifically to the                        hence be delegated to powerful devices. It also im-
+Dilithium ring using bit-decomposition [KN24] and binary                      plies that a much smaller amount of software needs
+gates.                                                                        to be protected.
+    Furthermore, we introduce an improved threshold de-
+cryption method for CKKS (Section 4.5). Our method is                 The main drawback of our approach is the high compu-
+specifically designed for ciphertexts storing ℓ real numbers          tational cost. However, as already observed, most of the
+(or ℓ/2 complex numbers) within their slots, where ℓ is               computation is public and can be delegated to powerful
+significantly smaller than the ring degree N . It allows each         machines. The main alternative for arbitrary t and n is the
+party to share only ℓ integers for the joint decryption, rather       scheme from [BdCE+ 26], but the high communication and
+than N integers. Notably, this method is compatible with              round complexity quickly translates into high runtimes in
+slot-encoding without requiring a computationally expensive           environments where participants are distant.
+encoding conversion algorithms, such as SlotToCoeff.
+    Using the implementation of the CKKS FHE                          Security Model. We focus on passive security for the sake
+scheme [CKKS17] available in the HEaaN library [Cry22],               of simplicity, but note that active security can be achieved
+we wrote a proof-of-concept implementation of THED’s                  by adding zero-knowledge proofs of honest threshold-FHE
+FHE components for the NIST level-2 instantiation of                  partial decryptions, consistent with public commitments of
+Dilithium. For a probability of successfully generating a             the partial decryption key shares. This provides robustness
+signature that is equal to p = 0.870, this costs 1.343s on a          with identifiable aborts without any honest majority assump-
+commodity GPU (NVIDIA RTX 5090). The communication                    tion. The statements to be proved are linear with smallness
+per party is 23.6KB, assuming up to 128 decryptors in the             constraints, which is typical of lattice-based cryptography,
+synchronous setting of [MBH23]. In fact, the first round              and we refer to [BS23, LNP22, NS24, HLSS25] (among
+computation can be preprocessed by making it independent              others) for potential instantiations.
+from the message; without taking preprocessing into                       Independently, it may seem that we rely on a trusted
+account, the runtime is decreased to 0.202s. We observe               dealer for key generation. Note that we can use the
+that the computation is public (except for threshold                  threshold-FHE distributed key generation from [MHPS25]
+decryption) and can be externalized to a server. If the               which enables fast CKKS computations, and a homomorphic
+protocol fails to produce a valid signature, then it can be           evaluation of Dilithium’s key generation algorithm. This
+restarted. Alternatively, the protocol can be executed several        provides an efficient distributed key generation protocol
+times in parallel to produce a signature with probability             without relying on a trusted dealer.
+
+
+                                                                  2
+1.1. Technical Overview                                               SHAKE is used as a pseudo-random function (PRF) in the
+                                                                      generation of the signing mask (Step 6). As we consider a
+    The main challenge in applying [BGG+ 18] to thresh-               deterministic signature scheme, the PRF key is part of the
+oldize a signature scheme is to find efficient ways to homo-          signing key and is provided in encrypted form. We replace
+morphically implement the various steps of THED’s signing             SHAKE by a PRF that is more FHE-friendly, namely, the
+algorithm. From that perspective, Dilithium comes with a              Learning-With-Rounding Darkmatter PRF from [BIP+ 18].
+number of challenges. The step numbers below refer to                 To make it more efficient, we replace the matrix-vector
+the Sign algorithm in Figure 2, which recalls the Dilithium           product by a polynomial ring multiplication, where the ring
+signature scheme.                                                     is chosen to be identical to that of CKKS. This leads to
+                                                                      signatures that differ from Dilithium’s, but does not prevent
+   •   Dilithium relies on SHAKE for expanding part of
+                                                                      us from achieving verification interchangeability. Finally,
+       the verification key (Step 1), hashing the message
+                                                                      we generate the signing challenge in the clear (Step 9),
+       (Steps 2 and 4), generating the signing mask (Step 6)
+                                                                      by decrypting its input with the threshold-FHE distributed
+       and generating the signing challenge (Step 9);
+                                                                      decryption algorithm. This is the reason why our scheme
+   •   It involves rejection sampling: if any of the four tests
+                                                                      has two communication rounds, instead of a single one as
+       (Steps 13 and 17) is invalid, then the signing process
+                                                                      would be obtained by directly applying [BGG+ 18].
+       has to be restarted;
+   •   All of these rejection tests rely on comparisons,                   The use of rejection sampling implies that the signing
+       sometimes on integers for which we have extracted              algorithm is cumbersome to describe as a circuit. If the
+       the most and least significant bits (with the HighBits,        probability to pass the tests is p, then the distribution of
+       LowBits and MakeHint functions, at Steps 8, 12                 the number of signing attempts follows a geometric law
+       and 16);                                                       of parameter p. This is difficult to handle with the circuit-
+   •   The main data type is integers, but some opera-                based model of homomorphic computations. This difficulty
+       tions involve modular arithmetic (Step 7), others are          was circumvented in [ASY22, GKS24, dPKM+ 24, KRT24,
+       over Z (Step 11), and yet others involve comparisons           EKT24, CATZ24, BKL+ 25] by removing rejection sam-
+       (see above).                                                   pling altogether: this is supported by a security proof based
+                                                                      on the Rényi divergence rather than the statistical distance,
+    In the following, we explain how we tackle these dif-             but leads to increased parameters. As this requires parameter
+ficulties, but we first discuss the choice of FHE scheme.             changes and handles only one of the four Dilithium rejection
+As the amount of data to be homomorphically processed                 tests, this approach seems incompatible with verification
+is significant, FHE schemes that provide Single-Instruction-          interchangeability. We instead take a more direct approach:
+Multiple-Data (SIMD) operations, such as BGV [BGV12],                 we perform a few signing attempts in parallel, using the
+BFV [Bra12, FV12], and CKKS [CKKS17], seem more                       high dimension of the CKKS plaintext vectors. On the one
+promising for thresholdizing Dilithium than latency-oriented          hand, we might have several successful iterations: as we
+schemes [DM15, CGGI16]. Among these throughput-                       only want to output a single signature, we only keep the
+oriented schemes, we choose CKKS as it enables rela-                  first successful signature and (homomorphically) discard the
+tively efficient homomorphic comparisons [CKK20] based                other ones. On the other hand, repeating the protocol boosts
+on polynomial approximation over the reals, as opposed                the success probability, but it remains non-negligibly away
+to BFV/BGV for which comparison is performed using                    from 1 as increasing the number of parallel attempts too
+interpolation over a finite field [IZ21]. In CKKS, the most           much would harm the performance.
+time-consuming operation is bootstrapping [CHK+ 18a]: it                   For homomorphic comparisons, we rely on [CKK20].
+aims at increasing the ciphertext modulus while preserving            The multiplicative depth it consumes grows fast with the bit-
+the underlying plaintext. This is needed every now and                sizes of the integers that have to be compared. Recall that
+then during a homomorphic computation as multiplications              depth consumption is crucial for CKKS: if the multiplicative
+decrease the ciphertext modulus. To obtain an efficient               depth is high, then one needs to bootstrap to re-increase the
+CKKS evaluation, one must strive to minimize the number               ciphertext modulus, and bootstrapping is costly compared
+of bootstraps. Our design is motivated by this objective.             to the basic homomorphic operations. In our context, the
+    Homomorphically evaluating SHAKE has been lit-                    integers to be compared can have up to 20 bits. Our calcu-
+tle explored in the literature. The state-of-the-art ap-              lations show that such a comparison could require up to 4
+proach [HCLK25] relies on [DM15, CGGI16]. It consumes                 bootstraps for typical parameters from [Cry22] (with ring
+more than 1 hour in single-thread CPU to evaluate one                 degree N = 216 ). We simplify some of these tests as follows
+SHA3 round function. Note that we have several kilobytes of           (see Figure 2 for the description of Dilithium):
+data to hash to obtain the signing challenge and the cost of
+hashing grows linearly with the amount of data to be hashed.             •   the tests of Step 17 occur on data that is known in the
+We avoid this high cost in several ways. First, we note that                 clear to the signers; this can be seen by rewriting w−
+some calls to SHAKE can be done publicly, as they do not                     cs2 as Az − ct and noting that t can be given to the
+involve any secret quantity: the expansion of the uniform                    signers without impacting security;
+component of the verification key (Step 1) and the hashing               •   for the remaining test (first half of Step 13), we
+of the message (Steps 2 and 4). Second, we observe that                      observe that the encrypted input is the sum of two
+
+
+                                                                  3
+       integers, one of which is known in binary decompo-           up in a CKKS format for the subsequent computations. The
+       sition, thanks to how the signing mask is generated,         PRF consists in evaluating
+       and the other one is relatively small; for this case,                                             
+       we use a hybrid comparison based on a tree structure                               1
+                                                                                   x 7→     (α · x mod pq) ,
+       for the most significant bits and on [CKK20] for the                               p
+       least significant parts.
+                                                                    where p and q are very small integers and α ∈ RFHE    pq is
+It remains to consider the comparison of Step 13. For               the encrypted PRF key (we do not have to take the same
+this one, we use a modulus-thrifty extension of [CKK20],            ring as the one used for the FHE scheme, but it simplifies
+gradually decreasing the precision during the computation:          the description and the computation). The multiplication
+indeed, when the underlying plaintexts become close to 0            modulo pq can be performed in BFV format, and then the
+or 1, less precision is required.                                   rounding can be applied while bootstrapping to a CKKS
+    Homomorphically extracting most/least significant bits          ciphertext, as described in [BKSS24]. This provides the
+for integers of such a bit-size is similarly challenging.           signing masks in q -ary digits, encrypted in CKKS format.
+For this purpose, we use the iterative bootstrapping tech-          This base-decomposed expression of the signing masks is
+nique from [KN24] to transform an integer into a radix              itself convenient to obtain an efficient homomorphic instan-
+decomposition. Extracting the most/least significant bits is        tiation of the last rejection test that we mentioned above
+then achieved using modular reductions for two different            (first half of Step 13).
+moduli: the first one is easier, as the binary decomposition             The overall computation consumes exactly 10 CKKS
+of Dilithium’s modulus is sparse; and the second one is             bootstraps before the first communication round, and 3 more
+implemented with thrifty comparison.                                afterwards. We observe that the computations up to the
+    We now explain how we perform modular multiplica-               first communication round can be made independent of the
+tions in the context of CKKS ciphertexts. These are required        message and considered as an offline computation.
+for the PRF evaluation (replacing Step 6, as discussed              Security Aspects. Creating the signing challenge in the
+above) and the construction of the input to the hash function       clear decreases the burden on the FHE evaluation of the
+producing the signing challenge (Step 7). For this purpose,         signing algorithm, but the two-round nature of the thresh-
+we observe that CKKS can be smoothly transformed into               old signature protocol raises more security questions than
+BFV and back. We aim at using properties of both, be-               if applying the universal thresholdizer [BGG+ 18] directly.
+cause CKKS is convenient for comparisons and BFV is                 Notably, as several signing attempts are run in parallel (ex-
+preferable for modular arithmetic. Assume we have a CKKS            ploiting the SIMD nature of CKKS) when making signing
+                           2                           N
+ciphertext (a, b) ∈ (RFHE            FHE
+                        Q ) with RQ = ZQ [X]/(X + 1)                queries, the adversary can see challenges of failed signing
+with N a power of 2 and Q a large integer. Assume                   attempts, as well as challenges of successful signing at-
+further that it decrypts to a vector of bits m ∈ {0, 1}N/2 .        tempts that are subsequently discarded as a single signature
+Concretely, we have:                                                is issued.
+                                                                         For the security proof, we start from the assumption that
+         a · s + b = DFT−1 (∆ · m + e) mod Q ,                      deterministic Dilithium is secure when using the Darkmatter
+                                                                    PRF for the signing mask (Step 6 of Figure 2) and rely
+where s is the secret key, DFT refers to the discrete               on the recent security analysis from [BdCE+ 26] (inspired
+Fourier transform from RFHE = Z[X]/(X N + 1) to CN/2                from [DFPS23, PN25]). It proves that Dilithium is secure
+and ∥e∥∞ < ∆/4. As observed in [DMPS24], by applying                even if the adversary has oracle access to aborted transcripts,
+the ‘cleaning’ map h1 : x 7→ 3x2 − 2x3 from [CKK20], we             i.e., if it can see commitments of Step 8 for rejected sig-
+can essentially square ∆ while keeping the same message m           natures, and both unselected and selected accepted signa-
+and a similar ∥e∥∞ , at the expense of decreasing Q by              tures. To achieve this, the authors modified Dilithium by
+a factor poly(∆). By repeatedly applying h1 , we quickly            adding a small error term e at Step 7. This tweak does not
+increase the gap between e and m. Then, homomorphically             affect interchangeability and has no noticeable impact on
+evaluating the DFT gives a pair (a′ , b′ ) ∈ (RFHE 2
+                                               Q′ ) such that       correctness. Our security proof then follows the blueprint
+                                                                    of [ASY22]. Oracle queries to Round 1 are simulated
+            a′ · s + b′ = ∆′ · m + e′ mod Q′ ,                      from aborted transcripts, and oracle queries to Round 2 are
+                                                                    simulated using a full signature query (including the full
+for some ∆′ ≫ ∆ and ∥e′ ∥∞ ≪ ∆′ . This is a BFV                     Round-1 transcript). As in [ASY22], we rely on the Rényi
+ciphertext for m modulo ⌊Q′ /∆′ ⌉. The effectiveness of             divergence to minimize the amount of noise in threshold-
+this approach is quantified by the decrease of Q relative to        FHE decryption.
+the growth of ∆. It was recently shown in [CKSS25] that
+one can almost obtain Q/Q′ ≈ ∆′ /∆ (i.e., the modulus               Implementation Aspects. As mentioned earlier, we rely
+decreases almost at the same speed as the scaling factor            on the HEaaN library [Cry22] that implements the CKKS
+increases).                                                         scheme. We use a modified version that incorporates the
+    In contrast, for the Darkmatter PRF evaluation (replacing       grafting technique from [CCK+ 24], since we flexibly use
+Step 6), it is convenient to start in a BFV format and end          small plaintext precisions to store bits as well as very
+
+
+                                                                4
+large plaintext precisions to prepare for noise flooding com-         denoted Dη,c , if its density function is ρX : x 7→ ρη (x − c).
+bined with high bit-size modular arithmetic. To increase              We extend it over polynomials of degree N by letting DN,η,c
+the precision of binary plaintexts, we rely on the technique          denote the distribution of degree-N polynomials whose i-
+introduced in [CKSS25] that saves modulus consumption.                th coefficient is sampled from Dη,ci , where ci is the i-th
+For flooding, we need an upper bound on the magnitude of              coefficient of c.
+the noise of the ciphertexts to be decrypted. Finally, to avoid
+the attack from [CCP+ 24] based on bootstrapping failures,            2.1. Threshold Signatures
+we use the sparse secret encapsulation from [BTH22] (note
+that sparse secret encapsulation is supported by the protocol
+                                                                          We recall the definition of threshold signatures. Intu-
+from [MHPS25]).
+                                                                      itively, a t-out-of-n threshold signature allows one to dis-
+Other Related Works. The CKKS-BFV continuum that we                   tribute a signing key among n parties such that any subset
+introduced is related to a series of recent works. Using a            of t parties can collaboratively sign any message, while any
+scaling factor close to the modulus in CKKS was considered            smaller subset of parties cannot issue valid signatures. We
+in [BGGJ20, BCKS24, BKSS24] for bootstrapping exact                   focus on threshold signatures with two rounds of commu-
+data. It was observed in [KN24, AKP25] that it may be                 nication in the semi-honest model.
+used to perform modular reduction. This was then exploited
+in [BK25] to perform modular multiplications, by multiply-            Definition 1. A 2-round threshold signature scheme is a
+ing over Z using the CKKS encoding of vectors in CN/2 ,               tuple of PPT algorithms (KeyGen, PartSign1 , Combine1 ,
+converting to polynomials with a homomorphic DFT and                  PartSign2 , Combine2 , Verify) with the following specifica-
+then performing modular reduction. This differs from our              tions:
+approach that performs modular arithmetic by viewing a                   •    KeyGen(1λ , 1n , 1t ) takes as inputs a security param-
+high scaling factor CKKS ciphertext as a BFV ciphertext.                      eter λ, a number of parties n and a threshold t and
+    The CKKS to BFV conversion may seem to contra-                            outputs public parameters pp, a verification key vk,
+dict [EGM23], which argues that a conversion from CKKS                        and partial signing keys (ski )i∈[n] ;
+to BGV leads to a fast bootstrapping for BGV. Here we                    •    PartSign1 (pp, ski , M ) takes as inputs the public pa-
+focus on BFV, but a BFV ciphertext can be converted to a                      rameters pp, a partial signing key ski and a mes-
+BGV ciphertext (and vice-versa) using a multiplication by a                   sage M and outputs a Round-1 contribution out1,i ;
+scalar. In fact, there is no contradiction: our conversion as-           •    Combine1 (pp, (out1,ij )j∈[t] ) is deterministic, takes
+sumes that the message m is binary, whereas the conversion-                   as inputs the public parameters pp and t Round-1
+based BGV bootstrapping from [EGM23] requires handling                        contributions (out1,ij )j∈[t] and outputs a Round-2
+messages m whose entries are integers larger than the BGV                     input message out1 ;
+plaintext modulus. We could convert such an integer to                   •    PartSign2 (pp, ski , out1 , M ) takes as inputs the pub-
+bits and apply our method, but the cost of bit extraction                     lic parameters pp, a partial signing key ski , a
+is not negligible compared to those of CKKS and BGV                           Round-2 input message out1 and a message M and
+bootstrappings. Note that bit extraction has actually been                    outputs a Round-2 contribution out2,i ;
+considered in [CKSS25] as an alternative path for CKKS                   •    Combine2 (pp, (out2,ij )j∈[t] ) is deterministic, takes
+bootstrapping.                                                                as inputs the public parameters pp and t Round-2
+    The CKKS to BFV conversion, if coupled with the                           contributions (out2,ij )j∈[t] and outputs a signa-
+small integers functional bootstrapping from [BKSS24],                        ture σ .
+provides a CKKS-based bootstrapping for BFV ciphertexts                  •    Verify(vk, M, σ) takes as inputs a verification
+for small plaintext moduli. It differs from the CKKS-based                    key vk, a message M , and a signature σ and outputs
+BFV bootstrapping from [KSS24] as the latter works for                        a bit b ∈ {0, 1}.
+any plaintext modulus but relies on high-precision CKKS
+bootstrapping [BCC+ 22, CKSS25].
+                                                                      Correctness. For ε > 0, the scheme is ε-correct if for any M
+2. Preliminaries                                                      and any sets S1 , S2 ⊆ [n] with |S1 | = |S2 | = t, we have:
+
+    Due to space constraints, we focus on the main defini-                         Pr[Verify(vk, M, σ) = 1] ≥ 1 − ε,
+tions in this section. Additional definitions and preliminaries       where (pp, vk, (ski )i∈[n] ) ← KeyGen(1λ , 1n , 1t ), out1,i ←
+can be found in Appendix A.                                           PartSign1 (pp, ski , M ) for all i ∈ S1 , out1 :=
+    We let HW(h) denote the Hamming weight of a binary                Combine1 (pp, (out1,i )i∈S1 ), out2,i ← PartSign2 (pp,
+vector h. For η > 0, we define the 1-dimensional Gaussian             ski , out1 , M ) for all i ∈ S2 , σ := Combine2 (pp,
+function ρη : R → (0, 1] as:                                          (out2,i )i∈S2 , M ), and where the probability is taken over
+                                   −π|x|2                             the random coins of KeyGen, PartSign1 , and PartSign2 .
+                                           
+                          1
+                 ρη (x) := exp                 .
+                          η           η2                              Compactness. The scheme achieves compactness if there
+We say that a random variable X over R follows the Gaus-              exists a polynomial p such that, for any M and any sets
+sian distribution of standard deviation η and center c ∈ R,           S1 , S2 ⊆ [n] with |S1 |, |S2 | ≥ t, using the same notation as
+
+
+
+                                                                  5
+                                                                              plaintexts (Mi )i∈[k] where k is the number of input wires
+  Expthuf
+     A (λ, n, t):                                                             of C , the following holds:
+  L ← ∅; W ← ∅                                                                                                      
+  Scor ← A(1λ ) with Scor ⊆ [n] and |Scor | = t − 1                               Dec sk, Eval(evk, C, (cti )i∈[k] ) = C((Mi )i∈[k] ) ,
+  (pp, vk, (ski )i∈[n] ) ← KeyGen(1λ , 1n , 1t )
+  (σ ∗ , M ∗ ) ← AOPartSign1 (·),OPartSign2 (·) (pp, vk, (ski )i∈Scor )       where cti ← Enc(pk, Mi ) for all i ∈ [k].
+  return Verify(vk, M ∗ , σ ∗ ) = 1 ∧ (M ∗ , σ ∗ ) ∈   /L
+                                                                              Security. The scheme is said to be IND-CPA-secure if for
+  OPartSign1 (i, M ):                                                         any PPT adversary A, the advantage Advindcpa (A) defined
+  if i ∈ Scor then return ⊥                                                   as follows is negligible:
+  out1,i ← PartSign1 (pp, ski , M )
+                                                                                                   (pk, evk, sk) ← KeyGen(1λ )
+                                                                                                                               
+  for j ∈ Scor : out1,j ← PartSign1 (pp, skj , M )
+  out1 ← Combine1 (pp, (out1,j )j∈Scor ∪{i} )                                                        (M0 , M1 ) ← A(pk, evk)
+                                                                                2 · Pr b = b′                                  −1 .
+                                                                                                                               
+  W ← W ∪ {(M, out1 )}                                                                                    b ← U ({0, 1})
+  return out1,i                                                                                   b′ ← A(pk, evk, Enc(pk, Mb ))
+  OPartSign2 (i, out1 , M ):
+                                                                                  Our threshold signature construction relies on thresh-
+  if i ∈ Scor ∨ (M, out1 ) ∈
+                           / W then return ⊥                                  oldizing an FHE scheme by distributing its secret key and
+  out2,i ← PartSign2 (pp, ski , out1 , M )
+  for j ∈ Scor : out2,j ← PartSign2 (pp, skj , M )                            splitting decryption into two steps (PartDec, FinDec) fol-
+  σ ← Combine2 (pp, (out2,j )j∈Scor ∪{i} )                                    lowing the structure of threshold-FHE [AJL+ 12, BGG+ 18].
+  L ← L ∪ {(M, σ)}                                                            While we could directly rely on threshold-FHE in a black-
+  return out2,i                                                               box manner, we opt not to, in order to obtain more compact
+                                                                              decryption shares by relying on the Rényi divergence in the
+            Figure 1: Security experiment Expthuf                             security analysis.
+                                             A .
+                                                                              Thresholdizing an FHE Scheme. We rely on an FHE
+                                                                                                                                           2
+for correctness, we have that the bit-sizes of vk and σ are                   scheme whose ciphertexts have the form (a, b) ∈ (RFHE    q )
+                                                                                                                                  FHE
+below p(λ).                                                                   satisfying as + b = ∆ · M + e where s ∈ R               is the
+                                                                              secret key, M is the underlying plaintext, e is some error
+Threshold Unforgeability. The scheme satisfies threshold                      satisfying ∥e∥∞ ≤ Beval for some bound Beval , and ∆ is a
+unforgeability if for any PPT adversary A, the advantage                      scaling factor. We thresholdize decryption by distributing the
+Advthuf (A) := Pr(Expthuf
+                        A (λ, n, t) = 1) is negligible, where                 secret key s as (ski )i∈[n] ← Share(s, n, t), where Share is
+experiment Expthuf
+                A    is defined in Figure 1.                                  a t-out-of-n linear secret sharing scheme (see Definition 9).
+    We focus on the semi-honest model for our construction.                       For simplicity, we focus on the n-out-of-n case, though
+Combining it with non-interactive zero-knowledge proofs                       our construction generalizes to the t-out-of-n setting with
+(of honest threshold-FHE partial decryption) allows us to                     the usual adjustments (see, among others, [BGG+ 18,
+achieve malicious security.                                                   MBH23]). In this setting, we have sk = sk1 + . . . + skn . We
+                                                                              then define PartDec(ski , (a, b)) as returning pi ← a·ski +ei
+2.2. Fully Homomorphic Encryption                                             where ei ← Dflood is an error, and
+                                                                                                                X                   X
+    We recall the definition of fully homomorphic encryp-                     FinDec((a, b), (pi )i∈[n] ) = b +      pi = b + as +      ei .
+tion (FHE).                                                                                                    i∈[n]               i∈[n]
+
+Definition 2. An FHE is a tuple of PPT algorithms                                  Note that the flooding noise may overwrite the plaintext,
+(KeyGen, Enc, Dec, Eval) with the following specifications:                   if the plaintext precision (i.e., the ratio between the scaling
+   •     KeyGen(1λ ) takes as input a security parameter and                  factor and the noise magnitude) is insufficient. Rather than
+         outputs a public key pk, an evaluation key evk, and                  using a high plaintext precision throughout the computation,
+         a secret key sk;                                                     when the final plaintext is binary, we compute with sufficient
+   •     Enc(pk; M ) takes as inputs a public key pk and a                    precision to obtain it, and then we prepare flooding by
+         plaintext M , and outputs a ciphertext ct;                           cleaning. The purpose of cleaning is to increase the plaintext
+   •     Eval(evk, C, (cti )i∈[k] ) takes as inputs an evalua-                precision.
+         tion key evk, a circuit C , and a tuple of cipher-                        Our security based on the Rényi divergence allows one
+         texts (cti )i∈[k] where k is the number of input wires               to set Dflood = DN,η where p    the threshold flooding param-
+         of C , and outputs a ciphertext ct;                                  eter η is set to η ≥ Beval · 10 · N · qsig , with qsig being
+   •     Dec(sk, ct) takes as inputs a secret key sk and a                    the number of signing queries made by the attacker and
+         ciphertext ct, and outputs a plaintext M ′ .                         N being the ring degree. In contrast, relying on black-
+                                                                              box threshold-FHE would lead to η = Ω(Beval · 2λ/2 )
+Correctness. The scheme is said to be perfectly correct if for                and therefore to degraded performance. This was already
+any (pk, evk, sk) ← KeyGen(1λ ), for any circuit C , for any                  observed in [ASY22].
+
+
+                                                                          6
+2.3. CKKS                                                              2.4. Dilithium
+
+     CKKS [CKKS17] is an FHE scheme based on ring-                         We recall, in Figure 2, the precise description of (the
+LWE [SSTX09, LPR10] whose underlying cleartexts are                    deterministic version of) Dilithium [BDK+ 21]. We use the
+vectors in RN/2 , where N is the degree of the ring RFHE . A           same notations and elementary functions and refer the reader
+ciphertext for a cleartext m is a pair (a, b) ∈ (RFHE 2                to the Dilithium documentation [BDK+ 21] for their defini-
+                                                  Q ) such
+that                                                                   tions. In the signing algorithm Sign, we refer to w1 (Step 8)
+                                                                       as the commitment, to c (Step 10) as the challenge, and to z
+          a · s + b = ∆ · DFT−1 (m) + e mod Q ,          (1)           (Step 11) as the response.
+where s ∈ RFHE is the secret key, e has small coefficients, ∆
+is a scaling factor that drives numerical precision and DFT is           Dilithium.KeyGen
+the map that sends p ∈ RFHE to (p(ζi ))i∈[N/2] . Here, the ζi ’s         1 ζ ← U ({0, 1}256 )
+are N/2 roots of X N + 1 without any pair of equal or                    2 (ρ, ρ′ , K) ← H(ζ)
+                                                                         3 A ← ExpandA(ρ) ∈ (RSIG       k×ℓ
+                                                                                                    q )
+conjugate elements. CKKS natively enables homomorphic                    4 (s1 , s2 ) ← ExpandS(ρ′ ) ∈ Sηℓ × Sηk
+component-wise addition, component-wise multiplication,                  5 t ← As1 + s2 mod q
+and cyclic rotation of the coordinates by arbitrary amounts.             6 (t0 , t1 ) ← Power2Roundq (t, d)
+     Multiplication is performed by tensoring the two input              7 tr ← (ρ ∥ t1 ) ∈ {0, 1}384
+                                                 3                       8 return vk = (ρ, t1 ), sk = (ρ, K, tr, s1 , s2 , t0 )
+ciphertexts, obtaining an element in (RFHE   Q ) , then relin-
+                               FHE 2
+earizing to get back to (RQ ) . These two steps lead to                  Sign(sk, M )
+a growth of the scaling factor from ∆ to ∆2 . The scaling                 1 A ← ExpandA(ρ)
+                                                                          2 µ ← H(tr ∥ M )
+factor is mapped back to ∆ by the rescaling step which                    3 κ ← 0, (z, h) ←⊥
+consists in dividing the ciphertext by ∆ and rounding.                    4 ρ′ ← H(K ∥ µ)
+This decreases the ciphertext modulus by a factor ≈ ∆.                    5 while (z, h) =⊥ do
+In contrast, addition and rotation preserve the ciphertext                6     y ← ExpandMask(ρ′ , κ) ∈ Sγℓ 1 −1
+modulus Q.                                                                7     w ← Ay mod q
+                                                                          8     w1 ← HighBits(w, 2γ2 )
+     After several sequential multiplications, the ciphertext             9     c̃ ← H(µ ∥ w1 ) ∈ {0, 1}256
+modulus may be so small that no further multiplica-                      10     c ← SampleInBall(c̃) ∈ Bτ
+tion can be performed. The purpose of CKKS bootstrap-                    11     z ← y + cs1
+ping [CHK+ 18a] (BTS) is to regain modulus while pre-                    12     r0 ← LowBitsq (w − cs2 , 2γ2 )
+                                                                         13     if ∥z∥∞ ≥ γ1 − β ∨ ∥r0 ∥∞ ≥ γ2 − β then
+serving the underlying cleartext, so that computations can               14        (z, h) ←⊥
+be continued. For efficiency, it is important to minimize the            15     else
+number of bootstraps, as this is significantly more costly               16        h ← MakeHintq (−ct0 , w − cs2 + ct0 , 2γ2 )
+than the basic operations.                                               17        if ∥ct0 ∥∞ ≥ γ2 ∨ HW(h) > ω then (z, h) ←⊥
+                                                                         18     κ←κ+ℓ
+     The default encoding of the cleartext in the ciphertext             19 return σ = (z, h, c̃)
+using DFT−1 as in Equation (1) is called slots encoding.
+                                                                         Verify(vk, M, σ = (z, h, c̃))
+An alternative encoding, called coefficients encoding, is
+                                                                         1 A ← ExpandA(ρ)
+as in Equation (1) but without DFT−1 . In that case, the                 2 µ ← H(H(ρ ∥ t1 ) ∥ M )
+cleartext m belongs to RN . This encoding is less conve-                 3 c ← SampleInBall(c̃)
+nient for homomorphic component-wise multiplication, but                 4 w1′ ← UseHintq (h, Az − ct1 · 2d , 2γ2 ) 
+                                                                         5 return ∥z∥∞ < γ1 − β ∧ c̃ = H(µ ∥ w1′ ) ∧ HW(h) ≤ ω
+                                                                                                                               
+allows homomorphic convolution. Going from slots (resp.
+coefficients) encoding to coefficients (resp. slots) encoding
+can be achieved by homomorphically evaluating DFT (resp.                              Figure 2: Deterministic Dilithium.
+DFT−1 ), an operation called S2C (resp. C2S).
+     In this work, we will mostly encode exact data (in slots
+and in coeffs). When m is binary and slots-encoded, then               3. The THED Threshold Signature Scheme
+we may perform arbitrary binary gates homomorphically. As
+the noise e grows relatively to ∆ with binary gate evalua-                 In this section, we describe how we combine Dilithium
+tions, the entries in m become less determined. As shown               with threshold-FHE in order to obtain an efficient 2-round
+in [DMPS24], accuracy of the bits can be regained by ho-               threshold signature scheme. We first provide a high-level
+momorphically applying the map h1 : x 7→ 3x2 − 2x3 . Note              description of our scheme, which is based on homomorphi-
+that the h1 map can also be used for pre-flooding cleaning.            cally evaluating Dilithium following the generic approach
+Furthermore, as shown in [BCKS24], bootstrapping can be                from [BGG+ 18], except we add a round of communication
+significantly improved for binary cleartexts (we refer to this         to avoid homomorphically evaluating the hash function.
+as Bits BTS). Based on [BGGJ20], this bootstrapping was                Then we detail our construction, in particular explaining
+extended to small integers and combined with an arbitrary              the tweaks we make to Dilithium to improve the efficiency
+component-wise look-up table in [BKSS24] (we refer to this             of the homomorphic computation (without hurting inter-
+as Small integers BTS).                                                changeability). We also analyze it by adapting the analysis
+
+
+                                                                   7
+from [ASY22] to our 2-round setting. Most details regarding              signers agree on the input to feed to the PRF. By default, for
+how we efficiently perform the homomorphic computations                  simplicity, we use the message, but it could be any unique
+are postponed to a dedicated section (Section 4).                        identifier that the signers agree on. That identifier can be
+                                                                         the message number, the time or other contextual data. This
+3.1. Description                                                         allows us to modify our construction to a threshold sig-
+                                                                         nature with preprocessing. In this setting, as commitments
+    We follow the blueprint from [BGG+ 18], which thresh-                are not bound to the signed message, we emphasize that
+oldizes a signature scheme by running it homomorphically                 the threshold decryption of the commitments should only
+using the encrypted signing key, and having each signer re-              be revealed during the online phase, once the message is
+lease a partial decryption of the encrypted signature. The un-           known. Decrypting the commitments earlier could enable
+derlying signature must be deterministic (each signer needs              ROS attacks [BLL+ 22], even in the semi-honest setting. We
+to evaluate the same signature/ciphertext), hence our choice             further remark that the homomorphic computations (1) and
+of thresholdizing the deterministic variant of Dilithium.                (3) are deterministic and only involve public information, so
+    We face two difficulties: (i) the challenge is computed              they can be outsourced to a server; only partial decryptions
+by evaluating a hash function, SHAKE-256, which is par-                  have to be performed by signers.
+ticularly difficult to evaluate homomorphically; (ii) when
+running the signing algorithm homomorphically, one cannot                3.2. Construction
+know when the while loop should terminate. We circumvent
+these difficulties as follows: (i) we add one round of interac-              We now detail our 2-round threshold signature proto-
+tion, which allows the signers to decrypt the commitment w1              col. Its precise description is provided in Figure 3. It is
+so that the hash function evaluation can be performed in the             mostly the instantiation of the above high-level idea, up to
+clear. Specifically, signers decrypt w1 after Step 8 of Sign             several tweaks which help improve efficiency. We explain
+and run Steps 9, 10 in the clear (see Figure 2). (ii) We set             these tweaks and their impact at the end of this section.
+a bound L on the number of loop iterations to be run and                 In addition, we also rely on the modification introduced
+return the first valid signature computed during all these               in [BdCE+ 26] that adds a small noise to the commitment w,
+iterations; if more than one successful iteration occurs, only           and allows one to prove security of Dilithium given revealed
+the first valid signature is revealed.                                   incomplete signatures.
+    In addition, and similarly to (i), homomorphically sam-
+pling the randomness y (Step 6) is also challenging, as it               Key Generation. The key generation algorithm samples
+requires running SHAKE-256 homomorphically. To circum-                   FHE keys and distributes the decryption key to the n parties.
+vent this issue, we adjust the randomness generation by                  It also samples signature keys and encrypts the signing key
+relying on a homomorphic-friendly PRF based on [BIP+ 18].                (which includes the PRF key used to deterministically derive
+As this modification only affects the internal randomness                randomness) using the FHE scheme. The verification key is
+distribution, it preserves interchangeability, and does not              exactly that of the underlying signature.
+affect security, assuming that pseudorandomness of the PRF               Distributed Sign. To sign a message M , the signers
+holds. We provide more details about the design of the PRF               homomorphically evaluate the first part of the signature
+in Section 3.2.                                                          scheme (Figure 2, Steps 1–8) using the encrypted signing
+    Consequently, our (threshold) signing algorithm has the              key, and partially decrypt the resulting ciphertext encrypt-
+following structure:                                                              (i)
+                                                                         ing (w1 )i∈[L] . Assuming that t distinct signers partici-
+   (1)   Homomorphically sample L commitments                            pate, their partial decryption shares can be recombined to
+                                                                                      (i)
+            (i)
+         (w1 )i∈[L] ;                                                    recover (w1 )i∈[L] , and the challenges (c(i) )i∈[L] can be
+   (2)   Compute in the clear the L associated challenges                computed in the clear (Figure 2, Steps 9 and 10). Finally, at
+         (c(i) )i∈[L] ;                                                  least t users homomorphically evaluate the second part of
+   (3)   Homomorphically compute the L corresponding                     the signature scheme (Figure 2, Steps 11–19) and partially
+         responses (z(i) )i∈[L] .                                        decrypt the resulting ciphertext. Again, assuming that t
+                                                                         distinct signers participate, their partial decryption shares
+During the homomorphic evaluation, the signers decrypt                   can be recombined: this time, the result is a signature. More
+the outcome of (1) to run (2) in the clear. Then, (3) is                 precisely, we consider the following signing protocol with 2
+performed homomorphically and only its result is decrypted.              rounds of communication.
+Furthermore, our homomorphic evaluation only keeps the
+first valid zi ’s, such that only one valid signature is revealed.       Round 1. For a message µ to be signed, the signers homo-
+Our two rounds of communication thus correspond to the                   morphically evaluate Steps 1–8 of Figure 2, L times in paral-
+two times the signers communicate their partial decryption               lel, using the encrypted signing key, and partially decrypt the
+shares, at the ends of (1) and (3).                                      resulting ciphertext. They broadcast their decryption shares.
+     We note that the start of the signing protocol up to the            Round 2. After receiving the decryption shares, each signer
+first round of communication (excluded) can be performed                 runs Combine1 , which consists in evaluating FinDec on t
+                                                                                                                    (i)
+offline as the dependency on the message can be removed.                 distinct partial decryptions to recover (w1 )i∈[L] . The latter
+This may be preprocessed under the assumption that the                   information allows signers to compute (in the clear and
+
+
+                                                                     8
+                                                   (i)
+locally) the challenges c̃(i) := H(M ∥ w1 ), therefore                    The second test is actually the test run in the publicly avail-
+avoiding evaluating the hash function homomorphically. The                able NIST submission implementation of Dilithium, while
+signers then homomorphically run Steps 11–19 of Figure 2                  the first test is the test described in the specification: both
+to compute a ciphertext encrypting (z(i) )i∈[L] , where only              tests have identical responses. These changes are reflected
+the first valid signature is kept, and partially decrypt it. They         in Step 6 of PartSign2 in Figure 3. The computation of Jr′0 K
+broadcast their decryption shares.                                        is performed directly after the computation of JwK in Step 7
+Finalize. After receiving the Round-2 decryption shares, the              of PartSign1 .
+signers recombine t distinct partial shares with FinDec to                Rejecting Hints. The rejection sampling concerning
+recover the unique z(i) ̸=⊥ (assuming signing is successful),             MakeHint (Figure 2, Step 17) could also generate a compu-
+and (z(i) , h(i) , c̃(i) ) is returned by Combine2 as the signature       tation overhead during homomorphic signing. As observed
+of M .                                                                    in [BdCE+ 26], the rejection test based on h very rarely fails
+                                                                          in Dilithium (it rejects ≈ 2% of the signatures that would
+    The detailed protocol is described in Figure 3. As can                pass without it). Moreover, this test does not play any role
+be observed, we slightly modify the steps of the original                 in security, since h is only there to allow compression of
+Dilithium signing algorithm (Figure 2). This is motivated                 the verification key. We postpone this test to first generate
+by performance gain and by improved security analysis: we                 a pre-signature z that passes all other tests, decrypt z and
+modify the sampling of y (Figure 2, Step 6) and add noise                 then see whether it passes this test (in the clear). Note that
+in the computation of w (Figure 2, Step 7), we modify the                 the hint vector h is computable from z, w, t and c via the
+rejection sampling based on r0 (Figure 2, Steps 12–14),                   relation:
+and we postpone the computation of MakeHint (Figure 2,                                        w − cs2 = Az − ct .                    (3)
+Step 16). Let us now explain these changes in more detail.
+                                                                          As a result, the signers do not even have to compute h
+Sampling y’s and e’s. Using ExpandMask as a pseudo-                       homomorphically: they can compute it in the clear after
+random function (PRF) for generating y (Figure 2, Step 6)                 decryption of z and check if it passes the test or not.
+is not efficient when computed in the encrypted state. We                 In 98% of cases, the hint vector h passes the test and the
+replace this PRF with a ring variant of the Darkmatter                    signers can return (z, h, c̃). In the remaining 2% of cases,
+PRF [BIP+ 18]. For a given PRF key kPRF and m(X) ∈                        they have to restart the protocol. As the signing protocol is
+                     N
+RFHE
+  64 = Z64 [X]/(X      + 1), it outputs                                   deterministic, signing a message M is attempted by first
+              
+                1
+                                                                         signing M ∥ ⋆ ∥0 for a special symbol ⋆. Then, despite
+                  (m(X) · kPRF (X) mod 64) ,           (2)                determinism, one can attempt to sign M again in case of
+                8                                                         failure using input M ∥ ⋆ ∥1, etc.
+which consists of 3N random bits, from which we ex-
+tract Jy(k) K and Je(k) K, where e denotes the error added by             Distributed Key Generation. Above and in Figure 3, we
+the modification of Dilithium from [BdCE+ 26]. For N =                    describe our key generation algorithm for the threshold
+216 , this instantiation of the learning-with-rounding Dark-              signature assuming a trusted dealer. Note however that one
+matter PRF achieves far more than 128 bits of security                    can remove such an assumption as soon as we have a
+against the best known attacks (this may be checked using                 distributed key generation (DKG) protocol for the threshold-
+the lattice estimator [APS15]). These changes are reflected               FHE scheme. Equipped with the latter, one can run the
+in Steps 4 and 5 of PartSign1 in Figure 3. Note that we                   DKG protocol to distribute (pk, evk, sk1 , . . . , skn ) and have
+actually sample an error e with 3-bit coefficients, which                 each party encrypt randomness to homomorphically gen-
+is slightly larger than that from [BdCE+ 26]. This cannot                 erate a seed, which then serves to homomorphically run
+damage security but could hurt correctness; our experiments               Dilithium.KeyGen in order to produce Js1 K, Js2 K, JkPRF K,
+do not reveal any visible impact on correctness.                          and vk. A 4-round DKG protocol for CKKS was recently
+                                                                          proposed in [MHPS25] (with more costly variants with
+Rejecting z’s and r0 ’s. The original rejection sampling for z            fewer rounds). By default, recovering vk would require
+(Figure 2, Steps 12–14) requires a high-precision compar-                 an extra round, but it can be performed during the DKG
+ison, which is inefficient when computed in the encrypted                 execution of [MHPS25] without adding a communication
+state. We do not change this step. We are able to perform                 round.
+this comparison by leveraging a small-precision encrypted
+comparison and using the binary decomposition of y. For                   3.3. Analysis
+the comparison involving r0 (Figure 2, Step 13), we instead
+compute Jr′0 K := LowBitsq (JwK). We emphasize that this                      Correctness is inherited from the correctness of
+does not have any impact, as we have:                                     Dilithium and of the underlying FHE scheme. Compactness
+                                                                          holds as the verification key and the signatures returned by
+  ∥LowBitsq (w − cs2 , 2γ2 )∥∞ ≥ γ2 − β                                   our scheme are precisely the same as those of Dilithium,
+                            ⇐⇒                                            therefore also guaranteeing verification interchangeability.
+               ∥LowBitsq (w, 2γ2 ) − cs2 ∥∞ ≥ γ2 − β .                    Further, we prove the following security claim.
+
+
+
+                                                                      9
+   KeyGen(1λ , 1n , 1t )                                           PartSign2 (pp, ski , out1 , M )
+    1   (vk, sk) ← Dilithium.KeyGen                                 1
+                                                                                                     (k)
+                                                                         parse out1 as (Jr′0 K, JyK, (w1 )k∈[L] )
+    2   parse vk as (ρ, t1 ) and sk as (ρ, K, tr, s1 , s2 , t0 )    2    for k ∈ [L]:
+    3   kPRF ← PRF.KeyGen(1λ )                                                                   (k)
+                                                                    3       c̃(k) ← H(M ∥ w1 )
+    4   (pk, evk, skfhe ) ← FheKeyGen(1λ )                                    (k)
+    5   (ski )i∈[n] ← Share(skfhe , n, t)                           4       c     ← SampleInBall(c̃(k) )
+    6   Js1 K ← Enc(pk, s1 )                                        5       Jz(k) K ← Jy(k) K + c(k) Js1 K
+                                                                                                             ′(k)
+    7   Js2 K ← Enc(pk, s2 )                                        6       if ∥Jz(k) K∥∞ ≥ γ1 − β ∨ ∥Jr0 K − c(k) Js2 K∥∞ ≥ γ2 − β then
+    8   JkPRF K ← Enc(pk, kPRF )                                    7          Jz(k) K ← J⊥K
+    9   pp ← (pk, evk, Js1 K, Js2 K, JkPRF K, ρ, tr, t0 , t1 )      8       else if ∥c(k) t0 ∥∞ ≥ γ2 then
+   10   return (pp, vk, (ski )i∈[n] )                               9          Jz(k) K ← J⊥K
+                                                                   10    set Jk0 K as the first k with zk ̸=⊥; if none, set Jk0 K = ϕ
+   PartSign1 (pp, ski , M )                                        11    for k ∈ [L] \ {k0 }:
+    1   A ← ExpandA(ρ)                                             12       Jz(k) K ← J⊥K
+    2   µ ← H(tr ∥ M )                                             13    JzK ← J(z(1) , . . . , z(L) )K
+    3   for k ∈ [L]:                                               14    pz,i ← PartDec(ski , JzK)
+           Jy(k) K, Je(k) K ← 81 H(µ ∥ k) · JkPRF K mod 64
+                                                         
+    4                                                              15    return out2,i = (JzK, (c̃(k) )k∈[L] , (c(k) )k∈[L] , pz,i )
+    5          (k)          (k)
+           Jw K ← AJy K + Je K mod q   (k)
+
+    6
+               (k)
+           Jw1 K ← HighBits(Jw(k) K, 2γ2 )                         Combine2 (pp, (out2,j )j∈[n] )
+              ′(k)
+    7      Jr0 K ← LowBitsq (Jw(k) K, 2γ2 )                        1 for j ∈ [n]:
+    8
+                     ′(1)        ′(L)
+        Jr′0 K ← J(r0 , . . . , r0 )K                              2    parse out2,j as (JzK, (c̃(k) )k∈[L] , (c(k) )k∈[L] , pz,j )
+                       (1)         (L)                             3 (zk )k∈[L] ← FinDec(JzK, (pz,j )j∈[n] )
+    9   Jw1 K ← J(w1 , . . . , w1 )K
+   10   pw1 ,i ← PartDec(ski , Jw1 K)                              4 if ∃k ∈ [L] : z(k) ̸=⊥ then
+   11   return out1,i = (Jr′0 K, JyK, Jw1 K, pw1 ,i )              5    σ = (z(k) , c(k) )
+                                                                   6    h ← MakeHintq (−c(k) t0 , Azk − c(k) t + c(k) t0 , 2γ2 )
+   Combine1 (pp, (out1,j )j∈[n] )                                  7    if HW(h) ≤ ω then
+   1 for j ∈ [n]:                                                  8       return (z(k) , h, c̃(k) )
+   2   parse out1,j as (Jr′0 K, JyK, Jw1 K, pw1 ,i )               9 else return ⊥
+        (k)
+   3 (w1 )k∈[L] ← FinDec(Jw1 K, (pw1 ,j )j∈[n] )                   Verify(vk, M, σ)
+                                     (k)
+   4 return out1 = (Jr′0 K, JyK, (w1 )k∈[L] )                      1    return Dilithium.Verify(vk, M, σ)
+
+
+   Figure 3: The THED Threshold Dilithium signature protocol. The steps in blue involve homomorphic computations.
+
+
+Theorem 3. Let qsig denote a bound on the number of                     costly, because of the modular multiplications, modulo 64 at
+signing queries made by an attacker, N denote the ring                  Step 4 and modulo q at Step 5. For homomorphic modular
+degree, and Beval denote a bound on the homomorphic                     multiplications, one more often relies on BFV or BGV.
+computation error of the ciphertexts that are decrypted.                However, having a CKKS encryption of the output JyK from
+Then, assuming the underlying FHE scheme is perfectly                   Step 4 is preferable to perform the first comparison of Step 6
+correct and IND-CPA-secure, assuming p    the threshold flood-          in PartSign2 .
+ing parameter η satisfies η ≥ Beval · 10 · N · qsig , and                   Going from a BFV ciphertext format to a CKKS cipher-
+assuming security of Dilithium with the Darkmatter PRF                  text format for small bit-length integers can be achieved
+instantiation of Equation (2), the threshold signature scheme           using the bootstrapping-based format-switching algorithm
+described in Figure 3 satisfies threshold unforgeability.               from [BGGJ20]. As shown in [BKSS24], this can be com-
+                                                                        bined with a function evaluation and bit extraction, which
+    The proof is adapted from [ASY22] and we detail it
+                                                                        allows us to have the bits of y in the CKKS slots of a
+in Appendix B. It relies on the security of Dilithium with
+                                                                        high-level ciphertext.
+revealed incomplete signatures shown in [BdCE+ 26] and of
+the underlying FHE scheme.                                                  We now explain how to transform a CKKS ciphertext
+                                                                                                                             2
+                                                                        for bits into a BFV ciphertext. Let (a, b) ∈ (RFHE
+                                                                                                                         Q ) with
+
+4. Homomorphic Computations                                                        a · s + b = DFT−1 (∆ · m + e) mod Q ,              (4)
+    We now explain how to perform the homomorphic com-                  where s is the secret key and γ := ∥e∥∞ /∆ < 1/4. As we
+putations in the algorithm of Figure 3. We first provide in-            consider a high-level CKKS ciphertext, the modulus Q is
+gredients that may have wider applicability and then explain            large and the scaling factor ∆ is very small compared to Q
+every step.                                                             (concretely, the scaling factor ∆ would typically be of the
+                                                                        order of 20-30 bits, compared to several hundreds of bits
+4.1. A CKKS-BFV Continuum                                               for Q). Our goal is to transform (a, b) into a pair (a′ , b′ ) ∈
+                                                                               2
+                                                                        (RFHE
+                                                                           Q′ ) with
+    Implementing Steps 4 and 5 in PartSign1 (see Figure 3)
+using the native homomorphic CKKS operations seems                                     a′ · s + b′ = ∆′ · m + e′ mod Q′ ,             (5)
+
+
+                                                                   10
+where ∆′ = ⌊Q′ /t⌉ with t being the BFV plaintext modulus             to slightly decrease the scaling factor across the evaluations
+and ∥e′ ∥ much smaller than ∆′ . The smaller the ratio γ ′ =          of the small-degree polynomials, which overall decreases
+∥e′ ∥∞ /∆′ the better, as a small ratio gives more room for           modulus consumption. For example, during homomorphic
+performing several BFV computations.                                  comparison for the reduction modulo 2γ2 , we start from a
+     Towards mapping Equation (4) to Equation (5), let us             40-bit scaling factor and gradually decrease it to 21.5 bits.
+first homomorphically evaluate the map h1 : x 7→ 3x2 − 2x3
+to the input ciphertext, used in [DMPS24] to increase                 4.3. Computing over the Dilithium Ring
+the precision of a binary plaintext. More precisely, we
+have h1 (b + ε) = b + O(ε2 ) for all b ∈ {0, 1} and all ε such            The underlying ring RFHE for CKKS and BFV dif-
+that |ε| is sufficiently small. Homomorphically apply h1              fers from the ring RSIG for Dilithium. Concretely, we use
+on (a, b) without rescaling (i.e., we perform homomorphic             RFHE = Z[X]/(X N + 1) with N = 216 while RSIG =
+                                                                                  ′
+multiplication by tensoring and relinearizing only), we ob-           Z[Y ]/(Y N + 1) with N ′ = 28 . Note that RSIG is a subring
+                        2
+tain (a1 , b1 ) ∈ (RFHE
+                    Q ) such that                                     of R , in which Y corresponds to X 256 . In particular, the
+                                                                           FHE
+
+                                                                      ring RFHE is an RSIG -module of rank 216 /28 = 28 .
+       a1 · s + b1 = DFT−1 (∆4 · m + e1 ) mod Q ,                         For the homomorphic computations over RSIG , we use
+where γ1 = ∥e1 ∥/∆4 ≈ γ 2 . Note that ∆ is raised to the              coefficient-encoded BFV-CKKS.PSuppose we are given two
+                                                                                                                             i
+fourth power as evaluating h1 has multiplicative depth equal          elements in RFHE : f (X) =         0≤i<256 mi (Y ) · X and
+                                                                        ′                     ′         i                     ′
+to 2. We can now rescale by ∆3 γ , to obtain (a′1 , b′1 ) ∈
+                                                                                   P
+                                                                      f (X) =        0≤i<256 mi (Y ) · X where mi and mi are
+       2                   3
+(RFHE
+   Q1 ) with Q1 ≈ Q/(∆ γ) and
+                                                                                      SIG
+                                                                      elements in R . Then, their product is
+                                                                                                                  
+      a′1 · s + b′1 = DFT−1 (∆1 · m + e′1 ) mod Q1 ,                                     X        X
+                                                                             f · f′ =                  mj · m′i−j  · X i ,
+where ∆1 = ∆/γ and ∥e′1 ∥/∆1 ≈ γ1 .                                                   0≤i<256    0≤j<256
+                                                             k
+    When iterating k times, we see that γk grows as γ 2
+and ∆k grows as ≈ ∆/γk , while Qk decreases as ≈                      where m−i = −mi for 1 < i < 256. As RFHE is an RSIG -
+Qγk2 /∆3k . We note that a refined approach was recently              module,  the product outputs 256 Dilithium ring elements
+                                                                      { 0≤j<256 mj · m′i−j }0≤i<256 in parallel. This observation
+                                                                        P
+proposed in [MHPS25], with a more thrifty modulus con-
+sumption (i.e., a larger Qk ). Overall, the ciphertext modulus        allows us to homomorphically implement Dilithium arith-
+decreases while the scaling factor increases, and the error           metic. For example, when the Dilithium dimensions are set
+term stays similar. When ∆k gets close to Qk , we perform a           to (k, ℓ) = (4, 4) and the number of parallel repetitions
+homomorphic DFT. If tuned correctly, the result has a scal-           is set to L = 8, for s∗ = (s∗,j )0≤j<4 ∈ (RSIG )4 and
+ing factor ∆′ = ⌊Q′ /t⌉, where Q′ is the current ciphertext           {ct }0≤t<8 ∈ (RSIG )8 , the following product over RFHE
+modulus and t is the BFV plaintext modulus. The current               computes {c · s∗ }0≤t<8 :
+ciphertext (a′ , b′ ) hence satisfies Equation (5), where the               X                        X                  
+norm of e′ is very small compared to ∆′ .                                          s∗,j (Y ) · X 8·j ·     ct (Y ) · X 32·t .
+    This transformation allows us to take the vector JyK from                0≤j<4                      0≤t<8
+
+Step 5 with coordinates stored in bits in CKKS ciphertexts            This allows to compute c · s1 and c · s2 during homomorphic
+and transform it into bits of BFV ciphertexts. We can then            signing. The same may be achieved for homomorphically
+multiply the entries by powers of 2 to obtain JyK with                computing A · y mod q . For a given y(X) ∈ RFHE that
+coordinates stored as integers modulo Dilithium’s q . Step 6          stores 3 (random) bits in each of its coefficients and a
+then consists of a BFV multiplication between a plaintext             Dilithium verification key A, one can compute L = 8
+matrix and a ciphertext vector.                                       vectors w in parallel by using k = 4 multiplications
+                                                                      over RFHE , outputting four module-LWE format cipher-
+4.2. Thrifty Comparison                                               texts [BGV12, LS15] with a module of rank 32 of de-
+                                                                      gree 2048. The four module-LWE format ciphertexts can be
+     For CKKS-based comparison, the state-of-the-art ap-              combined into one BFV-CKKS ciphertext by using format
+proach is the iterative method introduced in [CKK20]. It              conversion [BCK+ 23].
+evaluates small degree polynomials iteratively, to gradually
+increase the precision of the comparison. The small degree            4.4. Large Modular Arithmetic
+polynomials can be selected using the multiple-interval Re-
+mez algorithm [LLKN22].                                                   The decomposition steps in Dilithium contain modular
+     Here, we optimize the modulus consumption of this                arithmetic with moduli q and 2γ2 . In particular, it requires
+technique by flexibly changing the scaling factors. This              congruent elements precisely in [0, q) and (−γ2 , γ2 ], respec-
+is made convenient thanks to the grafting technique                   tively. We use bit representations to perform those large
+from [CCK+ 24]. The encrypted input of our comparison                 modular arithmetic P operations.    To be more precise, from a
+                                                                                                i
+is an integer of ≈ 20.5 bits while the output is just a single        given input x   =      b
+                                                                                           i i 2  , we first (approximately) compute
+                                                                      x mod k as i bi (2i mod k), and we adjust the value to be
+                                                                                    P
+bit. Note that the role of each small degree polynomial is to
+gradually decrease the most significant bits. This allows us          in [0, k) using either a binary circuit or a thrifty comparison.
+
+
+                                                                 11
+    For the bit decomposition, we adopt the iterative MSB                Define the plaintext
+extraction technique from [KN24]. Precisely, we consider 5                                            N                             N
+
+iterations of 6-bit Small integer bootstrapping to obtain 28             m′ (X) = m0 + m N · X ℓ + · · · + m N ·(ℓ−1) · X ℓ ·(ℓ−1) .
+                                                                                              ℓ                             ℓ
+
+ciphertexts  that decrypt to each bit {bi }0≤i<28 , i.e., x =            Then, for each j = 0, 1, · · · , N2 − 1,
+                 i
+P
+   0≤i<28 bi · 2 . In our protocol, the inputs for modular
+arithmetic are A · y + qI where I is a integral vector.                                       m′ (ζj ) = µ′j mod ℓ ,
+                                                                                                                    2
+Each element of I belongs to [− hwt       hwt
+                                      2 , 2 ] where hwt is the                              P Nℓ −1
+Hamming weight of the (sparse) secret key (e.g., hwt = 31                where µ′θ = Nℓ ·     k=0     µθ+k· ℓ for each 0 ≤ θ < ℓ/2.
+                                                                                                           2
+when using sparse secret encapsulation [BTH22]).     P                       The proof of Lemma 4 is detailed in Appendix C.
+    For the reduction modulo q , note that xq = 0≤i<28 bi ·
+(2i mod q) is in [0, 2q). Then, we obtain x mod q in [0, q)              Improved Threshold Decryption. Assume that we are
+by comparing xq with q and subtracting q if needed. Since q              given a ciphertext that stores only ℓ/2 complex numbers
+is 223 − 213 + 1, one can compare xq and q using a depth-7               out of N/2 slots. Typical examples include a ciphertext with
+binary circuit that takes the bi ’s as inputs. On thePother hand,        replication, which decrypts to a complex vector µ such that
+for the reduction modulo 2γ2 , we first compute 0≤i<28 bi ·                                         µj = µj+ ℓ ·k
+                                                                                                               2
+(2i mod 2γ2 ) which belongs to [−4γ2 , 4γ2 ]. Then, using
+the thrifty comparison in Section 4.2, we compare it with                for each integer j and k . Another representative case is
+each multiple of 2γ2 to obtain the exact x mod 2γ2 in                    a zero-padded ciphertext, where the decrypted vector µ
+(−2γ2 , 2γ2 ]. The input precision is ≈ log2 (16 · γ2 ) bits.            contains zero from the (ℓ/2)-th slots to the end. Let m(X)
+                                                                         be the underlying plaintext that encodes µ. Conventionally,
+                                                                         to jointly decrypt slot-encoded ciphertext, all decryptors
+4.5. Compact Threshold Decryption                                        send a(X) · si (X) + ei (X), which consists of N integers.
+                                                                             Based on Lemma 4, we propose the following threshold
+    Threshold decryption works for both of the standard                  decryption protocol. The main modifications are marked in
+FHE encodings: coefficient-encoding and slot-encoding.                   red. For a given ciphertext (b, a),
+Coefficient-encoding provides a higher level of granularity                  1)   Modified partial decryption: each party computes
+for the communication, as it allows sending only the relevant                     mi (X) = a · si + ei where ei is a flooding noise.
+coefficients. On the other hand, slot-encoding requires all the                   Then, it extracts the ℓ coefficients of mi (X) corre-
+coefficients to be sent regardless of the number of slots it                      sponding to the powers of X N/ℓ , and it sends their
+stores. For this reason, coefficient-encoding could be con-                       most significant bits to other parties.
+sidered preferable for threshold decryption, especially since                2)   Modified final decryption: one aggregates the
+a primary strength of ThFHE lies in its low communication                         partial decryption results with the ℓ terms of b
+cost.                                                                             corresponding to powers of X N/ℓ .
+    However, there are also good reasons for using threshold                 After the modified joint decryption, each party obtains
+decryption with slot-encoding. Indeed, almost all homomor-               the partial sums of the original message as a result. Pre-
+phic operations are more compatible with slot-encoding:                  cisely, the parties first obtain ℓ terms of m(X), correspond-
+going to slots would require an encoding conversion (a.k.a.,             ing to the powers of X N/ℓ . By Lemma 4, it reveals ℓ/2
+SlotToCoeff). Importantly, to rely on the noise flooding tech-           partial sums. We note that this is particularly useful when
+nique during threshold decryption, one typically increases               the ciphertext contains ℓ/2 complex numbers out of N/2
+the precision of plaintexts, for which the only known ap-                slots.
+proach relies on slot-encoding. Without threshold decryption                 Compared to the original joint decryption protocol, this
+in slot-encoding, an encoding conversion algorithm (a.k.a.,              modified joint decryption reduces the communication cost
+SlotToCoeff) with large precision seems needed, which is                 by a factor of N/ℓ. Note that this approach reduces the
+computationally expensive and also makes FHE parameter                   number of coefficients to be sent, and it is compatible with
+design significantly more difficult.                                     the existing compression approach that truncates the least
+    In this section, we propose a threshold decryption al-               significant bits of each coefficient (see [PS24]).
+gorithm with small communication for slot-encoded FHE                        We can further halve the communication volume for
+ciphertexts. For a ciphertext that decrypts to a complex (resp.          ciphertexts that store real numbers rather than complex
+real) vector of dimension ℓ/2, the proposed PartDec algo-                numbers. It is known that a plaintext m(X) stores a real
+rithm outputs ℓ (resp. ℓ/2) integers, instead of N integers              (instead of complex) vector if and only if m(X) = m(X −1 ).
+with the naive approach.                                                 By combining this with Lemma 4, a sparse message vector
+    We start with the following result.                                  of ℓ/2 real coordinates can be recovered from ℓ/2 coeffi-
+                                                                         cients of m(X). In more details, the parties first jointly re-
+Lemma 4. Consider a plaintext m(X) = m0 +m1 ·X+· · ·+
+                                                                         cover m0 , m N , · · · , m N ( ℓ −1) . Then, they locally compute
+mN −1 · X N −1 ∈ R, which decodes to a complex vector µ                                     ℓ          ℓ 2
+
+of length N/2. Specifically, for each j = 0, 1, · · · , N2 − 1,          m N · ℓ , · · · , m N ·(ℓ−1) by using the relations
+                                                                            ℓ 2               ℓ
+                                                                             N −1                 N
+                        m(ζj ) = µj .                                        X ℓ ·t           = −X ℓ ·(ℓ−t) and m N ·t = −m N ·(ℓ−t) .
+                                                                                                                        ℓ       ℓ
+
+
+
+
+                                                                    12
+This recovers all ℓ terms of m(X) corresponding to the                computing HighBits and LowBits using the above equations
+powers of X N/ℓ , which suffices by Lemma 4.                          leads exactly to the same result as in Dilithium. The large
+    As a side note, we observe that the approach is ap-               modular arithmetic can be performed using the approach
+plicable to general FHE contexts, not only to ThFHE. In               introduced in Subsection 4.4.
+particular, it can be used for reducing the communica-                Rejection Based on ∥z∥∞ (Figure 3, Step 6 of PartSign2 ).
+tion cost of sending FHE ciphertexts after homomorphic                We reject the signature if ∥z∥∞ = ∥y + c · s1 ∥∞ ≥ γ1 − β .
+computation. Assume that we are given an ordinary FHE                 As we have each bit of y + γ1 after the homomorphic PRF
+ciphertext (b, a) that decrypts to a sparse complex vector µ          evaluation (Step 5), we can split the comparison into two
+of dimension ℓ/2. Then, the b-part can be compressed by               parts: the high-bits comparison and the low-bits comparison.
+sending only a subset of coefficients corresponding to the            In particular, as ∥c·s1 ∥∞ ≤ β , we have ∥y+c·s1 ∥∞ ≥ γ1 −β
+powers of X N/ℓ . This reduces the communication cost by              if and  only if 
+a factor of up to 2N/(N + ℓ). If the underlying message is                y + γ1 − 1                                   
+a sparse real vector instead of a complex vector, the cost of                           = 0 and [y + γ1 − 1]256 + c · s1 ≤ β    or
+                                                                                256
+sending the b-part can be further halved.                              y + γ − 1 
+                                                                              1
+                                                                                                                                   
+                                                                                     = 1023 and [y + γ1 − 1]256 + c · s1 ≥ 255 − β ,
+                                                                            256
+4.6. Overall Protocol                                                 where [x]k is the residue of x modulo k in [0, k). The
+                                                                      high-bits comparison can be performed with an AND-tree,
+    We now describe the precise homomorphic computations              and the low-bits comparison can be performed with the
+performed by THED. The steps not listed below are done                thrifty comparison described in Subsection 4.2. For the
+in clear.                                                             low-bits comparison, a precision of log2 (4 · 256) bits
+Homomorphic Ring-Darkmatter (Figure 3, Step 4 of                      suffices.
+PartSign1 ). There are two main steps in the homomor-                 Rejection Based on ∥r′0 ∥∞ (Figure 3, Step 6 of PartSign2 ).
+phic evaluation of the Darkmatter PRF: (1) multiplying                This can also be performed with the thrifty comparison algo-
+modulo 64, and (2) extracting the 3 most significant bits.            rithm. It requires a comparison with a precision of log2 (8γ2 )
+For these, we respectively use the CKKS-BFV continuum                 bits.
+(Subsection 4.1) and Small integer functional bootstrap-              Disclosure of the Signature (Figure 3, Step 14 of
+ping [BKSS24]. At the end of this step, one obtains 6 CKKS            PartSign2 ). Before disclosing the signature, we should (ho-
+ciphertexts, each of which decrypts to a pseudo-random                momorphically) select the first non-rejected signature to
+binary vector of dimension N/2. We view this bit-string as            avoid trivial attacks based on unused but computed signa-
+the bit representation of L = 8 different (y + (γ1 − 1) · 1)’s        tures. For this purpose, we bootstrap the bits corresponding
+and (e+4·1)’s. Note that 6 ciphertexts output more random             to the results of the tests using [BCKS24], we then generate
+bits than are required for 8 signing attempts.                        the one-hot vector indicating the selected sample and we
+Computation of w (Figure 3, Step 5 of PartSign1 ). Com-               clean it by iterating the h1 map. Thanks to this processing,
+puting w = A · y + e mod q consists of two steps:                     only the first passing z is kept and all the others are set to 0.
+(1) cleaning the random bits y and e and (2) comput-                  We do not reuse the encryption of z computed earlier for
+ing A·y +e mod q . The first step increases the precision of          the rejection test as it was performed in a low precision that
+the bits to enable the exact binary recombination of y and e          does not allow cleaning: it was computed in a low precision
+as an integer, exact multiplication by A and noise flooding.          to minimize modulus consumption in the comparison. We
+We achieve it by iteratively applying the h1 map in the               hence recompute cs1 homomorphically with a higher scaling
+thrifty fashion described in [CKSS25]. The second step can            factor (as described in Subsection 4.3), so that after adding
+be achieved using the approach introduced in Subsection 4.3.          the cleaned bits of y, the precision is sufficiently high to
+    Note that while the output ciphertext of this procedure           enable noise flooding. The result is then ready for distributed
+stores A · y mod q , it does not ensure that the coordinates          decryption.
+are in [0, q). It hence requires post-processing to compute           Threshold Decryption. Following the approach of Sec-
+HighBits and LowBits.                                                 tion 4.5, after the conventional PartDec procedure, each
+HighBits and LowBits (Figure 3, Steps 6 and 7 of                      party compresses its decryption share before sending it.
+PartSign1 ). For a given coordinate w of w = A · y, except            Specifically: each party (1) adds the flooding noise, (2) ex-
+when w is congruent to −γ2 modulo q , the equations                   tracts the relevant coefficients, (3) truncates the low bits of
+ (                                                                    the coefficients, and (4 sends the compressed coefficients.
+   LowBits(w) = [[w + γ2 ]q − 1]2γ2 − γ2 + 1                              In our implementation for 128 parties, each party
+                                                                      sends 213 coefficients of 19 bits in Round 1, and 210
+   HighBits(w) = 2γ12 ([w + γ2 ]q − LowBits(w) − γ2 )
+                                                                      coefficients of 32 bits in Round 2.
+hold where [x]k is the residue of modulo k in [0, k). When w              Note that the number of coefficients we send exactly
+is congruent to −γ2 modulo q , the LowBits should be −γ2              matches with that of 8 samples of w1 and that of 1 valid z,
+while the above equation outputs γ2 . However, the LowBits            respectively.
+of both ±γ2 are rejected since |±γ2 −c·s2 | ≥ γ2 −β . Thus,               Figure 4 provides an overview of the whole process.
+
+
+                                                                 13
+Figure 4: Overview of the signing procedure in threshold Dilithium. Encrypted integer values are in dark boxes, encrypted
+binary values are in green checkered boxes, and values in the clear are in white boxes.
+
+
+5. Implementation and Experimental Results                         correctness of the proposed threshold decryption algorithm
+                                                                   (Sec. 4.5).
+    We now describe our proof-of-concept implementa-
+tion of THED. Our experiments are performed using a                Error Analysis and Noise Flooding. We analyzed the error
+modified version of the HEaaN library [Cry22], on an               in ciphertexts by measuring the deviation of the decrypted
+NVIDIA GeForce RTX 5090 GPU. We did not use RNS-                   slot values from their closest integers. This deviation rep-
+CKKS [CHK+ 18b] but grafted-CKKS [CCK+ 24] as it pro-              resents the noise in slots normalized by the scale factor ∆.
+vides increased flexibility for the scaling factors.               This measurement was then used to set the magnitude of
+                                                                   noise flooding.
+5.1. Security Aspects                                                  Figure 5 illustrates the error distribution before thresh-
+                                                                   old decryption during PartSign1 and PartSign2 . The worst
+    For CKKS, we use ring degree N = 216 and maximum
+                                                                   errors among 100 iterations were 2−92.0 and 2−77.4 , and the
+ciphertext modulus P Q satisfying log2 (P Q) = 1533, with
+                                                                   standard deviations σ are 2−94.76 and 2−80.75 , respectively.
+secret key of Hamming weight equal to 256. For bootstrap-
+ping, we used the sparse secret encapsulation technique                We added 60 bits of flooding noise on top of con-
+from [BTH22] at modulus log2 (P Q) = 116 with a se-                servative error bounds: 2−90 and 2−75 in Round-1 and
+cret key of Hamming weight 31, to make the bootstrap-              Round-2, respectively. These bounds correspond to 27.05σ
+ping failure probability due to the polynomial evaluation          and 53.78σ . Assuming that the error distributions are Gaus-
+in the EvalMod step equal to 0. This makes the attack              sian, the probability of an error occurring in the tails is
+from [CCP+ 24] inapplicable. The parameters used achieve           much smaller than 2−500 . This ensures that neither cipher-
+128-bit security against known attacks [APS15].                    text decrypted during signing process contains a slot with
+    For the Darkmatter PRF, we rely on the Ring Learning           outlying error, with probability > 1 − 2−128 . According
+With Rounding assumption, with ring degree N = 216 , large         to the theoretical analysis of Section 3.3 and the concrete
+modulus q = 64 and small modulus p = 8. According to our           discussion at the end of Appendix B, this allows us to
+security estimates (based on the lattice estimator [APS15]         support qsig = 264 signature issuances.
+and the recent analysis from [BHBS26]), these parameters               During the cleaning step, the scale factor ∆ and the error
+provide well above 128-bit security. We use such parameters        term are amplified at each iteration of the map h1 : x 7→
+as they are sufficient to generate all randomness required         3x2 −2x3 . The CKKS rescaling operation is used to suppress
+with a single Darkmatter evaluation, hence performance             the error. Notably, we set the rescale amounts conservatively
+would not benefit much from reducing security.                     large, ensuring that the dominant error component after
+                                                                   rescaling comes from rescale procedure itself, rather than
+5.2. Communication Cost                                            from the error accumulated before the rescaling. Note that
+                                                                   the kurtoses of the pre-decryption Round-1 and Round-2
+    We run 100 iterations to analyze the error distribution        error distributions are 0.72 and 1.54, respectively, which is
+for each threshold decryption, and we also verified the            lower than the kurtosis of the Gaussian distribution. This
+
+
+                                                              14
+                      (a) PartSign1 .                                                                (b) PartSign2 .
+Figure 5: Error distribution before threshold decryption for each round. The data comprises all real and imaginary components
+of all 3 276 800 slots obtained with 100 iterations.
+
+
+suggests that the observed distributions have even lighter                                             Input              Output
+tails than Gaussians.                                                                                                                      Latency
+                                                                                                  (log q , log ∆)     (log q , log ∆)
+Threshold Decryption from Section 4.5. After each com-                    Small integers BTS        ( 38, 32.0)         (821, 38.0)        71.5 ms
+munication round, the parties should share their partial de-                Bits extraction         (813, 30.0)         (663, 31.0)        37.3 ms
+cryption shares of HighBits(w) (Round 1) and z (Round 2).                 Clean random bits         (654, 22.0)         (613, 25.0)           -
+                                                                                   -                                    (569, 31.1)           -
+As described in Section 4.5, each party sends the most                             -                                    (519, 43.4)           -
+significant bits of the partial decryption shares that store                       -                                    (456, 67.2)           -
+the data with a small gap for FinDec, truncating the least                         -                                   (366, 111.6)        25.3 ms
+significant bits of their partial decryption shares. The re-             Product tree on MSB        (663, 31.0)         (508, 31.5)        14.9 ms
+                                                                            Compute LSB             (456, 67.2)         (344, 45.9)         3.1 ms
+maining plaintext precision should be sufficient to ensure                    Compute y            (366, 111.6)        (232, 111.5)         1.1 ms
+that the noise does not spill over to the plaintext when the              Compute C2S & w           (266, 66.0)         ( 68, 45.0)        11.2 ms
+shares are combined.                                                     Bit extraction for w       ( 68, 45.0)         (663, 31.0)       537.2 ms
+    Considering these optimizations and the synchronous                  Reduction modulo q         (603, 31.0)         (499, 22.9)        28.8 ms
+                                                                               Bits BTS             (499, 22.9)         (516, 40.4)        44.2 ms
+decryption protocol from [MBH23] whose FinDec is a sum,                 Reduction modulo 2γ2        (516, 40.4)         (414, 23.5)       106.0 ms
+for 128 decryptors, the communication cost per party can                Clean & Combine bits        (413, 22.5)        (121, 110.8)       119.3 ms
+be reduced to 19.5KB and 4.10KB for Rounds 1 and 2,                     BTS LowBits & LSB           (413, 22.5)         (661, 58.0)        41.5 ms
+respectively. For Round 1, we considered a 19-bit share                         Total                      -                   -         1141.5 ms
+modulus, and only 213 coefficients need to be sent as
+each one of the 8 parallel signing attempts consumes 210               TABLE 1: Homomorphic computations for PartSign1 . For
+coefficients. For Round 2, we considered a 32-bit share                all steps, we provide the ciphertext modulus q and the
+modulus, and only 210 coefficients need to be sent as there            scaling factor ∆ at the beginning and end of the step, in
+is a single signing attempt left at this point. Among 100              bits. ‘MSB’ and ‘LSB’ refer to most and least significant
+signing attempts, we experimentally verified that the above            bits of y, respectively.
+parameters are compatible with 60 bits of noise flooding,
+enabling all parties to recover the signature (if signing
+succeeds).                                                                                           Input              Output
+                                                                                                                                        Latency
+                                                                                                (log q , log ∆)     (log q , log ∆)
+                                                                        c · s1 , c · s2 & C2S    (1287,112.0)         (727,112.0)        13.5 ms
+5.3. Computation Cost                                                   Thrifty comparison       ( 530, 42.0)         (413, 23.9)       107.7 ms
+                                                                            Binary gates 1       ( 413, 23.9)         (248, 24.0)         4.7 ms
+     In Tables 1 and 2, we list the main steps performed                       Bits BTS          ( 248, 24.0)         (861, 33.0)        42.1 ms
+homomorphically. For each one, we provide the input and                     Binary gates 2       ( 857, 29.0)         (542, 28.5)        21.9 ms
+                                                                                 Clean           ( 542, 28.5)        (232, 111.5)         4.6 ms
+output ciphertext modulus and scaling factor, as well as the                     Mask            ( 232,111.5)        (121, 93.9)          7.1 ms
+time consumed by that step.
+                                                                               Total                   -                   -            201.6 ms
+     All signatures pass the reference Dilithium verification
+code. Among 1000 iterations, 870 iterations succeeded in               TABLE 2: Homomorphic computations for PartSign2 . For
+signing. This matches with the theoretical rejection proba-            all steps, we provide the ciphertext modulus q and the
+bility of Dilithium. Note that each run of our protocol signs 8        scaling factor ∆ at the beginning and end of the step, in
+signatures in parallel, and it outputs only the first signature        bits. ‘MSB’ and ‘LSB’ refer to most and least significant
+if at least 1 out of the 8 parallel signing processes succeed.         bits, respectively.
+Table 3 describes the overview of the experimental results.
+
+
+                                                                  15
+                Average         Worst          Sign         Comm.
+                                                                                [ADP24]      N. Alkeilani Alkadri, N. Döttling, and S. Pu. Practical lattice-
+                Latency        Precision       prob.       per party
+                                                                                             based distributed signatures for a small number of signers.
+ PartSign1     1141.5 ms       91.7 bits         -         19.5 KB
+                                                                                             In ACNS, 2024.
+ PartSign2     201.62 ms       77.2 bits       0.870       4.10 KB
+                                                                                [AJL+ 12]    G. Asharov, A. Jain, A. López-Alt, E. Tromer, V. Vaikun-
+TABLE 3: Overview of the costs. Note that the timings                                        tanathan, and D. Wichs. Multiparty computation with low
+exclude the clear computations such as MakeHint and dis-                                     communication, computation and interaction via threshold
+                                                                                             FHE. In EUROCRYPT, 2012.
+tributed decryption. The latency is the average latency and
+the precision is the worst precision among 1000 experi-                         [AKP25]      A. Alexandru, A. Kim, and Y. Polyakov. General functional
+                                                                                             bootstrapping using CKKS. In CRYPTO, 2025.
+ments.
+                                                                                [APS15]      M. R. Albrecht, R. Player, and S. Scott. On the concrete hard-
+                                                                                             ness of learning with errors. J. Math. Cryptol., 2015. Soft-
+                                                                                             ware available at https://github.com/malb/lattice-estimator,
+    We experimentally observed that in the output ciphertext,                                git commit# c7def4.
+there is a gap of 91.7 bits and 77.2 bits between the message
+                                                                                [ASY22]      S. Agrawal, D. Stehlé, and A. Yadav. Round-optimal lattice-
+and the error for each round. As desired, these are strictly                                 based threshold signatures, revisited. In ICALP, 2022.
+larger than our conservative bounds, 90 bits and 75 bits.
+                                                                                [BCC+ 22]    Y. Bae, J. H. Cheon, W. Cho, J. Kim, and T. Kim. META-
+Reducing the Online Cost. As reported in Table 3, the cost                                   BTS: Bootstrapping precision beyond the limit. In CCS,
+                                                                                             2022.
+of PartSign2 is significantly lower than that of PartSign1 .
+This can be exploited as follows to increase performance.                       [BCdP+ 25] G. Borin, S. Celi, R. del Pino, T. Espitau, G. Niot, and
+                                                                                           T. Prest. Threshold signatures reloaded ML-DSA and en-
+PartSign1 can be performed independently from the mes-                                     hanced Raccoon with identifiable aborts, 2025. IACR eprint
+sage to be signed. Although it appears to take the mes-                                    2025/1166.
+sage M as input in Figure 3, the seed µ can in fact be chosen                   [BCK+ 23]    Y. Bae, J. H. Cheon, J. Kim, J. H. Park, and D. Stehlé.
+independently of M : it only needs to be the same across                                     HERMES: efficient ring packing using MLWE ciphertexts
+signers and hence to be agreed upon (it can be set as the                                    and application to transciphering. In CRYPTO, 2023.
+output of a random oracle on an input that the signers agreed                   [BCKS24]     Y. Bae, J. H. Cheon, J. Kim, and D. Stehlé. Bootstrapping
+upon). With this modification, all of PartSign1 (excluding                                   bits with CKKS. In EUROCRYPT, 2024.
+the threshold decryption, which should occur only once the                      [BdCE+ 26] A. Bienstock, L. de Castro, D. Escudero, A. Polychroniadou,
+message M to be signed is revealed) can be executed in                                     and A. Takahashi. Quorus: Efficient, scalable threshold ML-
+an offline phase, and the online phase is reduced to the                                   DSA signatures: An MPC approach. In USENIX Security,
+                                                                                           2026.
+threshold decryption of PartSign1 plus PartSign2 .
+                                                                                [BDK+ 21]    S. Bai, L. Ducas, E. Kiltz, T. Lepoint, V. Lyubashevsky,
+                                                                                             P. Schwabe, Seiler G., and Stehlé D. CRYSTALS-Dilithium
+6. Conclusion                                                                                algorithm specifications and supporting documentation (ver-
+                                                                                             sion 3.1), 2021.
+    We presented a threshold signature scheme. It is verifi-                    [BFM+ 25]    Z. Brakerski, O. Friedman, A. Marmor, D. Mutzari, Y. Spi-
+cation interchangeable with Dilithium, NIST’s primary stan-                                  izer, and N. Trieu. Threshold FHE with efficient asyn-
+                                                                                             chronous decryption, 2025. IACR eprint 2025/712.
+dard for post-quantum signatures. The scheme is obtained
+by homomorphically evaluating the signing algorithm with                        [BG14]       S. Bai and S. D. Galbraith. An improved compression
+                                                                                             technique for signatures based on learning with errors. In
+the CKKS fully homomorphic encryption (FHE) scheme.                                          CT-RSA, 2014.
+Although FHE is often considered expensive, our proof-of-
+                                                                                [BGG+ 18]    D. Boneh, R. Gennaro, S. Goldfeder, A. Jain, S. Kim,
+concept implementation runs in only 0.202s for the online                                    P. M. R. Rasmussen, and A. Sahai. Threshold cryptosystems
+phase of the protocol. Further, this FHE-based approach                                      from threshold fully homomorphic encryption. In CRYPTO,
+enjoys multiple advantages such as low round complexity,                                     2018.
+low communication complexity, scalability with the number                       [BGGJ20]     C. Boura, N. Gama, M. Georgieva, and D. Jetchev.
+of parties, and the fact that most computations can be run                                   CHIMERA: combining ring-LWE-based fully homomorphic
+publicly.                                                                                    encryption schemes. J. Math. Cryptol., 2020.
+                                                                                [BGV12]      Z. Brakerski, C. Gentry, and V. Vaikuntanathan. (leveled)
+                                                                                             fully homomorphic encryption without bootstrapping. In
+Acknowledgment                                                                               ITCS, 2012.
+                                                                                [BHBS26]     J. Baudrin, R. Heim-Boissier, and F.-X. Standaert. On the
+We thank Sascha Roth for pointing out an additional security                                 concrete hardness of LWR with a power of two modulus,
+consideration regarding the preprocessing optimization in an                                 2026. IACR eprint 2026/250.
+earlier version of this work.                                                   [BIP+ 18]    D. Boneh, Y. Ishai, A. Passelègue, A. Sahai, and D. J. Wu.
+                                                                                             Exploring crypto dark matter: New simple PRF candidates
+References                                                                                   and their applications. In TCC, 2018.
+                                                                                [BK25]       D. Boneh and J. Kim. Homomorphic encryption for large
+                                                                                             integers from nested residue number systems. In CRYPTO,
+[AAC+ 22]    G. Alagic, D. Apon, D. Cooper, Q. Dang, T. Dang, J. Kelsey,
+                                                                                             2025.
+             J. Lichtinger, Y.-K. Liu, C. Miller, D. Moody, R. Peralta,
+             R. Perlner, A. Robinson, and D. Smith-Tone. Status report          [BKL+ 25]    C. Boschini, D. Kaviani, R. W. F. Lai, G. Malavolta, A. Taka-
+             on the third round of the NIST post-quantum cryptography                        hashi, and M. Tibouchi. Ringtail: Practical two-round thresh-
+             standardization process. Technical report, NIST, 2022.                          old signatures from learning with errors. In S&P, 2025.
+
+
+
+                                                                           16
+[BKSS24]    Y. Bae, J. Kim, E. Suvanto, and D. Stehlé. Bootstrapping              [DMPS24]     N. Drucker, G. Moshkowich, T. Pelleg, and H. Shaul.
+            small integers with CKKS. In ASIACRYPT, 2024.                                       BLEACH: cleaning errors in discrete computations over
+                                                                                                CKKS. J. Cryptol., 2024.
+[BLL+ 22]   F. Benhamouda, T. Lepoint, J. Loss, M. Orrù, and
+            M. Raykova. On the (in)security of ROS. In J. Cryptol.,                [DOTT21]     I. Damgård, C. Orlandi, A. Takahashi, and M. Tibouchi. Two-
+            2022.                                                                               round n-out-of-n and multi-signatures and trapdoor commit-
+[BP25]      L. T. A. N. Brandão and R. Peralta. NIST first call for multi-                     ment from lattices. In PKC, 2021.
+            party threshold schemes (second public draft). Technical               [dPKM+ 24] R. del Pino, S. Katsumata, M. Maller, F. Mouhartem, T. Prest,
+            report, NIST, 2025.                                                               and M.-J. O. Saarinen. Threshold Raccoon: Practical thresh-
+[Bra12]     Z. Brakerski. Fully homomorphic encryption without mod-                           old signatures from standard lattice assumptions. In EURO-
+            ulus switching from classical GapSVP. In CRYPTO, 2012.                            CRYPT, 2024.
+[BS23]      W. Beullens and GG. Seiler. LaBRADOR: Compact proofs                   [EGM23]      K. Eldefrawy, N. Genise, and N. Manohar. On the hard-
+            for R1CS from module-SIS. In CRYPTO, 2023.                                          ness of scheme-switching between SIMD FHE schemes. In
+                                                                                                PQCrypto, 2023.
+[BTH22]     J.-P. Bossuat, J. Troncoso-Pastoriza, and J.-P. Hubaux. Boot-
+            strapping for approximate homomorphic encryption with                  [EKT24]      T. Espitau, S. Katsumata, and K. Takemure. Two-round
+            negligible failure-probability by using sparse-secret encap-                        threshold signature from algebraic one-more learning with
+            sulation. In ACNS, 2022.                                                            errors. In CRYPTO, 2024.
+[CATZ24]    R. Chairattana-Apirom, S. Tessaro, and C. Zhu. Partially               [FV12]       J. Fan and F. Vercauteren. Somewhat practical fully homo-
+            non-interactive two-round lattice-based threshold signatures.                       morphic encryption. IACR eprint 2012/144, 2012.
+            In ASIACRYPT, 2024.
+                                                                                   [GKS24]      K. D. Gur, J. Katz, and T. Silde. Two-round threshold lattice-
+[CCK+ 24]   J. H. Cheon, H. Choe, M. Kang, J. Kim, S. Kim, J. Mono,                             based signatures from threshold homomorphic encryption. In
+            and T. Noh. Grafting: Decoupled scale factors and modulus                           PQCrypto, 2024.
+            in RNS-CKKS. In CCS, 2024.
+                                                                                   [HCLK25]     D. Hong, Y. Choi, Y. Lee, and Y.-S. Kim. Overlapped
+[CCP+ 24]   J. H. Cheon, H. Choe, A. Passelègue, D. Stehlé, and E. Su-                        bootstrapping for FHEW/TFHE and its application to SHA3.
+            vanto. Attacks against the IND-CPAD security of exact FHE                           In FC, 2025.
+            schemes. In CCS, 2024.
+                                                                                   [HLSS25]     I. Hwang, H. Lee, J. Seo, and Y. Song. Practical zero-
+[CGGI16]    I. Chillotti, N. Gama, M. Georgieva, and M. Izabachène.
+                                                                                                knowledge PIOP for maliciously secure multiparty homo-
+            Faster fully homomorphic encryption: Bootstrapping in less
+                                                                                                morphic encryption. In CCS, 2025.
+            than 0.1 seconds. In ASIACRYPT, 2016.
+[Che23]     Y. Chen. DualMS: Efficient lattice-based two-round multi-              [IZ21]       I. Iliashenko and V. Zucca. Faster homomorphic comparison
+            signature with trapdoor-free simulation. In CRYPTO, 2023.                           operations for BGV and BFV. POPET, 2021.
+
+[CHK+ 18a] J. H. Cheon, K. Han, A. Kim, M. Kim, and Y. Song.                       [KN24]       J. Kim and T. Noh. Modular reduction in CKKS. IACR
+           Bootstrapping for approximate homomorphic encryption. In                             Commun. Cryptol., 2024.
+           EUROCRYPT, 2018.                                                        [KRT24]      S. Katsumata, M. Reichle, and K. Takemure. Adaptively
+[CHK+ 18b] J. H. Cheon, K. Han, A. Kim, M. Kim, and Y. Song. A                                  secure 5 round threshold signatures from MLWE/MSIS and
+           full RNS variant of approximate homomorphic encryption.                              DL with rewinding. In CRYPTO, 2024.
+           In SAC, 2018.                                                           [KSS24]      J. Kim, J. Seo, and Y. Song. Simpler and faster BFV
+[CKK20]     J. H. Cheon, D. Kim, and D. Kim. Efficient homomor-                                 bootstrapping for arbitrary plaintext modulus from CKKS.
+            phic comparison methods with optimal complexity. In ASI-                            In CCS, 2024.
+            ACRYPT, 2020.
+                                                                                   [LLKN22]     E. Lee, J.-W. Lee, Y.-S. Kim, and J.-S. No. Optimization of
+[CKKS17]    J. H. Cheon, A. Kim, M. Kim, and Y. S. Song. Homomor-                               homomorphic comparison algorithm on RNS-CKKS scheme.
+            phic encryption for arithmetic of approximate numbers. In                           IEEE Access, 2022.
+            ASIACRYPT, 2017.
+                                                                                   [LNP22]      V. Lyubashevsky, N. K. Nguyen, and M. Plançon. Lattice-
+[CKSS25]    H. Choe, J. Kim, E. Suvanto, and D. Stehlé. Leveraging                             based zero-knowledge proofs and applications: Shorter, sim-
+            discrete CKKS to bootstrap in high precision. In CCS, 2025.                         pler, and more general. In CRYPTO, 2022.
+[Cry22]     CryptoLab. HEaaN library, 2022. https://heaan.it/.                     [LPR10]      V. Lyubashevsky, C. Peikert, and O. Regev. On ideal lattices
+[CS19]      D. Cozzo and N. P. Smart. Sharing the LUOV: Threshold                               and learning with errors over rings. In EUROCRYPT, 2010.
+            post-quantum signatures. In IMACC, 2019.                               [LS15]       A. Langlois and D. Stehlé. Worst-case to average-case
+[DF89]      Y. Desmedt and Y. Frankel. Threshold cryptosystems. In                              reductions for module lattices. Des. Codes Cryptogr., 2015.
+            CRYPTO, 1989.
+                                                                                   [LSS14]      A. Langlois, D. Stehlé, and R. Steinfeld. GGHLite: More ef-
+[DFPS23]    J. Devevey, P. Fallahpour, A. Passelègue, and D. Stehlé. A                        ficient multilinear maps from ideal lattices. In EUROCRYPT,
+            detailed analysis of Fiat-Shamir with aborts. In CRYPTO,                            2014.
+            2023.
+                                                                                   [LSV22]      P. Laud, N. Snetkov, and J. Vakarjuk. DiLizium-2.0: Revis-
+[DKL+ 18]   L. Ducas, E. Kiltz, T. Lepoint, V. Lyubashevsky, P. Schwabe,                        iting two-party Crystals-Dilithium. IACR eprint 2022/644,
+            G. Seiler, and D. Stehlé. CRYSTALS-Dilithium: A lattice-                           2022.
+            based digital signature scheme. IACR Trans. Cryptogr.
+            Hardw. Embed. Syst., 2018.                                             [Lyu09]      V. Lyubashevsky. Fiat-Shamir with aborts: Applications to
+                                                                                                lattice and factoring-based signatures. In ASIACRYPT, 2009.
+[DKLS25]    A. Dufka, S. Kravtsenko, P. Laud, and N. Snetkov.
+            Trilithium: Efficient and universally composable distributed           [Lyu12]      V. Lyubashevsky. Lattice signatures without trapdoors. In
+            ML-DSA signing. IACR eprint 2025/675, 2025.                                         EUROCRYPT, 2012.
+[DM15]      L. Ducas and D. Micciancio. FHEW: Bootstrapping homo-                  [MBH23]      C. Mouchet, E. Bertrand, and J.-P. Hubaux:. An efficient
+            morphic encryption in less than a second. In EUROCRYPT,                             threshold access-structure for RLWE-based multiparty homo-
+            2015.                                                                               morphic encryption. J. Cryptol., 2023.
+
+
+
+                                                                              17
+[MHPS25]     S. Min, G. Hanrot, A. Passelègue, and D. Stehlé. Distributed                Otherwise, we have that Ra (PX ∥PY ) is bounded
+             key generation for efficient threshold-CKKS, 2025. IACR                       from above by
+             eprint 2025/2057.
+[NS24]       N. K. Nguyen and G. Seiler. Greyhound: Fast polynomial                        R∞ (PX1 ∥PY1 )·    max      Ra (PX2 |X1 =x ∥PY2 |Y1 =x ).
+             commitments from lattices. In CRYPTO, 2024.                                                  x∈Supp(PX1 )
+
+[PN25]       R. Del Pino and G. Niot. Finally! A compact lattice-based                •    Probability Preservation: For any event E ⊆
+             threshold signature. In PKC, 2025.                                            Supp(PY ), we have
+[PS24]       A. Passelègue and D. Stehlé. Low communication threshold                                                       a
+             fully homomorphic encryption. In ASIACRYPT, 2024.                                                      PX (E) a−1
+                                                                                                         PY (E) ≥                .
+[SSTX09]     D. Stehlé, R. Steinfeld, K. Tanaka, and K. Xagawa. Efficient                                          Ra (PX ∥PY )
+             public key encryption based on ideal lattices. In ASIACRYPT,
+             2009.                                                                 Moreover, the Rényi divergence is non-decreasing and con-
+[SVL24]      N. Snetkov, J. Vakarjuk, and P. Laud. TOPCOAT: towards                tinuous as a function of a ∈ [1, +∞], as long as it is finite.
+             practical two-party Crystals-Dilithium. Discov. Comput.,
+             2024.                                                                     We finally recall the following result about the Rényi di-
+                                                                                   vergence of two shifted Gaussian distributions with the same
+[TPCZ23]     G. Tang, B. Pang, L. Chen, and Z. Zhang. Efficient lattice-
+             based threshold signatures with functional interchangeability.
+                                                                                   standard deviation (adapted from [LSS14, Lemma 4.2]).
+             IEEE Trans. Inf. Forensics Secur., 2023.                              Lemma 7. Let η > 0 and c ∈ R. Then for any a ∈ (1, ∞),
+[VSW21]      J. Vakarjuk, N. Snetkov, and J. Willemson. DiLizium: A                we have:
+             two-party lattice-based signature scheme. Entropy, 2021.
+                                                                                                                    aπc2
+                                                                                                                        
+                                                                                             Ra (Dη,c ∥Dη ) ≤ exp          ,
+Appendix A.                                                                                                          η2
+Additional Definitions                                                             and then, for any N > 0, we have (by multiplicativity):
+                                                                                                                        N aπc2
+                                                                                                                              
+A.1. Rényi divergence                                                                       Ra (DN,η,e ∥DN,η ) ≤ exp            .
+                                                                                                                          η2
+    We recall the definition and properties of the Rényi
+divergence.
+                                                                                   A.2. Digital Signatures
+
+Definition 5. Let a ∈ (1, +∞). Let P, Q be two probability                            We recall the definition of digital signatures.
+distributions with P absolutely continuous with respect to Q.
+Their Rényi divergence of order a, assuming that it exists,                       Definition 8. A signature scheme is a tuple of PPT algo-
+is                                                                                 rithms (KeyGen, Sign, Verify) with the following specifica-
+                                                     1
+                                                  ! a−1                            tions:
+                   Z                 a−1
+                               dP                                                     •    KeyGen(1λ ) takes as inputs a security parameter λ
+   Ra (P ∥Q) :=                   (x)      dP (x)         .
+                    Supp(P )   dQ                                                          and outputs public parameters pp, a verification
+                                                                                           key vk, and a signing key sk;
+Their Rényi divergence of infinite order is                                          •    Sign(pp, sk, M ) takes as inputs the public parame-
+                                          dP                                               ters pp, a signing key sk, and a message M , and
+           R∞ (P ∥Q) := ess supx∈Supp(P )    (x) .                                         outputs a signature σ .
+                                          dQ
+                                                                                      •    Verify(vk, M, σ) takes as inputs a verification
+Lemma 6. Let X and Y be two random variables with                                          key vk, a message M , and a signature σ and outputs
+probability distributions PX and PY such that Supp(PX ) ⊆                                  a bit b ∈ {0, 1}.
+Supp(PY ). The following holds for any order a ∈ (1, +∞].
+   •      Log. Positivity: Ra (PX ∥PY ) ≥ Ra (PX ∥PX ) = 1.                        Correctness. For ε > 0, the scheme is ε-correct if for
+   •      Data Processing Inequality: Ra (Pf (X) ∥Pf (Y ) ) ≤                      any M , the following probability is ≥ 1 − negl(λ):
+          Ra (PX ∥PY ) for any function f , where Pf (Z) de-                                                                            
+                                                                                                              (pp, vk, sk) ← KeyGen(1λ )
+          notes the distribution of f (Z) for Z = X or Y .                           Pr Verify(vk, M, σ) = 1                               ,
+                                                                                                                 σ ← Sign(pp, sk, M )
+   •      Multiplicativity: Let X = (X1 , X2 ) and Y =
+          (Y1 , Y2 ). Let PX1 and PY1 denote the probabil-                         where the probability is taken over the random coins
+          ity distributions of X1 and Y1 . Let PX2 |X1 =x                          of KeyGen and Sign.
+          and PY2 |Y1 =x denote the distributions of X2 con-
+          ditioned on X1 = x as well as Y2 conditioned                             Strong Unforgeability. The scheme satisfies strong un-
+          on Y1 = x. If X1 and X2 are independent and Y1                           forgeability if for any PPT adversary A, the advantage
+          and Y2 are independent, then we have                                     Advuf (A) := Pr(Expuf  A (λ) = 1) is negligible, where ex-
+                                                                                   periment ExpufA is defined in Figure 6.
+             Ra (PX ∥PY ) = Ra (PX1 ∥PY1 )Ra (PX2 ∥PY2 ) .
+
+
+
+                                                                              18
+                                                                        about the security of our scheme by relying on the un-
+  Expuf
+      A (λ)                                                             forgeability of the deterministic variant of Dilithium without
+                                          OSign(M )
+  L←∅                                                                   verification key compression.
+                                          σ ← Sign(pp, sk, M )
+  (pp, vk, sk) ← KeyGen(1λ )              L ← L ∪ {(M, σ)}
+      ∗   ∗
+  (M , σ ) ← A   OSign(·) (pp, vk)
+                                                                            For simplicity, we focus on the case t = n, so that the
+                      ∗    ∗        ∗   ∗
+                                          return σ                      FHE decryption key s satisfies s = sk1 + · · · + skn . The
+  return Verify(vk, M , σ ) = 1 ∧ (M , σ ) ∈
+                                           /L
+                                                                        proof extends beyond this setting with the usual technical
+                                                                        adjustments (see, e.g., [BGG+ 18, MBH23]). The threshold
+            Figure 6: Security experiment Expuf
+                                             A.                         signature construction has the following structure.
+                                                                           •    PartSign1 (pp, ski , M ) homomorphically evaluates
+A.3. Threshold Linear Secret Sharing Schemes                                    Sign1 . At the end of this first step, one obtains
+                                                                                a ciphertext (a, b) encrypting commitments w1 :=
+    We recall the definition of (threshold) linear secret shar-                    (1)          (L)
+                                                                                (w1 , . . . , w1 ): it satisfies as + b = ∆ · w1 + eeval
+ing schemes (LSSS) over a ring R.                                               for some small computation error eeval satisfying
+Definition 9. A linear secret sharing scheme LSSS consists                      ∥eeval ∥∞ ≤ Beval . Then, it returns a partial decryp-
+of PPT algorithms (Share, Combine) such that:                                   tion out1,i of (a, b) for the key share ski , defined
+                                                                                as out1,i := a · ski + e1,i , where e1,i ← DN,η is a
+   •    Share(s, n, t) takes as input a number n of par-                        Gaussian noise.
+        ties (Pi )i∈[n] , a threshold t ≤ n, and a secret s ∈ R,           •    Given all partial decryptions (out1,1 , . . . , out1,n )
+        and it outputs (shi )i∈[n] ;                                            of (a, b), it is possible to recover w1 by combining
+   •    Combine({shi }i∈S ) takes as input a set of                             the shares. We have:
+        shares {shi }i∈S and outputs a value s′ ∈ R.                                                             X
+                                                                                             ∆ · w1 + e = b +        out1,i ,
+For any n ≥ t > 0, and any S ⊆ [n], we say that S is
+                                                                                                                    i∈[n]
+valid if |S| = t, and otherwise we say it is invalid. Then,                                            P
+we further require that the following properties hold.                          where e = eeval + i∈[n] e1,i is the decryption error
+Correctness. For any s ∈ R and (shi )i∈[n] ← Share(s, n, t),                    term.
+we have Combine({shi }i∈S ) = s, for any valid set S .                     •    Similarly, PartSign2 (pp, ski , out1 , M ) homomorphi-
+                                                                                cally evaluates Sign2 , in order to obtain a ci-
+Linearity. We say it is linear if Combine is a linear function.                 phertext (a′ , b′ ) encrypting the responses z :=
+Privacy. For any s, s′ ∈ R and any invalid S , we have that                     (z(1) , . . . , z(L) ), i.e., satisfying a′ s+b′ = ∆·z+e′eval
+the distributions:                                                              for some small computation error e′eval satisfying
+                                                                                ∥e′eval ∥∞ ≤ Beval . It returns the partial decryption
+                {(shi )i∈S } and {(sh′i )i∈S }                                  out2,i of (a′ , b′ ) using the key share ski , defined as
+                                                                                out2,i := a′ · ski + e2,i . We have:
+are identical, where (shi )i∈[n]      ←    Share(s, n, t) and
+(sh′i )i∈[n] ← Share(s′ , n, t).
+                                                                                                                       X
+                                                                                                 ∆ · z + e ′ = b′ +         out2,i ,
+                                                                                                                    i∈[n]
+Appendix B.                                                                     where e   ′
+                                                                                              = e′eval +
+                                                                                                           P
+                                                                                                           i∈[n] e2,i .
+Proof of Theorem 3
+                                                                        We now provide a security analysis for this threshold sig-
+     First, let us argue that the fact we tweak the signature           nature scheme.
+by performing the test on the Hamming weight of the hint                    Let A denote an adversary against the unforgeability
+vector h only after decryption (Fig. 3, Steps 6–8) does not             of our threshold signature scheme described in Figure 3.
+hurt security. This tweak implies that we are slightly under-           Let Scor denote the set of n − 1 parties corrupted by A. For
+rejecting (about 2% of produced signatures do not pass this             the sake of simplicity, we assume that A only makes queries
+test) and that we reveal invalid signatures to the attacker that        to OPartSign1 and OPartSign2 for the index i ∈    / Scor . This
+would be rejected in Dilithium. This is actually not an issue:          is without loss of generality since it can answer by itself
+the hint does not play any role in the security of Dilithium,           any queries for j ∈ Scor , as it knows the corresponding
+it is provided because t0 is not known to the verifier in               secret key share skj . Our goal is to prove unforgeability
+Dilithium. We can therefore rely on the unforgeability of               based on the security (and correctness) of the FHE scheme,
+the Dilithium without verification key compression to argue             as well as the security of Dilithium. We rely on the anal-
+about the security of our construction. In this variant, the            ysis of Dilithium from [BdCE+ 26] which proves that it
+vector t is public and there is no hint h. Yet, the verification        secure given aborted transcripts. That is, the unforgeability
+key can be compressed, and the hint h can be computed                   of Dilithium holds even when the attacker is given ora-
+from the signature using Equation (3). Any attacker against             cle access to OSign1 , which can be queried with a mes-
+our threshold scheme would therefore lead to an attacker                sage M and returns L aborted transcripts, i.e., commitments
+                                                                          (1)         (L)
+against unforgeability of the variant of Dilithium without              w1 , . . . , w1 . The attacker also has access to the standard
+verification key compression. As a consequence, we argue                signing oracle OSign, which returns a valid signature. As we
+
+
+                                                                   19
+are relying on the deterministic variant of Dilithium without               the underlying signature scheme in the partial decryption
+verification key compression, a valid Dilithium signature                   share. Concretely, in Hyb1 , we set out1,i ← ∆ · w −
+                                                                            P
+is a pair (c, z), which is the first signature that passes                     j∈Scor aP · skj − b + efl while in Hyb0 , we have out1,i =
+rejection checks. It is possible to retrieve the corresponding              ∆ · w − j∈Scor a · skj − b + eeval + efl .
+commitment w1 following the verification algorithm, and                         For simplicity, we ignore the public parameters, the veri-
+therefore to know the index i ∈ [L] which corresponds to the                fication key and the corrupted partial secret keys {skj }j∈Scor
+first successful signature by matching w1 with the aborted                  in the analysis. This is possible as they are fixed before the
+transcript (there is a match as the scheme is deterministic).               adversary can make any query. However, the messages it
+     We now proceed via a sequence of hybrid games, defined                 queries to its oracles as well as the responses it gets are not
+as follows.                                                                 fixed and can adaptively depend on the prior queries. Let Db
+                                                                            denote their distribution in Hybb , for b ∈ {0, 1}.
+Hyb0 : This is the threshold unforgeability game, described                     Let Qj denote the random variable corresponding to
+in Figure 1.                                                                the input of the j -th query (which could be a query to
+Hyb1 : In this hybrid game, we modify how the challenger                    OPartSign1 or OPartSign2 ), and let Qb,j denote its distri-
+replies to signing queries OPartSign1 and OPartSign2 .                      bution in Hybb , for b ∈ {0, 1}.
+    When A makes a query OPartSign1 (i, M ), the chal-                          Similarly, we let Ej denote the random variable corre-
+lenger does the following. It first runs (in the clear) the                 sponding to the error term underlying the j -th ciphertext
+Dilithium signing protocol L times, in order to recover                     computed and partially decrypted in the j -th query (which
+    (1)                         (L)
+((w1 , c(1) , z(1) ), . . . , (w1 , c(L) , z(L) )). It then homomor-        could be a query to OPartSign1 or OPartSign2 ), and let Eb,j
+phically computes the ciphertext (a, b) as follows. Re-                     denote its distribution in Hybb , for b ∈ {0, 1}. By defi-
+call that the expected output of PartSign1 (pp, ski , M ) is                nition of Hyb0 and Hyb1 , we have E1,j = DN,η while
+a partial decryption out1,i by party Pi of (a, b). As we                    E0,j = DN,η,eeval,j where eeval,j is the computation error in
+assume that i ∈     / Scor , this implies that the output of                the ciphertext that is being partially decrypted in the j -th
+OPartSign1 (i, M ) is sufficient for the adversary to recover               query.
+           (1)           (L)                                                    Let qsig denote the total number of queries made by
+w1 := (w1 , . . . , w1 ).
+                                                                            the adversary. Then, we have Db = (Eb,qsig , Qb,qsig , . . . ,
+    Recall that (a, b) satisfies b + as = ∆ · w1 + eeval ,
+                                                                            Eb,1 , Qb,1 ), for b ∈ {0, 1}, and we aim to measure
+where eeval is the underlying noise term, and s is the FHE
+                                                                            Ra (D0 ∥D1 ).
+secret key, and we have:
+                                     X                                          By the multiplicativity property of the Rényi diver-
+                        s = ski +          skj .                            gence (Lemma 6), we have:
+                                 j∈Scor                                     Ra (D0 ∥D1 ) ≤ max Ra (E0,qsig |X = x∥E1,qsig |X = x)
+                                                                                                x∈X
+Then, in Hyb1 , the challenger replies to a query                                     · Ra (Q0,qsig , . . . , E0,1 , Q0,1 ∥Q1,qsig , . . . , E1,1 , Q1,1 )
+OPartSign1 (i, M ) as follows. It computes (a, b) as above                                                       2
+                                                                                                                      
+and samples efl ← DN,η . Then, it samples out1,i as:                                                   N aπBeval
+                                                                                           ≤ exp
+                            X                                                                                 η2
+       out1,i ← ∆ · w1 −          a · skj − b + efl .   (6)                           · Ra (Q0,qsig , . . . , E0,1 , Q0,1 ∥Q1,qsig , . . . , E1,1 , Q1,1 ) ,
+                               j∈Scor
+                                                                            where the last inequality follows from Lemma 7 and
+    Similarly, when A makes a query OPartSign2 (i,                          ∥eeval ∥∞ ≤ Beval . Indeed, we have:
+out1 , M ), the challenger first runs (in the clear) the (de-                         Ra (E0,qsig ∥E1,qsig ) = Ra (DN,η,eeval,qsig ∥ DN,η )
+terministic) Dilithium signing protocol, in order to re-                                                                                !
+             (1)                      (L)
+cover ((w1 , c(1) , z(1) ), . . . , (w1 , c(L) , z(L) )). Then, it                                                      N aπe2eval,qsig
+                                 ′ ′
+computes the ciphertext (a , b ) to be partially decrypted                                                     ≤ exp
+                                                                                                                            η2
+during this phase, which satisfies b′ + a′ s = ∆ · z + e′eval .                                                               2
+                                                                                                                                   
+Finally, it samples e′fl ← DN,η and returns:                                                                            N aπBeval
+                                                                                                               ≤ exp                    .
+                                 X                                                                                         η2
+           out2,i ← ∆ · z −           a′ skj − b′ + e′fl .     (7)          Now, since Qqsig is the adaptive query made by the ad-
+                               j∈Scor                                       versary given all prior information, it is a function of
+Lemma 10. Assuming perfect correctness of the threshold-                    Eqsig −1 , Qqsig −1 , . . . , E1 , Q1 , and the data processing in-
+FHE scheme, if there is an adversary which breaks unforge-                  equality (Lemma 6) gives us:
+ability in Hyb0 with success probability ε, then its success                 Ra (Q0,qsig , E0,qsig −1 , . . . , E0,1 , Q0,1
+probability in Hyb1 is at least ε2 /2.
+                                                                                                             ∥Q1,qsig , E1,qsig −1 , . . . , E1,1 , Q1,1 )
+       Proof: The only difference between Hyb0 and                               ≤ Ra (E0,qsig −1 , . . . , E0,1 , Q0,1 ∥E1,qsig , . . . , E1,1 , Q1,1 ) .
+Hyb1 is that, since we simulate the partial decryption
+queries based on the result of the decryption, we are                       Using a recursion, we therefore obtain:
+                                                                                                                  2
+                                                                                                                         
+missing the computation error eeval that results from the                                                  N aπBeval qsig
+homomorphic evaluation of the first (or second) stage of                              Ra (D0 ∥D1 ) ≤ exp                    .                          (8)
+                                                                                                                η2
+
+
+                                                                       20
+                    p
+Setting η = Beval 10 · N · qsig , we get Ra (D0 ∥D1 ) ≤                 how to set η concretely for practical deployment, by going
+exp(aπ/10), and by the probability preservation property of             back to Equation (8) from the proof of Lemma 10.
+the Rényi divergence, we obtain the claim by setting a = 2.               Define εb = Pr[A wins Hybb ], for b ∈ {0, 1}. By the
+We have                                                                 probability preservation property of the Rényi divergence,
+                                                                      we have:
+                                         2           2π                                     a
+ Pr[A wins Hyb1 ] ≥ Pr[A wins Hyb0 ] · exp −               ,                             ε0a−1 ≤ ε1 · Ra (D0 ∥D1 ) ,
+                                                     10
+                                                                        and then, from Equation (8), we obtain:
+which leads to our claim as exp(−2π/10) ≥ 1/2.
+                                                                                                            2
+                                                                                                                   
+                                                                                      a
+                                                                                     a−1             N aπBeval qsig
+Hyb2 : This game is defined as Hyb1 except that the shares                          ε0 ≤ ε1 · exp                     .
+of the FHE secret key are now replaced by shares of 0,                                                    η2
+i.e., we set {ski }i∈[n] ← Share(0). Due to the privacy of                           above inequality to the power a−1
+                                                                        We raise the p                               a and define η
+the secret sharing scheme (Definition 9), the two games are             as η = Beval N πqsig · ln(2) · x for x > 0, so that we have:
+perfectly indistinguishable.
+                                                                                                    a−1     (a−1)
+
+Hyb3 : In this game, we replace the encrypted signing key                                   ε0 ≤ ε1 a · 2     x     .
+(including the PRF key) by an encryption of 0’s. Note that
+                                                                             Our objective is to have T0 /ε0 ≥ 2128 , under the
+we can make this changes as the challenger now simu-
+                                                                        assumption that T1 /ε1 is a little higher than 2128 , where Tb
+lates partial decryptions from Dilithium signatures that it
+                                                                        is the adversary’s run-time in Hybb for b ∈ {0, 1}. Note
+computed in the clear. Thanks to IND-CPA security of the
+                                                                        that T0 = T1 and that only εb changes in the tran-
+FHE scheme, games Hyb2 and Hyb3 are computationally
+                                                                        sition between Hyb0 and Hyb1 . Let us define Eb =
+indistinguishable.
+                                                                        − log2 εb for b ∈ {0, 1}. Then, passing the above inequality
+    We can now complete the proof of security of our                    through log2 , we want:
+signature by proving the following lemma.                                                      a−1 a−1
+                                                                                        E1 ·      −    ≤ E0 ,
+Lemma 11. If there is an adversary A breaking unforge-                                          a   x
+ability in Hyb3 with success probability ε, then there exists                                                 a(a−1)
+an attacker with oracle access to aborted transcripts against           which is an equality when x = E1 (a−1)−E      0a
+                                                                                                                         . In order to
+Dilithium that breaks unforgeability with success probabil-             minimize η , our goal is to minimize
+                                                                                                       √     x√, for a >√1, given E1 .
+ity ε and runtime essentially the same as A’s.                          This is done by √setting √a = E1 /( E1 − E0 ), which
+                                                                        leads to x = 1/( E1 − E0 )2 . We obtain:
+        Proof: Let A denote an attacker that succeeds                                       q                         p       p
+in Hyb3 . We construct an attacker B against the unforge-               log2 η = log2 (Beval N πqsig · ln(2))−log2 ( E1 − E0 ) .
+ability of Dilithium with oracle access to aborted transcripts
+as follows. Attacker B receives the signature verification
+                                                                                                                   p
+                                                                        With N = 216 and qsig = 264 , since log2 ( π ln(2)) ≈ 0.56,
+key vk from its challenger. It generates a pair of FHE public           we then have:
+and secret keys and computes encryptions of 0 as for the                                                         p        p
+encrypted signing key and for the encrypted PRF key. It also                log2 η ≈ log2 Beval + 40.56 − log2 ( E1 − E0 ) .
+generates {ski }i∈[n] ← Share(0). Then B runs A. When
+                                                                        Assuming that E1 ≥ E0 + 1, so that at most one bit of
+the latter sends its target set of corruptions Scor , B forwards
+the public parameters to A as well as the partial signing
+                                                                        security is lost     √ Hyb0 and Hyb1 , it can be checked
+                                                                                      √ between
+                                                                        that − log2 ( E1 − E0 ) ≤ 5 for all E1 ≤ 256. Hence, to
+keys ski for j ∈ Scor . Then, when A makes a query to
+                                                                        obtain a security loss bounded by 1 bit (for any security
+OPartSign1 (resp. OPartSign2 ) with some message M for
+                                                                        level below 256 bits), it suffices to set η = 246 · Beval .
+some i ∈ / Scor , attacker B makes a signing query M to its or-
+                                                                        Finally, note that a Gaussian polynomial e with N = 216
+acle for aborted transcripts OSign1 (resp. OSign). It obtains
+   (1)         (L)                                                      coordinates sampled according to Dη satisfies ∥e∥∞ ≤ 6η
+(w1 , . . . , w1 ) as a response (resp. (c, z)), and replies            with probability at least 1 − 2−128 , implying that it suffices
+to A by producing the requested partial decryption using                to flood with a Gaussian error that is at most 49-bit larger
+the simulation described in Equation (6) (resp. Equation (7),           than Beval .
+by first recovering the index i ∈ [L] corresponding to
+the response z obtained by comparing the commitment w1
+induced by it with the aborted commitments obtained from                Appendix C.
+OSign1 for the same message). When A halts with some                    Proof of Lemma 4
+forgery (M ∗ , σ ∗ ), so does B .
+                                                                            Since the order of 5 modulo 2N is N/2, we have
+   This completes the proof of Theorem 3.                                    ℓ
+                                                                        (5k· 2 )N/ℓ ≡ 1 mod 2N for each integer k . Moreover,
+                                                                                      ℓ
+
+                      p Flooding Parameter η . The above
+Concrete Choice for the                                                 the set {5k· 2 mod 2N : k ∈ [0, N/ℓ) ∩ Z} is the set
+                                                                                         N
+proof sets η = Beval 10 · N · qsig , which is fine for the              of roots of X ℓ − 1 = 0 modulo 2N , which is also
+proof to go through in the theoretical sense. We now explain            {1 + 2ℓ · k : k ∈ [0, N/ℓ) ∩ Z}.
+
+
+
+                                                                   21
+   Therefore, for each j = 0, 1, · · · , ℓ/2 − 1, we have:
+      N                                 N
+     ℓ    −1                   ℓ            −1 N −1
+ ℓ X                    ℓ X          X
+                                                    t
+   ·     m(ζj+k· ℓ ) =      ·              mt · ζj+k·    ℓ
+ N               2      N                                2
+     k=0                       k=0 t=0
+                            N                     
+                 N −1            ℓ −1
+             ℓ X                X          j k· 2ℓ
+         =     ·       mt ·          ζ t·5 ·5 
+            N t=0
+                                k=0
+                            N                         
+                 N −1            ℓ −1
+             ℓ X                X          j
+         =     ·       mt ·          ζ t·5 ·(1+2ℓ·k) 
+            N t=0
+                                k=0
+                                     N                    
+                 N −1                    ℓ −1
+             ℓ X                  j      X          j
+         =     ·       mt · ζ t·5 ·           ζ t·5 ·2ℓ·k  . (9)
+            N t=0
+                                                    k=0
+                                                    j
+If t is a multiple of N/ℓ, then ζ t·2ℓ·5 = 1; hence, we have
+                         N
+                         ℓ −1
+                         X          j           N
+                                ζ t·5 ·2ℓ·k =     .
+                                                ℓ
+                         k=0
+                                                            j
+If t is not a multiple of N/ℓ, then ζ t·2ℓ·5 ̸= 1, because 5j
+is odd; hence, we have
+           N
+           ℓ −1                                 j       N
+           X         j              1 − ζ t·5 ·2ℓ· ℓ
+                  ζ t·5 ·2ℓ·k =                                 = 0 .
+           k=0
+                                     1 − ζ t·5j ·2ℓ
+Going back to Equation (9), we obtain, for each j =
+0, 1, · · · , N/2 − 1:
+       N
+       ℓ −1               ℓ−1
+   ℓ X                    X               N    j
+     ·      m(ζj+k· ℓ ) =     mt· N · ζ t· ℓ ·5 = m′ (ζj ) .
+   N                2
+                          t=0
+                                  ℓ
+          k=0
+
+This proves the theorem.
+
+
+
+
+                                                                        22
+

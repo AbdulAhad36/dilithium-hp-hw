@@ -1,0 +1,55 @@
+                      May 2nd Week Progress Update – 2026
+
+Dear Sir,
+
+I hope you are doing well. I am writing to provide an update on my progress for May 2nd week 2026 and outline my
+planned objectives for May leading up to the midyear evaluation.
+
+
+
+Work Completed in May 2nd Week (May 6 to 13):
+•   Completed verification of the Keccak implementation for both SHAKE-128 and SHAKE-256 (100% functional
+    coverage), verifying all operational modes, message lengths, and XOF output lengths.
+
+•   Implemented a 2-stage pipelined architecture in the Keccak design and restructured the architecture to include 4
+    separate Keccak processing channels, each with its own dedicated core.
+
+•   Studied recent research papers that adopt similar multi-core high-throughput architectures.
+
+•   Focused the design modifications toward maximizing throughput and overall performance. Identified that the
+    future Dilithium controller can utilize all 4 channels during different operations to justify the increased area usage
+    while improving throughput.
+
+•   Completed synthesis of the design on Intel Cyclone V FPGA and achieved approximately 84 MHz Fmax for
+    single-core operation (minor setup timing violations observed).
+
+•   Planned next step: begin implementation of the Number Theoretic Transform (NTT).
+
+•   Timing optimization and Fmax improvements for the Keccak design will be revisited later if necessary.
+
+
+
+Goals for 3rd Week of May (May 14 to 20):
+•   Research and literature review on NTT for high-performance and efficient design.
+
+•   Hardware design and UVM verification.
+
+•   Start synthesis for NTT.
+
+•   Start thesis writing.
+
+
+
+Goals Left Before Midyear Evaluation:
+•   Complete NTT implementation.
+
+•   Strengthen literature review by identifying new optimization approaches from recent research.
+
+•   Structured thesis writing.
+
+
+Please let me know if you would like any adjustments to the plan or additional focus areas.
+
+Best regards,
+Muhammad Abdul Ahad
+

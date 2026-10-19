@@ -1,0 +1,303 @@
+                                                                                                                                                                      2025 IEEE 68th International Midwest Symposium on Circuits and Systems (MWSCAS)
+                                                                                                                                                                      August 10-13, 2025. Lansing, Michigan, USA
+
+
+                                                                                                                                                                                       Area-Time Efficient Hardware Design for
+                                                                                                                                                                                               CRYSTALS-Dilithium
+                                                                                                                                                                                                                         Hien Nguyen∗ and Tuy Tan Nguyen†
+                                                                                                                                                                              ∗ School of Informatics, Computing, and Cyber Systems, Northern Arizona University, Flagstaff, AZ 86011, USA
+                                                                                                                                                                                 † Department of Electrical and Computer Engineering, Florida State University, Tallahassee, FL 32310, USA
+2025 IEEE 68th International Midwest Symposium on Circuits and Systems (MWSCAS) | 979-8-3315-8934-9/25/$31.00 ©2025 IEEE | DOI: 10.1109/MWSCAS53549.2025.11244431
+
+
+
+
+                                                                                                                                                                                                                           tn598@nau.edu, tuy.nguyen@fsu.edu
+
+
+                                                                                                                                                                          Abstract—CRYSTALS-Dilithium (Dilithium), a digital signa-                optimizations; however, they compute only one NTT stage
+                                                                                                                                                                       ture scheme based on lattice cryptography, has recently been                per cycle, thereby underutilizing the pipeline. The authors in
+                                                                                                                                                                       designated as a standard for post-quantum digital signatures by             [7], [8] focused on lightweight and compact implementations
+                                                                                                                                                                       the National Institute of Standards and Technology. Known for
+                                                                                                                                                                       its strong security guarantees and efficient use of polynomial              targeting low-end FPGAs or application-specific integrated
+                                                                                                                                                                       arithmetic, Dilithium offers a promising foundation for future-             circuits (ASICs), often trading off performance to minimize
+                                                                                                                                                                       proof digital signatures. However, implementing such lattice-               resource consumption. In [9], the authors proposed unified
+                                                                                                                                                                       based schemes in hardware introduces significant challenges due             cryptoprocessors that support multiple post-quantum cryptog-
+                                                                                                                                                                       to the high computational demands and structural complexity of              raphy (PQC) schemes, including Dilithium and Saber, but
+                                                                                                                                                                       their core operations. To overcome these issues, this work focuses
+                                                                                                                                                                       on optimizing Dilithium for field-programmable gate arrays                  are not optimized for the specific demands of Dilithium
+                                                                                                                                                                       (FPGAs), which offer substantial potential for performance gains            polynomial arithmetic. Meanwhile, the authors in [10] pro-
+                                                                                                                                                                       through parallelism and customized architectural design. We                 posed a sparse polynomial multiplication method to reduce the
+                                                                                                                                                                       introduce a novel hardware design that improves performance                 number of operations, achieving high throughput but relying
+                                                                                                                                                                       and area by employing a 2×2 butterfly number-theoretic trans-               on structured sparsity and precomputed constants, which limits
+                                                                                                                                                                       form capable of computing two transform stages per cycle,
+                                                                                                                                                                       along with a conflict-free memory subsystem that leverages                  its generality and flexibility. This paper presents a high-
+                                                                                                                                                                       pipelined coefficient rearrangement and an address resolution               performance FPGA implementation of Dilithium, designed to
+                                                                                                                                                                       mechanism to ensure continuous data access. Evaluation on an                address the core challenges of hardware-based post-quantum
+                                                                                                                                                                       Xilinx Versal Premium FPGA shows that our design enhanced                   digital signature schemes. The architecture is fully compliant
+                                                                                                                                                                       resource utilization and performance, reaching 328 MHz and an               with the Dilithium specification and supports all three NIST-
+                                                                                                                                                                       area-time product of 5.4 KLUTs × ms at security level 2.
+                                                                                                                                                                          Index Terms—CRYSTALS-Dilithium, number theoretic trans-                  defined security levels (2, 3, and 5), with runtime configura-
+                                                                                                                                                                       form, FPGA, hardware implementation.                                        bility that allows the system to adapt dynamically to varying
+                                                                                                                                                                                                                                                   performance and security requirements, without the need for
+                                                                                                                                                                                                I. I NTRODUCTION                                   hardware modification. To overcome performance bottlenecks
+                                                                                                                                                                          As the era of quantum computing approaches, tradi-                       observed in prior implementations, our design introduces two
+                                                                                                                                                                       tional cryptographic standards face unprecedented threats [1],              key architectural innovations. The first is a deeply pipelined
+                                                                                                                                                                       [2]. Among the emerging solutions, CRYSTALS-Dilithium                       2×2 butterfly NTT engine capable of executing two transform
+                                                                                                                                                                       (Dilithium) [3], a lattice-based digital signature scheme, has              stages per clock cycle, significantly reducing latency and
+                                                                                                                                                                       recently been selected by the National Institute of Standards               improving throughput. The second is a conflict-free memory
+                                                                                                                                                                       and Technology (NIST) as a standard for post-quantum digital                access mechanism that integrates pipelined coefficient flow, an
+                                                                                                                                                                       signatures [4]. Based on structured lattices and designed to                address resolver, and a bit-reversed memory layout, enabling
+                                                                                                                                                                       support efficient arithmetic over polynomial rings, Dilithium               continuous data streaming and minimizing block random ac-
+                                                                                                                                                                       is highly suitable for hardware implementation. However, de-                cess memory (BRAM) access stalls.
+                                                                                                                                                                       ploying it efficiently on field-programmable gate array (FPGA)                 The remaining sections of the paper are structured as
+                                                                                                                                                                       platforms remains a challenge due to the computational in-                  follows: Section II provides detailed background on NTT and
+                                                                                                                                                                       tensity of operations such as the number-theoretic transform                Dilithium. Section III presents our FPGA design methodology,
+                                                                                                                                                                       (NTT) and rejection sampling, all of which require careful                  highlighting the key architectural features and optimizations
+                                                                                                                                                                       architectural design to meet performance and area constraints.              employed. In Section IV, we discuss the experimental results,
+                                                                                                                                                                          Several recent studies have addressed this problem from                  demonstrating the performance improvements achieved. Fi-
+                                                                                                                                                                       different perspectives. In [5] and [6], the authors proposed                nally, Section V concludes the paper with a summary of our
+                                                                                                                                                                       pipelined or radix-4 NTT architectures with various memory                  findings and potential directions for future research.
+                                                                                                                                                                                                                                                                            II. BACKGROUND
+                                                                                                                                                                          This work was supported in part by the Department of Electrical and
+                                                                                                                                                                       Computer Engineering, FAMU-FSU College of Engineering, and the Center       A. Number theoretic transform
+                                                                                                                                                                       for Advanced Power Systems, Florida State University; and in part by the
+                                                                                                                                                                       School of Informatics, Computing, and Cyber Systems, Northern Arizona         The number theoretic transform (NTT) is a variant of
+                                                                                                                                                                       University. (Corresponding author: Tuy Tan Nguyen.)                         the discrete Fourier transform (DFT) adapted for operations
+
+                                                                                                                                                                      979-8-3315-8934-9/25/$31.00 ©2025 IEEE                                   907
+
+
+
+                                                                                                                                                                    Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:12:28 UTC from IEEE Xplore. Restrictions apply.
+   over finite fields, making it particularly suitable for crypto-                Dilithium achieves high efficiency by using the NTT for
+   graphic schemes that operate on modular integer arithmetic                  all polynomial multiplications and avoiding floating-point op-
+   [2]. It enables efficient polynomial multiplication in the ring             erations, which makes it highly suitable for FPGA imple-
+   Zq [x]/(xN + 1), where q is a prime modulus such that a                     mentation. However, realizing a practical FPGA accelerator
+   primitive N -th root of unity exists in Zq .                                for Dilithium remains non-trivial due to the need to handle
+                                   PN −1
+      Given a polynomial a(x) = j=0 aj xj , the NTT maps it                    intensive modular arithmetic, dynamic control flow across key,
+   to a coefficient vector A = NTT(a) in the transformed domain:               sign, and verify phases, and variable parameters across security
+               N −1                                                            levels.
+               X
+        Ak =          aj · ω jk   mod q,     for k = 0, ..., N − 1      (1)                     III. P ROPOSED A RCHITECTURE
+               j=0
+                                                                                 This section introduces our FPGA-based architecture for
+   where ω is a primitive N -th root of unity modulo q.
+                                                                               accelerating the Dilithium digital signature scheme.
+     The inverse NTT (INTT) restores the original polynomial:
+                   N
+                   X −1                                                        A. System overview
+     aj = N −1 ·          Ak ·ω −jk   mod q,     for j = 0, ..., N −1 (2)         The overall hardware architecture is shown in Fig. 1, where
+                   k=0
+                                                                               a central BRAM array stores all intermediate polynomial
+   where N −1 is the multiplicative inverse of N modulo q.                     data. Functional units, including the NTT and INTT core,
+      Polynomial multiplication in Dilithium is performed using                Keccak hashing engine, samplers, hint logic, decomposer, and
+   the NTT as:                                                                 signature verifiers, interact with this memory via a coordinated
+                                                                               access scheme. Three finite state machines (FSMs) indepen-
+                 c(x) = a(x) · b(x)        mod (xN + 1, q)              (3)
+                                                                               dently control the key generation, signing, and verification
+   Which is efficiently computed by transforming the inputs into               pipelines. These FSMs operate concurrently, ensuring non-
+   the NTT domain:                                                             blocking execution and maximizing throughput across all
+                                                                               operational phases.
+                      C = INTT(NTT(a) ⊙ NTT(b))                         (4)
+     This approach reduces the computational complexity from
+   O(N 2 ) to O(N log N ), making it a fundamental operation in
+   high-performance lattice-based cryptographic hardware.
+   B. Overview of Dilithium
+      Dilithium is a lattice-based digital signature scheme that
+   achieves post-quantum security by relying on the hardness
+   of the module learning with errors and module short integer
+   solution problems [3]. All operations are defined over the
+   polynomial ring Zq [x]/(xN + 1), where N = 256 and q is
+   a carefully chosen prime to support efficient NTT implemen-
+   tation.
+      The key generation procedure begins by sampling a uni-
+   formly random matrix A ∈ Zqk×l [x] from a public seed. Two
+   secret vectors s1 ∈ Zl and s2 ∈ Zk are sampled from a
+   centered binomial distribution χη . The public key is computed
+                                                                                          Fig. 1. Top-level hardware architecture for Dilithium.
+   as t = A·s1 +s2 mod q, where all polynomial multiplications
+   are performed efficiently using NTT.
+      To sign a message µ, a short vector y ← χγ1 is sampled,                  B. 2 × 2 butterfly NTT engine
+   and the commitment w is computed as:
+                                                                                  The core innovation in our NTT accelerator lies in the
+                       w = highbits(A · y      mod q).                  (5)    2×2 butterfly structure, which processes two consecutive NTT
+                                                                               stages on two input coefficient pairs per cycle. This design
+     A hash function is used to generate the challenge poly-                   directly addresses inefficiencies in prior NTT implementations,
+   nomial c = H(w, µ). The response vector is calculated as                    where only one stage is processed per cycle and intermediate
+   z = y + c · s1 . If z exceeds a predefined norm bound or fails              data is repeatedly written to and read from memory, introduc-
+   other constraints, the signature is rejected and recomputed.                ing latency and BRAM contention.
+   During verification, the verifier checks:                                      As illustrated in Fig. 2, the engine consists of four butterfly
+                   w′ = highbits(A · z − c · t mod q),                  (6)    units across two sequential stages. Each stage receives two
+                                                                               coefficient pairs and applies the Cooley-Tukey operations [11]:
+   accepting the signature only if w′ = w and other conditions                            ′                               ′
+   hold.                                                                                a = a + wb mod q, and b = a − wb mod q                      (7)
+
+                                                                           908
+
+
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:12:28 UTC from IEEE Xplore. Restrictions apply.
+                                        (a)
+
+
+                                                                                              Fig. 3. High-level architecture of the NTT engine.
+
+
+                                                                                    coefficients stay in registers across butterfly stages, the number
+                                                                                    of memory accesses is halved compared to single-stage NTT
+                                                                                    designs.
+                                                                                       By integrating the 2 × 2 butterfly architecture with a
+                                        (b)                                         memory-aware pipeline, our NTT engine achieves signifi-
+   Fig. 2. (a) The routing structure of 2 × 2 butterfly unit and (b) Illustration   cant improvements in throughput and efficiency. The design
+   of the butterfly BF1,1 unit.
+                                                                                    computes two NTT stages per clock cycle, processing four
+                                                                                    coefficients concurrently, which greatly accelerates the poly-
+                                                                                    nomial transformation process. Memory contention is mini-
+      Intermediate results from stage one are forwarded internally
+                                                                                    mized through an address-resolved access scheme that aligns
+   through multiplexers, eliminating the need for intermediate
+                                                                                    with the butterfly computation pattern, enabling uninterrupted
+   memory writes. Stage two then applies additional twiddle
+                                                                                    data flow. Modular arithmetic operations are shared across
+   factors w2 , w3 to complete the transformation. This double-
+                                                                                    both stages using Barrett-based datapaths, reducing resource
+   stage operation is supported by modular multiplication and
+                                                                                    overhead without compromising speed. Additionally, the archi-
+   fast Barrett reduction logic, which replaces division with bit-
+                                                                                    tecture supports runtime reconfiguration for Dilithium security
+   shifting and multiplication, reducing critical path delay.
+                                                                                    levels 2, 3, and 5, allowing a single hardware instance to adapt
+      As shown in Fig. 3, the design is fully pipelined: four                       to varying performance and security requirements flexibly.
+   coefficients are fetched each cycle, processed through two
+   NTT stages, and then buffered for writeback. This architecture                                   IV. E XPERIMENTAL R ESULT
+   supports both forward and inverse NTTs by switching butterfly                       This section presents our implementation of resource uti-
+   mode and twiddle read-only memory (ROM) sources. The                             lization and performance results (Ours), comparing these
+   divide-by-n in INTT is merged into the final butterfly stage                     outcomes with other designs. The proposed architecture is
+   using shift operations, further reducing latency. The memory                     described in Verilog, with results generated for Xilinx Versal
+   system is co-optimized with the butterfly engine to enable                       Premium Series (VPS) FPGAs, utilizing the default synthesis
+   continuous data streaming without stalls. Coefficients are                       and implementation strategy through the Vivado tool.
+   arranged in a 64 × 4 memory format, aligned with the 4-                             To ensure a rigorous and equitable comparison of design
+   coefficient-per-cycle processing rate of the NTT pipeline. Two                   efficiencies, we employ the area × time parameter as a key
+   dedicated 64 × 6 ROMs perform address resolution based on                        performance metric, expressed in thousands of equivalent
+   bit-reversal patterns and stage progression, ensuring proper                     LUTs multiplied by milliseconds (KLUTs × ms). Equivalent
+   data access sequencing.                                                          LUTs are calculated based on methodologies in [12], [13] as:
+      The conflict-free design prevents simultaneous access to the
+                                                                                          LUTsequiv = nLUTs + nFFs × 0.5 + nDSPs × 196              (8)
+   same BRAM ports. This is critical for avoiding pipeline stalls,
+   particularly when reading four coefficients and writing back                        Time represents the total duration of key generation, veri-
+   the results from a double-stage NTT computation. Because                         fication, and signing. Table I offers a thorough evaluation of
+
+                                                                                909
+
+
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:12:28 UTC from IEEE Xplore. Restrictions apply.
+                                                                    TABLE I
+                    A REA -T IME P RODUCT AND E XECUTION L ATENCY ACROSS S ECURITY L EVELS FOR D ILITHIUM H ARDWARE D ESIGNS
+
+                           Max freq.    LUT      FF                            Keygen              Verify                   Sign             Area × Time
+     Ref.      Devices                                  DSP    BRAM
+                            (MHz)        (K)     (K)                       KCCs         µs     KCCs         µs      KCCs             µs      (KLUTs × ms)
+                                                                       Security level 2
+      [5]      Artix-7        96.9       30     10.4     10       11         4.1        43      4.4         46     28.1/31.6       290/326      14.75
+      [6]    Zynq-7000        159       18.5     7.3     10       17         7.7        49      7.7         48        52            327          10.2
+      [9]      VUS+           270        23      9.7     4        24        14.6       54.1     15.4        57       31.7           117          6.5
+      [10]     Artix-7        119       30.3    13.6     16       28         3.9        33    1.9/4.2    16/36     10.7/12.8       90/108        6.36
+     Ours       VPS           328       55.6    30.4     8        29         5.2       15.9     6.6         20       12.7           38.87        5.4
+                                                                       Security level 3
+      [7]      Artix-7        145       30.9    11.4     21       45        33.1       228      12.1        83      105.1           725         37.92
+      [5]      Artix-7        96.9       30     10.4     10       11         5.9        60      6.2         64     44.7/49.5       461/511      26.67
+      [6]    Zynq-7000        159       18.5     7.3     10       17         13         82      11.2        71       89.2           561          17.2
+      [10]     Artix-7        119       30.3    13.6     16       28         6.5        54    2.8/6.0    24/58     17.6/21/4       148/180      10.42
+      [9]      VUS+           270        23      9.7     4        24        23.6       87.4     26.1        96.7     48.7           180          10.4
+     Ours       VPS           328       55.6    30.4     8        29         9.1      27.83     9.7         29.6     19.7           59.9         8.49
+                                                                       Security level 5
+      [8]      Artix-7        163        14      6.8     4        35        63.2       387      67.9        416     113.9           699         27.31
+      [6]    Zynq-7000        159       18.5     7.3     10       17        20.2       127      15.9        100      93.7           589          19.7
+      [9]      VUS+           270        23      9.7     4        24        39.7       147      46.7        173      70.2           260          16.6
+      [10]     Artix-7        119       30.3    13.6     16       28        10.9        91    4.2/11/5   35/97     20.7/27.6       174/232      14.48
+     Ours       VPS           328       55.6    30.4     8        29        15.8       48.1     14.6        44.6     31.2           95.32       13.61
+
+
+
+
+   multiple implementations of the Dilithium algorithm across                         At level 3, we again lead in both frequency (328 MHz) and
+   different security levels, including direct comparisons with                    area-time efficiency. Our design achieves 8.49 KLUTs × ms,
+   our work. The table highlights crucial metrics such as maxi-                    substantially outperforming [7] (37.92) and [5] (26.67). Even
+   mum frequency, area × time, resource utilization (LUTs, FFs,                    when compared to the optimized implementation of [10]
+   DSPs, and BRAM), and the number of clock cycles alongside                       (10.42), our pipeline achieves faster signing and key genera-
+   execution times for key generation, verification, and signing                   tion with fewer clock cycles, due to continuous data streaming
+   processes.                                                                      and efficient stage-overlapping in the butterfly units.
+      Unlike prior works that rely on single-stage NTT designs,                       At the highest security level, we maintain an area-time
+   our architecture incorporates a pipelined 2 × 2 butterfly struc-                product of 13.61 KLUTs × ms, again competitive with [10]
+   ture that enables simultaneous computation of two NTT stages.                   (14.48) and significantly better than [8] (27.31), despite the
+   This drastically reduces transform latency and minimizes                        latter’s smaller LUT footprint. Our reduced execution times
+   write-back stalls by forwarding intermediate values internally.                 (48.1 µs for key generation, 95.3 µs for signing) reflect
+   Furthermore, we integrate Barrett reduction into each butterfly                 the effectiveness of combining coefficient-level pipelining and
+   datapath, which replaces costly division operations with shift-                 runtime reconfigurability across polynomial lengths.
+   multiply logic, boosting modular arithmetic throughput. This                       Our implementations consistently achieve higher frequen-
+   combination of deep pipelining, modular reuse, and conflict-                    cies while maintaining competitive resource efficiency across
+   free memory access forms the foundation of our performance                      all security levels. We offer fast execution times for key
+   gains. Compared to pipelined radix-4 or sparse-multiplication                   generation and signing, making them suitable for applica-
+   approaches such as [10], our design avoids hardcoded sparsity                   tions requiring quick cryptographic operations. While our
+   and data-specific assumptions, enabling general-purpose and                     implementations use more resources than others, they achieve
+   scalable Dilithium acceleration.                                                a good balance between speed and efficiency, especially at
+                                                                                   higher frequencies.
+      At level 2, our design achieves a maximum frequency of
+   328 MHz, outperforming all others. In particular, compared                                                V. C ONCLUSION
+   to [5], [10] (119 MHz), our implementation delivers a lower                        We presented a high-performance FPGA implementation of
+   area-time product of 5.4 KLUTs × ms, while maintaining                          Dilithium, optimized through a 2×2 butterfly NTT architecture
+   superior key generation latency (15.9 µs) and competitive                       and conflict-free memory. Our design achieves strong perfor-
+   signing performance (38.87 µs). The efficiency gain comes                       mance across all security levels. Future work will explore
+   from reduced memory traffic via the 2×2 butterfly pipeline and                  resource optimization, scalability, and system-level integration
+   minimized overhead from Barrett-based modular arithmetic.                       to further advance post-quantum cryptographic hardware.
+
+                                                                             910
+
+
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:12:28 UTC from IEEE Xplore. Restrictions apply.
+                                  R EFERENCES                                         [7] G. Land, P. Sasdrich, and T. Güneysu, “A hard crystal - Implementing
+                                                                                          Dilithium on reconfigurable hardware,” in Smart Card Research and
+     [1] P. W. Shor, “Algorithms for quantum computation: Discrete logarithms             Advanced Applications. Amsterdam, The Netherland: Springer Inter-
+         and factoring,” in Proceedings 35th Annual Symposium on Foundations              national Publishing, 14 - 16 Nov. 2023, pp. 210–230.
+         of Computer Science, Washington, DC, US, 20-22 Nov. 1994, pp. 124–
+                                                                                      [8] N. Gupta, A. Jati, A. Chattopadhyay, and G. Jha, “Lightweight hardware
+         134.
+                                                                                          accelerator for post-quantum digital signature CRYSTALS-Dilithium,”
+     [2] H. Nguyen, S. Huda, Y. Nogami, and T. T. Nguyen, “Security in post-
+                                                                                          IEEE Transactions on Circuits and Systems I: Regular Papers, vol. 70,
+         quantum era: A comprehensive survey on lattice-based algorithms,”
+                                                                                          no. 8, pp. 3234–3243, Aug. 2023.
+         IEEE Access, vol. 13, pp. 89 003–89 024, May. 2025.
+     [3] L. Ducas, E. Kiltz, T. Lepoint, V. Lyubashevsky, P. Schwabe, G. Seiler,      [9] A. Aikata, A. C. Mert, D. Jacquemin, A. Das, D. Matthews, S. Ghosh,
+         and D. Stehlé, “CRYSTALS-Dilithium – Algorithm specifications                   and S. S. Roy, “A unified cryptoprocessor for lattice-based signature
+         and supporting documentation (version 3.1),” Feb. 2021, accessed                 and key-exchange,” IEEE Transactions on Computers, vol. 72, no. 6,
+         2025-01-21. [Online]. Available: https://pq-crystals.org/dilithium/data/         pp. 1568–1580, Oct. 2023.
+         dilithium-specification-round3-20210208.pdf                                 [10] H. Zhao, C. Zhao, W. Zhu, B. Yang, S. Wei, and L. Liu, “Sparse poly-
+     [4] G. Alagic, J. Alperin-Sheriff, D. Apon, D. Cooper, J. Kelsey, Q. Dang,           nomial multiplication-based high-performance hardware implementation
+         Y.-K. Liu, C. Miller, R. Peralta, D. Moody, R. Perlner, A. Robinson,             for CRYSTALS-Dilithium,” in 2024 IEEE International Symposium on
+         and D. Smith-Tone, “Status report on the third round of the NIST post-           Hardware Oriented Security and Trust (HOST), Washington DC, USA,
+         quantum cryptography standardization process,” National Institute of             06 - 09 May. 2024, pp. 150–159.
+         Standards and Technology, NISTIR 8413, Jul. 2022.                           [11] W. M. Gentleman and G. Sande, “Fast Fourier transforms: For fun and
+     [5] C. Zhao, N. Zhang, H. Wang, B. Yang, W. Zhu, Z. Li, M. Zhu,                      profit,” in Proceedings of the November 7-10, 1966, Fall Joint Computer
+         S. Yin, S. Wei, and L. Liu, “A compact and high-performance hardware             Conference, ser. AFIPS ’66 (Fall). New York, NY, USA: Association
+         architecture for CRYSTALS-Dilithium,” IACR Transactions on Crypto-               for Computing Machinery, 07-10 Nov. 1966, pp. 563–578.
+         graphic Hardware and Embedded Systems, vol. 2022, no. 1, pp. 270–           [12] Xilinx, “7 series FPGAs configurable logic block,” Nov. 2014,
+         295, Nov. 2021.                                                                  accessed 2025-03-15. [Online]. Available: https://docs.amd.com/v/u/
+     [6] T. Wang, C. Zhang, P. Cao, and D. Gu, “Efficient implementation of               en-US/ug474 7Series CLB
+         dilithium signature scheme on FPGA SoC platform,” IEEE Transactions         [13] B. Ronak and S. A. Fahmy, “Mapping for maximum performance on
+         on Very Large Scale Integration (VLSI) Systems, vol. 30, no. 9, pp. 1158–        FPGA DSP blocks,” IEEE Transactions on Computer-Aided Design of
+         1171, Jun. 2022.                                                                 Integrated Circuits and Systems, vol. 35, no. 4, pp. 573–585, Apr. 2016.
+
+
+
+
+                                                                                 911
+
+
+
+Authorized licensed use limited to: NED UNIV OF ENGINEERING AND TECHNOLOGY. Downloaded on May 06,2026 at 19:12:28 UTC from IEEE Xplore. Restrictions apply.
+

@@ -1,0 +1,1086 @@
+                                                                                                                                             1
+
+
+
+
+ Efficient Conflict-Free NTT Hardware Architecture
+ with Single-Port RAMs: Applications to ML-DSA
+          Henrique S. Ogawa, Thales B. Paiva, Marcos A. Simplicio Jr, Syed M. Hafiz, and Bahattin Yildiz
+
+
+
+
+   Abstract—We present a Number Theoretic Transform (NTT)                    k increases interpolation and evaluation overhead, though, its
+hardware architecture based on the Prouhet–Thue–Morse (PTM)                  value is usually restricted to 3 or 4 in practice. For large-
+code, enabling NTT implementations relying only on single-port               degree polynomials, Fast Fourier Transform (FFT)-based al-
+RAMs (SPRAMs), rather than using dual-port RAMs (DPRAMs)
+as usually done in the literature. We show that the PTM code                 gorithms are even faster, achieving O(n log n) performance by
+supports a conflict-free, transactional, and streamlined pipeline            evaluating and interpolating polynomials at roots of unity over
+across all NTT computation stages, as well as scalable parallelism           complex numbers. In cryptographic contexts, where modular
+through multiple butterfly units. Using this approach, we design             arithmetic is required, its finite-field analog, called Number
+single- and dual-butterfly NTT modules for ML-DSA that are                   Theoretic Transform (NTT), is a common choice for enabling
+compliant with reference software and can be packaged as a
+standalone AXI-Stream peripheral, allowing the forward and                   highly efficient modular polynomial multiplication [1], [2].
+inverse NTT operations to be offloaded from software via DMA                    Even though the NTT algorithm is fully realizable in
+transfers. Experimental results show that the proposed PTM-                  software, its intrinsic parallelism, pipeline-friendly structure,
+based NTT designs achieve near one-cycle-per-butterfly and half-             and high arithmetic intensity render it particularly well-suited
+cycle-per-butterfly performance for the single- and dual-butterfly           for hardware-based implementations [6], [7]. For example,
+configurations, respectively. At the same time, it maintains FPGA
+resource utilization comparable to state-of-the-art compact NTT              hardware accelerators for NTT are useful in PQC-enabled
+implementations relying on mixed SPRAM/DPRAM architec-                       scenarios requiring low latency and/or high throughput data
+tures or SPRAM-only designs requiring coefficient reordering.                processing, such as in applications that handle large volumes
+                                                                             of digitally signed financial transactions. The potential per-
+  Index Terms—Post-Quantum Cryptography (PQC), Number                        formance gains of hardware implementations are even more
+Theoretic Transform (NTT), memory allocation patterns, hard-                 critical in scenarios involving FHE schemes, where the exe-
+ware implementations, ML-DSA                                                 cution of NTT and its inverse may take more than 70% of
+                                                                             the total processing time in some settings (e.g., for ciphertext
+                         I. I NTRODUCTION                                    multiplications and key-switching procedures) [8]. Consider-
+   Polynomial multiplication is a critical building block in                 ing that FHE computations can be 104 × to 105 × slower than
+modern cryptography. In particular, many Post-Quantum Cryp-                  the equivalent operations performed over unencrypted data [9],
+tography (PQC) and Fully Homomorphic Encryption (FHE)                        optimizing the NTT often constitutes a key requirement for
+schemes heavily depend on arithmetic operations in polyno-                   rendering FHE viable for deployment in real-world scenarios.
+mial rings of the form Rq = Zq [x]/(xn + 1), where n is                         Driven by these needs, many studies in the literature have
+a power of 2. In such schemes, polynomial multiplication                     proposed a variety of hardware-oriented designs for imple-
+usually becomes a computational bottleneck, (at least partially)             menting the NTT [10], [11], [12], [13], [14], [15], [16], [17],
+dominating their asymptotic and practical runtime processing                 [18], [19], [20]. Commonly, such NTT accelerators rely on
+costs. This applies to standardized PQC schemes, like ML-                    Dual-Port RAMs (DPRAMs) to enable native concurrent data
+DSA [1] and ML-KEM [2], as well as state-of-the-art FHE                      access for the radix-2 and/or radix-4 butterfly processing units.
+schemes like BFV [3] and CKKS [4].                                           At least in part, this approach stems from the fact that, on
+   There are several possible algorithmic approaches for poly-               FPGAs, DPRAMs map directly to block RAM primitives,
+nomial multiplication, which trade simplicity for speed as the               making them convenient to use. In ASICs, however, supporting
+polynomial degree increases [5]. One example is the Karatsuba                a second port incurs non-trivial overheads: dual-port macros
+algorithm: compared to the naive Schoolbook O(n2 ) method,                   require larger decoders and multiplexers, arbitration circuitry,
+it achieves O(nlog2 3 ) ≈ O(n1.58 ) complexity by recursively                and more complex control logic [21]. This additional logic
+reducing the number of coefficient multiplications required                  tightens placement and routing constraints, increases energy
+during its operation. Toom-Cook generalizes Karatsuba’s ap-                  consumption and integration costs, and often makes timing
+proach by splitting polynomials into k parts, reducing the                   closure more challenging in ASIC design flows [22]. In
+number of recursive multiplications required, and achieving                  addition, DPRAM IPs typically have higher licensing costs
+an asymptotic complexity of O(nlog(2k−1) k ); since a higher                 than their single-port counterparts. Consequently, for designs
+                                                                             with structured forms of parallelism, it is often more advan-
+   Henrique S. Ogawa, Syed M. Hafiz, and Bahattin Yildiz are with the        tageous to employ Single-Port RAMs (SPRAMs) and achieve
+Emerging Technologies Lab, LG Electronics US, Santa Clara, CA, USA (e-       multi-access behavior through techniques such as memory
+mail: {henrique1.ogawa;syedmahbub.hafiz;bahattin.yildiz}@lge.com).
+   Thales B. Paiva and Marcos A. Simplicio Jr are with the Universidade de   interleaving or time-multiplexed access [23].
+São Paulo (USP), Brazil (e-mail: {thalespaiva;msimplicio}@larc.usp.br).        The primary goal of this study is to address the following
+                                                                                                                                                2
+
+
+
+research question: how can an efficient NTT accelerator be          modular reduction techniques. Section III reviews related work
+designed using only SPRAMs, instead of DPRAMs, while                on NTT implementations in general and for ML-DSA in
+avoiding data access conflicts? To answer it, we start by           particular, with a focus on conflict-free memory allocation
+noting that FFT- and NTT-based accelerators employ conflict-        schemes and SPRAM/DPRAM requirements. Section IV de-
+free memory placements that are described algorithmically or        scribes how the PTM concept is leveraged to avoid memory
+through address permutations dependent on the NTT stage.            conflicts in SPRAM-only configurations. Section V presents
+While these constructions differ in presentation and architec-      the proposed PTM-based NTT architectures for single- and
+tural context, we observe that, in the power-of-two setting, they   dual-butterfly configurations. Section VI reports the experi-
+correspond to a simple recursive structure closely related to the   mental results, compares the proposed designs with selected
+Prouhet-Thue-Morse (PTM) sequence [24]. This perspective            related works, and discusses potential application scenarios.
+does not introduce new conflict-free schedules, but provides a      Finally, Section VII concludes the paper.
+concise formulation that unifies a range of previously proposed
+designs and offers additional intuition on why these address                                II. BACKGROUND
+mappings arise naturally in FFT/NTT architectures.
+                                                                      For convenience, this section briefly introduces the main
+   In this work, we show how the PTM code can be used
+                                                                    concepts and algorithms employed in this work.
+to enable conflict-free NTT hardware architectures that rely
+exclusively on SPRAMs. We first present the approach in a
+single-butterfly (nBF = 1) configuration and then extend it         A. Number-Theoretic Transform
+to multi-butterfly (nBF > 1) designs. We further demonstrate           Among the possible solutions for performing polynomial
+the PTM-based NTT hardware architecture in the context of           multiplications in a finite field, NTT is one of the most efficient
+ML-DSA, targeting resource-constrained devices with direct          alternatives under certain conditions. For negacyclic rings of
+memory access (DMA) support by enabling transactional and           the form Rq = Zq [x]/(xn + 1), which are the ones used in
+streamlined offloading of NTT processing to a dedicated hard-       ML-DSA [1], NTT-based multiplication requires the existence
+ware module. For the specific context of ML-DSA butterfly,          of a 2n-root of unity ω in Zq . Fortunately, this condition is
+we propose a 5-stage pipeline architecture that replaces two        guaranteed to be met when q ≡ 1 (mod 2n). In this case, if
+Montgomery-constant multiplications with shift-and-add oper-        a ∈ Rq , then the NTT of a is defined as
+ations, thereby requiring only one multiplier unit per butterfly.                     n−1                          n−1
+To avoid critical path bottlenecks, the butterfly unit employs a                      X                            X
+                                                                          NTT(a) =          âi xi , where âi =         a[j]ω j(2i+1) .
+pipelined multiplier design in which large multiplications are                        i=0                          j=0
+decomposed into smaller parallel units and the overall datapath
+is split across multiple pipeline stages, sustaining higher         The inverse transformation is then defined as
+achievable clock frequencies. Besides detailing the proposed                        n−1
+                                                                                    X                                n−1
+                                                                                                                     X
+design, we also evaluate our solution’s performance compared         NTT−1 (â) =         ai xi , where ai = n−1            â[j]ω −i(2j+1) .
+to state-of-the-art alternatives. Specifically, we show that the                    i=0                              j=0
+
+proposed PTM-based NTT architecture achieves near 1/nBF -              Both the NTT and its inverse can be efficiently computed
+cycle-per-butterfly performance, i.e., corresponding to one-        with O(n log n) operations via iterative procedures, using,
+cycle-per-butterfly and half-cycle-per-butterfly performance in     respectively, Cooley-Tukey (CT) [27] and Gentleman-Sande
+the single- and dual-butterfly cases, respectively. At the same     (GS) [28] butterflies. Algorithm 1 illustrates such a butterfly-
+time, the resulting FPGA resource utilization remains com-          based efficient iterative procedure for computing the NTT.
+parable to state-of-the-art NTT implementations that rely on           We can then use the NTT and its inverse to efficiently
+mixed SPRAM/DPRAM architectures or SPRAM-only de-                   compute the product c = ab of polynomials a, b ∈ Rq as
+signs with coefficient reordering. Our contributions are, thus:     c = NTT−1 (NTT(a) ⊙ NTT(b)), where ⊙ denotes the point-
+  1) We use the PTM code [24] to enable a conflict-free,            wise product of the corresponding polynomial coefficients.
+     transactional, and streamlined pipeline for NTT opera-            We remark that some cryptographic schemes may benefit
+     tions using only SPRAMs, without relying on DPRAMs;            from running fewer iterations of the fast NTT algorithm, which
+  2) We apply the PTM-based NTT design in the context               is often called an incomplete NTT [29]. This may result in
+     of ML-DSA, exploring both single- and dual-butterfly           faster operations and fewer restrictions on the parameters q
+     configurations with a Montgomery reduction-optimized           and n [2], [29], [30], [31]. Since we focus on ML-DSA,
+     pipeline architecture, and estimate resource and perfor-       which uses the complete NTT formulation, we do not consider
+     mance metrics for four and eight butterflies;                  the incomplete NTT. Nevertheless, our construction can be
+  3) We demonstrate our NTT design as a standalone AXI-             directly applied to the incomplete case as well.
+     Stream peripheral [25], providing an alternative ap-
+     proach for offloading forward and inverse NTT software         B. Modular Reduction
+     operations to a self-contained hardware accelerator that
+                                                                       One relevant source of overhead during the NTT oper-
+     conforms to the reference implementation [26].
+                                                                    ation in the ring Zq refers to the reduction modulo q of
+  The rest of this paper is organized as follows. Section II        the polynomial coefficients. Efficient implementations in the
+provides background on the NTT and the formulation of               literature often rely on the Barrett and Montgomery reduction
+                                                                                                                                      3
+
+
+
+ 1: procedure NTT(a ∈ Zn   p)     ▷ Computes a ← NTT(a) in-place   for NTT accelerators, whether targeting single-port or multi-
+ 2:    ω ← Smallest primitive root of order 2n in Zp               port memories, commonly build upon or are closely related to
+ 3:    for i = 0 to log2 n − 1 do
+ 4:        d ← n/2i+1                                              the constructions introduced by Richardson et al. [36].
+ 5:        for j = 0 to 2i − 1 do                                     In the context of accelerating PQC schemes, Chen et al. [37]
+                                    i
+ 6:            ζ ← ω bit_reversed(2 +j,log2 n)                     present scalable conflict-free mappings for radix-2 and radix-4
+ 7:            for u = 0 to d − 1 do                               NTTs, while Guo and Li [38], [39] apply similar principles.
+ 8:                t0 ← a[2dj + u]                                 Related ideas also appear in hardware accelerators for fully
+ 9:                t1 ← ζ · a[2dj + u + d]                         homomorphic encryption, where NTTs also play a central
+10:                a[2dj + u] ← t0 + t1
+11:                a[2dj + u + d] ← t0 − t1                        role [40], [41]. In the resulting designs, higher memory
+12:    return a                                                    bandwidth requirements are typically addressed at the cost of
+                                                                   extra space, using multi-port or replicated memories.
+      Algorithm 1: Forward NTT computation in-place.
+                                                                      For the specific case of ML-DSA, Geng et al. [11] intro-
+                                                                   duced a high–low interactive memory access pattern based on
+techniques, both of which replace expensive integer division       2L dual-port RAMs, with L parallel butterfly units. Through
+by combinations of multiplication, addition, and bit shifts        data rearrangement between high and low indices, one co-
+tailored to a fixed modulus [32]. Nevertheless, there are also     efficient is accessed per cycle, allowing the design to rely
+some alternative implementations based on Plantard, K-RED,         solely on simple dual-port RAMs to achieve full memory
+and K2 -RED reduction methods [33].                                bandwidth utilization. Huang et al. [12] seek to obtain a more
+   Barrett reduction precomputes an approximation
+                                              j 2k k of the        compact design by reducing storage requirements through
+reciprocal of q, given by the constant µ = bq , where b            crossover memory scheduling and processing rearrangement,
+denotes the machine word base and k is chosen such that            while still using dual-port RAMs for memory access. Wang et
+q < bk . To reduce integer x, an approximate quotient is           al. [13] propose a radix-4 NTT architecture for accelerating
+obtained via multiplication with µ followed by right shifts.       polynomial multiplication, employing a conflict-free memory
+The remainder is obtained by subtracting the product of this       mapping scheme derived from the work of Chen et al. [37].
+quotient with q. Montgomery reduction, by contrast, represents     Similarly to many other pipelined NTT architectures recently
+residues in a transformed domain, in which each value is           proposed in the literature [20], [10], [14], [15], [16], [19], [17],
+implicitly multiplied by a power of the radix R = bk modulo        their solution also relies on DPRAMs.
+q. Exploiting the fact that gcd(R, q) = 1, reductions rely            Mu et al. [18] proposed a method for generating compact
+on multiplications with a precomputed constant q −1 mod R          and high-performance NTT accelerators for arbitrary polyno-
+followed by shifts and additions, rather than divisions by q.      mial lengths and moduli. To enable stall-free pipelined execu-
+   In hardware implementations of ML-KEM and ML-DSA,               tion, the authors introduced a memory partitioning and coef-
+Barrett reduction is often preferred over Montgomery reduc-        ficient assignment scheme that ensures conflict-free memory
+tion because it typically enables a narrower datapath. In this     access, along with a conflict-free index generation algorithm
+work, however, we adopt Montgomery reduction to ensure             for multilayer butterfly arrays. The approach reorders coeffi-
+adherence to their reference implementation. This approach         cient pairs such that the coefficients accessed in each round
+enables us to evaluate more directly the benefits of the PTM-      are distributed across distinct memory banks. The architecture
+based NTT design proposed herein.                                  relies on a combination of single-port and dual-port RAMs.
+                                                                      Li et al. [42] optimize multi-RAM access by rearranging the
+                                                                   polynomial coefficients and twiddle factors and storing them in
+                    III. R ELATED WORKS
+                                                                   separate memory blocks. This rearrangement, combined with
+   One key aspect of our construction is the design of a           a read-before-write access strategy, avoids data conflicts, en-
+conflict-free memory placement for the coefficients combined       abling continuous read and write operations. The architecture
+at each stage of the NTT. Conflict-free memory placement           employs three RAMs per butterfly unit, where the first two
+has been studied extensively in the context of FFT hardware,       RAMs store rearranged polynomial coefficients, and the third
+with early constructions appearing in works by Johnson [34]        one stores rearranged twiddle factors. Although realizable with
+and Hsin-Fu Lo et al. [35]. These works primarily focus            SPRAMs, the design depends on coefficient rearrangement.
+on specific architectural configurations, where the relationship      Zhao et al. [20] present a segmented pipelined processing
+between radix, number of memory banks, and butterfly units         approach for NTT computation, where algorithmic operations
+is fixed by design choices. These ideas were later formalized      are partitioned into multiple segments processed sequentially,
+by Richardson et al. [36], who studied the general problem         aiming to reduce memory usage. The architecture replaces
+of conflict-free placement for FFTs where the group size           long shift registers with BRAMs and minimizes BRAM con-
+and radix are powers of two, including architectures with          sumption by utilizing idle BRAM areas and ports, relying on
+multiple butterfly units per stage. Their framework shows          single-port BRAMs for intermediate data. Furthermore, one
+how conflict-free schedules can be constructed systematically      dual-port 36k BRAM stores all twiddle factors required by
+and enables efficient implementations using SPRAMs. Since          the final three butterfly units. Taghavi et al. [33] propose
+the butterfly structure of the NTT is identical to that of the     an architecture to address memory bandwidth bottlenecks by
+FFT, these techniques naturally extend to NTT-based designs.       storing polynomial vectors in flip-flops (FFs) instead of RAM
+Accordingly, recent works on conflict-free memory placement        modules. All coefficients are accessed simultaneously and then
+                                                                                                                                       4
+
+
+
+processed by radix-2 butterfly units (BFUs) in one clock cycle
+per NTT stage. This approach enables high throughput at                             Left                                  Right
+the cost of a significant increase in area usage, making it                        DPRAM               Butterfly         DPRAM
+                                                                                                         unit
+more suitable for server and cloud computing scenarios where
+                                                                                   Twiddle ROM
+performance is prioritized over hardware cost.
+   In contrast with the literature, our PTM-based NTT hard-
+ware architecture enables a conflict-free implementation using         Fig. 2. Baseline NTT hardware datapath with DPRAMs.
+only SPRAMs, without requiring coefficient reordering. The
+result is a transactional, streamlined pipeline aimed at offload-      left-side DPRAM that supplies coefficient pairs to the butterfly
+ing NTT processing from resource-constrained processors.               unit, and a right-side DPRAM that stores the updated results.
+                                                                       For clarity of presentation, control and multiplexing logic are
+IV. C ONFLICT- FREE MEMORY ALLOCATION FOR THE NTT                      omitted to highlight the core computation flow. In the subse-
+   In this section, we discuss the importance of conflict-free         quent layer, the roles of the memory blocks are interchanged:
+allocation of NTT coefficients for SPRAMs and how this is              the right-side DPRAM becomes the data source, while the
+used in our construction. We begin with a brief overview of            left-side DPRAM serves as the output storage. This alternating
+how DPRAMs are commonly used to simplify the design                    “ping-pong” process continues until all layers are completed,
+of butterfly units, highlighting the challenges of replacing           after which the coefficients can be retrieved from the final
+them with more area-efficient SPRAMs. Then, we describe the            output DPRAM block to form the NTT(a) polynomial. In this
+memory layout based on well-known techniques for conflict-             process, the ζ value associated with each butterfly operation
+free memory allocation adopted in our construction. The                can be retrieved from a Read-Only Memory (ROM) containing
+section ends with a more intuitive characterization of the             all the precomputed twiddle factors.
+conflict-free allocation of the NTT coefficients.
+                                                                       B. Using butterflies with SPRAM
+A. Baseline solution with DPRAM
+                                                                          Now, suppose we want to implement the baseline solution
+   The butterfly unit is a fundamental arithmetic component            from Figure 2 using SPRAMs instead of DPRAMs, while
+of NTT. It takes as inputs a pair of coefficients (x, y) and           avoiding the sequential fetching of xin and yin and the
+a twiddle factor ζ, and then computes their updated values.            sequential writeback of xout and yout . One potential approach
+Figure 1 illustrates the basic structures of the Cooley-Tukey          is to split the polynomial a’s coefficients, stored in a DPRAM
+and Gentleman-Sande butterflies (used in the forward and               in the solution from Figure 2, across two separate SPRAMs.
+inverse NTT, respectively), which differ mainly in the ordering        This needs to be done in such a way that each SPRAM can
+of their operands. It is worth noting that these structures            independently provide the xin and yin values simultaneously,
+closely resemble those used in the FFT algorithm [27], [28].           thereby reproducing the behavior of the DPRAM setting from
+                                                                       Figure 2. Similarly, xout and yout should be written into the
+                                                                       output SPRAMs at the same address locations where xin
+                                                                       and yin are stored in the corresponding input SPRAMs. This
+                                                                       concept is illustrated in Figure 3.
+
+Fig. 1. Cooley-Tukey (left) and Gentleman-Sande (right) butterflies.              Left
+                                                                                 SPRAM
+                                                                                   #0                                         Right
+   Now, suppose that the coefficients of the polynomial a                                                                    SPRAM
+                                                                                                                               #0
+processed by the butterfly are stored in a memory unit. In this                                         Butterfly
+case, the butterfly must fetch a pair of coefficients, xin and yin ,                                      unit
+                                                                                  Left                                        Right
+from specific memory addresses corresponding to the indices                      SPRAM                                       SPRAM
+                                                                                   #1       Twiddle                            #1
+2dj +u and 2dj +u+d, respectively, as defined in Algorithm 1.                                ROM
+
+To avoid sequential load operations – such as reading xin in
+the first cycle and yin in the next – many proposals in the            Fig. 3. NTT hardware datapath with SPRAMs.
+literature employ DPRAMs, which allow both xin and yin
+to be fetched simultaneously in a single cycle. Similarly, the            Now, for this construction to be efficient, we need a strategy
+concept applies to the output side: instead of writing back            for mapping coefficients of polynomial a into SPRAM blocks
+xout in one cycle and yout in the next, the DPRAM allows               in such a way that it enables parallel fetching and writeback of
+both to be written simultaneously within the same cycle. The           butterfly input–output pairs in the NTT. This is typically done
+difference between single- and dual-port RAMs is that the              using conflict-free memory allocation strategies [34], [36].
+first has only one address/data channel, whereas the second               Figure 4 illustrates two conflict-free memory allocations, for
+provides two distinct address/data channels.                           the cases when 2 or 4 SPRAM blocks are used, considering
+   Building on these ideas, we can define a baseline hardware          an NTT input with 8 coefficients. In each case, we can see,
+datapath for the processing of coefficients across the NTT             by following the NTT flow graph, that all butterflies combine
+layers, as shown in Figure 2. The architecture consists of a           elements that are stored in different memory blocks.
+                                                                                                                                           5
+
+
+
+               NTT flow graph                 Memory allocation            for the n NTT/FFT input coefficients, for which every pair of
+                    2 blocks                  2 blocks   4 blocks          coefficients combined through butterfly operations are never
+      a [0]                          â [0]      0          0              in the same memory block.
+      a [1]                          â [1]      1          1                  Proof 1: We split the proof into two cases, considering first
+      a [2]                          â [2]      1          2              what happens in the final stages of the NTT, and then moving
+      a [3]                          â [3]      0          3              to the initial ones. We refer to Algorithm 1 to formally reason
+      a [4]                          â [4]      1          3              about the parameters processed in each stage of the NTT/FFT.
+      a [5]                          â [5]      0          2                  Case 1. First, consider what happens for a stage i ≥
+      a [6]                          â [6]      0          1
+                                                                           log2 (n/m). When i = log2 (n/m), Algorithm 1 shows that
+      a [7]                          â [7]      1          0
+                                                                           d = m/2 butterfly operations are performed for each partition
+                                                                           j, with 2d coefficients being manipulated. Notice that, by the
+Fig. 4. Conflict-free memory allocation of NTT coefficients when 2 and 4
+memory blocks are considered.
+                                                                           definition of PTMXm (n), when n coefficients are split into j
+                                                                           partitions of size 2d = m, it is guaranteed that the coefficients
+                                                                           within the same partition j are each assigned to a different
+   The general case describing how to obtain a conflict-free
+                                                                           memory block, out of the m blocks available. This means that,
+memory allocation was first studied by Richardson et al. [36].
+                                                                           for all stages i ≥ log2 (n/m), all butterflies are guaranteed to
+The authors provide an algorithmic formulation based on
+                                                                           combine coefficients from different memory blocks.
+rotations and XORs. While their construction is very efficient
+                                                                               Case 2. Now suppose 0 ≤ i < log2 (n/m). In this case,
+to implement in hardware, it may not be so intuitive when
+                                                                           d = n/2i+1 ≥ m, since both m and n are powers of two. This
+reasoning about the allocation.
+                                                                           means that, when processing the partition j, the butterflies are
+C. An alternative characterization of conflict-free allocations            applied to pairs formed among the 2d coefficients in the par-
+                                                                           tition. Specifically, each butterfly u combines the coefficients
+   We propose a different characterization, yielding allocations           whose pair of indexes are (2dj + u, 2dj + u + d), as shown
+equivalent to well-known conflict-free constructions, following            in the inner loop of Algorithm 1. However, notice that, if we
+the observation that the scenario with two memory blocks                   let m ∈ Z2d contain the memory blocks assigned to the 2d
+follows exactly the Prouhet-Thue-Morse (PTM) sequence [24],                coefficients of the jth partition, then PTMXm (n) ensures that
+namely: 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, . . .              m[u] + m[u + d] = m − 1, for all u = 0 to d − 1. Furthermore,
+   While there are multiple ways to define this sequence [24],
+                                                                           since m ≥ 2, then m − 1 is odd. Therefore, m[u] ̸= m[u + d].
+for this work, the two most important ones are the following.
+   1) Sequential formulation. The ith term of the PTM se-
+                                                                                V. O UR PTM- BASED NTT DESIGN FOR ML-DSA
+       quence is defined as the parity of the Hamming weight
+       of the binary representation of i.                                    This section presents a method for enabling conflict-free
+   2) Recursive formulation. Start with T0 = [0]. On each                  NTT hardware designs with SPRAMs through the use of the
+       iteration, set Ti+1 = [Ti ∥T i ], where ∥ denotes con-              PTM concept. We first describe the approach in a single-
+       catenation, and T i is the sequence corresponding to the            butterfly setting and subsequently extend it to multi-butterfly
+       bitwise complement of each element of Ti .                          configurations. Furthermore, we showcase the PTM-based
+   To the best of our knowledge, no prior work explicitly con-             NTT hardware design in the context of ML-DSA, which
+nected the PTM sequence with conflict-free memory allocation               employs a complete 8-layer NTT over polynomials of length
+for the NTT and FFT. We highlight that this connection is                  n = 256 in Zq , where q = 8380417 [1].
+relevant because it bridges the most practical sequential defi-
+nition, intimately linked to Richardson et al.’s [36] algorithm            A. Design rationale
+for efficiently computing the allocation, with the recursive                  For the validation of the PTM concept, we chose to design
+definition, that appears naturally in the NTT/FFT flow graph.              and implement the NTT computation closely following the
+   Now that we defined the PTM for binary coefficients in                  ML-DSA software reference model [26], including the use of
+scenarios with only 2 SPRAM blocks, we can define the PTM-                 Montgomery reduction and a 32-bit datapath. In essence, we
+extended (PTMX) sequence to deal with more memory blocks.                  implement a hardware module that performs exactly the same
+   Definition 1 (PTMX sequence): Let m and n ≥ m be                        computations as the ntt() and invntt_tomont() functions
+powers-of-two. We define PTMXm (n) recursively as                          in the C reference implementation. For I/O compatibility, the
+                 (
+                   [0, 1, . . . , m − 1] ∈ Zn , if n = m,                  module uses the AXI-Stream protocol for input and output
+PTMXm (n) =                                                                coefficients, allowing the software functions to be directly
+                   [PTMXm n2 ∥ x − PTMXm n2 ] otherwise,
+                                                     
+                                                                           replaced by DMA transfer calls [25].
+where x ∈ Zn is the vector whose coordinates are all set to                   Our approach prioritizes functional equivalence and ver-
+m − 1, and v1 ∥ v2 is the concatenation of vectors v1 and v2 .             ifiability, as matching the reference implementation bit-for-
+  We now show that PTMXm (n) yields a conflict-free mem-                   bit simplifies testbench creation, simulation, and regression
+ory allocation for computing the NTT/FFT of polynomials                    testing. From a broader perspective, this design choice also
+with n coefficients using m memory blocks.                                 enables our NTT module to serve as a hardware-assisted
+  Lemma 1: When a power-of-two m ≥ 2 memory blocks are                     reference model for resource-constrained MCUs. For example,
+used, the PTMXm (n) sequence yields a memory allocation                    embedded systems lacking the resources needed to execute
+                                                                                                                                        6
+
+
+
+ML-DSA’s NTT in software can offload it to a self-contained            of the input y value with the factor f. As a result, the
+peripheral compliant with the reference algorithm, providing           remaining parameters are unused in this operation mode.
+auditable behavior and easing certification efforts.                Figure 5 shows the final butterfly model that unifies the
+   Although the solution presented here reflects a 32-bit NTT     CT, GS, and _tomont modes and requires only a single
+datapath model with Montgomery reduction, the PTM strategy        32×32→64-bit multiplier for the multiplication of a twiddle
+can also be applied to other modular reduction techniques.        zeta or the f factor by an arbitrary value of y.
+This includes, for example, scenarios using a 24-bit datap-
+ath with Barrett reduction, which is common in hardware-          void butterfly(int mode,
+optimized design proposals in the literature. Most importantly,                  int32_t *x, int32_t *y, int32_t zeta) {
+                                                                      int64_t a, tQ, tQ2   ;   int32_t t;
+the PTM logic is not limited to ML-DSA: it can be directly            const int32_t f = 41978;
+applied to ML-KEM NTT, other in-place radix-2 NTTs in                  if (mode == 1) { // GS
+general, and even to FFT constructions.                                    t = *x;     *x = t + *y;           *y = t - *y;
+                                                                       }
+
+                                                                       // Montgomery mod multiplication
+B. Unified NTT/INTT butterfly unit design                              if ((mode == 0) || (mode == 1)) // CT || GS
+                                                                           a = (int64_t) zeta * (*y);
+   As an initial step towards the butterfly RTL design, the            else if (mode == 2)              // _tomont
+CT and GS butterfly architectures are unified to enable the                a = (int64_t) f * (*y);
+                                                                       tQ = (int32_t) ((a << 0) + (a << 13) + (a << 23) +
+reuse of the Montgomery-reduction unit, which dominates                                (a << 24) + (a << 25));
+                                                                       tQ2 = (int64_t) (((tQ << 10) - tQ) << 13) + tQ;
+the logic cost due to the required multiplier hardware. This           t = (int32_t) ((a - tQ2) >> 32);
+unification is done by multiplexing the access to the Mont-
+                                                                       if (mode == 0) { // CT
+gomery modular multiplication block (corresponding to the                  *y = *x - t;    *x = *x + t;
+montgomery_reduce() function in [26]), which is the com-               }
+                                                                       else if ((mode == 1) || (mode == 2)) // GS || _tomont
+mon component to both butterfly types.                                     *y = t;
+   Another important aspect to consider is that a direct RTL      }
+translation of the Montgomery reduction implementation from       Fig. 5. C model of the unified CT/GS butterfly unit for the ML-DSA NTT.
+the montgomery_reduce() function would require instanti-
+ating two 32×32→64-bit multiplier units, which are known to          Based on this butterfly model, we derive the RTL design
+be resource-intensive components in ASIC design. Fortunately,     of the butterfly unit, which is illustrated in Figure 6. The
+we can exploit the fact that in montgomery_reduce(), the          ntt_mode input port controls the multiplexer select signals,
+multiplications are by constants, namely QINV and Q. For the      which route the data according to the selected operation mode
+first case, since QINV = 58728449 = 20 +213 +223 +224 +225 ,      (ntt, invntt, or _tomont). The Montgomery reduction
+the first multiplication a*QINV can be converted into the         circuitry is multiplexed based on the operation mode, enabling
+following shift-and-add scheme (from LSB to MSB):                 better resource reuse.
+  a*QINV <= (a << 0) + (a << 13) +
+                                                                     With respect to the multiplication unit, an important consid-
+            (a << 23) + (a << 24) + (a << 25)                     eration is that a single-cycle fully combinational 32×32→64-
+                                                                  bit multiplier constitutes a large circuit and is likely to be-
+   The multiplication by Q can be derived from the observation
+                                                                  come part of the critical path. For this reason, the multiplier
+that the modulus corresponds to the following decomposition:
+                                                                  is decomposed into four 16×16→32-bit units that compute
+    Q = 8380417 = 223 − 213 + 1 = (210 − 1) · 213 + 1             partial products in parallel, which are then recombined in
+                                                                  the subsequent clock cycle. Furthermore, the butterfly unit is
+This representation enables a shift-and-add implementation of     partitioned into five pipeline stages, as shown in Figure 6,
+the multiplication, which can be expressed as:                    in order to avoid overly long combinational paths that can
+     t*Q <= (((tQ << 10) - tQ) << 13) + tQ                        compromise the maximum achievable clock frequency during
+In this way, two multiplications are replaced by two shift-and-   the synthesis of the circuit.
+add operations, which are significantly less resource-intensive
+than generic multiplier units.                                    C. Single-butterfly NTT module
+   Our butterfly unit RTL design also specifies the datapath         To construct the datapath of the single-butterfly NTT mod-
+operations according to the three required operation modes:       ule based on the architecture shown in Figure 3, the butterfly
+   1) ntt_mode = 0: forward NTT using the CT butterfly –          unit described in Figure 6 is combined with the left-side and
+       referred to as ntt step;                                   right-side SPRAM blocks depicted in the architecture diagram.
+   2) ntt_mode = 1: inverse NTT using the GS butterfly –          It is worth noting that the use of left-side and right-side
+       referred to as invntt step;                                SPRAM blocks with multiplexed input and output roles aims
+   3) ntt_mode = 2: polynomial-wide Montgomery reduc-             to enable a pipelined data flow that aligns with the operation
+       tion by the factor f, which corresponds to the normal-     of the pipelined butterfly unit.
+       ization factor of the inverse NTT represented in the          For ML-DSA, each SPRAM is sized at 128×32 bits (4096
+       Montgomery domain (R · 256−1 mod q) – referred to as       bits), since the 256-element polynomial a is split into two parts
+       _tomont step. Note that this step operates only on the     in the single-butterfly configuration. Therefore, the datapath of
+       y pointer parameter, performing Montgomery reduction       the single-butterfly NTT module is composed of the butterfly
+                                                                                                                                                            7
+
+
+
+   ntt_mode
+
+                                x                    x2                   x3                      x4
+
+                                                                                                                               0
+                         0                           p0                                           a2                           1          x_new
+                         1      m0                                                                                             2
+                         2
+                                                     p1                                sub-                                    0
+                                                                shift-                                                                    y_new
+                                                                           a           shift-     tQ2                          1
+                                                               and-add                                                         2
+                                                     p2                                 add
+                         0
+                         1      m1
+                         2                           p3
+
+
+                                y                    y2                   y3                      y4
+
+
+                                     1                    2                    3                        4                                     5
+
+
+
+Fig. 6. Architecture for unified ML-DSA NTT/INTT butterfly unit with Montgomery reduction and a five-stage pipelined datapath. The values annotated on
+the multiplexers select the operation mode: forward NTT, inverse NTT, or polynomial-wide _tomont reduction (ntt_mode = 0, 1, or 2, respectively).
+
+                                                    ntt_mode
+                                                                                                                                          AXIS_OUT
+                s_ _a _a acl
+
+
+
+
+                                                    AXIS_IN                                     Control
+                  ax x re k
+                   s_ a
+
+                    s
+
+
+
+
+                    m_
+                     is is se
+         nt
+
+
+
+
+                      s_ ata ali
+                      ax xi
+
+
+
+
+                       ax
+                       s_
+
+
+
+
+                       _t _t tn
+              t_
+
+
+
+
+                        ax [3 d
+                        is _
+
+
+
+
+                          is
+                          d v
+                mo
+
+
+
+
+                           is 1:
+
+
+                            _t
+                             de
+
+
+
+
+                              _t 0]
+                              s
+
+
+
+
+                               re
+                                [1
+
+
+
+
+                                 la
+
+
+                                  ad
+                                   :0
+
+
+
+
+                                    st
+
+
+                                     y
+                                      ]
+
+
+
+
+                                                                                Left
+                                                                               SPRAM
+                          axis_ntt                                               #0
+                                                                                                                                       Right
+                                                                                                                                      SPRAM
+                                                                                                                                        #0
+
+                                                                                                            Butterfly
+                                                                                                              unit
+                         ax tv 0]
+
+
+
+
+                                                                                Left
+                                    st
+                                     y
+
+
+
+
+                              _t id
+                                  ad
+
+
+
+
+                      m_ s_ 1:
+
+
+
+
+                                                                                                                                       Right
+                                 la
+                            is al
+
+
+
+
+                                                                               SPRAM
+                               re
+
+
+
+
+                                3
+
+
+
+
+                                                                                                                                      SPRAM
+                       ax a[
+
+
+
+
+                                                                                 #1
+                             _t
+
+
+
+
+                                                                                            Twiddle
+                    m_ dat
+
+
+
+
+                                                                                                                                        #1
+                          is
+
+
+
+
+                          i
+                        ax
+
+
+
+
+                                                                                             ROM
+                       _t
+                     s_
+
+
+
+
+                    is
+                 ax
+
+
+
+
+                                                                                                                           Datapath
+              m_
+
+
+
+
+Fig. 7. Architecture of the proposed single-butterfly PTM-based AXI-Stream NTT hardware design (axis_ntt) using SPRAMs. The left side shows the
+I/O view of the module, while the right side shows the datapath along with the control signals exposed to the control module.
+
+
+
+unit, four 128×32-bit SPRAMs, and a set of multiplexers. The                    reg[10:0] counter;
+associated control signals, including the butterfly operation                   // PTM code
+mode, SPRAM write-enable and address signals, and multi-                        wire ptm_code = counter[8] ˆ
+                                                                                    counter[7] ˆ counter[6] ˆ counter[5] ˆ counter[4] ˆ
+plexer select signals, are exposed to the control module, which                     counter[3] ˆ counter[2] ˆ counter[1] ˆ counter[0];
+drives them using a finite-state machine (FSM). At the top
+                                                                               Fig. 8. Generating a 1-bit PTM code from an incrementing counter (Verilog).
+level, the proposed NTT module is implemented as an AXI-
+Stream peripheral, receiving and transmitting input and output
+coefficients via the AXI-Stream protocol [25]. Accordingly,
+                                                                                        CLEAR     PTM_                             NTT_
+we refer to this module as axis_ntt in the remainder of this                                                   PING     PONG
+                                                                                                  ALLOC                            DONE
+
+work. With these considerations in mind, Figure 7 presents the                                                                                PTM_
+                                                                                                                                               TX
+                                                                                                                                                      TX_
+                                                                                                                                                     DONE
+architecture diagram of the single-butterfly axis_ntt module.                            IDLE
+                                                                                                                                    TO_
+                                                                                                                                   MONT
+The left side of the figure shows the I/O interface, while the
+right side provides a top-level expanded view of the datapath                  Fig. 9. Finite state machine (FSM) of the axis_ntt control module and
+elements and the exposition of the aggregated control signals                  its associated control states.
+to the control module.
+   Before detailing the control logic, we show how the 1-                      for the master-side tvalid (m_axis_tvalid) signal to be
+bit PTM code can be generated from a simple incrementing                       asserted. When this handshake occurs, the input polynomial’s
+counter to obtain a low-cost construction. In essence, the PTM                 coefficient streaming over s_axis_tdata is initiated in the
+value is obtained by XORing the counter’s bits, yielding a                     next state, PTM ALLOC.
+single-bit code. The code snippet in Figure 8 illustrates this.                     PTM ALLOC: During streaming of the input polynomial
+   For the control module, Figure 9 illustrates the FSM and                    coefficients, one coefficient arrives per clock cycle. Each in-
+the corresponding states that control the dataflow through                     coming coefficient is allocated to a left-side SPRAM according
+axis_ntt’s datapath. Henceforth, we also describe how the                      to the PTM code designation (in this case, SPRAM #0 or
+PTM code is leveraged in the control logic of the NTT module.                  SPRAM #1). This allocation is achieved by coordinating the
+      IDLE: In this state, the slave-side AXI-Stream tready                    multiplexer select signals and the left-side SPRAM write-
+(s_axis_tready) signal is asserted, while the module waits                     enable signals following the PTM code of the current cycle.
+                                                                                                                                              8
+
+
+
+The PTM code is generated based on a counter that increments         butterfly operation mode registers, preparing the module for a
+for each incoming coefficient. This process is exemplified in        fresh NTT processing flow.
+the “Memory allocation” step of Figure 11.
+      PING: “left-to-right” – after all 256 input coefficients       D. Multi-butterfly NTT module
+have been allocated to SPRAM #0 or SPRAM #1, the control
+module transitions to the PING state, where butterfly input co-         The PTM design for enabling NTT hardware implementa-
+efficient pairs are fetched from the left-side SPRAMs and writ-      tions with SPRAMs can also be extended to multi-butterfly
+ten into the right-side SPRAMs. In this state, the PTM code          architectures. For example, in a dual-butterfly setting, the
+controls the butterfly input multiplexers, selecting whether         following extensions are required:
+xin and yin are sourced from the left side’s SPRAM #0                   1) Two butterfly units (Figure 6) operating in parallel;
+or SPRAM #1. The incrementing counter also provides the                 2) Using a 2-bit PTM-based dataflow requires partitioning
+read addresses for both SPRAMs and the twiddle ROM.                        the polynomial into four parts. Accordingly, the memory
+Furthermore, after five clock cycles, corresponding to the                 subsystem is expanded to four left- and four right-side
+butterfly latency, the butterfly outputs become available, and             SPRAMs, each sized at 64×32 bits, to support conflict-
+the control module begins writing the xout and yout values                 free fetching and writeback for the two butterfly units;
+into the right-side SPRAMs, mirroring the PTM-based alloca-             3) Control module whose states (see Figure 9) are extended
+tion and addressing used on the left side. Both the fetching               to manage the dataflow of four memory blocks and two
+and execution phases are exemplified in the “Fetching” and                 butterfly units. Figure 10 shows the corresponding 2-bit
+“Execution” steps of Figure 11 for the initial coefficient pairs           PTM sequence generation;
+of the first NTT layer.                                                 4) Resizing of multiplexers to accommodate the additional
+      PONG: “right-to-left” – in this state, data flows in the             memory blocks and butterfly units.
+opposite direction to the PING state, with butterfly input coef-
+ficients fetched from the right-side SPRAMs and written into          reg[10:0] counter;
+the left-side SPRAMs. Similarly, the PTM code controls the            // PTM code
+butterfly input multiplexers, selecting whether xin and yin are       wire[1:0] ptm_code;
+                                                                      assign ptm_code[0] = counter[0] ˆ
+sourced from the right side’s SPRAM #0 or SPRAM #1.                       counter[9] ˆ counter[8] ˆ counter[7] ˆ counter[6] ˆ
+During the writeback phase, the control module manages the                counter[5] ˆ counter[4] ˆ counter[3] ˆ counter[2];
+                                                                      assign ptm_code[1] = counter[1] ˆ
+process of writing xout and yout into the left-side SPRAMs,               counter[9] ˆ counter[8] ˆ counter[7] ˆ counter[6] ˆ
+mirroring the PTM-based allocation and addressing used on                 counter[5] ˆ counter[4] ˆ counter[3] ˆ counter[2];
+the right side.                                                      Fig. 10. Generating a 2-bit PTM code from an incrementing counter (Verilog)
+      NTT DONE: After the PING and PONG states repeat
+for each NTT layer until completion, the control module                 In Figure 12, we illustrate the use of the 2-bit PTM code
+transitions to the NTT DONE state. In this state, the next           in the control logic of the dual-butterfly axis_ntt module.
+state is selected based on the specified ntt_mode value: if          Both butterfly units operate in parallel, without pipeline stalls
+forward mode (= 0) is selected, the control transitions to           caused by conflicting accesses to the SPRAM blocks.
+PTM TX; otherwise, if inverse mode (= 1) is selected, the
+control transitions to TO MONT to perform the polynomial-                    VI. E XPERIMENTAL RESULTS & DISCUSSIONS
+wide Montgomery reduction.
+                                                                        For the experimental evaluation of the axis_ntt imple-
+      TO MONT: In this state, the control module sequentially
+                                                                     mentation with PTM-based control logic, both the single-
+fetches all coefficients stored in the right-side SPRAMs,
+                                                                     and dual-butterfly designs were implemented in Verilog RTL.
+processes them using the butterfly unit configured in operation
+                                                                     Both designs were validated through testbench simulation by
+mode = 2 (_tomont step), and writes the resulting coefficients
+                                                                     cross-checking the input and output values of the forward and
+back to the left-side SPRAMs.
+                                                                     inverse operation modes against the values produced by the
+      PTM TX: In this state, the control module asserts the          ML-DSA reference ntt() and invntt_tomont() software
+master-side tvalid signal (m_axis_tvalid) and waits for              implementations [26], respectively. The top-level module was
+the corresponding tready assertion. After the handshake,             synthesized using Vivado 2024.2, targeting the Xilinx Zynq
+the output coefficients are streamed through the master-side         ZCU102 UltraScale+ FPGA device [43]. The synthesis tool
+tdata channel (m_axis_tdata). The streaming process is               reports FPGA resource utilization metrics, including LUTs
+performed by re-serializing the polynomial coefficients, and         (lookup tables), FFs (flip-flops), BRAMs (block RAM), and
+sequentially retrieving them from the SPRAMs according to            DSP blocks. The maximum achievable clock frequency fmax
+the PTM-based allocation while incrementing the correspond-          of the RTL implementation is estimated from the reported
+ing memory addresses.                                                post-synthesis worst negative slack (WNS) value. The WNS
+      TX DONE: Marks the completion of the NTT processing            represents the difference between the target clock period
+flow and transitions the control logic to the CLEAR state.           Ttarget and the delay of the critical path. We can then obtain
+      CLEAR: In this state, the controller resets all its internal   fmax = 1/(Ttarget − WNS), in Hz. A negative WNS indicates
+FSM registers responsible for driving the SPRAM address              that the critical-path delay exceeds the target period, and fmax
+generators, write-enable signals, multiplexer select signals, and    corresponds to the frequency at which the slack becomes zero.
+                                                                                                                                                                              9
+
+
+
+                       Coeff.:
+                    PTM code:     0    1    1     0      1   0   0    1    1        0       1   0    0     1   0     1   1   0    0       1
+                                                                                                                                                      Memory
+                                                                                                                                                      allocation
+
+
+                                         M0                               M1
+                                                                                                          PTM code:
+                                      addr  data                       addr  data
+                                                                        0                                  0   BF(M0[0], M1[64]) = BF(               )
+                                       0
+                                       1                                1                                  1   BF(M1[0], M0[64]) = BF(               )
+                                       2                                2                                  1   BF(M1[1], M0[65]) = BF(               )
+                                       3                                3                                  0   BF(M0[1], M1[65]) = BF(               )
+                                       4                                4                                  1   BF(M1[2], M0[66]) = BF(               )
+                                                                                                           0   BF(M0[2], M1[66]) = BF(               )
+                                      64                                  64                               0   BF(M0[3], M1[67]) = BF(               )
+                                      65                                  65                               1   BF(M1[3], M0[67]) = BF(               )
+                                      66                                  66
+                                                                                                           1   BF(M1[4], M0[68]) = BF(               )
+                                      67                                  67
+                                                                                                           0   BF(M0[4], M1[68]) = BF(               )
+                                      68                                  68
+
+
+                                                                     Fetching                                                    Execution
+Fig. 11. Applying the 1-bit PTM code in the control logic of the single-butterfly axis_ntt for the first ten butterfly steps in the first NTT layer. In the
+memory allocation stage (PTM ALLOC), input coefficients are routed to the corresponding left-side SPRAM block (M0 or M1) according to the PTM code
+associated with their indices. During the butterfly coefficient fetching and execution phase, the PTM code is used to select which memory block supplies the
+xin and yin inputs of the butterfly unit (BF).
+
+          Coeff.:
+       PTM code:     0    1   2   3     3   2        1   0   3   2             3    2   1   0   0     1    2   3     0   1                Memory
+                                                                                                                                          allocation
+
+
+                                                                                                                                   PTM code:
+                                                                                                                                              BF0(M0[0], M3[32]) = BF0(   )
+                         M0                          M1                        M2                            M3                       0
+                                                                                                                                              BF1(M1[0], M2[64]) = BF1(   )
+                    addr  data                  addr  data                 addr data                     addr data                            BF0(M2[1], M1[65]) = BF0(   )
+                     0                           0                          0                             0                           1
+                                                                                                                                              BF1(M3[1], M0[65]) = BF1(   )
+                     1                           1                          1                             1                                   BF0(M3[2], M0[66]) = BF0(   )
+                                                                            2                             2                           2
+                                                                                                                                              BF1(M2[2], M1[66]) = BF1(   )
+                     32                         32                                                                                            BF0(M1[3], M2[67]) = BF0(   )
+                     33                         33                             32                         32                          3
+                                                                                                                                              BF1(M0[3], M3[67]) = BF1(   )
+                     34                         34                             33                         33
+                                                                                                                                      3       BF0(M3[4], M0[68]) = BF0(   )
+                                                                                                                                              BF1(M2[4], M1[68]) = BF1(   )
+
+                                                                      Fetching                                                                              Execution
+Fig. 12. Applying the 2-bit PTM code in the control logic of the dual-butterfly axis_ntt. In the memory allocation stage (PTM ALLOC), input coefficients
+are routed to the corresponding left-side SPRAM blocks (M0 to M3) according to the PTM code associated with their indices. In the butterfly coefficient
+fetching and execution phase, the PTM code is used to select which memory blocks supply the xin and yin inputs of the two butterfly units (BF0 and BF1).
+
+
+
+   The cycle counts are determined by design, according to                                             NTT DONE, TX DONE, and CLEAR).
+the control logic implemented by the FSM shown in Figure                                           Similarly, Equation 2 expresses the total cycle count of the
+9. For the ML-DSA case with an 8-layer NTT, the total cycle                                     axis_ntt module operating in inverse NTT mode. The over-
+count of the axis_ntt module in forward NTT mode (ntt)                                          all cycle count is identical to that of the forward NTT mode,
+can be expressed as in Equation 1.                                                              except for the extra cycles required by the final _tomont
+                                  
+                                    128
+                                                                                               operation. Specifically, n = 256 coefficients must be reduced,
+ cyclesntt = 2 × cyclesAXIS + 8 ×       + latencyBF + 3 (1)                                     and each butterfly unit processes one coefficient per cycle;
+                                    nBF
+                                                                                                therefore, this term is divided by the number of available but-
+   This Equation can be explained as follows:                                                   terfly units (nBF ). Furthermore, an additional 2 × latencyBF + 2
+                                                                                                cycles are required for intermediate address and multiplexer
+   1) cyclesAXIS is the number of cycles required to receive                                    select resets, as well as control logic synchronization.
+      and transmit the input and output coefficients through
+      the AXI-Stream interface. In our case, with n = 256,                                                                         256
+                                                                                                    cyclesinvntt tomont = cyclesntt +  + 2 × latencyBF + 2 (2)
+      this results in 2 × 256 = 512 cycles, as each coefficient                                                                    nBF
+      is transferred and allocated in one clock cycle;                                             Table I shows the cycle count, maximum clock frequency,
+   2) The factor 8× corresponds to the number of NTT layers,                                    and resource utilization for the synthesized single- and dual-
+      which is eight in the ML-DSA specification;                                               butterfly axis_ntt designs in our target FPGA. For the
+   3) Each NTT layer in ML-DSA consists of 128 butterfly                                        cycle count, the 2 × 256 = 512 portion corresponding to
+      computations. Since one butterfly computation is per-                                     the AXI-Stream input and output transfers is reported sepa-
+      formed per cycle, this term is divided by the number of                                   rately, highlighting the number of cycles for the actual NTT
+      butterfly units (nBF ) in the design;                                                     computation. The cycle count of the _tomont step is also
+   4) The butterfly unit is implemented as a 5-stage pipeline                                   reported separately to facilitate comparison with related works.
+      as shown in Figure 6, resulting in a latency of six cycles                                Our analysis shows that adding a second parallel butterfly
+      before the first output coefficient pair becomes available;                               unit to axis_ntt reduces the cycle count almost by half
+   5) Finally, an additional of three cycles are required for                                   for both the NTT and inverse NTT operations (from 1075
+      intermediate control states and synchronization (i.e.,                                    to 563 cycles). This performance gain, however, leads to an
+                                                                                                                                                                       10
+
+
+
+increase in resource utilization: the number of FFs, BRAMs,                    1750
+                                                                                                                             Cycles
+                                                                                                                ntt (experimental)                 30
+and DSPs approximately doubles, while the LUT count more                                                        invntt_tomont (experimental)
+                                                                               1500                             ntt (projected)
+than doubles due to the increased complexity of the control                                                     invntt_tomont (projected)          25
+
+
+
+
+                                                                                                                                                        FPGA resource usage
+logic introduced by the additional butterfly unit. Despite the                 1250
+                                                                                                                                                   20
+increased complexity of the control logic and the larger num-
+
+
+
+
+                                                                      Cycles
+                                                                               1000   FPGA Resources
+ber of datapath elements required to achieve a 1.9× reduction                            kFFs
+                                                                                                                                                   15
+                                                                                         kLUTs
+                                                                                750
+in cycle count, the maximum clock frequency decreased by                                 BRAMs
+                                                                                         DSPs                                                      10
+only 7%, indicating that the proposed design exhibits good                      500
+
+scalability without a significant increase in critical-path delay.              250
+                                                                                                                                                   5
+
+
+                                                                                  0                                                                0
+                                                                                        1               2                 4                    8
+A. Comparison with prior works                                                                     Number of butterfly units (nBF)
+
+   A key difference between our work and prior NTT hard-             Fig. 13. FPGA resource usage trade-off of axis_ntt as the number
+ware implementations is the assumed operating model. Most            of butterfly units (nBF ) increases. The cases nBF = 1 and 2 correspond to
+                                                                     experimental implementations, while nBF = 4 and 8 are estimated using an
+related works implement the NTT as a co-processor module             analytical model (Equation 1) and the observed resource overhead between
+operating in a continuous-processing mode, where data are            the single- and dual-butterfly designs. Note that FFs and LUTs are multiplied
+provided continuously and I/O latency is hidden within a             by 1,000 to fit in the same scale range (i.e., ×1000 → k).
+larger cryptographic pipeline. In contrast, our axis_ntt is a
+standalone AXI-Stream module designed to offload the NTT             scaling factors derived from the observed increase in resource
+computation from a CPU in a transactional send–wait–receive          usage (LUTs, FFs, BRAMs, and DSPs) when moving from
+manner, making input and output transfers part of the end-to-        the single-butterfly to the dual-butterfly design. By doing so,
+end latency. Since prior works do not explicitly account for         we observe that near one-cycle-per-coefficient performance in
+this I/O overhead, we focus the comparison on the core NTT           NTT processing can be achieved by employing four butterfly
+computation cycle count, excluding the AXI-Stream transfer           units in axis_ntt. This level of performance is also reported
+latency (2 × 256 = 512 cycles), to ensure a fair comparison.         by Li et al. [42] and Mu et al. [18], both of which employ
+   Another aspect is that, since the vast majority of related        the same number of butterfly units. Our design is projected to
+works leverage DPRAMs and compare against solutions that             require more resources than the proposal of Li et al. [42] due
+do so, our comparative analysis considers only prior im-             to the choice of modular reduction technique, which results in
+plementations that use a mixture of SPRAM and DPRAM,                 a wider datapath. While the design of Mu et al. [18] requires
+SPRAM only, or no RAM blocks, in order to ensure a                   fewer LUTs, FFs, and BRAMs than our projected 4-butterfly
+fair comparison while highlighting alternative approaches for        solution, our approach uses fewer DSP units.
+minimizing or avoiding the use of DPRAM.                                Alternatively, Taghavi et al. [33] present an aggressive
+   When comparing our solution with prior designs employing          approach that enables one-cycle-per-layer latency by employ-
+a single butterfly unit, we observe that the cycle count is close    ing very large processing pipelines and eliminating storage
+to 1,024 cycles, plus additional cycles due to intermediate          requirements; however, this comes at the cost of substantially
+synchronization states and butterfly latency. This indicates         increased processing resource usage.
+a comparable one-cycle-per-butterfly throughput achieved by
+leveraging a pipelined architecture. Li et al. [42] use slightly     B. Application analysis
+more LUTs and FFs, but fewer BRAMs and DSPs, as their                   Our motivation for developing a standalone NTT module is
+adopted K2 -RED reduction technique enables a narrower dat-          to enable systems with scarce computational resources to effi-
+apath compared to Montgomery reduction. Although Mu et al.           ciently offload the NTT computation – with the added benefit
+[18] also employ Montgomery reduction, their design requires         of not depending on DPRAM IPs. Our solution can serve as
+more BRAMs and DSPs than ours, while using significantly             a drop-in replacement for the ntt() and invntt_tomont()
+fewer LUTs and FFs. When considering our dual-butterfly              functions. For example, an MCU-based SoC could leverage the
+solution, Zhao et al. [20] also achieve an effective near half-      proposed axis_ntt module via a DMA engine to offload the
+cycle-per-butterfly throughput (512 cycles plus intermediate         ntt and invntt_tomont computations. For instance, Table II
+states and synchronization), despite employing four butterfly        reports the cycle counts of different software implementations
+units instead of two. Because their design targets the min-          across commonly used microcontroller (MCU) platforms.
+imization of storage resources, it relies on larger processing          Naturally, cross-domain considerations must also be taken
+structures that require a higher number of multipliers, resulting    into account, such as clock frequency differences and the
+in approximately four times more DSP usage than our solution.        latency associated with streaming data to and from the acceler-
+   Based on Table I and Equations 1-2, Figure 13 presents the        ator through the DMA engine. Therefore, while MCUs such as
+projected cycle counts of the ntt and invntt_tomont opera-           the Cortex-M4 may not significantly benefit from an external
+tions, along with the corresponding FPGA resource utilization,       NTT accelerator, more constrained platforms like the Cortex-
+when increasing the number of butterfly units to four and eight      M3 may benefit substantially. This is because the Cortex-M3
+in order to progressively halve the PTM-based NTT processing         lacks support for constant-time DSP instructions available in
+cycle count. In addition, to estimate the resource utilization of    the Cortex-M4 and later architectures. As shown in Table II,
+the four- and eight-butterfly variants of axis_ntt, we apply         a constant-time NTT implementation on the Cortex-M3 can
+                                                                                                                                                          11
+
+
+
+                                                              TABLE I
+FPGA SYNTHESIS RESULTS FOR OUR SINGLE - AND DUAL - BUTTERFLY HARDWARE NTT, COMPARED TO RELATED WORKS USING A MIXTURE OF SPRAM
+ AND DPRAM, SPRAM ONLY, OR NO RAM BLOCKS . T HE AXI-S TREAM I/O LATENCY (512 CYCLES ) IS OMITTED FOR NORMALIZATION PURPOSES .
+
+                                                                           Latency (cycles)
+            Solution                     Target            nBF                                         fmax         LUT        FF       BRAM       DSP
+                                                                   ntt      invntt      _tomont
+   axis_ntt: ours (SPRAM)            Zynq ZCU102            1      1,075      1,075         270       332 MHz       1,423     818         2.5        4
+   axis_ntt: ours (SPRAM)            Zynq ZCU102            2       563        563          142       308 MHz       3,185    1,578         5         8
+          [42] (SPRAM)             Kintex XKCU060           1      1,052      1,052          –        255 MHz       1,623    1,325        1.5        3
+          [42] (SPRAM)             Kintex XKCU060           4       284        284           –        250 MHz       5,478    4,955         6        12
+     [18] (SPRAM+DPRAM)           Virtex-7 XC7VX690         1      1,031      1,031          –        187 MHz        691      451          3         5
+     [18] (SPRAM+DPRAM)           Virtex-7 XC7VX690         4       270        270           –        175 MHz       2,466    1,637        4.5       20
+     [20] (SPRAM+DPRAM)            Artix-7 XC7Z020          4       533        536           –        311 MHz        524      759          1        17
+         [33] (No RAM)             Virtex-7 XCU250         128       7          7            –        400 MHz      34,595    18,565        0        256
+
+
+
+                           TABLE II                                              [3] Z. Brakerski, C. Gentry, and V. Vaikuntanathan, “(Leveled) fully ho-
+    P ERFORMANCE OF ( INVERSE ) NTT IN MCU- BASED SOFTWARE                           momorphic encryption without bootstrapping,” in 3rd Innovations in
+IMPLEMENTATIONS FOR ML-DSA. CT/VT = C ONSTANT /VARIABLE T IME                        Theoretical Computer Science Conference, pp. 309–325, ACM, 2012.
+                                                                                 [4] J. Cheon, A. Kim, M. Kim, and Y. Song, “Homomorphic encryption
+                               Software               ntt        invntt              for arithmetic of approximate numbers,” in Advances in Cryptology –
+     Target CPU
+                            implementation           cycles       cycles             ASIACRYPT’17, pp. 409–437, Springer, 2017.
+   ARM Cortex-M4              Ref. [26], CT          40,899       45,750         [5] J. Mera, A. Karmakar, and I. Verbauwhede, “Time-memory trade-off
+   ARM Cortex-M4             pqm4 [44], CT           5,356         5,496             in Toom-Cook multiplication: an application to module-lattice based
+   ARM Cortex-M3        Greconici et al. [45], VT    19,347       21,006             cryptography,” TCHES, vol. 2020, no. 2, pp. 222–244, 2020.
+   ARM Cortex-M3        Greconici et al. [45], CT    33,025       36,609         [6] M. Niasar, R. Azarderakhsh, and M. Kermani, “High-speed NTT-based
+                                                                                     polynomial multiplication accelerator for post-quantum cryptography,”
+                                                                                     in 28th symposium on computer arithmetic, pp. 94–101, IEEE, 2021.
+require more than 30,000 CPU cycles due to the limitations                       [7] J. Sun and X. Bai, “A high-speed hardware architecture of an NTT
+of variable-latency multiplication instructions and the need to                      accelerator for CRYSTALS-Kyber,” Integrated Circuits and Systems,
+employ countermeasures to enforce constant-time execution,                           vol. 1, no. 2, pp. 92–102, 2024.
+                                                                                 [8] J. Kim, G. Lee, S. Kim, G. Sohn, M. Rhu, J. Kim, and J. Ahn, “ARK:
+which is often required for side-channel resistance. In this                         Fully homomorphic encryption accelerator with runtime data generation
+scenario, the proposed axis_ntt module can be particularly                           and inter-operation key reuse,” in Proceedings of MICRO’22, pp. 1237–
+beneficial, as it enables the MCU to offload the NTT com-                            –1254, IEEE, 2023.
+                                                                                 [9] N. Samardzic, A. Feldmann, A. Krastev, S. Devadas, R. Dreslinski,
+putation to an external accelerator while the CPU continues                          C. Peikert, and D. Sanchez, “F1: A fast and programmable acceler-
+executing other tasks until the NTT operation completes.                             ator for fully homomorphic encryption,” in Proceedings of Micro’21,
+                                                                                     pp. 238–252, IEEE, 2021.
+                       VII. C ONCLUSION                                         [10] G. Land, P. Sasdrich, and T. Güneysu, “A hard crystal - Implementing
+                                                                                     Dilithium on reconfigurable hardware,” in Int. Conf. on Smart Card
+   In this paper, we demonstrated how the PTM code can be                            Research and Advanced Applications, pp. 210–230, Springer, 2021.
+leveraged to enable a DPRAM-free NTT hardware architecture                      [11] Y. Geng, X. Hu, M. Li, and Z. Wang, “Rethinking parallel memory
+while guaranteeing conflict-free memory access throughout                            access pattern in number theoretic transform design,” IEEE Trans. on
+                                                                                     Circuits and Systems, vol. 70, no. 5, pp. 1689–1693, 2023.
+all NTT computation phases. We validated this approach in                       [12] T. Huang, J. Lu, A. Li, L. Chen, K. Li, J. Zhang, M. Wang, X. Mei,
+the context of ML-DSA, designing a scalable datapath and                             H. Li, and D. Liu, “A lightweight and efficient post quantum crypto-
+control architecture that can be adapted to different numbers of                     processor for ML-DSA,” IEEE Trans. on Circuits and Systems, 2025.
+parallel butterfly units. We also evaluated the performance and                 [13] T. Wang, C. Zhang, P. Cao, and D. Gu, “Efficient implementation of
+                                                                                     Dilithium signature scheme on FPGA SoC platform,” IEEE Trans. on
+resource utilization of the proposed NTT processing pipeline                         VLSI Systems, vol. 30, no. 9, pp. 1158–1171, 2022.
+and compared it against selected prior solutions that reduce                    [14] L. Beckwith, D. Nguyen, and K. Gaj, “High-performance hardware
+DPRAM usage either by combining SPRAM and DPRAM                                      implementation of Crystals-Dilithium,” in International Conference on
+                                                                                     Field-Programmable Technology (ICFPT), pp. 1–10, IEEE, 2021.
+or by relying exclusively on SPRAMs. Finally, we packaged                       [15] D. Kundi, J. Mera, P. Strub, and M. Hutter, “High-performance NTT
+our design as a standalone AXI-Stream peripheral that can                            hardware accelerator to support ML-KEM and ML-DSA,” in Workshop
+be directly connected to a DMA engine to serve as a drop-                            on Attacks and Solutions in Hardware Security, pp. 100–105, 2024.
+                                                                                [16] T. Nguyen, B. Nguyen, C. Pham, and T. Hoang, “High-speed NTT ac-
+in replacement for the reference software forward and inverse                        celerator for CRYSTAL-Kyber and CRYSTAL-Dilithium,” IEEE Access,
+NTT functions, thereby offloading these operations to a dedi-                        vol. 12, pp. 34918–34930, 2024.
+cated accelerator and potentially enabling reference-compliant                  [17] S. Mandal and D. B. Roy, “KiD: A hardware design framework targeting
+ML-DSA implementations on resource-constrained systems.                              unified NTT multiplication for CRYSTALS-Kyber and CRYSTALS-
+                                                                                     Dilithium on fpga,” in 37th Int. Conf. on VLSI Design and 23rd Int.
+   Future work includes extending the PTM-based NTT design                           Conf. on Embedded Systems (VLSID), pp. 455–460, IEEE, 2024.
+to other schemes (e.g., ML-KEM), and systematically evalu-                      [18] J. Mu, Y. Ren, W. Wang, Y. Hu, S. Chen, C. Chang, et al., “Scalable
+ating the potential benefits of avoiding DPRAMs in ASICs.                            and conflict-free NTT hardware accelerator design: Methodology, proof,
+                                                                                     and implementation,” IEEE Transactions on Computer-Aided Design of
+                                                                                     Integrated Circuits and Systems, vol. 42, no. 5, pp. 1504–1517, 2022.
+                             R EFERENCES                                        [19] N. Gupta, A. Jati, A. Chattopadhyay, and G. Jha, “Lightweight hardware
+ [1] NIST, “Module-lattice-based digital signature standard (FIPS 204),”             accelerator for post-quantum digital signature Crystals-Dilithium,” IEEE
+     tech. rep., National Institute of Standards and Technology, USA, 2024.          Trans. on Circuits and Systems, vol. 70, no. 8, pp. 3234–3243, 2023.
+ [2] NIST, “Module-lattice-based key-encapsulation mechanism standard           [20] C. Zhao, N. Zhang, H. Wang, B. Yang, W. Zhu, Z. Li, et al., “A compact
+     (FIPS 203),” tech. rep., National Institute of Standards and Technology,        and high-performance hardware architecture for CRYSTALS-Dilithium,”
+     USA, 2024.                                                                      TCHES, pp. 270–295, 2022.
+                                                                                 12
+
+
+
+[21] K. Bhagirath, D. Pant, A. Tiwari, and V. Khaneja, “Advanced HLS for
+     reconfigurable image processing in big data systems,” in Big Data and
+     Artificial Intelligence, pp. 148–162, Springer Nature Switzerland, 2025.
+[22] M. Reddy and G. Sujatha, “Optimized synchronous dual-port memory
+     design using flip-flop clock gating,” IJISRT, vol. 10, no. 11, 2025.
+[23] H. Jain, M. Edwards, E. Elenberg, A. Rawat, and S. Vishwanath,
+     “Achieving multi-port memory performance on single-port memory with
+     coding techniques,” in 3rd ICICT, pp. 366–375, IEEE, 2020.
+[24] J. Allouche and J. Shallit, “The ubiquitous Prouhet-Thue-Morse se-
+     quence,” in Sequences and their Applications, pp. 1–16, Springer, 1999.
+[25] Arm Ltd., “AMBA AXI-Stream Protocol Specification (ARM IHI
+     0051B),” Tec. Specification IHI 0051B, Arm Limited, 2021. Defines
+     the AMBA AXI-Stream protocols (AXI4-Stream and AXI5-Stream).
+[26] pq-crystals, “Reference implementation of the CRYSTALS-Dilithium
+     signature scheme.” https://github.com/pq-crystals/dilithium, 2026.
+[27] J. Cooley and J. Tukey, “An algorithm for the machine calculation of
+     complex Fourier series,” Mathematics of computation, vol. 19, no. 90,
+     pp. 297–301, 1965.
+[28] W. Gentleman and G. Sande, “Fast fourier transforms: For fun and
+     profit,” in Proc. of AFIPS’66, pp. 563–578, 1966.
+[29] S. Hafiz, B. Yildiz, M. Simplicio, T. Paiva, H. Ogawa, G. De Micheli,
+     and E. Cominetti, “Incompleteness in Number-Theoretic Transforms:
+     New tradeoffs and faster lattice-based cryptographic applications,” in
+     IEEE European Symposium on Security and Privacy, pp. 565–584, 2025.
+[30] M. Kannwischer, Polynomial multiplication for post-quantum cryptog-
+     raphy. PhD thesis, Radboud Universiteit, 2022.
+[31] T. Paiva, G. De Micheli, S. Hafiz, M. Simplicio, and B. Yildiz, “Faster
+     amortized bootstrapping using the incomplete NTT for free,” TCHES,
+     vol. 2025, no. 4, pp. 520–543, 2025.
+[32] A. Bosselaers, R. Govaerts, and J. Vandewalle, “Comparison of three
+     modular reduction functions,” in CRYPTO, pp. 175–186, Springer, 1993.
+[33] B. Taghavi, R. Azarderakhsh, and M. Kermani, “Parallelntt: Maximizing
+     performance of forward and inverse ntt on fpga for ml-dsa and ml-kem,”
+     in Proc. of the Great Lakes Symposium on VLSI, pp. 372–378, 2025.
+[34] L. Johnson, “Conflict free memory addressing for dedicated FFT hard-
+     ware,” IEEE Trans. on Circuits and Systems, vol. 39, pp. 312–316, 2002.
+[35] H. Lo, M. Shieh, and C. Wu, “Design of an efficient FFT processor for
+     DAB system,” in ISCAS’01, vol. 4, pp. 654–657, IEEE, 2001.
+[36] S. Richardson, D. Marković, A. Danowitz, J. Brunhaver, and
+     M. Horowitz, “Building conflict-free FFT schedules,” IEEE Trans. on
+     Circuits and Systems, vol. 62, no. 4, pp. 1146–1155, 2015.
+[37] X. Chen, B. Yang, S. Yin, S. Wei, and L. Liu, “CFNTT: Scalable
+     radix-2/4 NTT multiplication architecture with an efficient conflict-free
+     memory mapping scheme,” TCHES, pp. 94–126, 2022.
+[38] W. Guo and S. Li, “Highly-efficient hardware architecture for Crystals-
+     Kyber with a novel conflict-free memory access pattern,” IEEE Trans.
+     on Circuits and Systems, vol. 70, no. 11, pp. 4505–4515, 2023.
+[39] W. Guo and S. Li, “Split-radix based compact hardware architecture for
+     Crystals-Kyber,” IEEE Trans. on Computers, vol. 73, pp. 97–108, 2023.
+[40] D. Pont, J. Bertels, F. Turan, M. Beirendonck, and I. Verbauwhede,
+     “Hardware acceleration of the prime-factor and rader NTT for BGV
+     fully homomorphic encryption,” in 31st ARITH, pp. 1–8, IEEE, 2024.
+[41] Y. Xing, G. Li, Z. Ye, R. Luk, D. Chen, H. Yan, and R. Cheung, “High-
+     radix/mixed-radix NTT multiplication algorithm/architecture co-design
+     over fermat modulus,” IEEE Trans. on Computers, 2025.
+[42] B. Li, Y. Yan, Y. Wei, and H. Han, “Scalable and parallel optimization
+     of the number theoretic transform based on FPGA,” IEEE Trans. on
+     VLSI Systems, vol. 32, no. 2, pp. 291–304, 2023.
+[43] Advanced Micro Devices, Inc., “Zynq UltraScale+ MPSoC ZCU102
+     evaluation kit (ek-u1-zcu102-g).” Online. Accessed: Jan. 22, 2026.
+[44] M. Kannwischer, M. Krausz, R. Petri, and S. Yang, “pqm4: Bench-
+     marking NIST additional post-quantum signature schemes on micro-
+     controllers,” Cryptology ePrint Archive, 2024.
+[45] D. Greconici, M. Kannwischer, and A. Sprenkels, “Compact Dilithium
+     implementations on Cortex-M3 and Cortex-M4,” IACR Transactions on
+     Cryptographic Hardware and Embedded Systems, pp. 1–24, 2021.
+

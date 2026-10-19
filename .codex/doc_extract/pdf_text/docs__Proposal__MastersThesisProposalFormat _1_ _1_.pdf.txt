@@ -1,0 +1,184 @@
+     NED University of Engineering & Technology
+                        Department of Mathematics
+            Proposal for MS Thesis Applied Mathematics
+                              MS Thesis (MT-5002)
+Note: The red color text in the following document must be replaced by
+your data.
+
+                                 [Proposed Title*]
+*Short title without abbreviations is recommended.
+
+
+Student Name                           Your Name S/D/o Father Name
+
+Roll No/Batch                          Complete roll number with batch
+
+                                ☒      MS Applied Mathematics
+
+Program                         ☐      Evening
+
+                                ☐      Weekend
+
+
+Name of Supervisor            Name of supervisor with department and designation
+
+
+Name of Co-Supervisor         Name of co-supervisor with department and
+(If any)                      designation
+
+
+Duration                               Fall 2023 to Spring 2024
+                                                      [Proposed Title*]
+             *Short title without abbreviations is recommended.
+
+
+
+
+Table of Contents
+Abstract ......................................................................................................................................3
+   1.        Introduction and Motivation ...........................................................................................3
+   2.        Literature Review............................................................................................................3
+   3.        Proposed Research Work ................................................................................................3
+   4.        Research plan ..................................................................................................................3
+        a)      Proposed Research Methodology ................................................................................3
+        b)      Activity Timeline.........................................................................................................3
+   5.        References .......................................................................................................................4
+
+
+
+
+                                                                        2
+Abstract
+Maximum 350 words
+Highlight the context and background of the problem then mention briefly the objective of
+your research along with the proposed methodology, dataset (if any) and the possible
+software and hardware tools to be used.
+
+
+1. Introduction and Motivation
+
+     Discuss the introduction of the area of your research and highlight the prospects of
+     further work and exploration in that area.
+
+
+2. Literature Review
+
+     Give a suitable account of the relevant recent work in your current area of study.
+
+
+3. Proposed Research Work
+
+     Discuss your research problem and objectives along with the limitations and scope of
+     the research work.
+
+
+4. Research plan
+
+   a) Proposed Research Methodology
+
+
+     Mention the proposed problem-solving approach, data collection methods (if needed),
+     research questions, hypothesis etc.
+
+   b) Activity Timeline (Gantt Chart)
+
+
+                                                      Month
+  Project Activities
+                                     Thesis 1                           Thesis 2
+                          1      2      3       4     5      6      7      8       9      10
+
+
+
+
+                                                3
+            Sample Gantt chart (not to be included in the student’s proposal)
+
+
+ Project Activities                                     Month
+                                      Thesis 1                           Thesis 2
+                           1      2      3       4     5      6      7       8      9     10
+ Literature Review
+ Model development
+ Data preparation
+ Coding and
+ Integration
+ Model Testing
+ Final documentation
+
+
+5. References
+*References must be added in the following format only
+1) Hoffman, K.C. & Jorgenson, D.W. (1977). Economic and technological models for
+evaluation of energy policy. Bell Journal of Economics, Vol. 8 (2), Page 444-466.
+
+
+
+
+I certify that the above MS thesis proposal is prepared by me under the guidance of my
+supervisor and/or co-supervisor. I will carry out this research project with academic integrity,
+research ethics and punctuality. If my performance is found unsatisfactory in the mid-year
+evaluation or any time during this research project, my enrollment in MS thesis may be
+cancelled.
+
+
+
+
+                                                              Signature of Student with date
+
+
+
+
+                                                 4
+For Office Use Only
+
+                            Recommendations / Comments
+
+   1) Supervisor and/or Co-Supervisor:
+I / We agree to supervise the above-mentioned student. I / We verify that the MS thesis proposal
+was prepared by the student with my / our consultation and the similarity index of this proposal
+is less than 20%.
+
+
+
+
+Supervisor Signature with date                           Co-Supervisor Signature with date
+
+
+
+   2) Post Graduate Coordinator (PGC):
+I certify that the above student has / has not achieved the minimum requirement /eligibility to
+enroll in MS thesis (MT-5002) as defined in the postgraduate regulations of NED University
+of Engineering & Technology.
+
+The above student may / may not be recommended to enrolled in MS thesis.
+
+
+
+
+                                                                    PGC Signature with date
+
+   3) Chairperson:
+This proposal is / is not recommended to be discussed in BoS.
+
+
+
+                                                              Chairman Signature with date
+
+   4) BoS Recommendation:
+This proposal is discussed in the BoS held,
+__________________________________________________________________________.
+
+This proposal is recommended to be Approved / Approved with correction / Rejected.
+
+
+
+
+                                               5
+    Chairman Signature with date
+
+
+
+
+6
+

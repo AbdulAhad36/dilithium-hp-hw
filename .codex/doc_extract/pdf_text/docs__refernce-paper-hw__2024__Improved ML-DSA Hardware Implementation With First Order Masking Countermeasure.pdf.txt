@@ -1,0 +1,911 @@
+                                                                                                                                       1
+
+
+
+
+Improved ML-DSA Hardware Implementation With
+      First Order Masking Countermeasure
+                            Kamal Raj, Prasanna Ravi, Tee Kiah Chia, Anupam Chattopadhyay
+
+
+
+
+   Abstract—We present the protected hardware implementation                However, asymmetric cryptosystems pose a major security
+of the Module-Lattice-Based Digital Signature Standard (ML-              threat to quantum computers because of Shor’s algorithms that
+DSA). ML-DSA is an extension of Dilithium 3.1, which is the win-         can solve the current public key cryptosystem’s hard problem
+ner of the Post Quantum Cryptography (PQC) competition in the
+digital signature category. The proposed design is based on the          in polynomial time with the quantum computer [3]. The
+existing high-performance Dilithium 3.1 design. We implemented           National Institute of Standard and Technology (NIST) started a
+existing Dilithium masking gadgets in hardware, which were only          competition called Post Quantum Cryptography (PQC) which
+implemented in software. The masking gadgets are integrated              aims to develop cryptosystems that are quantum-safe, which
+with the unprotected ML-DSA design and functional verification           means the algorithms that are hard for classical as well
+of the complete design is verified with the Known Answer
+Tests(KATs) generated from ML-DSA reference software. We                 as quantum computers and also provides long-term secu-
+also present the practical power side-channel attack experimental        rity. These PQC cryptosystems are implemented in classical
+results by implementing masking gadgets on the standard side-            computers but at the same time, they also provide security
+channel evaluation FPGA board and collecting power traces                from quantum computer threats. Although PQC algorithms are
+up-to 1 million traces. The proposed protected design has the            quantum-safe, it has some issues compared to non-quantum-
+overhead of 1.127× LUT, 1.2× Flip-Flop, and 378× execution
+time compared to unprotected design. The experimental results            safe cryptosystems like larger key size, and most importantly,
+show that it resists side-channel attacks.                               they are not studied rigorously for side-channel attack threat.
+                                                                            There are both software and hardware implementation PQC
+  Index Terms—Post Quantum Cryptography, ML-DSA, Hard-
+ware Implementation, Masking, Side-Channel Attack, Security              algorithms are available in the literature but we choose hard-
+                                                                         ware implementation to study side-channel attack threats. A
+                                                                         cryptosystem implemented in hardware can give high-speed
+                        I. I NTRODUCTION                                 computation of the cryptographic algorithms. For example,
+                                                                         authors in [4] have implemented PQC candidate Dilithium
+   A huge amount of data is exchanged between various                    on FPGA SoC which achieved about 40× better performance
+devices through wired or wireless communication channels.                compared to software-only implementation. Authors in [5]
+Most of the data is exchanged over the public channel,                   implemented AES on 22nm Tri-gate CMOS which gives a
+which is vulnerable to various threats and also has privacy              throughput of 289 Gbps which is significantly large compared
+concerns. The cryptographic ciphers protect sensitive data               to its software-only implementation. Also, the computational
+from the attacker and solve the problem of security and privacy          extensive part of the cryptosystem can be implemented in
+concerns [1]. The underlying method to protect data over                 hardware and added to the instruction set architecture which
+public channels is a mathematical hard problem that can’t be             increases the performance of the cryptosystem in software.
+solved by the modern computer unless the adversary has the               For example, Intel added six instructions in the processor to
+information about the secret key, which encrypts or decrypts             improve Advanced Encryption Standard (AES) performance
+the secret messages.                                                     in software [6].
+   There are two types of cryptosystems, symmetric key and                  Although hardware implementation of cryptosystesms pro-
+asymmetric key cryptosystems both have their benefits. For               vide better performance, it has the threat of extracting se-
+example, symmetric cryptosystems have the benefit of less                cret information through side-channel attack techniques like
+computational cost while secret key sharing is the biggest issue         power side-channel attack [7], timing side-channel attacks
+while asymmetric cryptosystems have the benefit of no secret             [8] etc. These attacks can recover secret information from
+key sharing but has more computational cost. In practice, both           the system running with the cryptographic algorithm. Hence,
+symmetric and asymmetric cryptosystems are used to balance               it is important that it is protected from side-channel attack
+the computational cost by using asymmetric cryptosystems for             countermeasure.
+authentication and key encapsulation over public channels and               Module-Lattice-Based Digital Signature Standard or ML-
+using symmetric cryptosystems for encrypting or decryption               DSA [9] is the extension of Dilithium 3.1 [10] recently
+the secret messages [2].                                                 standardized by NIST. However, it also has a threat from
+  Kamal Raj and Tee Kiah Chia are with Temasek Laboratories @ Nanyang    side-channel attacks. For example, authors in [11] presented
+Technological University, Singapore 639798 (email: kamalraj@ieee.org,    the power side-channel attack on Dilithium targeting the
+tkchia@ntu.edu.sg)                                                       randomness leakage in the signature generation algorithm and
+  Prasanna Ravi and Anupam Chattopadhyay are with College of Computing
+and Data Science, Nanyang Technological University, Singapore 639798.    recovered secret information from Dilithium level 3 using
+(email: prasanna.ravi@ntu.edu.sg, anupam@ntu.edu.sg)                     10,000 power traces within half an hour.
+                                                                                                                                  2
+
+
+
+   There are various hardware designs of Dilithium are avail-      authors in [12] present high-performance hardware implemen-
+able in the literature. However, these designs are not protected   tation of Dilithium 3.1 which is available in the public repos-
+with the side-channel attack countermeasure which can lead         itory. It is a high-performance design that uses multiple cores
+to the extraction of secret information through leakage con-       of different hardware modules to increase the performance of
+cerning security and privacy issues. At present, there is a lack   the design. More details about this implementation are given in
+of protected hardware implementation of Dilithium or ML-           Section IV. There are also other hardware designs of Dilithium
+DSA which motivates us to implement side-channel attack            3.1 available in the literature which are given below.
+countermeasures to protect ML-DSA for long-term security.             Authors in [14] have presented a lightweight hardware
+   In this paper, the implementation of masking counter-           implementation of Dilithium 3.1. It uses various methods to
+measures for ML-DSA hardware design, the challenges of             optimize the design which includes efficient implementation
+implementing it in hardware, and its effect on side-channel        of modular reduction module, implementation of pipeline
+attack resistance, area, and performance are presented. The        architecture, and hardware resource sharing. They also use
+main contributions are as follows:                                 this hardware design as an accelerator for the Zynq processing
+   1) Existing hardware implementation, Dilithium 3.1 imple-       system by integrating the core design of Dilithium with the
+       mented by the authors in [12], is updated to the final      Zynq processing system using the AXI interface. Authors
+       ML-DSA standard, and its functionality is verified using    in [4] have presented the Dilithium hardware implemented
+       Known Answer Tests (KATs) generated from the official       on the FPGA SoC platform. The authors use the hardware-
+       ML-DSA software implementation.                             software co-design method to implement Dilithium on the SoC
+   2) Masking gadgets proposed by the authors in [13] to           platform. Those computations that are expensive for software
+       mask entire signature generation algorithm are imple-       are implemented in hardware like polynomial multiplication,
+       mented in hardware which is then integrated with ML-        expandmask, SampleInBall. The high-level design is then
+       DSA design. The masked implementation is also verified      integrated with the processer using AXI interface.
+       with the same Known Answer Tests (KATs).                       Authors in [15] have presented the hardware implementation
+   3) The proposed protected ML-DSA design has an over-            of a crypto-processor that is targeted for accelerating opera-
+       head of 1.127× LUT, 1.2× Flip-Flop, and 378× execu-         tions in Dilithium algorithms. The authors implemented low
+       tion time compared to the high-performance unprotected      latency NTT butterfly using the Karatsuba algorithm which is
+       ML-DSA hardware design.                                     embedded in the NTT module. The crypto-processor is de-
+   4) Side-Channel attack experiments are performed to evalu-      signed in such a way that one object (256-degree polynomial)
+       ate proposed protected ML-DSA hardware. We collected        is processed in each instruction enabling computation of par-
+       up to 1 million traces for each module and t-test result    allel data resulting in speeding up the execution time. Authors
+       shows that it doesn’t leak side-channel information.        in [16] presented a unified crypto-processor for lattice-based
+   This paper is organized as follows. Section II present          post-quantum cryptography Kyber and Dilithium. The authors
+the background on existing hardware implementation, Side-          targeted polynomial multiplication design to optimize the de-
+Channel attack and its countermeasures of Dilithium algo-          sign. The sampling unit that samples pseudo-random numbers
+rithms. Section III briefly present the internal algorithms of     from the KECCAK module is customized for Dilithium and
+ML-DSA and masking gadgets for ML-DSA. Section IV                  Kyber.
+present the proposed hardware implementation of masked ML-
+DSA signature generation. Section V present the experimental
+                                                                   B. Side-Channel Attack and Countermeasure
+results and Section VI concludes the paper.
+                                                                      Since ML-DSA is a digital signature algorithm, some of its
+                       II. BACKGROUND                              variables are public and can be skipped for masking and some
+   Modular Lattice-Based Digital Signature Standard (ML-           variables are sensitive and need to be protected because if they
+DSA) [9] is a lattice-based post-quantum cryptography (PQC)        are leaked, they can help attackers to compute secret parts. The
+digital signature algorithm, recently standardized by the Na-      first variable in the signing algorithm is y, which needs to be
+tional Institute of Standard and Technology (NIST) as FIPS         protected since attackers can compute coefficients of s1 from
+204. It is an extension of Dilithium Version 3.1 [10] which is     z = y + cs1 , because z and c are public. The variable y is
+the winner of the NIST PQC competition in the digital signa-       generated pseudo-randomly from the seed (ρ) and a nonce.
+ture scheme. The initial public draft of ML-DSA was finalized         Authors in [11] have presented a practical Side-Channel
+to the final ML-DSA standard on 13th August 2024 with              attack on Dilithium signature generation by targeting y vari-
+minor changes to the initial draft. The authors of Dilithium       able and they recommend that the entire Dilithium signa-
+3.1 also published a reference software implementation of ML-      ture generation must be protected including pseudo-random
+DSA which is available in public. This implementation also         number. To protect the Dilithium from side-channel attack,
+includes, ML-DSA implemented with AVX2 instruction set             masked Dilithium is proposed by the authors in [13] and [17].
+and implementation tests like Known Answer Tests (KATs).           Authors in [13] have not provided any software and hardware
+                                                                   implementation but presented the practical result of a Side-
+A. Dilithium Hardware Implementation                               Channel attack on their proposed algorithm. Authors in [17]
+  Although there is no official Dilithium or ML-DSA hard-          have not provided any practical results but they have provided
+ware implementation available from authors of Dilithium,           C program implementation of their proposed algorithm. We
+                                                                                                                                    3
+
+
+
+use the masking gadget proposed by the authors in [13] to          s2 , and t0 are converted to NTT domain. ρ is expanded to
+implement protected ML-DSA hardware design.                        sample matrix A which is then converted to NTT domain.
+                                                                   Other seed ρ′′ is computed which is expanded to sample y.
+                III. A LGORITHM D ESCRIPTION                       From y, it computes w = Ay. w1 nd µ and hashed to gen c̃.
+                                                                   The signature z is computed as z = y + cs1 .
+   All the notations used in this section are as per the no-
+tations used in the FIPS-204 document [9]. ML-DSA has
+three internal algorithms that are key generation, signature       Algorithm 2 Signature Generation
+generation, and signature verification. It is divided into three   Input: (sk, M ′ , rnd)
+categories, category 2 (ML-DSA-44), category 3 (ML-DSA-            Output: Signature σ
+65), and category 5 (ML-DSA-87). The parameter set of               1: (ρ, K, tr, s1 , s2 , t0 ) ← skDecode(sk)
+different categories is given in TABLE I.                           2: sˆ1 ← NTT(s1 )
+                                                                    3: sˆ2 ← NTT(s2 )
+                                TABLE I                             4: tˆ0 ← NTT(t0 )
+                        ML-DSA PARAMETER S ET [9]                   5: Â ← ExpandA(ρ)
+                                                                    6: µ ← H(BytesT oBits(tr)||M ′ , 64)
+     Parameter            ML-DSA-44    ML-DSA-65    ML-DSA-87
+                                                                    7: ρ′′ ← H(K||rnd||µ, 64)
+     Public key size         2560         1312         2420
+     Private key size        4032         1952         3309         8: κ ← 0
+     Signature size          4896         2592         4627         9: (z, h) ←⊥
+     γ1                      217          219          219         10: while (z, h) =⊥ do
+     γ2                    (q-1)/88     (q1-/32)     (q-1)/32      11:     y ∈ Rql ← ExpandM ask(ρ′′ , κ)
+     (k, l)                 (4, 4)       (6, 5)       (8, 7)
+     η                         2           4            2          12:     w ← N T T (−1) (Â ◦ N T T (y))
+     β                        78          196          120         13:     c̃ ← H(µ||w1Encode(w1 ), λ/4)
+                                                                   14:     c ∈ Rq ← SampleInBall(c̃)
+                                                                   15:     c̃ ← N T T (c)
+A. Key Generation                                                  16:     ⟨⟨cs1 ⟩⟩ ← N T T −1 (ĉ ◦ sˆ1 )
+                                                                   17:     ⟨⟨cs2 ⟩⟩ ← N T T −1 (ĉ ◦ sˆ2 )
+   The key generation algorithm (Algorithm 1) generates a
+                                                                   18:     z ← y + ⟨⟨cs1 ⟩⟩
+public key and a secret key pair using a random 32-bit seed ξ.
+                                                                   19:     r0 ← LowBits(w − ⟨⟨cs2 ⟩⟩)
+This seed is expanded to to generate other seeds ρ, ρ′ and K.
+                                                                   20:     if ||z||∞ ≥ γ1 − βor||ro ||∞ ≥ γ2 − βthen(z, h) ←⊥
+ρ is expanded using the XOF function to pseudo-randomly
+                                                                       then
+sampling matrix A which is then stored in NTT representation.
+                                                                   21:     else
+ρ′ is expanded to sample s1 and s2 in the range [−η, η]. After
+                                                                   22:          ⟨⟨cto ⟩⟩ ← N T T −1 (ĉ ◦ tˆ0 )
+expanding A, s1 and s2 , t = As1 + s2 which is a public
+                                                                   23:          h ← M akeHint(−⟨⟨ct0 ⟩⟩, w − ⟨⟨cs2 ⟩⟩ + ⟨⟨ct0 ⟩⟩)
+value. K is stored as it is and it is used in the signature
+                                                                   24:     end if
+generation algorithm. The public key is then packed which
+                                                                   25: end while
+is byte encoding of t1 and ρ. Then hash of the public key is
+                                                                   26: σ ← sigEncode(c̃, z, h)
+computed and it is packed with other secret key variables.
+
+Algorithm 1 Key Generation                                            After signature generation, validity check is performed and
+Input: Seed ξ ∈ B32                                                if validity check is failed, the signature generation continue the
+Output: Public Key(pk) and Private Key(sk)                         rejection sampling. If the validity is passed, hint is computed
+ 1: (ρ, ρ′ , K) ∈ B32 × B64 × B32 ← H(ξ||κ||l)                     and it is encoded with final signature.
+ 2: Â ← ExpandA(ρ)
+ 3: (s1 , s2 ) ← ExpandS(ρ′ )
+ 4: t ← N T T −1 (Â ◦ N T T (s1 )) + s2                           C. Signature Verification
+ 5: (t1 , t2 ) ← Power2Round(t)
+ 6: pk ← pkEncode(ρ, t1 )                                             The signature verification takes message M ′ and public key
+ 7: tr ← H(pk, 64)                                                 and generates a boolean output. If the output is true then
+ 8: sk ← skEncode(ρ, K, tr, s1 , s2 , t0 )                         the signature is valid else signature is invalid. The signature
+                                                                   verification algorithm is given in Algorithm 3. First, the
+                                                                   signature is decoded and if lengths are not as per defined
+                                                                   value, it generates an invalid output. If decoding returns valid,
+B. Signature Generation                                            signature verification continues by first expanding the seed ρ to
+  Signature generation algorithm takes message M ′ which is        sample matrix A which is then stored in NTT representation.
+message M padded with the contextual message, and secret           Then it samples challenge and computes W′approx = Az −ct1 .
+key (sk) as input and generate the signature. The signature        It uses signer’s hint to obtain w1′ form W′approx . Finally, it
+generation algorithm is shown in Algorithm 2. First, the secret    checks whether response z and hint are valid or not. If all
+key is decoded to get the seed and other variables. Then s1 ,      succeeds, it returns true otherwise it returns false.
+                                                                                                                                                      4
+
+
+
+Algorithm 3 Signature Verification                                                                                           Decoder
+
+Input: (pk, M ′ , σ)
+                                                                                         RAM6 RAM6A RAM5 RAM5A RAM3 RAM3A
+Output: Boolean                                                       RAM4 RAM4A
+
+ 1: (ρ, t1 ) ← pkDecode(pk)
+ 2: (c̃, z, h) ← sigDecode(σ)
+                                                                                                                                             64 AXI
+ 3: if h =⊥ then return false                                                                                                     MakeHint    \\ Stream
+                                                                                                           PolyArith0                               IN
+
+
+
+
+                                                                                                                                       \\
+ 4: end if                                                                                                                              64
+                                                                       sig_gen
+ 5: Â ← ExpandA(ρ)                                                                                                               64
+                                                                                             UseHint         Encoder         \\              64 AXI
+ 6: tr ← H(pk, 64)                                                          Decomposer                                                        \\ Stream
+                                                                                                                                                  Out
+ 7: µ ← (H(BytesT oBits(tr)||M ′ , 64))                                Masked
+                                                                     Decomposer
+ 8: c ← Rq ← SampleInBall(c̃)                                                              RAM2 RAM2A
+       ′                                                                                                                64
+ 9: wApprox    ← N T T −1 (A ◦ N T T (z) − N T T (c) ◦ N T T (t1 ◦                                         SampleC
+                                                                                                                         \\ Keccak1
+                                                                                             RAM0                       64
+    2d ))                                                                                                  SampleA          Keccak0
+                                                                         PolyArith1
+10: w1′ ← U seHint(h, wApprox
+                           ′
+                                 )                                                       RAM1 RAM1A         SampleS
+                                                                                                                        64    Keccak2
+11: c̃′ ← H(µ||w1Encode(w1′ ), λ/4)                                                                         Masked
+                                                                                                            SampleY
+12: return[[||z||∞ < γ1 − β]]and[[c̃ = c̃′ ]]
+                                                                     Fig. 1. Masked ML-DSA Hardware Implementation Architecture. Redrawn
+                                                                     Dilithium 3.1 Architecture From [12].
+D. Masking Gadgets
+   The higher-order masking gadget algorithms form authors           generation (mode 0), sign (mode 2), or verify (mode 1) and
+in [13] is used in the proposed protected ML-DSA design.             handshaking signals valid i, ready o, ready i, and valid o.
+Although they used these gadgets to protect Dilithium from              The design uses two cores of polynomial arithmetic unit
+side-channel attack but it can also be used for masking ML-          (PolyArith), which performs NTT, polynomial addition, and
+DSA since the internal algorithms of ML-DSA is similar to            subtraction operations. The PolyArith core uses the four but-
+Dilithium algorithms [9]. The masking is basically splitting the     terfly unit to perform arithmetic operations. The BRAM used
+sensitive variables into shares such that combining the shares       to store the coefficient has 96-bit in each address which is
+give the original value. The masking applies for boolean values      capable of storing 4 coefficients per address. It also uses three
+such that (b1 ⊕b2 ⊕. . .⊕bn = b) where b is the original value.      KECCAK cores which perform computation independently to
+It applies for arithmetic value such that (a1 + a2 + . . . + an )    each other for parallel operation.
+mod q = a, where a is the original value.
+   The ML-DSA algorithms use both arithmetic and boolean             A. Masked ML-DSA Hardware Implementation Flow
+values. Hence conversion from boolean to arithmetic and                 First, we updated the existing Dilithium 3.1 design to the
+arithmetic to boolean is required to mask ML-DSA. The                final ML-DSA standard. There are a few changes in the
+authors have proposed an efficient gadgets ShiftMod which            Dilithium 3.1 to ML-DSA which can be implemented easily
+is the base component in masking Dilithium [13]. They also           in hardware. These changes are listed below:
+provided boolean to arithmetic conversion algorithms which              1) Domain separation added in the key generation algo-
+is used in Dilithium expandMask and decompose. There are                    rithm.
+three functions where masking is used which are expandMask,             2) The length of tr is increased from 256-bit to 516-bit.
+decompose and rejection sampling. In ML-DSA, these func-                3) The size of the c̃ is increased from 256-bit to 384-bit
+tions are the same as Dilithium hence these gadgets are also                and 512-bit.
+applicable to masking ML-DSA.                                           4) Addition of 256-bit random number in signature gener-
+                                                                            ation to generate ρ′ .
+                                                                        5) Addition of contextual message padded with the original
+       IV. P ROPOSED H ARDWARE I MPLEMENTATION
+                                                                            message.
+   The proposed design is based on existing Dilithium                In hardware, these changes are made by changing the counter
+3.1 design from the authors in [12]. The source code                 read, and counter write value of the KECCAK module since
+of this design which includes the implementation of key-             the changes either increase the number of absorb data or
+pair generation, signature generation, signature verification        squeeze data. After the design update, it is verified us-
+and KATs are available online in a GitHub repository                 ing the Known Answer Tests(KATs) generated from offi-
+https://github.com/GMUCERG/Dilithium.                                cial software implementation (https://github.com/pq-crystals/
+   The design exchanges data using 64-bit input-output ports.        dilithium, 5 Sep 2024 version, Git commit cf998be4ad).
+The authors have provided the Verilog testbench with the             The KATs used in this design can be found online at the
+hardware implementation, which demonstrates how the data is          link https://github.com/kamalrajnegi/ml-dsa-kats. We further
+exchanged. Other than the 64-bit port, there are more input and      tried to optimise the design by locating the critical path and
+output ports like sec level input port (2,3 and 5 are the valid      reducing it. We identified the critical path parallel in serial
+inputs) for setting Dilithium security level, mode (0,1,2 are        out buffer and we reduced the buffer size which reduces the
+valid inputs) for setting which algorithm to run like key-pair       critical path.
+                                                                                                                                                                                                 5
+
+
+
+                     Software Flow                                                        Hardware Design Flow
+
+                                                                        Design Verification                                                                      Masking Gadgets
+             1    Reference ML-DSA                     KAT Available                                                             3
+                                                                                                     Dilithium 3.1                                                   Design
+                 (Deterministic Variant)
+                            Compile                                                                           Design Update
+                                                                        Design Verification                                                            Design Verification Using Test
+                        KATs                                                                           ML-DSA                                            Vectors Generated From 4
+                                                        KAT From 1
+                                                                                                             Design Update                                                     Design Update
+            2     Masked Dilithium
+                                                                        Design Verification                                                                        Optimized
+                (Randomised variant)                    KAT From 1                                    Optimized
+                                                                                                       ML-DSA                                                    Masking Gadgets
+                            Source Code Update
+
+             4 Masked ML-DSA
+                                                                                                                                                                Design Integration
+             (Deterministic Variant)
+                             Compile
+                                                                                                                                     Design Verification               Optimized
+                         KATs                                                                                KAT From 1                                              Masked ML-DSA
+                           KAT Matching
+
+                 1 KATs == 4 KATs
+                                                                                                                                                                     Design Verified
+
+     1 https://github.com/pq-crystals/dilithium       3 https://github.com/GMUCERG/Dilithium
+     2 https://github.com/fragerar/Masked_Dilithium   4 Masked ML-DSA
+
+
+Fig. 2. Design and Verification Flow of Proposed Masked ML-DSA Hardware Implementation.
+
+
+                                                                                                                                     2
+   Next, we designed and integrated masking gadgets with the                                                                             //
+                                                                                                                                                                                  Q
+ML-DSA design. The architecture of the proposed design is                                                                                 1        +                                   -
+                                                                                                      3                                       //                           -
+                                                                                                        //              2
+shown in Fig. 1.It is similar to the Dilithium 3.1 design but                                        10
+                                                                                                        //     +
+                                                                                                                 12//       //
+                                                                                                                                                                                  2Q           out
+                                                                                                     10 //                       +
+the only difference is the modules that perform computation                                                             10
+                                                                                                                          //
+                                                                                                                                          1
+                                                                                                                                           //
+                                                                                                                                                                                       -
+                                                                                                                                                   +       Shifter
+with sensitive variables are replaced with masked modules, and                            46                                             10 //
+                                                                                                                                                                                  Q
+                                                                                               //                                                                                      +
+extra BRAM is added to store the shares of sensitive variables.                          data_in
+                                                                                                     3 //
+   The most important part of designing hardware is the design                                       13 //     +
+should functionally correct. It can be checked using the Known                                       23//                                              -
+                                                                                                                                                                       +          Comparator
+Answer Tests (KAT). There are different variants of ML-
+DSA signature generation which is deterministic, hedged, and
+randomized. The author in [17] have provided the masked                                 Fig. 3. Modular Reduction Hardware Implementation [14].
+implementation for randomised Dilithium. The randomised
+variant makes verification of the design difficult and also it
+makes difficult to find errors in the design. To solve this issue,                      modular reduction uses the modulus property of Dilithium
+we updated the masked Dilithium C implementation to the                                 recursively, which is 223 = 213 − 1 (mod 8380417) [14]. The
+masked ML-DSA deterministic variant with minor changes in                               equations for modular reduction for Dilithium are given below:
+the C code. Then we used this implementation to verify indi-
+vidual masking gadgets as well as to verify complete masked
+                                                                                                                     a = 223 a[45 : 23] + a[22 : 0]                                            (1)
+signature generation. The design and verification flow of the
+proposed hardware is shown in Fig. 2. The hardware design of                            Using the modulus property we get:
+various modules used to implement masking countermeasures
+are given below.                                                                                    = 213 (a[45 : 43] + a[42 : 33] + a[32 : 23])
+                                                                                                                                                                                               (2)
+                                                                                                − (a[45 : 43] + a[45 : 33] + a[45 : 23]) + a[22 : 0]
+B. Modular Reduction
+   Modular reduction is the most expensive computation in                                                            = 213 c − e + a[22 : 0]( mod q)                                           (3)
+both ML-DSA and masking algorithms. Optimising this can                                 Using the same modulus property, we can reduce c as:
+lead to significant improvement in area and performance.
+Since we are implementing masking, it is essential that we                                              213 c = 213 (c[11 : 10] + c[9 : 0]) − c[11 : 10]                                       (4)
+implement modular reduction in an efficient way. There are
+different methods for modular reduction which are Barrett                                                             = 213 f − c[11 : 10]( mod q)                                             (5)
+reduction and Montgomery reduction.
+   There is a modular reduction method which is very efficient                          Further reduction gives the following equation:
+in hardware and it is presented by the authors in [18] [19].                                            = 213 (f [10] + f [9 : 0]) − (f [10] + c[11 : 10])                                     (6)
+The authors in [14] used the same method to implement
+modular reduction for Dilithium. We implemented and used                                  The modulus reduction described above require shift and
+the same design to computed mod q, mod 2q and mod                                       add operations which is efficient in hardware. Fig. 3 shows
+4q, which is required in designing masking gadgets. The                                 the circuit diagram of modular reduction for mod q using the
+                                                                                                                                                                                                                 6
+
+
+
+                                                                                                                            rnd                     level              rho_p
+technique described above. The similar technique is used to                             clk rst start
+                                                                                                                               94
+
+
+
+
+                                                                                                                            //
+
+
+
+
+                                                                                                                                                                         //
+                                                                                                                                                                              20
+calculate mod 2q and mod 4q which are used in masking
+                                                                                                                          rnd rho_p
+gadgets, with the cost of increased size of the adder circuit.                                                          20      20 20
+                                                                                                                                                               20     20
+
+
+
+
+                                                                                                                            //
+                                                                                                                                  //
+                                                                                                          load                               20                 //     //
+                                                                                                                                       //     //                //                                 23
+                                                                                                                             +         //                      18                                      //
+                                                                                                        start_b2a                     18                         level
+                                                                                                                                                                                                   y_share1
+                                                                                                                                        level
+C. Psudo Random Number Generator (PRNG)                                                                                         load        regA
+                                                                                                                                                                  load
+                                                                                                        start_smod                                                            regB
+                                                                                                                                  clk                              clk
+   The masking requires random numbers to refresh the                                    Controller                                                                                                     23  //
+                                                                                                                                               rnd 20
+
+
+
+
+                                                                                                                                                        //
+                                                                                                                                                                  20                               y_share2
+
+
+
+
+                                                                                                                                                              //
+masked coefficients. In our hardware design, we used a                                                  done_b2a                             47
+
+
+
+
+                                                                                                                                               //
+                                                                                                                       start_b2a                                         done_b2a
+Pseudo Random Number Generator (PRNG) for refreshing the                                                done_smod             clk
+                                                                                                                                                     B2A
+                                                                                                                                 rnd 47
+variables. We choose the size of PRNG 96-bits. It is enough                                                                                                  47
+
+
+
+
+                                                                                                                                                        //
+                                                                                                                                                //
+                                                                                                          done_s               32                                                                  done_s
+
+
+
+
+                                                                                                                                        //
+                                                                                                                                                                       23 center
+for masking operation because the design requires a random                                                               clk            Shift Mod                   //
+                                                                                                                                                                    done_smod
+number at most 47-bit for masking y, and 24-bit for masking                                                                gamma                -           center
+the rest of the variables.                                                                                                                             Datapath
+
+
+                                                                                       Fig. 5. Masked Sampler Architecture.
+D. Masking s1 and s2
+   The s1 and s2 variables are used in signature generation                            F. Masked Decompose
+algorithms (Line 16 to 18 in Algorithm 2). These variables
+                                                                                          The masked decompose function computes HighBits and
+are first converted to the arithmetic shares and then it is used
+                                                                                       LowBits of w as w0 and w1 . It takes two shares of w as
+in the masked signature generation. The circuit for masking
+                                                                                       an input and computes two shares of w0 and unmasks the
+s1 and s2 are shown in Fig. 4. It takes s1 or s2 as an input,
+                                                                                       w1 variable because it can be skipped for masking. The
+and generate two output shares such that (share1 + share2)
+                                                                                       architecture of masked decompose is shown in Fig. 6. This
+mod q = (s1 or s2 ). Both the shares are stored separately in
+memory so that it can be use later in the masked signature                              clk rst start                   rnd                           level            share1               share2
+generation operation. The shares are refreshed with random                                                            24                                                                          24
+
+
+
+
+                                                                                                                                                                                             //
+                                                                                                                                                                               24
+
+
+
+
+                                                                                                                                                                          //
+                                                                                                                           //
+number each and every time when the signature generation is                                                load
+performed in the hardware. Refreshing the values with random                                                                    load                        load
+                                                                                                         start_cmod                           regA                        regB
+number makes harder for the attacker to get the values from                                                                       clk                         clk
+                                                                                                         start_sadd                                                                                     24
+side-channel attack.                                                                                                  start_cmod
+                                                                                                                                                                          share1 share2
+                                                                                                                                                                                                  w0_share1
+                                                                                                                                                                                                            //
+
+                                                                                                        start_b2a            level           Convert Modp
+                                                                                                                               clk                                                 center
+                                                                                                         done_cmod                                                                                      24
+                                                                                        Controller                                                                        done_cmod
+                                                                                                                                                                                                        //
+          23                                                                                                                                                                                      w0_share2
+            //          23                                                                                            start_smod
+           23     -       //   1
+                                                                              share1
+                                                                                                         done_b2a            rand              Secure Add                      +
+         Q //                                     23
+                                                    //                                                                         clk                                                                     w1
+                                                                                                                                                                       done_smod
+                               0                                                                         done_sadd                                                                      level
+ 23                                                                                                                    start_b2a
+    //                                                23                                                                     rand               Bool2Arith                     +
+rand                                                    //                                              done_decom             clk                                                                done_dec
+                                                               -          1                                                                                            done_b2a
+         23      Comparator                           -Q //
+          //                                             23                    23                                                                      Datapath
+                  rand>Q                                                         //
+                                                              23              share2
+                                                                   //     0
+                                   23
+                                     //        24//
+                                                                                       Fig. 6. Masked Decompose Architecture.
+                                   23 //
+                                           -
+s1/s2                                                               MSB                module uses the boolean to arithmetic conversion which is
+                                                                                       also used in the masked sampler and other masking gadgets to
+Fig. 4. Circuit For Masking s1 and s2.
+                                                                                       compute the share of w1 . This module also refreshes the values
+                                                                                       using the random number each and every time the masked w1
+                                                                                       is computed.
+E. Masking y
+   The expandmask function samples y from the SHAKE256                                 G. Masked Rejection
+output and it is used to compute signature z. The masked                                   The signature generation algorithm rejects the signature if it
+sampler takes input form expandmask hardware, then it makes                            leaks the information. If the signature is rejected, it computes
+boolean shares of it using random number and then, it gener-                           y again with the next nonce and all the computation is repeated
+ates two share of y. The architecture for masking y is shown                           till there is no rejection. It is also masked using the masked
+in Fig. 5. The masked sampler uses the boolean to arithmetic                           gadgets with is used in previous masked decompose module.
+conversion gadgets and Shift Mod gadget [13] to generate                               It takes two shares of z and r and 24-bit random number
+shares of y.                                                                           to refresh the values and set control signal to reject if there
+   The shares of y is computed such a way that, (y share1                              is rejection. The architecture of masked rejection sampling is
++ y share2) mod q = y. After this, both the shares are made                            shown in Fig. 7.
+in the range of q using the center hardware which subtracts
+q if the value of the share is more than q. This module also                           H. Unmasking
+refreshes the shares of y using random number each and every                             If there is no rejection, the signature is unmasked. It is
+time the module computes y.                                                            computed only after the completion of rejection sampling.
+                                                                                                                                                                                                                  7
+
+
+
+                                                              TABLE II
+                 P ERFORMANCE COMPARISON OF ML-DSA IMPLEMENTATION ON FPGA (K INTEX -7) SYNTHESIZED IN AMD V IVADO 2024.1
+
+          Hardware Module                          LUT                 FF1                 BRAM1
+                                                                                         Keygen                 DSP1
+                                                                                                                   Sign         Freq1 Verify
+                                                                                    Cycles2(36 Kb)
+                                                                                                Time        Cycles        Time  Cycles3
+                                                                                                                               (M Hz)        Time
+                                                                                    (×103 )     (µs)       (×103 )        (µs)  (×103 )      (µs)
+          Dilithium 3.1 [12]  54668     28199         29        16        111.8     14.030     125.49      24.846        222.24  14.635      130.9
+            ML-DSA Ref        55040     28746         29        16        106.2     14.038     125.56      24.857       222.33   14.647     131.01
+            ML-DSA Opt        55156     28625         29        16        125.9     14.038      111.5      24.857       197.43   14.647     116.34
+          ML-DSA Masked       61629     33861         47        21        122.5     14.038     114.59     1151.294      9398.32  14.647     119.56
+          1 Same design constraint and synthesis strategy are used for fair comparison. 2 Cycle count is for ML-DSA-88’s best case sign generation.
+
+
+
+
+ clk rst start                       rnd            mode                   level                   share1       share2                  A. Hardware Performance and Area Analysis
+                                    24                                                                24            24
+
+
+
+
+                                                                                                                  //
+                                                                                                   //
+                                                                               3
+                                                                               //
+                                     //
+
+
+
+
+                     load
+                                                                                                                                           At present, there is no hardware implementation of pro-
+                 start_cmod              load                                       load                                                tected ML-DSA known to us, so we compared our proposed
+                                                          regA                                        regB
+                 start_sadd                clk                                        clk
+                                                                                                      24
+                                                                                                        //                              protected ML-DSA design with the unprotected design to com-
+                                                           //
+
+
+
+
+                                                                 24
+                                                                                                                           reject       pare the area and computational overhead. The performance
+                 start_refresh                 mode
+Controller                               start_cmod                   Convert Modp                                                      comparison of the proposed design is given in the TABLE
+                                                level
+                 done_cmod
+                                                                 24        24       24      24                            done_rej      II. The intermediate values of masked variables need to be
+                                                                                      //
+                                                                      //
+
+                                                                               //
+
+
+
+                                                                                                 //
+
+
+
+
+                 done_refresh                  rand
+                                                          24
+                                                           //                                              rej
+                                                                                                                                        stored separately which increases the BRAM count in the
+                                                clk                   Secure Add                           done_sadd
+                                                                      24
+                                                                                                                                        proposed design. The expandmask, decompose, and rejection
+                                                                           //
+
+
+
+
+                                                                              24
+                                                                                            //
+
+
+
+
+                 done_sadd
+                                                   rand    //                  refresh                     done_refresh                 sampler modulus are replaced with a new masked design
+                                                          24
+                                                                                                                                        which also increased the LUT count. Also, the finite state
+                                                                                Datapath                                                machine of the top module is updated so that it can compute
+                                                                                                                                        and process masked variables, which also increased the total
+Fig. 7. Masked Rejection Sampling Architecture.                                                                                         LUT count. The computation of masked variables requires
+                                                                                                                                        more clock cycles as given in TABLE III that increased the
+                                                                                                                                        execution time of signature generation. Other operations like
+Unmasking is basically the addition of the arithmetic shares                                                                            NTT multiplication, addition, and subtraction to the masked
+of the signature z and the variable r followed by mod Q                                                                                 variable are computed twice, which further increases the
+operation such that z or r = (share1 + share2) mod q. Since we                                                                          execution time of signature generation.
+have implemented first order masking, we can use subtraction
+circuit instead of mod circuit, which is less expensive in
+hardware. The unmasking circuit is shown in Fig. 8.                                                                                     B. Challenges of Implementing Masking Countermeasure
+                                                                                                                                           Masking implementation requires the redesign of the tar-
+                                         23
+                                              //                                         23
+                                                                                                                                        geted module which computes the sensitive variable. The
+  23                                                  23
+                                                                           -                  //                   1
+                                                                                                                          23            design needs to be integrated with the unmasked design by
+    //                                         Q            //                                                                 //
+                            24                                                         23                                           z
+ share1
+                 +             //                                                   sum //
+                                                                                                                   0                    replacing the unprotected module with the protected one. The
+                             sum
+  23
+     //
+                                                                                                                                        integration is also challenging since the design has various
+ share2
+                                          24                     Comparator                                                             handshaking signals that need to be taken care of during design
+                                               //                  sum>Q                                                                integration. Since the masked variable needs to be computed
+                                                                                                                                        twice and more constraints need to be added in the design since
+Fig. 8. Circuit For Unmasking Signature z.                                                                                              some part of the computation is unmasked, it also requires the
+                                                                                                                                        redesign of the finite state machine.
+
+
+                                               V. R ESULTS                                                                                                         TABLE III
+                                                                                                                                        S YNTHESIS RESULT OF MASKING GADGETS IMPLEMENTED ON K INTEX -7
+                                                                                                                                                                     FPGA
+   In this section, we present the hardware synthesis, per-
+formance and side channel analysis results of masked ML-                                                                                 Module                LUT      FF     DSP             Cycles *
+DSA hardware implementation. The masking gadget design
+                                                                                                                                         PRNG                      88     192      0                  1
+is described in Verilog HDL and it is integrated with the                                                                                Masked s1 and s2         60       0       0                 1
+existing hardware implementation of Dilithium 3.1. The syn-                                                                              Masked Sampler          2256    1587      3                 58
+thesis report of masking gadget hardware is given in Table                                                                               Masked Decompose        1664    1107      2             678,132**
+III. These masking gadget are integrated with the improved                                                                               Masked Rejection         854    1233      0                166
+                                                                                                                                         Unmask                    75      0       0                  1
+ML-DSA hardware which is verified with the Known Answer                                                                                  * It is the number of clock cycle required to process one coefficient.
+Test (KAT) generated form the reference ML-DSA software                                                                                  ** Boolean to arithmetic conversion is not required for ML-DSA-65 and
+implementation. The synthesis report of complete system is                                                                               ML-DSA-87.
+given in Table II.
+                                                                                                                                                                                                       8
+
+
+
+
+                                                                                                                        8
+                                                                                                                                                                     TVLA-Set1-Set2
+                                                                                                                                                                     TVLA-PASS-FAIL-Threshold
+                                                                                                                        6
+
+
+                                                                                                                        4
+
+
+                                                                                                                        2
+
+
+
+
+                                                                                                              t-value
+                                                                                                                        0
+
+
+                                                                                                                        -2
+
+
+                                                                                                                        -4
+
+
+                                                                                                                        -6
+
+
+                                                                                                                        -8
+                                                                                                                             0     50         100    150     200          250     300      350
+Fig. 9. Experimental Setup for Side-Channel Attack Resistant Evaluation.                                                                              Trace points
+
+
+                                                                                                         Fig. 11. Masked Sampler t-test Result (1 million Traces).
+                                                           data_in
+                             24MHz clk
+                 PRNG                             share1             share2
+                                                           //
+
+                                                                //
+
+
+
+
+        clk                  24 random
+                               //                                                                TX                     8
+                                            24 //                         start
+ clk                                                   Masking                     UART                                                                              TVLA-Set1-Set2
+                                           random                                 Controller
+24MHz                                                  Gadget             done                  RX                                                                   TVLA-PASS-FAIL-Threshold
+             Clock             tx_clk           clk                                                                     6
+        clk Generator                                 24             24
+                                                       //
+
+                                                                //
+
+
+
+
+                               rx_clk
+                                                                                               trigger                  4
+                                                       data_out
+
+              Control FPGA       Interconnect         Crypto FPGA                                                       2
+                                                                                                              t-value
+
+
+
+
+Fig. 10. Block Diagram of Side-Channel Attack Trace Collection Method.                                                  0
+
+
+                                                                                                                        -2
+
+
+C. Side-Channel Attack Analysis                                                                                         -4
+
+    1) Experimental Setup: The masking gadgets is evaluated                                                             -6
+for Side-Channel attack (SCA) resistant using standard side
+channel attack testing FPGA board (SAKURA X). The exper-                                                                -8
+                                                                                                                             0   200    400    600   800   1000    1200   1400   1600   1800    2000
+imental setup is shown in Figure 9. This FPGA board have                                                                                              Trace points
+two FPGAs Kintex-7 (to implement cryptographic design) and
+Spartan-6 (to implement non-cryptographic design). The target                                            Fig. 12. Masked Decompose t-test Result (1 million Traces).
+hardware (masking gadget design) is implemented on the
+Kintex-7 FPGA which is running on 24MHz clock frequency.
+                                                                                                         trigger signal is used to locate the masking operation since we
+To eliminate the noise effect generated from parallel hardware,
+                                                                                                         used asynchronous communication protocol. The trigger signal
+other hardware module like UART clock generator and PRNG
+                                                                                                         is just ex-or operation of start signal and done signal.
+are implemented on the control FPGA. Fig. 10 shows the
+                                                                                                            After the trace collection, the computed result is checked
+block diagram of different hardware modules implemented on
+                                                                                                         in the PC. If the output is unexpected, the collected trace
+control and crypto FPGAs to perform side-channel attack ex-
+                                                                                                         is rejected and it is re-run again for the same sample data
+periment. For trace collection, High Definition digital storage
+                                                                                                         until computed operation is correct and expected. We have
+oscilloscope with the sample size of 100 Mega samples per
+                                                                                                         done this to avoid any false data collected which is generated
+second, a low noise amplifier, and 200 MHz internal digital
+                                                                                                         by unexpected glitching the hardware which can led to false
+filter are used.
+                                                                                                         positive or false negative result in the t-test plot. Then, 1
+    2) Testing Methodology: We used the similar technique
+                                                                                                         million traces are logged in the system, and t-test plot is
+used by the authors in [17] in which each masked module
+                                                                                                         generated for first 500K traces as first-set and next 500K traces
+is tested separately for the experiment. Although, they used
+                                                                                                         as second-set. The t-test plot is plotted for masked decompose,
+the simulation based power result which is only limited to 10
+                                                                                                         sampler and rejection sampler and are shown in Figure 12,
+thousand traces, we used actual power consumption trace from
+                                                                                                         Figure 11 and Figure 13 respectively. As shown in the plot,
+FPGA implementation beyond 10 thousand traces. The masked
+                                                                                                         there is no leakage in the design for 1 million traces.
+share, which is two shares of original value is generated from
+the computer and transferred it to the FPGA through UART.
+The UART controller enables the masking gadgets once both                                                                                      VI. C ONCLUSION
+of the shares are received. Once the masked operation are                                                  In this paper, we presented improved ML-DSA hardware
+performed, the UART controller sends the result to the PC. The                                           implementation with the addition of masking countermeasures
+                                                                                                                                                                         9
+
+
+
+                                                                                              [8] P. C. Kocher, “Timing Attacks on Implementations of Diffie-Hellman,
+               8                                                                                  RSA, DSS, and Other Systems,” in Advances in Cryptology — CRYPTO
+                                                           TVLA-Set1-Set2                         ’96, N. Koblitz, Ed. Berlin, Heidelberg: Springer Berlin Heidelberg,
+                                                           TVLA-PASS-FAIL-Threshold
+               6                                                                                  1996, pp. 104–113.
+                                                                                              [9] N. I. of Standards and Technology, “Module-lattice-based digital signa-
+               4                                                                                  ture standard,” (Department of Commerce, Washington, D.C.), Federal
+                                                                                                  Information Processing Standards Publication (FIPS) NIST FIPS 204,
+               2                                                                                  2024.
+                                                                                             [10] S. Bai, L. Ducas, E. Kiltz, T. Lepoint, V. Lyuba-
+     t-value
+
+
+
+
+               0                                                                                  shevsky, P. Schwabe, G. Seiler, and D. Stehlé, “Crystals-
+                                                                                                  dilithium algorithm specifications and supporting documentation,”
+               -2
+                                                                                                  2021. [Online]. Available: https://pq-crystals.org/dilithium/data/
+                                                                                                  dilithium-specification-round3-20210208.pdf
+                                                                                             [11] Z. Qiao, Y. Liu, Y. Zhou, J. Ming, C. Jin, and H. Li, “Practical
+               -4
+                                                                                                  Public Template Attacks on CRYSTALS-Dilithium With Randomness
+                                                                                                  Leakages,” IEEE Transactions on Information Forensics and Security,
+               -6
+                                                                                                  vol. 18, pp. 1–14, 2023.
+                                                                                             [12] L. Beckwith, D. T. Nguyen, and K. Gaj, “High-Performance Hardware
+               -8                                                                                 Implementation of CRYSTALS-Dilithium,” in 2021 International Con-
+                    0   100   200   300    400   500   600     700   800    900       1000
+                                            Trace points                                          ference on Field-Programmable Technology (ICFPT), 2021, pp. 1–10.
+                                                                                             [13] Jean-Sébastien Coron, François Gérard, Matthias Trannoy, and Rina
+                                                                                                  Zeitoun, “Improved Gadgets for the High-Order Masking of Dilithium,”
+Fig. 13. Masked Rejection Sampling t-test Result (1 million Traces).                              IACR Transactions on Cryptographic Hardware and Embedded
+                                                                                                  Systems, vol. 2023, no. 4, pp. 110–145, Aug. 2023. [Online]. Available:
+                                                                                                  https://tches.iacr.org/index.php/TCHES/article/view/11160
+to protect the hardware implementation from the side-channel                                 [14] N. Gupta, A. Jati, A. Chattopadhyay, and G. Jha, “Lightweight Hardware
+attack threat. The Proposed hardware design is implemented                                        Accelerator for Post-Quantum Digital Signature CRYSTALS-Dilithium,”
+                                                                                                  IEEE Transactions on Circuits and Systems I: Regular Papers, vol. 70,
+as per ML-DSA final standard which was published on 13                                            no. 8, pp. 3234–3243, 2023.
+August 2024. It is verified with the Known Answer Tests                                      [15] X. Li, J. Lu, D. Liu, A. Li, S. Yang, and T. Huang, “A High Speed Post-
+(KATs), which are generated from the reference ML-DSA soft-                                       Quantum Crypto-Processor for Crystals-Dilithium,” IEEE Transactions
+                                                                                                  on Circuits and Systems II: Express Briefs, vol. 71, no. 1, pp. 435–439,
+ware implementation. After designing and verifying ML-DSA                                         2024.
+hardware, masking gadgets are designed and integrated with                                   [16] A. Aikata, A. C. Mert, M. Imran, S. Pagliarini, and S. S. Roy, “KaLi: A
+the ML-DSA hardware by replacing expandmask, decompose,                                           Crystal for Post-Quantum Security Using Kyber and Dilithium,” IEEE
+                                                                                                  Transactions on Circuits and Systems I: Regular Papers, vol. 70, no. 2,
+and rejection sampling module with the masked module which                                        pp. 747–758, 2023.
+is functionally equivalent to these modules. These masked                                    [17] V. Migliore, B. Gérard, M. Tibouchi, and P.-A. Fouque, “Masking
+modules generate two shares of sensitive variables to protect                                     Dilithium Efficient Implementation and Side-Channel Evaluation,” in
+                                                                                                  Applied Cryptography and Network Security, R. H. Deng, V. Gauthier-
+these variables from the side-channel attack. Finally, the side-                                  Umaña, M. Ochoa, and M. Yung, Eds. Cham: Springer International
+channel attack experiments are performed to test the masked                                       Publishing, 2019, pp. 344–362.
+module to see if it is leaking any information or not. The                                   [18] Neng Zhang, Bohan Yang, Chen Chen, Shouyi Yin, and Shaojun
+                                                                                                  Wei, “Highly Efficient Architecture of NewHope-NISTon FPGA using
+experimental results show that the proposed masked design is                                      Low-Complexity NTT/INTT,” IACR Transactions on Cryptographic
+resistant to side-channel attacks.                                                                Hardware and Embedded Systems, vol. 2020, no. 2, pp. 49–72,
+                                                                                                  Mar. 2020. [Online]. Available: https://tches.iacr.org/index.php/TCHES/
+                                          R EFERENCES                                             article/view/8544
+                                                                                             [19] F. Yaman, A. C. Mert, E. Öztürk, and E. Savaş, “A Hardware Accelerator
+ [1] W. S. Admass, Y. Y. Munaye, and A. A. Diro, “Cyber security:                                 for Polynomial Multiplication Operation of CRYSTALS-KYBER PQC
+     State of the art, challenges and future directions,” Cyber Security                          Scheme,” in 2021 Design, Automation & Test in Europe Conference &
+     and Applications, vol. 2, p. 100031, 2024. [Online]. Available:                              Exhibition (DATE), 2021, pp. 1020–1025.
+     https://www.sciencedirect.com/science/article/pii/S2772918423000188
+ [2] J. Katz and Y. Lindell, Introduction to Modern Cryptography, Second
+     Edition, 2nd ed. Chapman & Hall/CRC, 2014.
+ [3] P. W. Shor, “Polynomial-Time Algorithms for Prime Factorization
+     and Discrete Logarithms on a Quantum Computer,” SIAM Journal
+     on Computing, vol. 26, no. 5, pp. 1484–1509, 1997, eprint:
+     https://doi.org/10.1137/S0097539795293172. [Online]. Available: https:
+     //doi.org/10.1137/S0097539795293172
+ [4] T. Wang, C. Zhang, P. Cao, and D. Gu, “Efficient Implementation of
+     Dilithium Signature Scheme on FPGA SoC Platform,” IEEE Transac-
+     tions on Very Large Scale Integration (VLSI) Systems, vol. 30, no. 9,
+     pp. 1158–1171, 2022.
+ [5] S. Mathew, S. Satpathy, V. Suresh, M. Anders, H. Kaul, A. Agarwal,
+     S. Hsu, G. Chen, and R. Krishnamurthy, “340 mV–1.1 V, 289 Gbps/W,
+     2090-Gate NanoAES Hardware Accelerator With Area-Optimized En-
+     crypt/Decrypt GF(2 4 ) 2 Polynomials in 22 nm Tri-Gate CMOS,” IEEE
+     Journal of Solid-State Circuits, vol. 50, no. 4, pp. 1048–1058, 2015.
+ [6] Shay       Gueron,      “Intel®      Advanced        Encryption   Stan-
+     dard      (AES)       New      Instructions      Set,”    2020.    [On-
+     line]. Available: https://www.intel.com/content/dam/doc/white-paper/
+     advanced-encryption-standard-new-instructions-set-paper.pdf
+ [7] X. Hou and J. Breier, “Side-Channel Analysis Attacks and Counter-
+     measures,” in Cryptography and Embedded Systems Security. Cham:
+     Springer Nature Switzerland, 2024, pp. 205–352. [Online]. Available:
+     https://doi-org.remotexs.ntu.edu.sg/10.1007/978-3-031-62205-2 4
+
