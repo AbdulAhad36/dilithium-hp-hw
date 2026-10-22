@@ -1,0 +1,10 @@
+db/
+incremental_db/
+output_files/
+*.log
+
+simulation_postsynth/
+
+simulation_postfit/
+
+postsynth_build/

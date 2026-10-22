@@ -1,0 +1,133 @@
+# Evolving Dilithium project:Stage4 Keccak+sampler+memory+NTT.
+set_global_assignment -name FAMILY "Cyclone V"
+set_global_assignment -name DEVICE 5CGXFC7C7F23C8
+set_global_assignment -name TOP_LEVEL_ENTITY keccak_sampler_ntt
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 4
+set_global_assignment -name SEED 1
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING OFF
+# Timing trial: use the accepted Keccak physical-synthesis profile locally.
+# Keep sampler retiming disabled and verify its original pipeline registers.
+set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON
+set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
+set_instance_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING ON -to "producer|hash|*"
+set_instance_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING OFF -to "producer|sample|*"
+# Restore ordinary state clock-enable mapping;readiness is predecoded in RTL.
+set_global_assignment -name SDC_FILE dilithium.sdc
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_param_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_absorb_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/theta_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/rho_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/pi_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/chi_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/iota_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_step_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_output_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_dual_interleaved.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_secret_lane.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_mask_unpack.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_input_prepare.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_ball.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_compact.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/ntt_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/mod_mul.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/butterfly_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/twiddle_rom.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/ntt_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/ntt_engine.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/keccak_sampler.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/legacy/slot_memory.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/legacy/keccak_sampler_memory.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/legacy/keccak_sampler_ntt.sv
+# Stage5A arithmetic source,not yet connected to the Stage4 top.
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/power2round.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/bitpkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/decompose.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/decompose_x4.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/cnb.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/mhint.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/sign_process.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/sign_process_dma.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/poly_process.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/poly_process_dma.sv
+# Stage5B message formatter source; shared hash service connection is still pending.
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/keygen_hash_message.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/helpers/keygen_seed_collect.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/helpers/keygen_sample_source.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/helpers/dilithium_service_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/helpers/keygen_encode.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/memory/poly_bram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/memory/memory_banks.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/memory.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/keccak_sampler_banks.sv
+# Stage5F source-tested banked NTT helper; synthesis top/pins remain Stage4.
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/keccak_sampler_ntt_banks.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/helpers/row_accumulate.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/keccak_sampler_row.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/dilithium_services.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/keygen.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/dilithium.sv
+set_instance_assignment -name VIRTUAL_PIN ON -to "rst"
+set_instance_assignment -name VIRTUAL_PIN ON -to "job_valid_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "job_ready_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "job_core_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "job_id_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "message_len_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "job_mode_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "job_param_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "input_data_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "input_valid_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "input_ready_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "job_slot_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "read_valid_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "read_slot_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "read_index_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "read_ready_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "response_valid_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "response_error_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "response_slot_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "response_index_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "response_data_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "response_id_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "response_mode_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "response_param_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "response_ntt_domain_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "response_ready_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "release_valid_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "release_slot_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "release_ready_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "reserved_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "complete_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "fault_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_valid_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_ready_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_busy_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_a_slot_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_b_slot_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_a_id_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_b_id_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_id_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_done_valid_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_done_ready_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_done_code_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_done_id_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "op_done_slot_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "status_valid_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "status_core_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "status_id_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "status_code_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "status_ready_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "active_o[*]"
+
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"

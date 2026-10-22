@@ -1,0 +1,13 @@
+/work/
+/nist_work/
+/netlist_reference_work/
+/post_synthesis_gate_work*/
+/post_fit_gate_work*/
+/cyclonev_sim_libs*/
+/modelsim.ini
+/transcript
+/*.log
+/*.wlf
+/*.ucdb
+/*.rpt
+/nist_shake_dut_outputs.txt

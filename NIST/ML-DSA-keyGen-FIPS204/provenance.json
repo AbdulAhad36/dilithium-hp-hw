@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/usnistgov/ACVP-Server",
+  "commit": "2972def23bf9f3680c2c531561ed9bdd0f1086ad",
+  "commit_date": "2026-07-20T20:31:36Z",
+  "directory": "gen-val/json-files/ML-DSA-keyGen-FIPS204",
+  "retrieved_utc": "2026-10-21T15:34:05.329146+00:00",
+  "files": [
+    {
+      "name": "prompt.json",
+      "url": "https://raw.githubusercontent.com/usnistgov/ACVP-Server/2972def23bf9f3680c2c531561ed9bdd0f1086ad/gen-val/json-files/ML-DSA-keyGen-FIPS204/prompt.json",
+      "bytes": 10062,
+      "sha256": "43e81ad820e495dbcad086fe27c1008393a8c32100bbbff77c558c3f06dcefef"
+    },
+    {
+      "name": "expectedResults.json",
+      "url": "https://raw.githubusercontent.com/usnistgov/ACVP-Server/2972def23bf9f3680c2c531561ed9bdd0f1086ad/gen-val/json-files/ML-DSA-keyGen-FIPS204/expectedResults.json",
+      "bytes": 873632,
+      "sha256": "361f47ca19d592adcc66ff2cb591686ad785fea157b295648738bed6921a68df"
+    }
+  ]
+}
