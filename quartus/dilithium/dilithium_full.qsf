@@ -1,0 +1,124 @@
+# Stage7 whole-main baseline; preserved subsystem project remains dilithium.qpf.
+set_global_assignment -name FAMILY "Cyclone V"
+set_global_assignment -name DEVICE 5CGXFC7C7F23C8
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
+set_global_assignment -name TIMING_ANALYZER_MULTICORNER_ANALYSIS ON
+set_global_assignment -name NUM_PARALLEL_PROCESSORS 4
+set_global_assignment -name SEED 1
+set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
+set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING OFF
+set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
+set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION OFF
+set_global_assignment -name ROUTER_TIMING_OPTIMIZATION_LEVEL MAXIMUM
+set_global_assignment -name SDC_FILE dilithium.sdc
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_param_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_absorb_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/theta_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/rho_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/pi_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/chi_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/iota_step.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_step_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_output_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/keccak/keccak_dual_interleaved.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_input_prepare.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_mask_unpack.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_secret_lane.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_compact.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler_ball.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/sampler/sampler.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/ntt_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/mod_mul.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/butterfly_fused.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/butterfly_unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/twiddle_rom.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/ntt/ntt_core.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/helpers/dilithium_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/memory/poly_bram.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/memory/bank_request_pipe.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/memory/memory_banks.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/memory/memory_port.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/memory/memory.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/memory/memory_router.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/memory/bank_fabric.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/secret_regroup.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/power2round.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/cnb.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/mhint.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/poly_process.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/bitpkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/keccak_sampler.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/sampler_writer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/bitunpkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/load_decode.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/hash_sampler.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/ntt_dma.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/process_dma.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/datapath/datapath.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/hint_codec.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/verify_input.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/process/sign_hash_message.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/verify.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/keygen.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/sign_input.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/sign.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/dilithium.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../src/controller/dilithium_fpga.sv
+set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
+set_global_assignment -name TOP_LEVEL_ENTITY dilithium_fpga
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_full
+set_instance_assignment -name VIRTUAL_PIN ON -to "busy_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "done_code_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "done_detail_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "done_id_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "done_ready_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "done_stage_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "done_valid_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "fault_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "key_bytes_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "key_data_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "key_id_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "key_index_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "key_last_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "key_ready_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "key_type_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "key_valid_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "rst"
+set_instance_assignment -name VIRTUAL_PIN ON -to "sign_attempts_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "sign_input_bytes_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "sign_input_data_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "sign_input_index_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "sign_input_last_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "sign_input_ready_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "sign_input_valid_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "sign_next_nonce_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "sign_rejections_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "signature_bytes_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "signature_data_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "signature_id_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "signature_index_o[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "signature_last_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "signature_ready_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "signature_valid_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "start_context_len_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "start_id_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "start_message_len_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "start_op_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "start_param_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "start_ready_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "start_rnd_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "start_seed_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "start_signature_len_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "start_valid_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "verify_accept_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "verify_input_bytes_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "verify_input_data_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "verify_input_index_i[*]"
+set_instance_assignment -name VIRTUAL_PIN ON -to "verify_input_last_i"
+set_instance_assignment -name VIRTUAL_PIN ON -to "verify_input_ready_o"
+set_instance_assignment -name VIRTUAL_PIN ON -to "verify_input_valid_i"

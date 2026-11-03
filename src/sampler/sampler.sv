@@ -1,7 +1,7 @@
 // Stage 3.3: registered extraction/compaction/collector pipeline.
 // Earliest input byte occupies bits 7:0. Per-context matrix collectors serialize
 // groups of four; tags keep interleaved polynomials distinct at the output.
-module sampler (
+module sampler #(parameter bit BANK_IO=0) (
   input logic clk, rst,
   input logic job_valid_i, output logic job_ready_o,
   input logic job_core_i, input logic [15:0] job_id_i,
@@ -19,10 +19,15 @@ module sampler (
   output logic [15:0] status_id_o,
   output logic [2:0] status_code_o,
   input logic status_ready_i,
-  output logic [1:0] active_o, source_stop_o
+  output logic [1:0] active_o, source_stop_o,
+  // Packed bank egress uses the existing collector/arithmetic. Secret jobs
+  // emit16 signed nibbles in bits63:0;other jobs emit4 canonical coefficients.
+  output logic [91:0] output_bank_data_o,
+  output logic [4:0] output_bank_count_o
 );
   import sampler_pkg::*;
   localparam int COLLECTOR_DEPTH=32;
+  localparam int OUTPUT_WIDTH=BANK_IO?92:23;
   logic [1:0] active_r, active_n, failed_r, failed_n;
   logic [15:0] id_r [2], id_n [2];
   logic [2:0] error_r [2], error_n [2];
@@ -139,13 +144,14 @@ module sampler (
   logic status_lock_r, status_lock_n, status_core_r, status_core_n;
   logic [1:0] eligible, status_eligible;
   logic out_valid_r,out_core_r,out_last_r;
-  logic [22:0] out_data_r;
+  logic [OUTPUT_WIDTH-1:0] out_data_r;
+  logic [4:0] out_count_r,batch_count[2],read_count_r[2];
   logic [15:0] out_id_r;
   logic [7:0] out_index_r;
   logic [8:0] fetched_r[2],fetched_n[2];
   logic collector_pop;
   logic [1:0] read_valid_r,read_fill,read_space;
-  logic [22:0] read_data_r[2];
+  logic [OUTPUT_WIDTH-1:0] read_data_r[2];
   logic [7:0] read_index_r[2];
   logic chosen, schosen;
   integer remaining, c, used, available, consumed;
@@ -202,7 +208,7 @@ module sampler (
   logic [6:0] slot_refund_r[2],slot_refund_n[2];
   logic [6:0] reservation_incoming[2],reservation_sum[2],reservation_carry[2];
   logic [4:0] reservation_pending_r[2];
-  logic [1:0] reservation_pop_r;
+  logic [4:0] reservation_pop_r[2];
   logic [8:0] quota_r[2],quota_n[2];
   logic [4:0] admit_by_context[2];
   logic [9:0] quota_difference[2];
@@ -469,7 +475,7 @@ module sampler (
       chunk_capacity[core]<=1;reservation_pending_r[core]<=0;reservation_pop_r[core]<=0;
     end else begin
       reservation_pending_r[core]<=5'(reservation_incoming[core]);
-      reservation_pop_r[core]<=read_fill[core];
+      reservation_pop_r[core]<=read_fill[core]?batch_count[core]:5'd0;
       if(chunk_issue[core] && reservation_pending_r[core]!=0)
         chunk_capacity[core]<=!mode_flags_r[core][SAMPLE_SECRET] && slot_reservation_r[core]<=
           (mode_flags_r[core][SAMPLE_A] ? 7'd23:7'd20);
@@ -485,6 +491,7 @@ module sampler (
   always_comb begin
     active_o = active_r;
     for (int k=0; k<2; k++) begin
+      batch_count[k]=BANK_IO?(mode_flags_r[k][SAMPLE_SECRET]?5'd16:5'd4):5'd1;
       source_stop_o[k] = active_r[k] && (failed_r[k] || generated_r[k]==N || (mode_flags_r[k][SAMPLE_BALL] && ball_done[k]));
       // An unlocked read slot starts only after a whole burst is available.
       // During a locked burst it contains the next reserved coefficient.
@@ -513,12 +520,15 @@ module sampler (
         ((lock_r && lock_core_r==k && left_r>1) ||
          (collector_pop && chosen==k && !lock_r) ||
          (!failed_r[k] && count_r[k]>=(mode_flags_r[k][SAMPLE_SECRET] ? 16:4)));
+      if(BANK_IO)read_fill[k]=!rst && active_r[k] && !failed_r[k] && read_space[k] &&
+        count_r[k]>={1'b0,batch_count[k]};
     end
     output_core_o = out_core_r;
     output_id_o = out_id_r;
     output_index_o = out_index_r;
     output_last_o = out_last_r;
-    output_data_o = out_data_r;
+    output_data_o = 23'(out_data_r);
+    output_bank_data_o=92'(out_data_r);output_bank_count_o=out_count_r;
     output_valid_o = !rst && out_valid_r;
     schosen = status_lock_r ? status_core_r :
       (status_eligible==2'b11 ? status_turn_r : status_eligible[1]);
@@ -548,12 +558,12 @@ module sampler (
       mask_residual_n[k]=mask_residual_r[k];mask_bits_n[k]=mask_bits_r[k];
       // One equation per fixed context replaces cascaded dynamic updates for
       // pop, challenge append and packed append. Both appends are mode-exclusive.
-      count_n[k]=count_r[k]+6'(appended)-6'(read_fill[k]);
+      count_n[k]=count_r[k]+6'(appended)-(read_fill[k]?6'(batch_count[k]):6'd0);
       // Unowned counts/credits clear together one clock after retirement.
       // New descriptors initialize both earlier if the context is reused.
       if(!active_r[k])count_n[k]=0;
-      head_n[k]=head_r[k]+5'(read_fill[k]);tail_n[k]=tail_r[k];
-      fetched_n[k]=fetched_r[k]+9'(read_fill[k]);
+      head_n[k]=head_r[k]+(read_fill[k]?batch_count[k]:5'd0);tail_n[k]=tail_r[k];
+      fetched_n[k]=fetched_r[k]+(read_fill[k]?9'(batch_count[k]):9'd0);
       for (int j=0; j<COLLECTOR_DEPTH; j++) collector_n[k][j]=collector_r[k][j];
     end
     remaining=0; c=0;
@@ -577,7 +587,7 @@ module sampler (
       mask_residual_n[c]=0;mask_bits_n[c]=0;
     end
     if(output_valid_o && output_ready_i)
-      emitted_n[out_core_r]=emitted_r[out_core_r]+1'b1;
+      emitted_n[out_core_r]=emitted_r[out_core_r]+9'(out_count_r);
     // Fetch arbitration is separate from the external slot's stall ownership.
     if (collector_pop) begin
       remaining=lock_r ? int'(left_r) : (mode_flags_r[chosen][SAMPLE_SECRET] ? 16 : 4);
@@ -586,6 +596,7 @@ module sampler (
         left_n=5'(remaining-1);
         if (remaining==1) begin lock_n=0; turn_n=~chosen; end
       end
+      if(BANK_IO)begin lock_n=0;left_n=0;turn_n=~chosen;end
     end
     if (input_valid_i && input_ready_o) begin
       if (input_bytes_i>=1 && input_bytes_i<=16) begin
@@ -839,7 +850,8 @@ module sampler (
       reservation_carry[k]=((slot_reservation_r[k]&7'(reservation_pending_r[k])) |
         (slot_reservation_r[k]&~slot_refund_r[k]) |
         (7'(reservation_pending_r[k])&~slot_refund_r[k]))<<1;
-      slot_reservation_n[k]=reservation_sum[k]+reservation_carry[k]+7'(!reservation_pop_r[k]);
+      slot_reservation_n[k]=reservation_sum[k]+reservation_carry[k]+
+        (BANK_IO?(7'd1-7'(reservation_pop_r[k])):7'(!reservation_pop_r[k]));
       // Keep status eligibility/arbitration off the credit register reset.
       // Status can retire only after tokens drain;inactive state owns no data.
       if(!active_r[k])slot_reservation_n[k]=0;
@@ -855,9 +867,10 @@ module sampler (
       out_valid_r<=collector_pop;
       begin
         out_core_r<=chosen;out_id_r<=id_r[chosen];
-        out_index_r<=read_index_r[chosen];out_last_r<=read_index_r[chosen]==N-1;
-        out_data_r<=mode_flags_r[chosen][SAMPLE_SECRET] ?
-          secret_coefficient(read_data_r[chosen][3:0]):read_data_r[chosen];
+        out_index_r<=read_index_r[chosen];out_last_r<=9'(read_index_r[chosen])+9'(read_count_r[chosen])==N;
+        out_count_r<=read_count_r[chosen];
+        out_data_r<=BANK_IO?read_data_r[chosen]:(mode_flags_r[chosen][SAMPLE_SECRET] ?
+          OUTPUT_WIDTH'(secret_coefficient(read_data_r[chosen][3:0])):read_data_r[chosen]);
       end
     end
   end
@@ -868,7 +881,15 @@ module sampler (
     if(rst)read_valid_r<=0;
     else for(int k=0;k<2;k++)if(read_space[k])read_valid_r[k]<=read_fill[k];
     for(int k=0;k<2;k++)if(read_space[k])begin
-      read_data_r[k]<=collector_r[k][head_r[k]];
+      if(BANK_IO)begin
+        read_data_r[k]<='0;
+        if(mode_flags_r[k][SAMPLE_SECRET])begin
+          for(int lane=0;lane<16;lane++)
+            read_data_r[k][4*lane+:4]<=collector_r[k][{head_r[k][4],4'(lane)}][3:0];
+        end else for(int lane=0;lane<4;lane++)
+          read_data_r[k][23*lane+:23]<=collector_r[k][{head_r[k][4:2],2'(lane)}];
+      end else read_data_r[k]<=collector_r[k][head_r[k]];
+      read_count_r[k]<=batch_count[k];
       read_index_r[k]<=fetched_r[k][7:0];
     end
   end
@@ -1009,7 +1030,8 @@ module sampler (
       if(active_r[k])begin
         assert(fetched_r[k]<=generated_r[k] && emitted_r[k]<=fetched_r[k])
           else $fatal(1,"Output fetch/accept accounting violated");
-        assert(fetched_r[k]==emitted_r[k]+9'(out_valid_r && out_core_r==k)+9'(read_valid_r[k]))
+        assert(fetched_r[k]==emitted_r[k]+((out_valid_r && out_core_r==k)?9'(out_count_r):9'd0)+
+          (read_valid_r[k]?9'(read_count_r[k]):9'd0))
           else $fatal(1,"Output-slot reservation lost context ownership");
       end
       assert(residual_count_r[k]<=2) else $fatal(1,"Byte carry violated");

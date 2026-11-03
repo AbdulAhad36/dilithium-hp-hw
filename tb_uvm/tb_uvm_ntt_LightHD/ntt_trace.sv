@@ -143,8 +143,11 @@ class ntt_trace extends uvm_object;
             half_a='0; half_b='0;
             for (int lane=0; lane<4; lane++) begin
                 coeff_t x,y;
-                x=mulm(v.bf_a[lane],coeff_t'((Q+1)/2));
-                y=mulm(v.bf_b[lane],coeff_t'((Q+1)/2));
+                // Published BU physical order in GS is (yi,xi):the reducer
+                // stays on A. Logical inverse sum x therefore comes from B.
+                // Independent routing/math and final-polynomial checks remain.
+                x=mulm(v.bf_b[lane],coeff_t'((Q+1)/2));
+                y=mulm(v.bf_a[lane],coeff_t'((Q+1)/2));
                 scaling[(v.bf_a[lane]==0) ? 0 : (v.bf_a[lane][0] ? 2 : 1)]=1;
                 scaling[(v.bf_b[lane]==0) ? 0 : (v.bf_b[lane][0] ? 2 : 1)]=1;
                 if (v.pair_layout>=2) begin

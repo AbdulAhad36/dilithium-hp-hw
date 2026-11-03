@@ -4,7 +4,7 @@
 // derived and checked by sim/ntt_LightHD/fifo_schedule.py.
 import ntt_pkg::*;
 
-module ntt_core (
+module ntt_core #(parameter bit BANK_IO=0) (
     input logic clk, rst,
     input logic start_i,
     input ntt_op_e op_i,
@@ -14,7 +14,27 @@ module ntt_core (
     input logic [COEFF_W-1:0] wr_data_i,
     input logic rd_en_i,
     input logic [LOGN-1:0] rd_addr_i,
-    output logic [COEFF_W-1:0] rd_data_o
+    output logic [COEFF_W-1:0] rd_data_o,
+    // First-stage bank stream:32 pairs of92-bit words DURING computation.
+    // Forward pairs word i/i+32;inverse pairs2i/2i+1. Pre uses Figure5's
+    // regrouped16-nibble words at (issue[3:1],issue[3:1]+8),feeding stage1.
+    // Scalar behavior remains unchanged at the default BANK_IO=0.
+    input logic bank_load_valid_i,
+    input logic [4:0] bank_load_index_i,
+    input logic [4*COEFF_W-1:0] bank_load_a_i,bank_load_b_i,
+    output logic bank_load_ready_o,
+    output logic [4:0] bank_load_index_o,
+    // PWM consumes64 continuous four-coefficient pairs from reserved RAM ports.
+    input logic bank_pwm_valid_i,
+    input logic [4*COEFF_W-1:0] bank_pwm_a_i,bank_pwm_b_i,bank_pwm_c_i,
+    input logic bank_pwm_accumulate_i,
+    output logic bank_pwm_ready_o,
+    output logic [5:0] bank_pwm_index_o,
+    // Final-stage results go directly to reserved ports. PWM emits one word;
+    // transforms emit two. No post-compute scalar drain/copy is required.
+    output logic bank_result_valid_o,bank_result_two_o,
+    output logic [5:0] bank_result_a_index_o,bank_result_b_index_o,
+    output logic [4*COEFF_W-1:0] bank_result_a_o,bank_result_b_o
 );
   localparam int W = 4*COEFF_W;           // 92 bits per FIFO word
   localparam int PIPE = 10;                // 1 FIFO + 1 input + 7 BF + 1 result
@@ -37,10 +57,11 @@ module ntt_core (
   logic read_sel_q;
   logic [1:0] read_lane_q;
   logic [W-1:0] read_word;
-  // Combined FIFO/coefficient selectors are decoded on the read-launch side.
-  // Their registers align with fifo_q*, avoiding cascaded word/lane muxes.
+  // De_BU: each input has at most five legal FIFO/coefficient sources.
+  // Encode them before the FIFO read register, using three control bits.
+  // Code zero supplies zero (PWM A); bank-first/PWM overrides stay below.
   logic [3:0][11:0] operand_a_sel, operand_b_sel;
-  logic [3:0][11:0] operand_a_sel_q, operand_b_sel_q;
+  logic [3:0][2:0] operand_a_sel_q, operand_b_sel_q;
   logic [1:0] source_a, source_b;
   logic [1:0] dest_a, dest_b;
   logic [4:0] issue;
@@ -48,6 +69,9 @@ module ntt_core (
   logic run_issue, pwm_issue;
   logic route_middle, route_swap, dest_to3;
   logic [W-1:0] b_q;
+  logic [W-1:0] bank_pwm_a_q,bank_pwm_c_q,bank_first_a_q,bank_first_b_q;
+  logic bank_accumulate_r;
+  logic bank_final,bank_first;
 
   typedef struct packed {
     logic valid;
@@ -55,6 +79,8 @@ module ntt_core (
     logic inverse;
     logic [2:0] p;
     logic [1:0] dest_a, dest_b;
+    logic [5:0] word_index;
+    logic bank_first;
   } tag_t;
   tag_t tag [PIPE];
   logic [COEFF_W-1:0] bf_ai [4], bf_bi [4], bf_zi [4];
@@ -131,6 +157,19 @@ module ntt_core (
                             : raw_diff[COEFF_W-1:0];
   endfunction
 
+  function automatic logic [COEFF_W-1:0] small_value(input logic [3:0] nibble);
+    return nibble[3]?COEFF_W'(Q-16)+COEFF_W'(nibble):COEFF_W'(nibble);
+  endfunction
+  function automatic logic [COEFF_W-1:0] small_product(input logic [3:0] nibble);
+    case(nibble)
+      0:return 23'd0;1:return 23'd4808194;2:return 23'd1235971;
+      3:return 23'd6044165;4:return 23'd2471942;
+      15:return 23'd3572223;14:return 23'd7144446;
+      13:return 23'd2336252;12:return 23'd5908475;
+      default:return '0;
+    endcase
+  endfunction
+
   // The stream supplies a whole polynomial before start_i. For INTT the
   // 4-coefficient words must alternate between FIFO1 and FIFO2, whereas NTT
   // loads the first 128 coefficients into FIFO1 and the next 128 into FIFO2.
@@ -141,12 +180,12 @@ module ntt_core (
   logic [W-1:0] pre_a_q, pre_product_q, pre_sum_q, pre_diff_q;
   logic pre_v0, pre_v1, pre_upper_q0, pre_upper_q1;
   always_comb begin
-    load_word = state == IDLE && wr_en_i && wr_addr_i[1:0] == 2'd3;
-    load_b = load_word && wr_b_sel_i;
+    load_word = !BANK_IO && state == IDLE && wr_en_i && wr_addr_i[1:0] == 2'd3;
+    load_b = !BANK_IO && load_word && wr_b_sel_i;
     load_a = load_word && !wr_b_sel_i;
-    pre_pop = state == IDLE && wr_en_i && !wr_b_sel_i &&
+    pre_pop = !BANK_IO && state == IDLE && wr_en_i && !wr_b_sel_i &&
               op_i == OP_PRE_NTT && wr_addr_i[7] && wr_addr_i[1:0] == 0;
-    pre_write = load_a && op_i == OP_PRE_NTT && wr_addr_i[7];
+    pre_write = load_a && op_i == OP_PRE_NTT && (BANK_IO || wr_addr_i[7]);
     load_dest = (op_i == OP_INTT) ?
                 (wr_addr_i[2] ? 2'd1 : 2'd0) :
                 (wr_addr_i[7] ? 2'd1 : 2'd0);
@@ -155,7 +194,7 @@ module ntt_core (
   end
   always_ff @(posedge clk or posedge rst) begin
     if (rst) load_pack <= '0;
-    else if (state == IDLE && wr_en_i) begin
+    else if (!BANK_IO && state == IDLE && wr_en_i) begin
       // Fixed slices avoid synthesizing a variable bit offset (index * 23)
       // on the measured rx_idx -> load_pack critical path. One beat still
       // updates exactly one lane in the same clock; there is no extra stage.
@@ -189,11 +228,12 @@ module ntt_core (
       pre_v0 <= pre_write;
       pre_v1 <= pre_v0;
       if (pre_write) begin
-        pre_a_q <= fifo_q1;
-        pre_upper_q0 <= wr_addr_i[6];
+        pre_a_q <= BANK_IO ? bank_load_a_i : fifo_q1;
+        pre_upper_q0 <= BANK_IO ? bank_load_index_i[4] : wr_addr_i[6];
         for (int lane = 0; lane < 4; lane++)
           pre_product_q[lane*COEFF_W +: COEFF_W] <=
-              pre_mul(completed_word[lane*COEFF_W +: COEFF_W]);
+              pre_mul(BANK_IO ? bank_load_b_i[lane*COEFF_W +: COEFF_W] :
+                                completed_word[lane*COEFF_W +: COEFF_W]);
       end
       if (pre_v0) begin
         pre_upper_q1 <= pre_upper_q0;
@@ -217,6 +257,7 @@ module ntt_core (
     p = (op_r == OP_INTT) ? stage : (3'd7-stage);
     run_issue = (state == RUN && op_r != OP_PWM);
     pwm_issue = (state == RUN && op_r == OP_PWM);
+    bank_first=BANK_IO && run_issue && stage==(op_r==OP_PRE_NTT?3'd1:3'd0);
     // Direct bit decoding implements the group formulas without a variable
     // shifter. Middle stages alternate (F1,F3) and (F2,F1); edge stages use
     // (F1,F2). Therefore every transform issue reads F1.
@@ -294,6 +335,55 @@ module ntt_core (
       end
     end
   end
+  function automatic logic [2:0] bu_encode(
+    input logic [11:0] m,input logic side_b,input logic [1:0] lane);
+    case({side_b,lane})
+      0:return {1'b0,m[4],m[0]};
+      1:return {1'b0,m[2]|m[5],m[1]|m[5]};
+      2:return {1'b0,m[4]|m[6],m[2]|m[6]};
+      3:return {m[7],m[5]|m[6],m[3]|m[6]};
+      4:return {m[4]|m[8],m[1]|m[2],m[0]|m[2]|m[8]};
+      5:return {m[9],m[3]|m[5],m[1]|m[5]};
+      6:return {m[10],m[5]|m[6],m[2]|m[6]};
+      7:return {1'b0,m[7]|m[11],m[3]|m[11]};
+    endcase
+  endfunction
+  function automatic logic [COEFF_W-1:0] bu_select(
+    input logic [2:0] s,input logic side_b,input logic [1:0] lane,
+    input logic [3*W-1:0] words);
+    // Fixed slices only: unreachable sources do not become a 12-way mux.
+    case({side_b,lane,s})
+      6'b000001:return words[0*COEFF_W+:COEFF_W];
+      6'b000010:return words[4*COEFF_W+:COEFF_W];
+      6'b001001:return words[1*COEFF_W+:COEFF_W];
+      6'b001010:return words[2*COEFF_W+:COEFF_W];
+      6'b001011:return words[5*COEFF_W+:COEFF_W];
+      6'b010001:return words[2*COEFF_W+:COEFF_W];
+      6'b010010:return words[4*COEFF_W+:COEFF_W];
+      6'b010011:return words[6*COEFF_W+:COEFF_W];
+      6'b011001:return words[3*COEFF_W+:COEFF_W];
+      6'b011010:return words[5*COEFF_W+:COEFF_W];
+      6'b011011:return words[6*COEFF_W+:COEFF_W];
+      6'b011100:return words[7*COEFF_W+:COEFF_W];
+      6'b100001:return words[0*COEFF_W+:COEFF_W];
+      6'b100010:return words[1*COEFF_W+:COEFF_W];
+      6'b100011:return words[2*COEFF_W+:COEFF_W];
+      6'b100100:return words[4*COEFF_W+:COEFF_W];
+      6'b100101:return words[8*COEFF_W+:COEFF_W];
+      6'b101001:return words[1*COEFF_W+:COEFF_W];
+      6'b101010:return words[3*COEFF_W+:COEFF_W];
+      6'b101011:return words[5*COEFF_W+:COEFF_W];
+      6'b101100:return words[9*COEFF_W+:COEFF_W];
+      6'b110001:return words[2*COEFF_W+:COEFF_W];
+      6'b110010:return words[5*COEFF_W+:COEFF_W];
+      6'b110011:return words[6*COEFF_W+:COEFF_W];
+      6'b110100:return words[10*COEFF_W+:COEFF_W];
+      6'b111001:return words[3*COEFF_W+:COEFF_W];
+      6'b111010:return words[7*COEFF_W+:COEFF_W];
+      6'b111011:return words[11*COEFF_W+:COEFF_W];
+      default:return '0;
+    endcase
+  endfunction
   always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
       for (int lane = 0; lane < 4; lane++) begin
@@ -302,8 +392,8 @@ module ntt_core (
       end
     end else begin
       for (int lane = 0; lane < 4; lane++) begin
-        operand_a_sel_q[lane] <= operand_a_sel[lane];
-        operand_b_sel_q[lane] <= operand_b_sel[lane];
+        operand_a_sel_q[lane] <= bu_encode(operand_a_sel[lane],0,2'(lane));
+        operand_b_sel_q[lane] <= bu_encode(operand_b_sel[lane],1,2'(lane));
       end
     end
   end
@@ -311,17 +401,36 @@ module ntt_core (
   always_comb begin
     for (int lane = 0; lane < 4; lane++) begin
       bf_mode[lane] = (op_r == OP_INTT && !tag[0].pwm) ? BF_GS : BF_CT;
-      bf_ai[lane] = '0;
-      bf_bi[lane] = '0;
-      // One-hot masks combine physical FIFO and coefficient selection.
-      // PWM A stays zero, so CT returns the product on its A output.
-      for (int k = 0; k < 4; k++) begin
-        bf_ai[lane] |= ({COEFF_W{operand_a_sel_q[lane][k]}} & fifo_q1[k*COEFF_W +: COEFF_W]) |
-                       ({COEFF_W{operand_a_sel_q[lane][4+k]}} & fifo_q2[k*COEFF_W +: COEFF_W]) |
-                       ({COEFF_W{operand_a_sel_q[lane][8+k]}} & fifo_q3[k*COEFF_W +: COEFF_W]);
-        bf_bi[lane] |= ({COEFF_W{operand_b_sel_q[lane][k]}} & fifo_q1[k*COEFF_W +: COEFF_W]) |
-                       ({COEFF_W{operand_b_sel_q[lane][4+k]}} & fifo_q2[k*COEFF_W +: COEFF_W]) |
-                       ({COEFF_W{operand_b_sel_q[lane][8+k]}} & fifo_q3[k*COEFF_W +: COEFF_W]);
+      bf_ai[lane] = bu_select(operand_a_sel_q[lane],0,2'(lane),{fifo_q3,fifo_q2,fifo_q1});
+      bf_bi[lane] = bu_select(operand_b_sel_q[lane],1,2'(lane),{fifo_q3,fifo_q2,fifo_q1});
+      if(BANK_IO && tag[0].pwm)begin
+        bf_ai[lane]=bank_accumulate_r?bank_pwm_c_q[lane*COEFF_W +: COEFF_W]:'0;
+        bf_bi[lane]=bank_pwm_a_q[lane*COEFF_W +: COEFF_W];
+      end
+      if(BANK_IO && tag[0].bank_first)begin
+        if(op_r==OP_PRE_NTT)begin
+          logic [3:0] a0,a64,b128,b192;
+          logic [COEFF_W-1:0] va0,va64,vb128,vb192;
+          a0=tag[0].word_index[0]?bank_first_a_q[4*(lane+4)+:4]:bank_first_a_q[4*lane+:4];
+          a64=tag[0].word_index[0]?bank_first_a_q[4*(lane+12)+:4]:bank_first_a_q[4*(lane+8)+:4];
+          b128=tag[0].word_index[0]?bank_first_b_q[4*(lane+4)+:4]:bank_first_b_q[4*lane+:4];
+          b192=tag[0].word_index[0]?bank_first_b_q[4*(lane+12)+:4]:bank_first_b_q[4*(lane+8)+:4];
+          va0=small_value(a0);va64=small_value(a64);
+          vb128=small_product(b128);vb192=small_product(b192);
+          bf_ai[lane]=tag[0].word_index[4]?pre_sub(va0,vb128):pre_add(va0,vb128);
+          bf_bi[lane]=tag[0].word_index[4]?pre_sub(va64,vb192):pre_add(va64,vb192);
+        end else if(op_r==OP_INTT)begin
+          if(lane<2)begin
+            bf_ai[lane]=bank_first_a_q[2*lane*COEFF_W+:COEFF_W];
+            bf_bi[lane]=bank_first_a_q[(2*lane+1)*COEFF_W+:COEFF_W];
+          end else begin
+            bf_ai[lane]=bank_first_b_q[2*(lane-2)*COEFF_W+:COEFF_W];
+            bf_bi[lane]=bank_first_b_q[(2*(lane-2)+1)*COEFF_W+:COEFF_W];
+          end
+        end else begin
+          bf_ai[lane]=bank_first_a_q[lane*COEFF_W+:COEFF_W];
+          bf_bi[lane]=bank_first_b_q[lane*COEFF_W+:COEFF_W];
+        end
       end
       bf_zi[lane] = tag[0].pwm ? b_q[lane*COEFF_W +: COEFF_W] : tw[lane];
       // Every ROM entry is in [1, Q-1], so inverse twiddles need no zero guard.
@@ -387,7 +496,7 @@ module ntt_core (
   genvar lane;
   generate for (lane = 0; lane < 4; lane = lane + 1) begin: g_bf
     twiddle_rom u_tw (.clk(clk), .addr_i(tw_addr[lane]), .tw_o(tw[lane]));
-    butterfly_unit u_bf (.clk(clk), .rst(rst), .mode_i(bf_mode_q[lane]),
+    butterfly_fused #(.PUBLISHED_ORDER(1)) u_bf (.clk(clk), .rst(rst), .mode_i(bf_mode_q[lane]),
                          .a_i(bf_ai_q[lane]), .b_i(bf_bi_q[lane]),
                          .zeta_i(bf_zi_q[lane]),
                          .a_o(bf_ao[lane]), .b_o(bf_bo[lane]));
@@ -405,37 +514,46 @@ module ntt_core (
     end
   end
 
+  // Published BU outputs are (x,y) in CT and (yi,xi) in GS. Decode return
+  // positions ONE clock early into3-bit selects,as in the De_FIFO strategy.
+  logic [3:0][2:0] return_select_a,return_select_b,return_next_a,return_next_b;
+  logic [7:0][COEFF_W-1:0] return_values;
+  function automatic logic [COEFF_W-1:0] return_mux(
+    input logic [2:0] s,input logic [7:0][COEFF_W-1:0] v);
+    case(s)
+      0:return v[0];1:return v[1];2:return v[2];3:return v[3];
+      4:return v[4];5:return v[5];6:return v[6];default:return v[7];
+    endcase
+  endfunction
+  always_comb begin
+    for(int j=0;j<4;j++)begin
+      if(tag[PIPE-3].pwm || tag[PIPE-3].p>=3'd2)begin
+        return_next_a[j]={tag[PIPE-3].inverse,2'(j)};
+        return_next_b[j]={!tag[PIPE-3].inverse,2'(j)};
+      end else if(tag[PIPE-3].p==3'd1)begin
+        return_next_a[j]={1'(j>>1)^tag[PIPE-3].inverse,1'b0,1'(j)};
+        return_next_b[j]={1'(j>>1)^tag[PIPE-3].inverse,1'b1,1'(j)};
+      end else begin
+        return_next_a[j]={1'(j)^tag[PIPE-3].inverse,1'b0,1'(j>>1)};
+        return_next_b[j]={1'(j)^tag[PIPE-3].inverse,1'b1,1'(j>>1)};
+      end
+      return_values[j]=tag[PIPE-2].inverse?half_mod(bf_ao[j]):bf_ao[j];
+      return_values[4+j]=tag[PIPE-2].inverse?half_mod(bf_bo[j]):bf_bo[j];
+    end
+  end
+  always_ff @(posedge clk or posedge rst)begin
+    if(rst)begin return_select_a<=0;return_select_b<=0;end
+    else begin return_select_a<=return_next_a;return_select_b<=return_next_b;end
+  end
   // Result reassembly. INTT divides each stage output by two, so eight GS
   // stages incorporate the 1/256 scale without a separate scaling pass.
   always_ff @(posedge clk or posedge rst) begin
     if (rst) begin result_a <= '0; result_b <= '0; end
     else begin
       for (int lane = 0; lane < 4; lane++) begin
-        logic [COEFF_W-1:0] x, y;
-        x = (tag[PIPE-2].inverse) ? half_mod(bf_ao[lane]) : bf_ao[lane];
-        y = (tag[PIPE-2].inverse) ? half_mod(bf_bo[lane]) : bf_bo[lane];
-        if (tag[PIPE-2].pwm) begin
-          result_a[lane*COEFF_W +: COEFF_W] <= x;
-        end else if (tag[PIPE-2].p >= 3'd2) begin
-          result_a[lane*COEFF_W +: COEFF_W] <= x;
-          result_b[lane*COEFF_W +: COEFF_W] <= y;
-        end else if (tag[PIPE-2].p == 3'd1) begin
-          if (lane < 2) begin
-            result_a[lane*COEFF_W +: COEFF_W] <= x;
-            result_a[(lane+2)*COEFF_W +: COEFF_W] <= y;
-          end else begin
-            result_b[(lane-2)*COEFF_W +: COEFF_W] <= x;
-            result_b[lane*COEFF_W +: COEFF_W] <= y;
-          end
-        end else begin
-          if (lane < 2) begin
-            result_a[(lane*2)*COEFF_W +: COEFF_W] <= x;
-            result_a[(lane*2+1)*COEFF_W +: COEFF_W] <= y;
-          end else begin
-            result_b[((lane-2)*2)*COEFF_W +: COEFF_W] <= x;
-            result_b[((lane-2)*2+1)*COEFF_W +: COEFF_W] <= y;
-          end
-        end
+        result_a[lane*COEFF_W +: COEFF_W] <= return_mux(return_select_a[lane],return_values);
+        if(!tag[PIPE-2].pwm)
+          result_b[lane*COEFF_W +: COEFF_W] <= return_mux(return_select_b[lane],return_values);
       end
     end
   end
@@ -445,23 +563,25 @@ module ntt_core (
   always_comb begin
     pop1 = 0; pop2 = 0; pop3 = 0;
     push1 = 0; push2 = 0; push3 = 0;
-    if (run_issue) begin
+    if (run_issue && !bank_first) begin
       pop1 = 1;
       pop2 = !route_middle || route_swap;
       pop3 = route_middle && !route_swap;
-    end else if (pwm_issue) begin
+    end else if (pwm_issue && !BANK_IO) begin
       pop1 = !tick[5];
       pop2 = tick[5];
     end
     if (pre_pop) pop1 = 1;
-    if (state == IDLE && rd_en_i && rd_addr_i[1:0] == 2'd3) begin
+    if (!BANK_IO && state == IDLE && rd_en_i && rd_addr_i[1:0] == 2'd3) begin
       if (((op_r == OP_NTT || op_r == OP_PRE_NTT) && !rd_addr_i[2]) ||
           (op_r == OP_INTT && !rd_addr_i[7]) ||
           (op_r == OP_PWM && !rd_addr_i[7])) pop1 = 1;
       else pop2 = 1;
     end
     if (load_a && !pre_write) begin
-      if (load_dest == 0) begin
+      if(BANK_IO)begin
+        push1=1;push2=1;
+      end else if (load_dest == 0) begin
         push1 = 1;
       end else begin
         push2 = 1;
@@ -475,7 +595,7 @@ module ntt_core (
         push3 = 1;
         push1 = 1;
       end
-    end else if (tag[PIPE-1].valid) begin
+    end else if (tag[PIPE-1].valid && !(BANK_IO && bank_final)) begin
       if (tag[PIPE-1].dest_a == 0) begin push1 = 1; end
       else if (tag[PIPE-1].dest_a == 1) begin push2 = 1; end
       else begin push3 = 1; end
@@ -497,6 +617,9 @@ module ntt_core (
                         : completed_word;
     push_word2 = pre_v1 ? pre_diff_q : completed_word;
     push_word3 = pre_sum_q;
+    if(BANK_IO && load_a && !pre_write)begin
+      push_word1=bank_load_a_i;push_word2=bank_load_b_i;
+    end
     if (tag[PIPE-1].valid) begin
       push_word1 = return_use_b_q[0] ? result_b : result_a;
       push_word2 = return_use_b_q[1] ? result_b : result_a;
@@ -510,13 +633,19 @@ module ntt_core (
     if (push3) fifo3[tail3] <= push_word3;
     // Decode RAM enables directly from issue/route controls. Output reads
     // still occur on every requested beat; heads advance only on pop above.
-    if (run_issue || (pwm_issue && !tick[5]) || pre_pop || (rd_en_i && state == IDLE))
+    if ((run_issue && !bank_first) || (pwm_issue && !BANK_IO && !tick[5]) || pre_pop || (!BANK_IO && rd_en_i && state == IDLE))
       fifo_q1 <= fifo1[head1];
-    if ((run_issue && (!route_middle || route_swap)) ||
-        (pwm_issue && tick[5]) || (rd_en_i && state == IDLE))
+    if ((run_issue && !bank_first && (!route_middle || route_swap)) ||
+        (pwm_issue && !BANK_IO && tick[5]) || (!BANK_IO && rd_en_i && state == IDLE))
       fifo_q2 <= fifo2[head2];
-    if (run_issue && route_middle && !route_swap) fifo_q3 <= fifo3[head3];
-    if (pwm_issue) b_q <= b_words[tick[5:0]];
+    if (run_issue && !bank_first && route_middle && !route_swap) fifo_q3 <= fifo3[head3];
+    if(bank_first)begin bank_first_a_q<=bank_load_a_i;bank_first_b_q<=bank_load_b_i;end
+    if (pwm_issue)begin
+      if(BANK_IO)begin
+        b_q<=bank_pwm_b_i;bank_pwm_a_q<=bank_pwm_a_i;bank_pwm_c_q<=bank_pwm_c_i;
+      end
+      else b_q <= b_words[tick[5:0]];
+    end
   end
   always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
@@ -540,6 +669,8 @@ module ntt_core (
       tag[0].p <= p;
       tag[0].dest_a <= dest_a;
       tag[0].dest_b <= dest_b;
+      tag[0].word_index <= pwm_issue?tick[5:0]:{1'b0,issue};
+      tag[0].bank_first <= bank_first;
       for (int i = 1; i < PIPE; i++) tag[i] <= tag[i-1];
     end
   end
@@ -564,16 +695,30 @@ module ntt_core (
 
   assign busy_o = state != IDLE;
   assign done_o = state == DONE;
+  assign bank_final=tag[PIPE-1].pwm ||
+    (tag[PIPE-1].inverse?tag[PIPE-1].p==7:tag[PIPE-1].p==0);
+  assign bank_pwm_ready_o=!rst && BANK_IO && pwm_issue;
+  assign bank_pwm_index_o=tick[5:0];
+  assign bank_load_ready_o=!rst && bank_first;
+  assign bank_load_index_o=issue;
+  assign bank_result_valid_o=!rst && BANK_IO && tag[PIPE-1].valid && bank_final;
+  assign bank_result_two_o=!tag[PIPE-1].pwm;
+  assign bank_result_a_o=result_a;assign bank_result_b_o=result_b;
+  assign bank_result_a_index_o=tag[PIPE-1].pwm?tag[PIPE-1].word_index:
+    (tag[PIPE-1].inverse?{1'b0,tag[PIPE-1].word_index[4:0]}:{tag[PIPE-1].word_index[4:0],1'b0});
+  assign bank_result_b_index_o=tag[PIPE-1].inverse?{1'b1,tag[PIPE-1].word_index[4:0]}:
+    {tag[PIPE-1].word_index[4:0],1'b1};
   always_ff @(posedge clk or posedge rst) begin
     if (rst) begin
-      state <= IDLE; op_r <= OP_NTT; tick <= 0; drain <= 0;
+      state <= IDLE; op_r <= OP_NTT; tick <= 0; drain <= 0;bank_accumulate_r<=0;
     end else begin
       case (state)
         IDLE: if (start_i) begin
           op_r <= op_i;
+          bank_accumulate_r<=BANK_IO && op_i==OP_PWM && bank_pwm_accumulate_i;
           tick <= (op_i == OP_PRE_NTT) ? 8'd32 : 8'd0;
           drain <= 0;
-          state <= (op_i == OP_PRE_NTT) ? PRE_DRAIN : RUN;
+          state <= (op_i == OP_PRE_NTT && !BANK_IO) ? PRE_DRAIN : RUN;
         end
         PRE_DRAIN: state <= RUN;
         RUN: if ((op_r == OP_PWM && tick == 8'd63) ||
@@ -589,6 +734,13 @@ module ntt_core (
   end
 `ifndef SYNTHESIS
   always @(posedge clk) if (!rst) begin
+    if(BANK_IO && pwm_issue && !bank_pwm_valid_i)$fatal(1,"Direct PWM bank stream underrun");
+    if(bank_first && (!bank_load_valid_i || bank_load_index_i!=issue))$fatal(1,"Transform bank stream underrun/order error");
+    if(bank_first && op_r==OP_PRE_NTT)for(int lane=0;lane<16;lane++)begin
+      if((bank_load_a_i[4*lane+:4]>4 && bank_load_a_i[4*lane+:4]<12) ||
+         (bank_load_b_i[4*lane+:4]>4 && bank_load_b_i[4*lane+:4]<12))
+        $fatal(1,"Regrouped Pre-NTT input outside [-4,4]");
+    end
     if (state == IDLE && wr_en_i && !wr_b_sel_i && op_i == OP_PRE_NTT &&
         !(wr_data_i <= 4 || wr_data_i >= Q-4))
       $fatal(1, "Pre-NTT requires every coefficient in [-4,4]");

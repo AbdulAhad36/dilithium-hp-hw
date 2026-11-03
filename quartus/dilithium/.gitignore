@@ -1,8 +1,12 @@
 /db/
 /incremental_db/
 /output_files/
+/output_full/
+/critical_full/
+/type_probe/
 /critical_paths/
 /*.log
 /*.qws
 /c5_pin_model_dump.txt
 /timing_trials/
+/rebuild_checks/

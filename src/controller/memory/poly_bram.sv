@@ -1,6 +1,7 @@
 // One published-size LightHD logical bank:1024 words,4*23 bits per word.
 // Full-word writes;coefficient packing belongs to the producer adapter.
-// Both ports have one elastic response (read data or write acknowledgement).
+// Each port has two response slots (one RAM read register plus one skid slot).
+// Registered occupancy cuts ready feedback while retaining unstalled word rate.
 `default_nettype none
 module poly_bram (
   input wire logic clk,rst,
@@ -22,37 +23,80 @@ module poly_bram (
 );
   logic [91:0] words_r[1024];
   logic a_fire,b_fire;
-  assign a_ready_o=!rst && (!a_response_valid_o || a_response_ready_i);
-  // Serialize any same-address pair containing a write. Read/read may proceed
-  // together. A has priority;this avoids device-specific mixed-port collisions.
+  logic a_pending_valid,a_skid_valid,a_pending_write,a_skid_write;
+  logic [9:0] a_pending_address,a_skid_address;
+  logic [91:0] a_ram_data,a_skid_data;
+  assign a_response_valid_o=a_pending_valid || a_skid_valid;
+  assign a_response_write_o=a_skid_valid?a_skid_write:a_pending_write;
+  assign a_response_address_o=a_skid_valid?a_skid_address:a_pending_address;
+  assign a_response_data_o=a_skid_valid?a_skid_data:a_ram_data;
+  logic b_pending_valid,b_skid_valid,b_pending_write,b_skid_write;
+  logic [9:0] b_pending_address,b_skid_address;
+  logic [91:0] b_ram_data,b_skid_data;
+  assign b_response_valid_o=b_pending_valid || b_skid_valid;
+  assign b_response_write_o=b_skid_valid?b_skid_write:b_pending_write;
+  assign b_response_address_o=b_skid_valid?b_skid_address:b_pending_address;
+  assign b_response_data_o=b_skid_valid?b_skid_data:b_ram_data;
+  // Registered occupancy cuts ready-to-ready feedback. Two response slots
+  // sustain one request per clock until actual downstream congestion fills both.
+  assign a_ready_o=!rst && !(a_pending_valid && a_skid_valid);
   assign collision_o=!rst && a_valid_i && a_ready_o && b_valid_i &&
                      a_address_i==b_address_i && (a_write_i || b_write_i);
-  assign b_ready_o=!rst && (!b_response_valid_o || b_response_ready_i) && !collision_o;
+  assign b_ready_o=!rst && !(b_pending_valid && b_skid_valid) && !collision_o;
   assign a_fire=a_valid_i && a_ready_o;
   assign b_fire=b_valid_i && b_ready_o;
-  // No reset on the array or read-data registers:allow synchronous dual-port
-  // RAM inference. A read of never-written storage has unspecified data.
-  always @(posedge clk)if(a_fire)begin
-    if(a_write_i)words_r[a_address_i]<=a_data_i;
-    else a_response_data_o<=words_r[a_address_i];
-  end
-  always @(posedge clk)if(b_fire)begin
-    if(b_write_i)words_r[b_address_i]<=b_data_i;
-    else b_response_data_o<=words_r[b_address_i];
+  // One synchronous RAM read register and one skid register per port.
+  // Payload has no reset;only response validity is invalidated.
+  always @(posedge clk)begin
+    if(a_fire)begin
+      if(a_write_i)words_r[a_address_i]<=a_data_i;
+      else a_ram_data<=words_r[a_address_i];
+    end
+    if(a_pending_valid && !a_skid_valid && !a_response_ready_i && a_fire)
+      a_skid_data<=a_ram_data;
   end
   always_ff @(posedge clk or posedge rst)begin
     if(rst)begin
-      a_response_valid_o<=0;a_response_write_o<=0;a_response_address_o<=0;
-      b_response_valid_o<=0;b_response_write_o<=0;b_response_address_o<=0;
+      a_pending_valid<=0;a_skid_valid<=0;
+      a_pending_write<=0;a_skid_write<=0;
+      a_pending_address<=0;a_skid_address<=0;
     end else begin
-      if(a_response_valid_o && a_response_ready_i)a_response_valid_o<=0;
-      if(b_response_valid_o && b_response_ready_i)b_response_valid_o<=0;
+      if(a_skid_valid && a_response_ready_i)a_skid_valid<=0;
+      if(a_pending_valid && !a_skid_valid && !a_response_ready_i && a_fire)begin
+        a_skid_valid<=1;a_skid_write<=a_pending_write;
+        a_skid_address<=a_pending_address;
+      end
       if(a_fire)begin
-        a_response_valid_o<=1;a_response_write_o<=a_write_i;a_response_address_o<=a_address_i;
+        a_pending_valid<=1;a_pending_write<=a_write_i;
+        a_pending_address<=a_address_i;
+      end else if(!a_skid_valid && a_response_ready_i)a_pending_valid<=0;
+    end
+  end
+  // One synchronous RAM read register and one skid register per port.
+  // Payload has no reset;only response validity is invalidated.
+  always @(posedge clk)begin
+    if(b_fire)begin
+      if(b_write_i)words_r[b_address_i]<=b_data_i;
+      else b_ram_data<=words_r[b_address_i];
+    end
+    if(b_pending_valid && !b_skid_valid && !b_response_ready_i && b_fire)
+      b_skid_data<=b_ram_data;
+  end
+  always_ff @(posedge clk or posedge rst)begin
+    if(rst)begin
+      b_pending_valid<=0;b_skid_valid<=0;
+      b_pending_write<=0;b_skid_write<=0;
+      b_pending_address<=0;b_skid_address<=0;
+    end else begin
+      if(b_skid_valid && b_response_ready_i)b_skid_valid<=0;
+      if(b_pending_valid && !b_skid_valid && !b_response_ready_i && b_fire)begin
+        b_skid_valid<=1;b_skid_write<=b_pending_write;
+        b_skid_address<=b_pending_address;
       end
       if(b_fire)begin
-        b_response_valid_o<=1;b_response_write_o<=b_write_i;b_response_address_o<=b_address_i;
-      end
+        b_pending_valid<=1;b_pending_write<=b_write_i;
+        b_pending_address<=b_address_i;
+      end else if(!b_skid_valid && b_response_ready_i)b_pending_valid<=0;
     end
   end
 `ifndef SYNTHESIS

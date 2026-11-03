@@ -11,6 +11,8 @@ import keccak_pkg::*;
 
 module keccak_output_unit #(
     parameter int OUTPUT_DWIDTH = DWIDTH,
+    // Caller guarantees a whole-beat-aligned squeeze counter. Safe default.
+    parameter bit ALIGNED_COUNTER = 1'b0,
     parameter int OUTPUT_BYTES = OUTPUT_DWIDTH / 8,
     parameter int OUTPUT_BYTE_COUNT_WIDTH = $clog2(OUTPUT_BYTES + 1)
 ) (
@@ -59,11 +61,32 @@ module keccak_output_unit #(
     assign rate_bytes = BYTE_ABSORB_WIDTH'(rate_i >> 3);
     assign rate_bytes_remaining = rate_bytes - bytes_squeezed_i;
 
+    logic [OUTPUT_BYTE_COUNT_WIDTH-1:0] rate_limited_bytes;
+    generate if (ALIGNED_COUNTER && OUTPUT_BYTES > 1 &&
+                 (OUTPUT_BYTES & (OUTPUT_BYTES-1)) == 0 &&
+                 OUTPUT_BYTE_SHIFT < BYTE_ABSORB_WIDTH) begin:aligned_count
+        // Low counter bits are zero. Therefore the wrapped rate difference
+        // is below one beat iff its HIGH fields are equal; no subtract/borrow
+        // chain is needed on the valid-byte path. Keep the generic X behavior.
+        always_comb begin
+            rate_limited_bytes = FULL_BEAT_BYTES;
+            if ((rate_bytes[BYTE_ABSORB_WIDTH-1:OUTPUT_BYTE_SHIFT] ==
+                 bytes_squeezed_i[BYTE_ABSORB_WIDTH-1:OUTPUT_BYTE_SHIFT]) &&
+                (rate_bytes == rate_bytes))
+                rate_limited_bytes = OUTPUT_BYTE_COUNT_WIDTH'(
+                    rate_bytes[OUTPUT_BYTE_SHIFT-1:0]);
+        end
+    end else begin:generic_count
+        always_comb begin
+            rate_limited_bytes = FULL_BEAT_BYTES;
+            if (rate_bytes_remaining < BYTE_ABSORB_WIDTH'(OUTPUT_BYTES))
+                rate_limited_bytes =
+                    rate_bytes_remaining[OUTPUT_BYTE_COUNT_WIDTH-1:0];
+        end
+    end endgenerate
+
     always_comb begin
-        output_bytes_this_cycle = FULL_BEAT_BYTES;
-        if (rate_bytes_remaining < BYTE_ABSORB_WIDTH'(OUTPUT_BYTES))
-            output_bytes_this_cycle =
-                rate_bytes_remaining[OUTPUT_BYTE_COUNT_WIDTH-1:0];
+        output_bytes_this_cycle = rate_limited_bytes;
         if (is_xof_fixed_len_i &&
             (xof_len_i < XOF_LEN_WIDTH'(output_bytes_this_cycle)))
             output_bytes_this_cycle =

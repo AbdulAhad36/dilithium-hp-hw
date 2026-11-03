@@ -48,6 +48,13 @@ module keccak_dual_interleaved #(
         (START_OFFSET_CYCLES <= 1) ? 1 : $clog2(START_OFFSET_CYCLES);
 
     logic [1:0] core_start;
+    (* preserve *) logic [1:0] launch_start_r;
+    logic [1:0] core_busy_internal;
+    logic [0:0] launch_mode_r;
+    logic [MSG_LEN_WIDTH-1:0] launch_message_r;
+    logic [XOF_LEN_WIDTH-1:0] launch_output_r;
+    // Registered command capture cuts live controller logic from wide core start.
+    assign core_busy_o=core_busy_internal | launch_start_r;
     logic [1:0] core_input_ready;
     logic [1:0] core_input_valid;
     logic [1:0][DWIDTH-1:0] core_input_data;
@@ -73,6 +80,20 @@ module keccak_dual_interleaved #(
     wire input_accept = input_valid_i && input_ready_o;
 
     assign busy_o = |core_busy_o;
+    always_ff @(posedge clk or posedge rst) begin
+        if(rst)launch_start_r<=0;
+        else if(request_accept)launch_start_r<=2'b01<<dispatch_core;
+        else launch_start_r<=0;
+    end
+    always_ff @(posedge clk) if(request_accept) begin
+        launch_mode_r<=keccak_mode_i;
+        launch_message_r<=message_len_i;
+        launch_output_r<=output_len_i;
+    end
+    // synthesis translate_off
+    always @(posedge clk) if(!rst && (|(core_start & core_busy_internal)))
+        $fatal(1,"Registered launch targets an already busy core");
+    // synthesis translate_on
 
     always_comb begin
         if (!core_busy_o[dispatch_preference])
@@ -84,9 +105,7 @@ module keccak_dual_interleaved #(
         request_ready_o = !ingress_active && offset_ready_r &&
                           (!core_busy_o[0] || !core_busy_o[1]);
 
-        core_start = '0;
-        if (request_accept)
-            core_start[dispatch_core] = 1'b1;
+        core_start = launch_start_r;
     end
 
     always_comb begin
@@ -192,11 +211,11 @@ module keccak_dual_interleaved #(
                 .clk            (clk),
                 .rst            (rst),
                 .start_i        (core_start[core]),
-                .keccak_mode_i  (keccak_mode_i),
-                .message_len_i  (message_len_i),
-                .output_len_i   (output_len_i),
+                .keccak_mode_i  (launch_mode_r),
+                .message_len_i  (launch_message_r),
+                .output_len_i   (launch_output_r),
                 .stop_i         (stop_i[core]),
-                .busy_o         (core_busy_o[core]),
+                .busy_o         (core_busy_internal[core]),
                 .done_o         (core_done_o[core]),
                 .input_data_i   (core_input_data[core]),
                 .input_valid_i  (core_input_valid[core]),

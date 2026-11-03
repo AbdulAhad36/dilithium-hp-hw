@@ -5,19 +5,38 @@ module cnb (
   input wire logic [1:0] param_i,kind_i,input wire logic [3:0][22:0] data_i,
   output logic [3:0] reject_o,output logic error_o
 );
-  logic [22:0] bound_value,beta,gamma1,gamma2;
+  logic [22:0] lower_bound,upper_bound;
   logic [3:0] bad;
   always_comb begin
-    beta=param_i==0?23'd78:(param_i==1?23'd196:23'd120);
-    gamma1=param_i==0?23'd131072:23'd524288;
-    gamma2=param_i==0?23'd95232:23'd261888;
-    bound_value=kind_i==0?gamma1-beta:(kind_i==1?gamma2-beta:gamma2);
+    // |centered(a)|>=B iff B<=a<=q-B for canonical coefficients.
+    // Select the two constant thresholds once;no q-a or gamma-beta carry
+    // chains sit between each RAM word and its four norm comparisons.
+    case(kind_i)
+      0:case(param_i)
+        0:begin lower_bound=23'd130994;upper_bound=23'd8249423;end
+        1:begin lower_bound=23'd524092;upper_bound=23'd7856325;end
+        default:begin lower_bound=23'd524168;upper_bound=23'd7856249;end
+      endcase
+      1:case(param_i)
+        0:begin lower_bound=23'd95154;upper_bound=23'd8285263;end
+        1:begin lower_bound=23'd261692;upper_bound=23'd8118725;end
+        default:begin lower_bound=23'd261768;upper_bound=23'd8118649;end
+      endcase
+      default:begin
+        lower_bound=param_i==0?23'd95232:23'd261888;
+        upper_bound=param_i==0?23'd8285185:23'd8118529;
+      end
+    endcase
   end
-  for(genvar i=0;i<4;i++)begin:lanes
-    wire [22:0] magnitude=data_i[i]>23'd4190208 ? 23'd8380417-data_i[i]:data_i[i];
-    assign reject_o[i]=magnitude>=bound_value;
+  genvar i;
+  generate for(i=0;i<4;i=i+1)begin:lanes
+    // Keep the old unsigned-wrap result on invalid a>q as well. At a==q,
+    // the old magnitude is zero (not rejected),but error_o remains asserted.
+    assign reject_o[i]=data_i[i]>23'd8380417 ||
+      (data_i[i]>=lower_bound && data_i[i]<=upper_bound);
     assign bad[i]=data_i[i]>=23'd8380417;
   end
+  endgenerate
   assign error_o=param_i==3 || kind_i==3 || |bad;
 endmodule
 `default_nettype wire

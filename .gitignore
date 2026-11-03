@@ -1,5 +1,8 @@
 # QuestaSim build artifacts
+/sim/dilithium/stage5_sign_encode_outputs.txt
 sim/work/
+sim/dilithium/work_guard/
+quartus/dilithium/failed_stage7b2/
 sim/*_work/
 sim/transcript
 sim/vsim.wlf
@@ -93,6 +96,10 @@ quartus/sampler/*.log
 /sim/ntt_LightHD/
 /quartus/ntt_LightHD/
 /experiments/
+
+# Temporary local PDF inspection tools and rendered LightHD figures
+/tmp/pdf_runtime/
+/tmp/pdfs/lighthd_architecture/
 
 # Sampler software-reference executables
 sim/sampler/reference_build/

@@ -1,5 +1,873 @@
 # Dilithium polynomial memory
 
+Trial-by-trial history has been removed. Qualified evidence is retained in evidence/. Current measurements and active work are recorded in AGENTS.md and sim/dilithium/.
+
+### Registered request boundary (one of four banks)
+
+```mermaid
+flowchart LR
+  A["A scheduler request
+write +10-bit address +92-bit data"] --> AQ["A queue:2 x103bits
+ready from registered occupancy"]
+  B["B scheduler request
+write +10-bit address +92-bit data"] --> BQ["B queue:2 x103bits
+ready from registered occupancy"]
+  AQ --> ORDER["4-bit older-slot relation
+only conflicting younger requests wait"]
+  BQ --> ORDER
+  ORDER --> RAM["Existing dual-port RAM
+1024words x92bits
+collision protection retained"]
+  RAM --> RESP["Existing registered responses
+physical completion before retirement"]
+```
+
+Four banks retain the same coefficient storage. The new transport is1,648
+request-payload/metadata bits plus48 queue-control/age bits across the four
+banks (1,696logical FF bits),not another polynomial RAM. Reset invalidates
+queued requests and responses;already committed RAM writes remain. The
+independent model rolls back unissued requests to the actual committed RAM
+state on reset. RAM responses and burst retirement follow physical issue.
+The scheduler request handshake now means queue admission. Producer write
+counters and producer status can therefore advance before the last RAM commit;
+the age relation prevents subsequent conflicting reads from bypassing those
+writes. Physical response/retirement checks remain separate from admission.
+Full placed ALMs/registers must be measured after compilation.
+
+## Stage7C compact fixed-bank replacement
+
+Current C10 adds registered NTT read-release/final-completion decisions to the
+qualified C9R1 transport below. Full210/protocol88/main33 UVM/negative passes;
+48 forced split-port renewals retain ownership and match all160 NTT results.
+The whole-main fit uses34660 placed ALMs,59M10Ks,8DSP and409381 block bits.
+Worst reported Fmax56.65MHz/setup-10.894ns/hold+0.122ns;148MHz setup remains
+open. Payload capacity stays four1024x92-bit coefficient banks. No key or
+polynomial RAM is added by C8/C9/C10 control changes.
+
+Stage7C.9 R1 introduces ADMIT,one command-validation clock
+using existing descriptors. The router adds one deferred-completion bit per
+physical lane (8 total). If the client consumes a completion while its same-
+lane renewal loses arbitration,the router hides the already consumed report
+from the client but holds the physical REPORT and owner. The cached bit makes
+the later renewal eligible even after the client deasserts done-ready. Physical
+retirement and the new command then happen atomically. The NTT adapter also
+remembers read completion when A and B renew on different clocks. Expanded
+160-case real-bank testing passes48 deliberate split renewals/48 owner checks
+and40960 exact Python coefficients. The frozen C8 design fails that new legal
+contention stimulus;its older qualified campaigns did not exercise this phase.
+Full R1 end-to-end and physical results pass within their recorded scope;
+its53.85MHz result is slower than C8 and remains a historical trial.
+
+Stage7C.8 simplifies command validation without changing addressing or timing:
+sequential bursts require `base+words<=1024`;stride-two bursts require
+`words+floor(base/2)<=512`. Zero and counts above1024 still reject. Mode2 reads
+require32 words and `base<=1016`;mode3 requires64 words and `base<=1008`.
+Tagged mode2 writes retain producer-address handling. Mask/write checks and
+atomic same-owner read-to-write renewal are unchanged. Actual command-admission
+equivalence against C7 passes16842752 cases. Complete native210/protocol88 and
+all30 UVM latency rows remain exact C7. The new whole-main fit uses34333 placed
+ALMs,59M10Ks and8DSP;worst Fmax55.53MHz/setup-11.251ns/hold+0.121ns. Setup
+remains open at148MHz. Payload size and four fixed bank roles are unchanged.
+
+Stage7C.6 changes the response transport,not the bank roles or payload size.
+Each physical port has a synchronous RAM read register plus one skid entry.
+Request readiness uses registered two-slot occupancy;it does not look through
+the consumer's response-ready signal. This breaks the feedback loop seen in
+the frozen7C.5 implementation. One request per port per clock is sustained
+without stalls;recovering from completely full buffering may add an admission
+bubble. Native queue checking passes23397 requests,204 serialized conflicts
+and three resets. The direct-memory28 and real-bank NTT160 gates also pass.
+Fresh production210/protocol88/UVM33 gates pass with all measured cycle
+fields unchanged. The current7C.7 whole accelerator routes with59 M10Ks and34302
+actual placed ALMs;its148MHz setup target remains open.
+
+```mermaid
+flowchart LR
+  REQ["One physical A or B port<br/>address10,data92,write,valid"] --> RAM["Synchronous bank RAM<br/>1024 x92 bits"]
+  RAM --> HEAD["RAM read register<br/>data92 + response metadata"]
+  HEAD --> MUX["Oldest valid response<br/>address10,write,valid/ready"]
+  HEAD -->|"new request while head is stalled"| SKID["One skid entry<br/>data92,address10,write,valid"]
+  SKID --> MUX
+  OCC["Two registered valid bits<br/>accept when a slot is empty"] -->|"request ready"| REQ
+  MUX --> CLIENT["Current physical-port owner"]
+```
+
+There is one such response path per A/B port of each of the four banks.
+The first response retains its synchronous latency. Request ready does not
+depend on response ready;the extra slot absorbs the request already in flight.
+Payload is not reset. Reset clears both validity bits,so old read data cannot
+be published as a new response. Logical field widths here are not an estimate
+of placed ALMs or register allocation;Quartus can absorb RAM read registers
+and optimize unused acknowledgement data.
+
+The7C.7 loader adds two92-bit decoded-packet registers before the SAME
+sampler writer. They hold at most two packets,with format/ID/index checks at
+admission and separate admitted/committed counters. They are not extra
+polynomial banks. The184 payload bits are retained in the fitted register
+report;the four coefficient banks and total block-memory bits are unchanged.
+
+The replacement uses exactly four logical1024 x92-bit banks:376832 payload
+bits =47104 bytes. A92-bit word holds four23-bit canonical coefficients;
+a full polynomial occupies64 words. A secret in Fig5 signed-nibble form
+uses16 words with only bits63:0 meaningful. It is not a second coefficient
+array. The7C.6 fitted hierarchy allocates40 M10Ks to these four coefficient
+banks;59 M10Ks are used by the complete accelerator. Logical bank count is
+not the physical M10K block count.
+
+```mermaid
+flowchart LR
+  SAMPLE["Dual-context sampler<br/>4 canonical coefficients<br/>or16 signed nibbles"] -->|"B:tagged address +92-bit word"| PORTS
+  NTT["4-BU NTT / Pre-NTT / MAC"] <-->|"A/B:two92-bit transform words<br/>or streamed PWM operands"| PORTS
+  PROCESS["x4 Process / BitPkg / controller"] <-->|"92-bit words / packed low64"| PORTS
+  PORTS["Independent A/B schedulers<br/>4 lanes per port<br/>8 small ownership entries"] <--> B1
+  PORTS <--> B2
+  PORTS <--> B3
+  PORTS <--> B4
+  B1["BRAM1 / RTL bank0<br/>1024 x92<br/>0..447:y or raw s1<br/>448..959:s2<br/>960..1023:row coefficients"]
+  B2["BRAM2 / RTL bank1<br/>1024 x92<br/>0..63:row accumulator<br/>64..575:t0<br/>576..1023:first7 w0"]
+  B3["BRAM3 / RTL bank2<br/>1024 x92<br/>0..447:s1hat<br/>448..895:yhat<br/>896..1023:packed w1"]
+  B4["BRAM4 / RTL bank3<br/>1024 x92<br/>A ring during matrix phase<br/>then z / chat / r0<br/>KeyGen packed t1:576..895 max"]
+```
+
+These are phase-specific lifetimes,not simultaneous ownership of every label.
+At level5,the final w0 uses BRAM2 words0..63 only after the final accumulator
+is consumed. KeyGen uses a nine-slot A ring0..575;packed t1 occupies40*K
+low64-bit words from576,and never overlaps it. Its raw s1/s2 remain compact
+until final secret-key encoding. `helpers/dilithium_pkg.sv` is the executable
+fixed-role address contract;memory/router state carries no64-slot ID database.
+
+Read address modes:0 sequential,1 stride2,2 repeated compact Pre words,
+3 natural-order groups from compact secret storage. Write mode2 accepts the
+producer's word address,so both Keccak contexts can interleave on the same
+B lane;the command still supplies the exact bounded number of writes.
+All other writes follow the selected sequential/stride address sequence.
+Accepted writes occur in the synchronous RAM on that edge;status publication
+requires all words of the polynomial accepted and sampler completion. The
+batch's physical completion retires its lane before reuse by another client.
+
+### Compact Verify lifetimes
+
+Verify uses the SAME four arrays. These phase-specific addresses are inferred
+controller scheduling details on the published geometry, not additional RAM.
+The input gate writes shifted t1 and z through the shared BitUnpkg/writer,
+and expands validated sparse hints into canonical0/1 bank words.
+
+|RTL bank|Word addresses|Verify role|
+|---|---|---|
+|0|448..959|Up to8 shifted t1 polynomials, then their in-place FNTTs|
+|0|960..1023|Challenge coefficients, then reused CT1 product / inverse-row scratch|
+|1|0..63|One row accumulator; SUB subtracts chat*t1hat before its INTT|
+|1|64..575|Up to8 raw hint polynomials, four0/1 values per92-bit word|
+|1|576..703 maximum|Contiguous packed w1;96 words at levels2/3,128 at level5|
+|2|0..447|Up to7 z polynomials, then their in-place FNTTs|
+|2|896..959|Cached challenge transform chat|
+|3|Bounded ring|Sampled Ahat;9 slots at levels2/3,physical16-slot limit inferred for level5|
+
+Each row finishes MAC, CT1 multiplication, SUB, one inverse and shared
+UseHint/BitPkg before scratch is reused. Packed w1 is disjoint from hints
+and the accumulator. Hashing reads it only after all rows and sampling retire.
+All raw operands must pass the whole input gate before math starts; malformed
+frames return an error, while noncanonical hints or an out-of-bound z return
+normal signature invalidity. New commands overwrite required roles before use.
+
+## Stage7B.7 decoder-local alignment candidate
+
+The coefficient pool and completed-tag RAM are unchanged from7B.6. Only the
+Verify decoder's local hint suffix registers change layout:eleven64-bit words
+provide88 source-storage bytes for at most84 encoded bytes. Four high padding
+bytes are unused and tail input lanes are masked. No whole-signature RAM,
+coefficient bank or pipeline cycle is added. Final mapped register/ALM cost
+must come from the current Quartus build;source padding is not a fitted-area
+claim. The383-case decoder comparison checks all qualified outputs and timing.
+
+## Stage7B.6 candidate: descriptor storage
+
+The coefficient pool remains four banks of1024 words x92 bits:47104 bytes,
+64 regions,256 coefficients per region. Only descriptor implementation changes.
+Previously all64 slots kept ID,mode,parameter,domain,smallness,rewrite and
+progress in registers. Only two writers can be active. Their mutable records
+now stay beside the two writer contexts;successful finish copies a22-bit tag
+to a64-entry synchronous RAM. The two-bit region states remain registers.
+
+| Storage | Geometry | Meaning |
+|---|---|---|
+|Coefficient RAM|4 x1024 x92 bits|Four23-bit coefficients per word|
+|Region state|64 x2 register bits|FREE,WRITING,COMPLETE;reset to FREE|
+|Completed tags|64 x22 RAM bits|ID16,mode2,parameter2,NTT-domain1,small1|
+|Active writer records|2 x32 register bits|Tag22,accepted-count9,rewrite1|
+|Writer ownership|2 valid bits +2 x6-bit handles|Existing context ownership|
+
+```mermaid
+flowchart LR
+  ALLOC["Allocation descriptor<br/>ID16,mode2,param2,domain1"] --> WR["Two active writer records<br/>2 x32 bits<br/>tag22 +count9 +rewrite1"]
+  SCALAR["Scalar write<br/>index8 +coefficient23"] --> WR
+  SCALAR --> PACK["Existing two word packers<br/>4 x23 =92 bits"]
+  PACK --> COEFF["Coefficient pool<br/>4 banks x1024 x92 bits<br/>64 regions x64 words"]
+  WR -->|"successful finish:256 coefficients<br/>64 acknowledged words"| TAG["Completed tag RAM<br/>64 x22 bits<br/>address:bank2 +region4"]
+  STATE["Region states<br/>64 x2 register bits"] --> SELECT["Read legality and tag selection"]
+  REQ["Read request<br/>bank2,region4,word6"] --> SELECT
+  SELECT -->|"COMPLETE:synchronous tag read"| TAG
+  SELECT -->|"WRITING:untouched rewrite word<br/>snapshot active tag"| ACTIVE["Active-tag snapshot"]
+  REQ --> COEFF
+  TAG --> RESP["Existing held response<br/>data92,ID16,mode2,param2<br/>domain1,small1,error1"]
+  ACTIVE --> RESP
+  COEFF --> RESP
+```
+
+Tag RAM is read in parallel with coefficient RAM,so qualified response timing
+is unchanged. COMPLETE-region metadata is immutable until rewrite/release;
+a finish writes only a WRITING region. This excludes same-address tag RAM
+read/write. Rewrite reads snapshot the active tag before a possible cancel
+or context reuse. Reset invalidates all region states,so stale/uninitialized
+RAM entries cannot become externally readable. Failed reads return zero tags.
+
+The internal administration contract has one active writer per region. The
+integrated adapters enforce it:sample allocations select FREE regions;
+compute rewrites lock their source/destination;release_allowed excludes those
+locks,including the command-acceptance edge. Load owns its own allocation and
+release sequence exclusively. Thus an owning region cannot be released and
+reallocated behind a live writer. The per-writer metadata representation
+depends on this arbitration contract. The raw memory pins are internal,not
+an additional unrestricted host interface. The full-main public API retains
+the existing ownership guards;the trace comparison checks its actual traffic.
+
+The isolated old/new comparison passes64 slots,two interleaved writers,
+16647 scalar writes and4418 reads,including simultaneous read/rewrite admission,
+rewrite watermarks,cancellation,reset and fault cases. Full-main UVM runs the
+same comparison alongside its independent scoreboard. Fresh synthesis confirms
+all1408 tag bits in a64 x22 M10K instance. Local store registers drop2543->560
+and local ALUT3972->1919 relative to7B.4 synthesis. Full routing and the final
+placed ALM cost remain pending;these synthesis counts are not fitted metrics.
+
+## Stage5V.4 whole Verify ownership
+
+Main grants one services owner for the entire operation. Input preparation
+loads raw t1/z/h and computes tr. Its atomic take transfers that context to
+math preparation,which uses rotating scratch and publishes t1hat/zhat/h/chat.
+The next take transfers it to the equation owner. The parent retains ownership
+until the equation and all cleanup have retired. No additional bank or
+coefficient/key/signature/message RAM is introduced by the main controller.
+
+The same pool is4 x1024 words x92 bits=64 polynomial regions=47104 payload
+bytes. One region is64 words x92 bits=256 x23-bit coefficients=736 bytes.
+Verify peaks remain22/30/40 private regions (16192/22080/29440 payload bytes)
+for levels2/3/5. There is no foreign owner in the whole main Verify gate;
+the component gate separately preserved one foreign region. Main excludes
+debug clients while an operation owns the shared pool.
+
+```mermaid
+flowchart TD
+  HOST["Main op2<br/>PK64 ->SIG64 ->ctx/message64"] --> INPUT["Input owner<br/>K raw t1 +L z +K hints<br/>12 /17 /23 regions,rho/tr/ctilde"]
+  INPUT -->|"atomic take"| MATH["Math owner<br/>mu hash,SampleInBall,NTT rotation<br/>peak14 /19 /25 regions"]
+  MATH -->|"atomic take"| EQ["Equation owner<br/>Ahat *zhat -chat *t1hat<br/>inverse,UseHint,packing/hash<br/>peak22 /30 /40 regions"]
+  POOL["One shared physical pool<br/>4 banks x1024 x92 bits<br/>64 regions x64 words<br/>each word4 coefficients x23 bits"] --- INPUT
+  POOL --- MATH
+  POOL --- EQ
+  EQ --> FREE["Release every adopted/new region<br/>retire all services<br/>main held valid/invalid result"]
+  INPUT -->|"structural invalid:cleanup"| FREE
+  MATH -->|"error:drain and cleanup"| FREE
+```
+
+Failed pre-adoption handoffs leave the previous owner responsible. The parent
+clears retained math and input contexts before reporting error. Normal invalid
+signatures also leave an empty pool. Fatal faults discard the operation only
+through global reset;recovery tests reconstruct the full chain afterward.
+
+## Stage5V.3 Verify equation workspace
+
+The unchanged pool is4 banks x1024 words x92 bits=47104 payload bytes.
+Each region is64 words x92 bits=256 coefficients x23 bits=736 bytes.
+The equation owner adopts the13/18/24-region prepared context,then plans
+L A regions,one accumulator,one product scratch,and K inverse-result regions.
+Planning does not allocate RAM or occupy the regions;the exclusive services
+lease prevents another client from taking them during the operation.
+
+| Role | Level2 | Level3 | Level5 | Lifetime/domain |
+|---|---:|---:|---:|---|
+|Adopted t1hat,zhat,h,chat|13|18|24|Through challenge hash;h coefficient domain,others NTT domain|
+|A row workspace|4|5|7|Sample Ahat,consume during PWM,release at row end|
+|Accumulator +product|2|2|2|NTT domain;product reused after each ADD/SUB|
+|Inverse W results|4|6|8|Coefficient domain;retain until all UseHint/packing/hash retire|
+|Conservative private planning bound|23|31|41|Adopted context +L+2+K;foreign owners excluded|
+
+Fresh captures measure private peaks22/30/40 because product/accumulator leases
+are released before all K W rows coexist. The count comes from actual
+allocation/release events and excludes the foreign sentinel. The owner stores
+only two92-bit read caches (W/h),handles and hash
+headers;no new polynomial,key,signature or message RAM is added.
+
+```mermaid
+flowchart TD
+  CTX["Actual prepared context<br/>t1hat,zhat,raw h,chat<br/>rho,mu,ctilde"] --> OWN["Atomic take<br/>same64-region pool"]
+  OWN --> A["L Ahat row regions<br/>SHAKE128 rho||column||row"]
+  A --> PWM["Shared PWM +in-place ADD<br/>one accumulator +one product"]
+  OWN --> PWM
+  PWM --> SUB["Subtract chat*t1hat<br/>in NTT domain"]
+  SUB --> INV["One shared inverse NTT per row<br/>K W result regions"]
+  INV --> READ["Read W92 +hint92<br/>4 coefficients per word"]
+  OWN --> READ
+  READ --> HINT["UseHint ->shared Bitpkg<br/>w1:6 or4 bits/coefficient"]
+  HINT --> HASH["Shared SHAKE256<br/>mu||packed_w1 ->c2"]
+  HASH --> FREE["Compare c2 with ctilde<br/>release all owned regions<br/>held valid/invalid completion"]
+```
+
+No-free-workspace and other pre-take errors preserve the upstream context.
+After take,successful valid and invalid checks both release the entire
+context/workspace. Foreign leases remain intact and are read back before
+their own explicit release. Fatal faults require a global reset.
+
+## Stage5V.2b transformed Verify context
+
+The math owner adopts all raw handles on one take edge;the old owner then
+returns idle. It chooses the first free region for sampled c and another for
+NTT workspace. Each successful NTT commits its destination,fully retires the
+engine,then releases its raw source. That freed source becomes the next NTT
+destination. Hints stay in their original regions and coefficient domain.
+After the last transform,raw c is freed and only chat remains.
+
+| Item | Level2 | Level3 | Level5 | Contents |
+|---|---:|---:|---:|---|
+|Input context|12|17|23|K shifted t1,L z,K dense hints|
+|Peak private regions|14|19|25|Input context plus sampled c plus rotating work|
+|Successful result regions|13|18|24|K t1hat,L zhat,K raw hints,chat|
+|Successful payload bytes|9568|13248|17664|Each region is256x23 bits=736 bytes|
+
+These figures exclude any retained foreign owner,which the tests preserve
+and read back independently. The physical pool is unchanged:4 banks x16
+regions x64 words x92 bits=47104 payload bytes. No new polynomial RAM exists.
+Result t1hat/zhat/chat have domain1;hints have domain0. The operation ID and
+parameter stay attached to all regions. Sampling uses mode3 with domain0;
+its allocation ignores the raw domain port when alloc_compute=0,as defined
+in memory.sv. Captures record both allocation signals and verify the effective
+stored domain by readback and engine eligibility.
+
+```mermaid
+flowchart TD
+  RAW["5V.2a raw context<br/>K shifted t1,L z,K hints<br/>rho,tr,ctilde"] --> TAKE["Atomic context take<br/>complete leases +identity checked"]
+  MSG["Third frame:ctx and M<br/>64-bit stream,1..8 valid bytes"] --> MU["Existing formatter +shared SHAKE256<br/>tr64 ||00 ||ctxlen ||ctx ||M<br/>mu64"]
+  TAKE --> MU
+  MU --> BALL["Shared SampleInBall(ctilde)<br/>first free region<br/>256 coefficients:0,+1,-1"]
+  BALL --> WORK["One free NTT work region<br/>commit destination,retire engine<br/>free source,rotate work handle"]
+  TAKE --> WORK
+  WORK --> HATS["K FNTT(t1 shifted by13)<br/>L FNTT(z)<br/>Pre-NTT(c) ->chat"]
+  MU --> READY["Retained Verify arithmetic context<br/>13 /18 /24 regions<br/>rho,mu,ctilde"]
+  HATS --> READY
+  TAKE -->|"hints kept raw"| READY
+  READY --> NEXT["Next5V.3:Az-c*t1hat<br/>inverse NTT,UseHint,w1 hash"]
+```
+
+Pre-adoption errors leave the old context intact. After adoption,message
+errors drain the finite hash and release the raw context;sampler/NTT errors
+also release any actual new destination. Metadata mismatches use actual
+reservation state for cleanup. Fatal physical/raw protocol faults require
+global reset. A pending read response blocks result clear/take;clear wins
+when both are offered. Normal transform source releases follow successful
+NTT retirement;error cleanup explicitly discards the adopted raw sources.
+
+## Stage5V.2a Verify context ownership
+
+The same pool has4 banks,each1024 words x92 bits (4 coefficients x23 bits).
+Each polynomial occupies64 words=256 coefficients=736 bytes. Each bank has
+16 regions;flat region[5:4] selects the bank,region[3:0] selects its polynomial,
+and word[5:0] selects one packed word. Capacity=64*736=47104 payload bytes.
+No additional coefficient memory or whole encoded-key/signature RAM is added.
+
+| Role | Regions relative to base B | Level2 /3 /5 polynomials | Payload bytes2 /3 /5 |
+|---|---|---|---|
+|Shifted public t1 (t1<<13)|B through B+K-1|4 /6 /8|2944 /4416 /5888|
+|Canonical z|B+K through B+K+L-1|4 /5 /7|2944 /3680 /5152|
+|Dense hints (0/1)|B+K+L through B+2K+L-1|4 /6 /8|2944 /4416 /5888|
+|Total retained context|B through B+2K+L-1|12 /17 /23|8832 /12512 /16928|
+
+All roles are coefficient-domain (domain0). t1/h use mode3;z uses mode2.
+Operation ID16 and parameter2 are attached to every region. The `small` flag
+is derived from stored values,not the role label. A caller grants an exclusive
+services lease and a free contiguous range ending at or below region63.
+Previously owned foreign regions remain untouched. The decoder hides tentative
+frame commits;the parent publishes handles/rho/tr/ctilde only after both frames
+and the finite PK hash have retired successfully.
+
+```mermaid
+flowchart TD
+  HOST["PK then signature<br/>64-bit words,1..8 valid bytes<br/>index16,last per frame"] --> FORK["PK:one-word fork<br/>separate decoder/hash credits<br/>signature goes directly to decoder"]
+  FORK --> LOAD["Verify decoder + existing scalar writer<br/>23-bit coefficients ->4-lane packed92-bit words<br/>whole-frame commit or rollback"]
+  FORK --> HASH["Shared physical Keccak<br/>SHAKE256 of full encoded PK<br/>four128-bit beats ->tr512"]
+  LOAD --> PORT["Existing allocator/packer<br/>region6,word6,ID16<br/>no extra bank"]
+  subgraph POOL["Existing four-bank pool:64 regions /47104 payload bytes"]
+    B0["Bank0:regions0..15<br/>1024 x92 bits<br/>A/B synchronous ports"]
+    B1["Bank1:regions16..31<br/>1024 x92 bits<br/>A/B synchronous ports"]
+    B2["Bank2:regions32..47<br/>1024 x92 bits<br/>A/B synchronous ports"]
+    B3["Bank3:regions48..63<br/>1024 x92 bits<br/>A/B synchronous ports"]
+  end
+  PORT --> B0
+  PORT --> B1
+  PORT --> B2
+  PORT --> B3
+  B0 --> READ["Existing packed read response<br/>92-bit data +region/word/tag/metadata<br/>held response blocks clear/take"]
+  B1 --> READ
+  B2 --> READ
+  B3 --> READ
+  READ --> NEXT["Future Verify arithmetic owner<br/>take transfers all12/17/23 handles<br/>clear releases them"]
+  HASH --> NEXT
+```
+
+PK error:stop host acceptance,finish already accepted fork data,zero-fill only
+the remaining raw hash absorption needed to retire that failed request,discard
+its digest and release its regions. Signature error:the frame loader rolls
+back z/h;the parent releases the retained PK regions. Errors publish no context.
+Reset invalidates all allocator leases;it does not erase the underlying RAM.
+Clear wins over simultaneous take. A successful take does not physically free
+memory;the next owner must release it. No NTT/mu/challenge work occurs here.
+
+## Stage5V.1 decoder storage
+
+The new decoder uses84 reservoir bits,512 header bits and an84-byte maximum
+encoded hint suffix,plus counters/metadata. It does not instantiate coefficient
+banks or a full encoded-key/signature RAM. Its coefficient outputs are tentative
+until successful completion. The later5V.2 owner must allocate destinations in
+the existing four-bank pool and discard all tentative regions on error/reset.
+No memory.sv or existing allocator/engine path changes in this checkpoint.
+
+Stage5N.4h.7 official Sign testing reuses this exact pool and memory ledger.
+It adds no memory/register architecture. Each selected request supplies its
+original expanded SK and message stream;expected signatures remain outside
+RTL. Measured58802 new lifetimes/58802 releases and33/45/61-region peaks are
+recorded in THROUGHPUT.md. Every official Sign returns all regions before done.
+
+## Stage5N.4h.6 one main operation owner
+
+The approved host reloads the expanded secret key for every Sign request.
+The existing four banks/64 regions/47104 payload bytes remain unchanged.
+Key preparation uses base0 and one rotating spare31. Its12/17/23 retained
+transformed-key regions stay leased through all retries and encoding. Raw y
+starts at32;existing clients choose free workspace regions from the same pool.
+The new controller stores command metadata and handles;it adds no payload RAM.
+
+```mermaid
+flowchart TD
+  HOST["Command + SK frame<br/>64 bits,8 bytes/word<br/>320 /504 /612 words"] --> MAIN["Main owner mux<br/>KeyGen OR Sign<br/>lease includes cleanup"]
+  MAIN --> KEY["Sign key preparation<br/>base0,rotating spare31<br/>12 /17 /23 regions"]
+  MSG["ctx and message frame<br/>64 bits,1..8 valid bytes<br/>index restarts0"] --> A["Attempt/retry clients<br/>same four-bank pool<br/>no message replay RAM"]
+  KEY -->|"retained key lease"| A
+  A -->|"accepted z and hints<br/>atomic context take"| ENC["Signature encoder<br/>8 /11 /15 payload regions<br/>64-bit output"]
+  ENC --> DROP["Release attempt payload<br/>then clear prepared key"]
+  DROP --> DONE["All regions free<br/>held main Sign completion"]
+  MAIN --> KG["Existing KeyGen<br/>owner retained through its<br/>post-completion cleanup"]
+```
+
+Main start readiness requires both clients idle and services quiescent.
+During Sign,external debug reads cannot observe or consume the internal read
+stream. New requests cannot enter during KeyGen cleanup even after main done
+has retired. Reset discards all contexts globally;fatal failure needs reset.
+The main-top gate reconstructs every physical allocation/rewrite,finish and
+release. It checks zero outstanding regions at normal Sign completion and
+before the next request;reset snapshots may contain incomplete regions.
+
+## Stage5N.4h.5 signature packing lifetime
+
+Physical memory stays four1024 x92-bit banks. Each region is64 x92-bit words
+=256 x23-bit coefficients=736 payload bytes. The encoder snapshots handles/
+digest,one92-bit read cache,one64-bit hint word and eight8-bit counts. Z uses
+the existing87-bit packer reservoir. No full-signature or polynomial RAM.
+
+```mermaid
+flowchart LR
+  K["Key owner<br/>12 /17 /23 regions<br/>retained throughout"]
+  A["Attempt READY<br/>z:4 /5 /7 regions<br/>h:4 /6 /8 regions<br/>ctilde:256 /384 /512 bits"] -->|"atomic take;old owner invalidates"| E["Encoder owns z+h<br/>8 /11 /15 regions<br/>5888 /8096 /11040 bytes"]
+  E -->|"64 words x92 bits per region<br/>4 x23-bit coefficients per word"| Z["Shared Bitpkg<br/>z:18 /20 bits<br/>87-bit reservoir"]
+  E --> H["Binary hint scan<br/>8-bit indices and counts<br/>64-bit output word"]
+  Z --> O["64-bit signature stream<br/>2420 /3309 /4627 bytes<br/>backpressure,final byte count"]
+  H --> O
+  O -->|"last byte handshake or recoverable error"| C["Release ALL adopted z+h<br/>then held completion"]
+  C --> K
+```
+
+The scheduler grants only the encoder during packing and keeps the key leased.
+Preflight failures preserve the attempt owner. After adoption,recoverable
+failures free the whole map;fatal/reset paths need global reset. Key/sentinel
+regions are outside the map. Quiescence and upstream take block outstanding
+read responses before ownership moves. No adopted region is freed during reads.
+
+## Stage5N.4h.4 retry ownership and cleanup
+
+The parent retains the prepared key while the six existing clients move one
+attempt through the same64-region pool. On normal rejection,the checker has
+already freed **every** attempt payload before its header-only take. The next
+ExpandMask therefore reuses the y/workspace addresses without overwriting a
+live polynomial. One transit copy of mu512+private-seed512 and nextnonce17
+connects the rejected checker to the next mask command. It is control/header
+storage,not another polynomial or arbitrary-message buffer.
+
+On success,only z[l]+h[k] remain with the checker and parent. On ordinary
+failure,clear live clients in dependency order:checks,products,transform,
+challenge,matrix,mask. This preserves raw y while matrix/transform need it
+and w1 while challenge needs it. Transfers invalidate old owners before any
+reuse. The key owner is outside this cleanup chain and remains intact.
+
+```mermaid
+flowchart TD
+  KEY["Retained prepared key<br/>12 /17 /23 regions"] --> LOOP["Attempt parent<br/>exclusive services"]
+  MSG["Stream ctx and M once"] --> M["Initial mu/seed hash<br/>then y[l]"]
+  LOOP --> M
+  M --> A["A*y and Decompose<br/>existing workspace"]
+  A --> C["w1 hash and challenge<br/>then FNTT c"]
+  C --> P["cs1/cs2/ct0<br/>z and corrected low"]
+  P --> B["CNB and hints"]
+  B -->|reject and free payload| R["Take mu512,seed512,nextnonce17<br/>guard nonce+l <=65536"]
+  R -->|legal| Y["ExpandMask only<br/>same seed,next nonce"]
+  Y --> A
+  R -->|exhausted| E["Code6<br/>key retained,no nonce wrap"]
+  B -->|accept| OUT["Retain z[l],h[k],ctilde<br/>clear or whole-context take"]
+```
+
+Earlier phase storage peaks remain unchanged;this control loop adds no bank
+or payload RAM. Existing matrices are resampled for each attempt in this
+functionality-first schedule;matrix caching is a later measured optimization.
+The focused gate records physical allocations,rewrites,commits and releases,
+including row-MAC internal scratch releases and temporary IDs. Test sentinel
+storage and artificial errors are separate from the algorithm's requirements.
+
+## Stage5N.4h.3 norm/hint lifetime and rotating destination
+
+The physical memory is unchanged:four banks,each1024 words x92 bits,with
+four23-bit coefficients per word. A region is64 words=256 coefficients=
+736 payload bytes. The64-region pool has47104 payload bytes. No new RAM.
+
+The owner adopts z[l],r0[k],w1[k],ct0[k] together. CNB reads do not allocate.
+One lowest-free address is planned by the exclusive owner as the first hint
+destination;the Mhint client physically allocates it when launched. After
+each ADD and successful Mhint fully retire,the old r0,
+w1 and ct0 row regions are released. That freed r0 address becomes the next
+hint destination. Completed hints remain owned until acceptance/clear/take.
+An over-weight partial hint vector is entirely discarded before rejection
+publication. The prepared key and unrelated clients are never released.
+
+| Level | Adopted attempt | Key | Peak including first hint | Accepted result +key | Rejected result +key |
+|---|---|---|---|---|---|
+|2|4+3x4=16|12|29|4z+4h+12=20|12|
+|3|5+3x6=23|17|41|5z+6h+17=28|17|
+|5|7+3x8=31|23|55|7z+8h+23=38|23|
+
+Counts exclude the test sentinel/capacity blockers and earlier phase peaks.
+The owner holds scalar headers mu512,seed512,ctilde512,nextnonce17 plus
+handle/control metadata. A rejected outcome exposes no ctilde/payload handles,
+but preserves mu/seed/nextnonce for the later retry controller.
+
+```mermaid
+flowchart TD
+  P["Products owner<br/>z[l],r0[k],w1[k],ct0[k]"] --> T["Whole-context take<br/>no polynomial copy"]
+  T --> C["Read-only CNB<br/>z then r0 then ct0"]
+  C -->|pass| A["Shared ADD<br/>r0[row] += ct0[row] in place"]
+  A --> H["Shared Mhint x4<br/>combined low + retained w1<br/>write256 hints to spare region"]
+  H --> W["12-bit sum vs omega"]
+  W -->|within limit| F["Release old low/high/ct0 row<br/>reuse freed low as next spare"]
+  F -->|next row| A
+  F -->|all rows| OK["Retain z[l],h[k],ctilde<br/>mu,seed,next nonce"]
+  C -->|norm reject| R["Release entire attempt<br/>retain mu,seed,next nonce only"]
+  W -->|above limit| R
+```
+
+## Stage5N.4h.2 mask handoff and response workspace
+
+The new owner adopts raw y and w0/w1/chat together. It copies only the small
+mu/seed/ctilde headers and handle metadata. After the last read of each raw
+polynomial,shared ADD/SUB rewrites y->z and w0->r0 in place. The previous
+owners are invalid before these writes,so their clear paths cannot reclaim
+or expose a partially updated attempt.
+
+| Level | Adopted attempt regions | Planned free addresses | Retained result + key | Phase peak + key |
+|---|---|---|---|---|
+|2|4 y+4 w0+4 w1+1 chat=13|4 ct0+2 scratch=6|4 z+4 r0+4 w1+4 ct0+12 key=28|30 |
+|3|5+6+6+1=18|6+2=8|5+6+6+6+17=40|42 |
+|5|7+8+8+1=24|8+2=10|7+8+8+8+23=54|56 |
+
+Counts exclude the test sentinel and capacity blockers. The planned address
+set includes an inverse scratch used for s1/s2 which is already free while
+the final ct0 vector accumulates;the peak counts are actual simultaneous
+allocations,not the sum of every planned address. Prior matrix-generation
+peaks remain separate. Physical storage stays four1024x92-bit banks/64regions.
+
+```mermaid
+flowchart TD
+  MASK["Mask owner:y[l],mu,private seed"] --> TAKE["Atomic take;no bank copy"]
+  VECTOR["Vector owner:w0[k],w1[k],chat,ctilde"] --> TAKE
+  KEY["Prepared s1/s2/t0 NTT handles<br/>remain with key owner"] --> PWM["Shared PWM:chat*secret_hat<br/>one reusable region"]
+  TAKE --> PWM
+  PWM --> INV["Shared INTT<br/>reusable scratch or retained ct0[row]"]
+  INV --> ADD["In-place ADD:y -> z"]
+  INV --> SUB["In-place SUB:w0 -> r0"]
+  INV --> T0["Keep ct0[k] for later norm/hints"]
+  ADD --> KEEP["Retain z,r0,w1,ct0<br/>mu,seed,ctilde,next nonce"]
+  SUB --> KEEP
+  T0 --> KEEP
+```
+
+PWM/inverse scratch is freed after each polynomial. chat is freed after all
+three groups. Normal post-adoption errors discard the whole attempt;only the
+prepared key survives. Full-sign retry will consume the retained headers and
+choose the next nonce rather than replaying arbitrary message RAM. That
+controller and rejection handling are not part of this arithmetic checkpoint.
+
+## Stage5N.4h.1 ownership transfer and dead-yhat reuse
+
+Ownership changes without copying bank data. The previous matrix and
+challenge clients transfer on one edge;their clear paths then cannot release
+the adopted regions. The new sign_challenge_transform owner releases yhat,
+allocates chat=FNTT(c),validates its complete commit,then releases raw c.
+Key and original y remain with their existing owners.
+
+| Level | Before transfer | Dead yhat released | c/chat overlap | Retained after raw c released |
+|---|---|---|---|---|
+|2|29 regions|4|26|12 key+4 y+8 low/high+1 chat=25 |
+|3|40|5|36|17+5+12+1=35 |
+|5|54|7|48|23+7+16+1=47 |
+
+These counts cover this phase,excluding the test sentinel and capacity
+blockers;they do not replace earlier matrix-generation peak counts. At
+736 payload bytes per region,the retained totals are18400/25760/34592 bytes.
+No encoded key,message or polynomial copy RAM is added. Even when every
+other region is occupied,the released yhat slots provide the NTT destination.
+
+```mermaid
+flowchart TD
+  M["Matrix owner:yhat[l],w0[k],w1[k]"] --> T["Atomic take edge<br/>no allocation or physical release"]
+  C["Challenge owner:c + ctilde"] --> T
+  T --> N["New owner:all adopted handles"]
+  N --> F["Release dead yhat:4/5/7 regions"]
+  F --> D["FNTT c -> one free chat region<br/>64 x92 bits"]
+  D --> ACK["Validate complete commit and child retirement"]
+  ACK --> R["Release raw c"]
+  R --> KEEP["Retain w0,w1,chat + ctilde<br/>clear or transfer to next owner"]
+```
+
+Normal post-adoption error releases all adopted attempt data;raw y and
+prepared secrets survive. Global reset is the recovery for partial/fatal
+faults. Later products/z/hints still need their own region lifetimes;this
+checkpoint establishes the handoff and challenge transform only.
+
+## Stage5N.4g challenge lifetime
+
+The original key,raw y and retained yhat/w0/w1 keep28/39/53 regions at
+levels2/3/5. Challenge generation reads w1 in place and needs one additional
+free region for c:29/40/54 logical live regions. The test fixture also keeps
+one unrelated sentinel. No full encoded-w1 buffer is stored:one92-bit cache
+feeds the existing87-bit packer reservoir and formatter stream.
+
+ctilde uses a private512-bit register with32/48/64 meaningful bytes. The
+same bytes are hashed for SampleInBall. c occupies64 x92 bits =256 x23-bit
+coefficients =736 payload bytes in the existing four-bank memory. Its handle
+is chosen from currently free descriptors,including released row workspace;
+the outer Sign owner retains all other contexts across the handoff.
+
+```mermaid
+flowchart LR
+  SOURCE["Existing key,y,yhat,w0,w1<br/>28/39/53 retained regions"]
+  W1["w1[k]<br/>64 x92 bits each"] --> CACHE["92-bit read cache"]
+  CACHE --> PACK["Shared87-bit packing reservoir"]
+  PACK --> HASH["mu || packed w1 -> SHAKE256"]
+  HASH --> DIGEST["ctilde register512 bits<br/>32/48/64 valid bytes"]
+  DIGEST --> SAMPLE["Same SHAKE256/SampleInBall"]
+  SAMPLE --> DEST["One new c region<br/>64 x92 bits"]
+  DEST --> CLEAR["Explicit clear releases c only"]
+```
+
+Hash/packing failures allocate no polynomial. A completed c with bad status
+identity is released before error done. All source regions remain intact.
+During teardown,drain consumers then clear challenge,matrix,mask and key
+clients in that order. Partial ownership transfers for later secret products
+and rejection/retry are still to be scheduled;this is not the final full Sign
+memory lifetime map or a new fitted resource measurement.
+
+## Stage5N.4f reusable matrix-row workspace
+
+Same physical memory:four banks,each1024 x92 bits;64 logical regions,each
+64 x92 bits =256 x23-bit coefficients =736 payload bytes. sign_matrix_prepare
+chooses free region handles automatically and adds metadata only.
+
+| Level | Existing key + raw y | Workspace addresses | Total address plan | Retained after row temporaries released |
+|---|---|---|---|---|
+|2|12+4=16|4 yhat+4 A+4 w0+4 w1+3 row work=19|35|12+4+12=28 regions |
+|3|17+5=22|5 yhat+5 A+6 w0+6 w1+3 row work=25|47|17+5+17=39 regions |
+|5|23+7=30|7 yhat+7 A+8 w0+8 w1+3 row work=33|63|23+7+23=53 regions |
+
+Address-plan counts include workspace addresses leased for later use;they
+are not simultaneous physical allocations. Accumulator/scratch are released
+by the row service before decomposition allocates its new outputs. The focused
+bench also reserves region50 as an unrelated sentinel,so the largest complete
+address plan covers all64 regions. Artificial capacity tests fill additional
+free regions with real sampled blockers;these are not normal Sign storage.
+
+```mermaid
+flowchart LR
+  KEY["Prepared key<br/>N=l+2k regions<br/>retained by key client"]
+  Y["Original y[l]<br/>coefficient domain<br/>each64 x92 bits"] --> FNTT["Shared forward NTT"]
+  FNTT --> YH["yhat[l]<br/>NTT domain<br/>retained by matrix client"]
+  RHO["rho register256 bits"] --> SAMPLE["Shared SHAKE128 + sampler"]
+  SAMPLE --> A["A row[l]<br/>NTT domain<br/>reused for each row"]
+  A --> ROW["Shared PWM + in-place ADD + INTT<br/>acc,scratch,w:3 region addresses"]
+  YH --> ROW
+  ROW --> DEC["Shared x4 Decompose"]
+  DEC --> LOW["w0[k]<br/>canonical signed-low residues"]
+  DEC --> HIGH["w1[k]<br/>unsigned high parts"]
+  Y --> Z["Later z calculation<br/>original y is preserved"]
+  KEY --> LATER["Later secret products"]
+```
+
+A row and raw w are freed after validated decomposition;acc/scratch retire
+inside the existing row service. All yhat/w0/w1 stay private until the whole
+vector succeeds. Errors roll back only workspace regions. Clear order during
+teardown is matrix client,then mask client,then key client,after consumers
+drain;normal algorithm rejection/retry will define its own lifetimes later.
+
+## Stage5N.4e mask-vector lifetime
+
+The prepared key remains in its N=12/17/23 regions throughout hashing and
+mask generation. One attempt adds l=4/5/7 contiguous coefficient-domain mask
+regions,each64 x92 bits=256 x23-bit coefficients=736 payload bytes. The raw
+key transform scratch is already free;it is not required by the mask client.
+
+| Level | Key + mask live regions | Logical payload bytes |
+|---|---|---|
+|2|12+4=16|11776 |
+|3|17+5=22|16192 |
+|5|23+7=30|22080 |
+
+These are live payload sizes in the same four1024 x92-bit banks,not newly
+allocated hardware or fitted resources. Tests use key handles
+[31,0,...,N-2],mask regions32..32+l-1,and an unrelated sentinel in region50.
+All mask regions stay private under the outer owner until the full vector
+is validated. Clear/error cleanup releases masks only;key and sentinel
+readback must remain exact. Later arithmetic may use a different explicit
+nonoverlapping plan. This is not the final complete Sign memory schedule.
+
+```mermaid
+flowchart TB
+  KEY["Retained key regions<br/>N x64 x92 bits<br/>s1hat,s2hat,t0hat"]
+  MU["Registers:mu512 + mask seed512<br/>plus snapshotted header/control"] --> ENGINE["Same Keccak/sampler"]
+  ENGINE --> Y["Mask base..base+l-1<br/>l x64 x92 bits<br/>y in coefficient domain"]
+  KEY --> NEXT["Later shared NTT/PWM/process clients"]
+  Y --> NEXT
+  Y --> CLEAR["Clear/rollback releases y only"]
+```
+
+## Stage5N.4d one-scratch prepared-key layout
+
+The existing four1024 x92-bit banks remain unchanged. Let B be raw base,W
+the initial free scratch,N=l+2k. Raw key region B+j initially holds polynomial
+j. Transform0 writes W and releases B;transform1 writes B and releases B+1;
+continue until the last transform releases B+N-1. Prepared handles therefore
+become [W,B,B+1,...,B+N-2];B+N-1 is the final free scratch. The explicit handle
+array preserves polynomial order even though physical regions move.
+
+| Level | Prepared polynomials | Steady key payload | Peak key+scratch payload |
+|---|---|---|---|
+|2|12|12 x736=8832 bytes|13 x736=9568 bytes |
+|3|17|17 x736=12512 bytes|18 x736=13248 bytes |
+|5|23|23 x736=16928 bytes|24 x736=17664 bytes |
+
+Each region is64 x92 bits=256 x23-bit coefficients=736 payload bytes. These
+are logical live payload sizes inside the existing banks,not added RAM or
+fitted resource counts. rho/K/tr require1024 retained register bits;handles,
+owned/plan masks and control are metadata. No polynomial/key-byte RAM is added.
+
+```mermaid
+flowchart LR
+  RAW["Raw regions B..B+N-1<br/>s1[l],s2[k],t0[k]<br/>64 words x92 bits each"] --> NTT["Shared Pre/FNTT"]
+  NTT --> W["Free scratch W<br/>64 x92 bits"]
+  W --> OK["Validate ID,destination,complete ACKs"]
+  OK --> FREE["Release old raw source<br/>it becomes next scratch"]
+  OK --> MAP["Retained handles<br/>[W,B,...,B+N-2]"]
+  MAP --> OWNER["Future Sign owner uses same banks<br/>clear later releases every handle"]
+```
+
+Loaded raw secrets use coefficient domain;prepared results use NTT domain.
+s1/s2 retain mode1 and t0 mode3 as storage labels;all retain key ID/level.
+The operation owner keeps intermediate raw/results private across child
+handoffs. Error cleanup includes already transformed replacements plus any
+new completed destination,not just the original raw-region mask. Reset is
+required for a physical fault with a potentially WRITING destination. A
+separate unrelated sentinel remains allocated and must survive normal errors
+and clear;global reset intentionally invalidates the whole shared tree.
+
+## Stage5N.4c2 production access control
+
+The unchanged contiguous decoded-key layout below now uses the production
+shared service. One load owner controls the same allocator/packer/four banks;
+new compute/sampling descriptors and public reads are blocked until its done
+retires. complete is filtered with whole-key hidden. External releases are
+blocked on acceptance and throughout loading/held done;internal rollback
+releases have their own mux selection into the existing release port.
+
+The plan still consumes12/17/23 existing regions,with no extra key/polynomial
+RAM. Prior public-read responses and Keccak/sampler retirement must drain
+before a load can start. Header and region handles are valid at successful
+held done and must be retained by the future Sign owner. Reset clears validity
+and ownership across the one shared tree;payload RAM is not securely erased.
+The Stage5N.4c1 diagram/layout below remains applicable;its standalone-only
+scope describes that historical checkpoint.
+
+## Stage5N.4c1 tentative expanded-key layout
+
+The new loader is tested against the real memory primitive;production service
+arbitration is the next checkpoint. No memory dimensions change:
+4 logical banks x1024 words x92 bits;flat region={bank2,region4};each region
+has64 words x4 coefficients x23 bits. A decoded key occupies12/17/23 regions,
+or8832/12512/16928 coefficient-payload bytes. These are logical allocated
+payload sizes within the existing banks,not extra RAM or fitted resource counts.
+
+| Section | Level2/3/5 polynomial count | Flat regions from command base B | Metadata |
+|---|---|---|---|
+|s1|4/5/7|B through B+l-1|mode1,coefficient domain,key ID,level |
+|s2|4/6/8|B+l through B+l+k-1|mode1,coefficient domain,key ID,level |
+|t0|4/6/8|B+l+k through B+l+2k-1|mode3,coefficient domain,key ID,level |
+
+```mermaid
+flowchart TB
+  IN["Expanded SK bytes"] --> DEC["Decoder<br/>rho256 / K256 / tr512<br/>76-bit payload reservoir"]
+  DEC --> DMA["One23-bit coefficient at a time<br/>core0 packing context"]
+  DMA --> MAP["Region plan B..B+l+2k-1<br/>s1 then s2 then t0<br/>64 words x92 bits/region"]
+  MAP --> B0["Bank0<br/>1024 x92<br/>flat regions0..15"]
+  MAP --> B1["Bank1<br/>1024 x92<br/>flat regions16..31"]
+  MAP --> B2["Bank2<br/>1024 x92<br/>flat regions32..47"]
+  MAP --> B3["Bank3<br/>1024 x92<br/>flat regions48..63"]
+  B0 --> OUT["Existing checked92-bit read port<br/>4 natural-order coefficients/word"]
+  B1 --> OUT
+  B2 --> OUT
+  B3 --> OUT
+```
+
+The7-bit end calculation rejects overflow instead of wrapping. Any occupied
+region rejects the whole plan before input/allocation. Each polynomial gets
+64 write ACKs before primitive finish0;all earlier commits remain hidden.
+Whole-key done0 publishes the complete region mask and header. On error,
+finish1 frees the active partial region,then release handshakes free every
+earlier committed region. Unrelated data is preserved and checked by sentinel
+readback. The owner must mask complete and block public reads;the primitive
+alone does not enforce whole-key privacy. Locks last through held done.
+Reset clears validity,not payload bits;this is not secure key erasure.
+
+## Stage5N.4b signing hash storage
+
+The formatter holds a selected1024-bit prefix and128-bit merge reservoir,
+plus counters;there is no full context/message RAM. Raw hash requests allocate
+no polynomial region. Mask-nonce tests use the existing sampler allocation,
+packing/ACK/commit path and read back64x92-bit words(256 coefficients).
+The focused host then releases that scratch region;this is not a permanent
+Sign memory allocation. Existing four-bank geometry/KeyGen map are unchanged.
+The future decoded-key loader must keep its whole-key allocations private;
+the hash client does not implement that loader or retain full keys.
+
+## Stage5N.4a decoded-key boundary
+
+The standalone sign_key_decode retains rho256 + K256 + tr512 =1024 header
+bits and a76-bit payload reservoir. It emits canonical23-bit coefficients,
+tagged by s1/s2/t0 section,polynomial,index and ID. It currently allocates no
+shared-bank regions and changes none of the maps/geometry below.
+The future key-memory owner must reserve/protect destination regions and keep
+the ENTIRE key private until decoder done_code0,not publish each polynomial
+as it arrives. Error or reset invalidates all tentative header/payload output.
+No signing key lifetime map or bank-ingestion implementation is claimed here.
+
 ## Stage5N.3 signing-process use of the existing four banks
 
 Geometry and accepted KeyGen allocations below are unchanged. Signing process

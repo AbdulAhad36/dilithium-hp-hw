@@ -1,5 +1,805 @@
 # Dilithium specification
 
+Trial-by-trial history has been removed. Qualified evidence is retained in evidence/. Current measurements and active work are recorded in AGENTS.md and sim/dilithium/.
+
+## Stage7 implementation work
+
+The same complete KeyGen/Sign/Verify API, four-bank memory and arithmetic
+engines are retained. Stage7A passes the initial 33-scenario main UVM gate,
+but its first complete-design fit exceeds this Cyclone V's capacity.
+Stage7B targets area on the SAME 5CGXFC7C7F23C8, with the 6.757ns constraint.
+Its first candidate replaces only six helpers' combinational region-set
+construction: independent handle decoders plus pairwise six-bit uniqueness
+checks replace repeated variable-index bitmap reads/writes. Region equality,
+cross-set overlap, metadata, ownership and error checks remain. No controller
+state, interface, memory depth, engine or pipeline latency changes.
+45841 function-level equivalence cases pass; current-source main UVM and
+Quartus results remain pending. See THROUGHPUT.md and COVERAGE.md for evidence
+and scope; the older Stage6 full-suite qualification is a historical baseline.
+
+## Stage6 qualification status
+
+The full-operation configuration FULL_KEYGEN=1, ENABLE_SIGN=1, ENABLE_VERIFY=1
+passes 75 official KeyGen / 90 pure external Sign / 45 pure external Verify
+cases under one current source fingerprint. These cover final ML-DSA-44/65/87
+with level aliases2/3/5. The API and all 74 production RTL files are unchanged
+from Stage5V.4. REFERENCE_VERIFICATION.md owns commands, results, pinned NIST
+provenance and explicit unsupported-mode audits. Whole-main UVM/PPA is next.
+
+## Stage5V.4 main operation dispatch
+
+Main supports op0 KeyGen,op1 Sign,op2 Verify;op3 returns unsupported code2.
+Use FULL_KEYGEN=1 for complete encoded KeyGen. ENABLE_SIGN and ENABLE_VERIFY
+default1;the partial-KeyGen generic remains available for the earlier tests.
+The full-operation bench enables all three functions and shares one physical
+services tree. Sign keeps its existing input/output group. Verify adds one
+64-bit input group for PK,signature and ctx||M,with index16,bytes4,last1.
+Start carries signature length16,message length16,context length9,ID16 and
+parameter2. Parameter0/1/2 retains level2/3/5 labels for final ML-DSA-44/65/87.
+
+PK lengths1312/1952/2592 and signature lengths2420/3309/4627 bytes follow the
+level. Each frame restarts index0;an empty body has no beat. The finite hash
+contract is context<=255 and66+context+message<=65535. Unused high tail bytes
+are ignored. Accepted command metadata is snapshotted;later changes do not
+alter the operation. Main Verify completion code0 carries verify_accept1/0;
+structural invalidity and wrong signature length produce normal invalid0.
+Framing and internal failures retain separate nonzero status/stage/detail.
+The host stops remaining payload after early completion,acknowledges it and
+starts a new command. Verify frees all owned regions before completion.
+
+Main blocks debug reads and Sign input readiness while Verify owns services.
+Further starts wait for every owner to become idle,including KeyGen's existing
+post-ack cleanup. Fatal physical/raw faults need reset. The four banks,
+all existing arithmetic and6.757ns SDC remain unchanged. No new PPA or
+full-system UVM/netlist/board/security signoff is implied by source integration.
+
+## Stage5V.3 equation component boundary
+
+Internal command:id16,valid/ready;upstream context:param2,id16,region mask64,
+K t1hat,K hints,L zhat,chat handles6,rho256,mu512,zero-extended ctilde512.
+Validate complete unique leases before atomic take. Upstream is allowed to
+drop its context after take. Completion is held valid/ready with id16,code3,
+detail3,accept1 and zero-extended recomputed digest512. Code0/accept0 means
+cryptographically invalid;nonzero code has accept0 and digest0.
+
+Compute inverseNTT(Ahat*zhat-chat*t1hat),then UseHint and packed-w1 hash.
+Existing shared engines are reused;all sources/destinations are released
+before normal valid/invalid completion. No result context is retained.
+Recoverable child/read/packer failures retire/drain before releasing ownership;
+fatal physical/raw metadata failures halt until reset. Four banks and6.757ns
+constraint remain unchanged. Main host Verify/op2 wiring is still Stage5V.4.
+
+## Stage5V.2b Verify arithmetic preparation boundary
+
+The internal math preparer adopts the successful raw context from5V.2a and
+accepts ctx||M as one frame with64-bit data,1..8 valid bytes,index16 starting0
+and last. Command ID16 must match the upstream ID;level comes from that
+context. Context length9 must be<=255 and66+context+message must fit65535 bytes.
+This is the current finite shared-hash interface limit,not an algorithm limit.
+
+Compute mu=SHAKE256(tr64||00||ctxlen_byte||ctx||M).64. Sample c from the full
+received ctilde32/48/64 using SHAKE256 and SampleInBall. FNTT each shifted-t1
+and z polynomial;use existing Pre-NTT for c. Retain raw hints and publish
+K t1hat,L zhat,K hints and chat (13/18/24 region handles),rho32,mu64,ctilde.
+All arithmetic remains in existing shared engines;no new coefficient RAM.
+
+Before adoption,command/lease errors leave the original context untouched.
+After adoption,framing and recoverable child errors drain/retire the current
+service and release every owned source/destination before error completion.
+Result clear frees the context;take transfers it;pending reads block both and
+clear wins on simultaneous requests. Physical/raw protocol faults need reset.
+Status codes are documented in PROCESS_BLOCKS.md.
+
+This helper does not evaluate the Verify equation. The approved main three
+frames remain PK/signature/ctx||M;main op2 is still pending. UseHint,equation
+and challenge comparison are next5V.3,then main dispatch in5V.4. No new PPA,
+board ports,netlist or full-system UVM signoff is part of this checkpoint.
+
+## Stage5V.2a preparation boundary
+
+Internal verify_input_prepare consumes two sequential64-bit frames:PK then
+signature,index0/last per frame. It snapshots level0/1/2=2/3/5,operation ID16,
+signature byte length16 and base region6. Exact lengths are1312/1952/2592 PK
+bytes and2420/3309/4627 signature bytes. Header/endian rules match5V.1.
+It retains K shifted-t1,L z,K dense-hint coefficient-domain polynomials in the
+existing pool (12/17/23 regions) and returns rho32,tr64,ctilde32/48/64.
+tr is SHAKE256 of the complete encoded PK,not merely rho or t1.
+
+Prepared context is published only after both frame loaders and the PK hash
+retire successfully. Clear releases it;take transfers the whole lease;clear
+wins when both are offered. A pending read response blocks either handoff.
+Errors publish no context and preserve foreign regions;fatal service protocol
+faults require reset. See PROCESS_BLOCKS.md for status-code definitions.
+
+This is NOT a signature-validity result. The approved main contract remains
+PK/signature/ctx||M,with mu/challenge/NTT work next in5V.2b,Verify arithmetic
+in5V.3 and main op2 in5V.4. Existing engine RTL,memory geometry,main ports and
+6.757ns SDC are retained;the shared loader gains a Verify mode and paired raw
+PK admission. No new PPA or full-system UVM/netlist signoff is claimed here.
+
+## Stage5V.1 Verify boundary
+
+Approved future main Verify input:three64-bit frames,PK -> signature -> ctx||M,
+each with index0 and its own last. Command carries message/context/signature
+lengths;completion reports valid/invalid. Main op2 is still unsupported in this
+component checkpoint;no disconnected top-level placeholder ports are added.
+
+The working internal verify_decode frame interface is documented in
+PROCESS_BLOCKS.md. It checks exact declared length,all16 index bits,valid-byte
+count,last position,z's strict infinity-norm bound and canonical sparse hints.
+All output is provisional until done0. A structurally accepted signature still
+needs the full Verify equation and challenge comparison. Existing67 RTL files
+and the6.757ns timing constraint remain unchanged;one new decoder is added.
+
+## Stage5N.4h.7 official-vector scope
+
+The existing pure Sign host contract maps directly to ACVP's external/public
+Sign API. It supports deterministic requests by supplying32 zero rnd bytes,
+and randomized requests with the original32-byte rnd. Official corpus
+groups1/3/5/13/15/17 supply90 selected cases,30 per level2/3/5;messages1..8192
+bytes and contexts0..255 need no RTL/interface change. ACVP internal messages
+already carry different formatting;they are not public-message inputs.
+Prehash,external-mu and raw internal-message API groups remain unsupported.
+See REFERENCE_VERIFICATION.md for provenance,execution and gate results.
+
+## Stage5N.4h.6 main Sign operation and approved host framing
+
+`dilithium.sv` now dispatches operation0 to KeyGen and operation1 to
+`src/controller/sign.sv`. Operation2 (Verify) and3 are still unsupported and
+return code2. Sign is enabled by default (`ENABLE_SIGN=1`). The old focused
+KeyGen-only tests select ENABLE_SIGN0 to retain their unsupported-operation
+checks;the main Sign test uses the default enabled path and includes KeyGen.
+FULL_KEYGEN still selects encoded versus polynomial KeyGen output as before.
+
+The user approved this two-frame64-bit stream:
+
+1. Command:parameter0/1/2 means labels2/3/5 (ML-DSA-44/65/87),operation ID,
+   message length16,context length9 and explicit32-byte signing rnd.
+2. Frame1:expanded secret key,2560/4032/4896 bytes. All words have8 valid
+   bytes,index starts0,last marks the final word. High index bits are checked
+   before narrowing to the existing10-bit key decoder;they cannot silently alias.
+3. Frame2:context||message,index restarts0,last marks its last word. The final
+   word has1..8 valid bytes and unused high bytes are ignored. An empty body
+   consumes no beat. Ready may pause between frames during key transformation;
+   hold the first body word until its handshake.
+4. Signature:separate data64/bytes4/index10/last/ID ready-valid stream with
+   2420/3309/4627 bytes. Hold stalled words. Discard the provisional frame on
+   error/reset;matching main completion code0 validates it.
+
+This implementation supports pure ML-DSA with context length<=255 and
+66+context+message<=65535 bytes for its current finite hash descriptor.
+External-mu/prehash interfaces are not part of this command. start_seed256
+continues to serve KeyGen and is ignored by Sign;Sign's key comes from frame1.
+Host metadata is snapshotted at accepted start. A malformed frame causes an
+operation error;the producer stops sending its unaccepted remainder when
+completion/fault/reset cancels the request. A valid request must supply all
+required beats;there is no automatic timeout for a silent producer/consumer.
+
+The Sign controller grants only key preparation,attempt/retry or encoding
+to the existing services at a time. It retains the prepared key until the
+attempt is retired or adopted by the encoder,then clears any remaining attempt
+and the key before main completion. All regions are free before a normal Sign
+completion is published. KeyGen retains its existing cleanup-after-completion
+behavior;the main owner stays granted while child busy remains high and the
+next command is blocked. External debug read ready/response-valid are masked
+during Sign. No new bank,encoded-key/message/signature RAM or crypto engine.
+
+| Main completion code | Meaning / stage / detail |
+|---|---|
+|0|Success;stage0/detail0 |
+|1|Invalid Sign parameter/context/finite length;stage0/detail0;no key input consumed |
+|2|Unsupported main operation or disabled Sign;stage0/detail0 |
+|3|Key preparation error;stage1/detail=key-preparer code |
+|4|Attempt/retry error;stage2/detail=attempt-loop code |
+|5|Signature encoder error;stage3/detail=encoder code |
+|6|Observed child publication/ID mismatch;stage1/2/3 |
+
+KeyGen retains its original code meanings and reports stage/detail0. The Sign
+status counters are17-bit attempts,rejections,next polynomial nonce and remain
+stable through held done. Fatal child/memory faults assert fault and HALT until
+global reset instead of publishing a successful completion. No per-request key
+cache or explicit zeroization/security signoff is introduced.
+
+## Stage5N.4h.5 accepted attempt to signature bytes
+
+`helpers/sign_signature_encode.sv` snapshots an accepted attempt descriptor,
+checks unique handles,exact map/digest length/padding and complete physical
+sources,then takes the whole context atomically. Preflight code1 preserves
+the old owner. After take,the encoder owns all z/hint regions until cleanup.
+The outer scheduler leases the key and exclusive services through completion.
+
+| Label / final FIPS204 format | ctilde | z[l] | Hint indices + counts | Signature | Words / final bytes |
+|---|---:|---:|---:|---:|---:|
+|2 / ML-DSA-44|32 bytes|4 x576 bytes,18 bits/coefficient|80+4 bytes|2420 bytes|303 /4 |
+|3 / ML-DSA-65|48 bytes|5 x640 bytes,20 bits/coefficient|55+6 bytes|3309 bytes|414 /5 |
+|5 / ML-DSA-87|64 bytes|7 x640 bytes,20 bits/coefficient|75+8 bytes|4627 bytes|579 /3 |
+
+Shared Bitpkg command op is now3 bits:0=t1,1=t0,2=eta,3=w1,4=z;5..7 reject
+with code1. Previous operation values are unchanged. Z converts canonical
+residues to centered coefficients and packs gamma1-z,least significant bits
+and bytes first. The encodable interval is[-gamma1+1,gamma1];upstream CNB
+enforces the stricter signing norm bound. The existing87-bit reservoir suffices.
+
+Hints are scanned in polynomial/coefficient order. Emit each nonzero index,
+zero-pad the index area to omega80/55/75,and append k cumulative counts.
+Reject nonbinary values and weight above omega. All reads verify region,word,
+source ID,mode,param and coefficient domain. Z uses mode2,hints mode0.
+
+Output valid/ready,data64,bytes4,index10,ID16,last1 remains stable while stalled.
+Source read tags and output-frame tags are independent and tested with different
+IDs. A full hint output word retires before a potentially failing hint response
+is consumed,so a recoverable read error cannot withdraw a stalled valid word.
+Unused bytes of the last word are zero. **Bytes are provisional until matching
+completion code0.** Error/reset means discard the whole frame,including earlier
+bytes. Cleanup frees the adopted map before held completion. Code2 is an observed
+packer failure;code3 is a malformed hint/read observation. A bad Z read with a
+live noncancelable pack command,unexpected pack output framing,physical fault
+or disappearing owned region HALTs until global reset. No signature RAM or
+duplicate packer. Main host Sign and Verify remain unconnected.
+
+## Stage5N.4h.4 attempt loop and seed reuse
+
+`helpers/sign_attempt_loop.sv` connects the existing mask,matrix,challenge,
+challenge-transform,products and candidate-check clients to the same physical
+services. It starts from a retained prepared-key context and streamed ctx||M.
+The initial mask command hashes mu and the private seed exactly once. After
+a genuine candidate rejection,it takes the checker outcome atomically,
+retains mu/seed/nextnonce,and launches ExpandMask directly. No message replay,
+second private-seed hash,polynomial copy RAM or new arithmetic engine.
+
+The mask helper adds command_retry1 and command_retry_mu/seed512 inputs.
+Normal commands tie retry low and retain their original behavior. A retry
+snapshots those two headers and enters formatter op3 directly;message/context
+lengths and rnd are unused in this mode. Existing vector/base/key/nonce
+capacity checks remain in force. payload_ready stays low on retries. The
+mask result has the same headers,handles,clear/take and ownership contract.
+
+The parent sequences six child commands. Each successful result retires
+before the next command. Matrix/challenge and mask/vector ownership transfers
+remain within the existing helpers. A rejected checker publishes no attempt
+regions;the parent snapshots its headers on take before the checker invalidates.
+Then nonce advances by l(4/5/7),the prepared key remains live,and another
+attempt starts. Service errors stop the loop and clear all still-owned child
+contexts in reverse dependency order. A fatal child/physical/context fault
+HALTs the parent and requires global reset.
+
+| Parent done code | Meaning |
+|---|---|
+|0|Accepted candidate retained;not yet an encoded signature |
+|1|Invalid/missing prepared context or parameter |
+|2|Child error;done_stage identifies0mask/1matrix/2challenge/3transform/4products/5checks;done_detail is the child's code |
+|3|Observed child publication ID/valid contract mismatch |
+|6|The next whole mask vector would exceed nonce65535;no wrapped command launches |
+|fault1,no done|Fatal state requiring global reset |
+
+command_nonce,next_nonce,attempt/rejection counters have17 bits. The parent
+checks nonce+l<=65536 with18-bit arithmetic **before** narrowing the sampler
+nonce to16 bits. A valid final vector may end at nextnonce65536 and still
+return an accepted candidate. A rejected final vector instead returns code6
+without launching another mask or nonce0. There is no arbitrary retry-count
+limit in RTL. The local fixture generator's bounded search is only a test aid.
+
+At accepted REPORT/READY,the parent exposes z[l],h[k],ctilde32/48/64 bytes,
+region map and stable attempt/rejection/nextnonce status. z/h regions have
+the parent's command ID;z mode2,hints mode0,coefficient domain0. Outputs are
+masked until the parent verifies acceptance. Clear releases them;take transfers
+them without physical release. Clear wins and pending consumers block both.
+The outer controller retains the key and exclusive service routing through
+the entire busy interval,including cleanup,held done and READY. Main Sign
+host integration,signature encoding and main Verify remain unfinished.
+
+## Stage5N.4h.3 whole-attempt checks
+
+`helpers/sign_attempt_check.sv` consumes the entire products READY context
+with its existing take handshake. It snapshots handles,IDs,mu,private seed,
+ctilde and17-bit next nonce before the old owner invalidates. The prepared
+key remains leased to its existing owner throughout this operation and READY.
+No arithmetic engine,polynomial memory or physical bank changes are needed.
+As with the preceding clients,the outer controller grants exclusive service
+routing across the entire busy interval,including planning,inter-command gaps
+and retained READY. A new unrelated allocator must not steal a planned spare.
+Explicit consumer reads are allowed only while the controller preserves the
+owner's regions;pending responses block clear/take.
+
+CNB reads z,r0,ct0 in that order;each polynomial reduces its256 coefficients.
+The first failing polynomial stops the attempt. Centered magnitude **equal
+to** its bound rejects. Bounds at levels2/3/5 are:
+
+| Check | Level2 | Level3 | Level5 |
+|---|---|---|---|
+|z:gamma1-beta|130994|524092|524168|
+|r0:gamma2-beta|95154|261692|261768|
+|ct0:gamma2|95232|261888|261888|
+|Maximum total hint weight,omega|80|55|75|
+
+After every norm passes,shared in-place ADD updates r0[row]+=ct0[row] moduloq.
+Shared x4 Mhint compares that combined low part with retained w1[row],writes
+one0/1 polynomial and returns its9-bit weight. A12-bit accumulator holds
+the vector sum without truncation(maximum8x256=2048). Reject **above** omega;
+equality is allowed. Each ADD/hint result must retire before destination
+completeness checks or the next operation. Source/key metadata loss or a
+physical fault HALTs until global reset.
+
+| Completion | Meaning and retained state |
+|---|---|
+|code0,reject0,reason0|Candidate accepted;retain z[l],hints[k],ctilde,mu,seed,next nonce |
+|code0,reject1,reason1/2/3|Normal z/r0/ct0 norm rejection;release all attempt regions,retain only mu/seed/next nonce |
+|code0,reject1,reason4|Normal hint-weight rejection;discard all attempt payloads,including the partial hint vector;retain retry headers |
+|code1|Bad/missing/overlapping source contract;previous products owner remains intact |
+|code2|No free hint destination before take;previous owner remains intact |
+|code3,detail=child code|Shared CNB/Mhint service error;discard adopted attempt |
+|code4,detail=child code|Shared ADD service error;discard adopted attempt |
+|code5|Observed child tag/destination/result contract mismatch;discard adopted attempt |
+|fault1|Unsafe physical/context failure;no done/result credit,global reset required |
+
+`result_valid` represents a retained algorithmic outcome,including rejection.
+On rejection,result_regions/z/hints/z_id/ctilde/bytes are allzero;mu,seed and
+next_nonce remain valid for retry. On acceptance,z_id is the products ID;
+hints use the new command ID. done_reason/weight are stable through held done.
+Normal errors publish no result or retry header. Only the next operation's
+control can decide to retry;this helper does not rehash the message or sample y.
+
+READY clear discards the retained result and zeroes private headers. READY
+take transfers it without physical release and invalidates the old owner.
+Clear has priority. Both wait for all services and pending read responses to
+retire. Inputs/results are canonical23-bit coefficients,with existing bank
+metadata checks;the helper adds no encoded signature interface. Main Sign
+and Verify remain unfinished;candidate acceptance alone is not a signature.
+
+## Stage5N.4h.2 response products and in-place correction
+
+sign_mask_prepare adds READY-only take_valid/ready,with the same quiescent,
+pending-read and clear-priority contract as the other retained clients.
+The receiver must snapshot raw-y handles,mu and the private mask seed before
+take. The old mask owner invalidates its publication and clears those header
+registers without physically releasing y. Existing diagnostic clients tie
+take_valid low.
+
+helpers/sign_response_products.sv atomically adopts the mask context and the
+retained w0/w1/chat context. Prepared-key ownership stays with its existing
+client for the entire busy/REPORT/READY/cleanup lifetime. It validates unique,
+disjoint handle maps,level,digest length,nonce range and complete sources.
+It plans k+2 free addresses before taking either owner:k retained ct0 regions
+and two reusable PWM/inverse scratch regions. No polynomial payload RAM.
+
+For each secret polynomial,shared PWM computes chat*secret_hat and ordinary
+INTT returns the coefficient product. The C Montgomery/inverse factors cancel;
+RTL stores ordinary canonical residues. Group0 computes cs1 and rewrites y as
+z=y+cs1. Group1 computes cs2 and rewrites w0 as r0=w0-cs2. Group2 computes
+ct0=c*t0 and retains it for later norm/hint checks. Scratch regions are released
+after their last read and reused. chat is released only after all products.
+w1 remains unchanged.
+
+All z/r0/ct0 coefficients are canonical23-bit residues. z retains mode2,
+r0 mode0,ct0 mode3,all coefficient domain with the new command ID. w1 retains
+mode0 and the original matrix ID. Successful result publishes ordered z[l],
+r0[k],w1[k],ct0[k] handles,mu512,private seed512,ctilde512,valid digest bytes
+and next_nonce17=nonce+l. Values beyond legal signing bounds may appear:
+success here means arithmetic complete,not signature acceptance.
+
+| Code | Meaning | detail |
+|---|---|---|
+|0|Whole arithmetic context complete|0 |
+|1|Invalid/missing context,layout,digest length or nonce|0 |
+|2|Fewer than k+2 free planned addresses|0 |
+|3|PWM or inverse child rejected|Child code |
+|4|In-place ADD/SUB child rejected|Child code |
+|5|Result identity/region/storage mismatch|0 |
+
+Each child result retires before the parent checks complete storage and
+starts dependent work. Before adoption,normal rejection preserves both old
+owners. Afterwards,normal failure releases all adopted/new attempt regions,
+including previously rewritten y/w0 and retained ct0 prefixes. It does not
+restore those source publications. The prepared key remains intact. Partial
+physical write faults or key-context loss require global reset.
+
+Whole result holds through done and READY. Clear releases this attempt only;
+take transfers handles AND retry headers to the next owner. Consumer reads
+block either handoff. Unused digest/handle bits remain zero. A normal service
+failure is an operation error;automatic algorithmic rejection/retry is not
+implemented here. The future outer Sign controller owns the header lifetime
+through such decisions. CNB,Mhint,hint-count rejection,signature bytes and
+main Sign/Verify remain separate unfinished work. No Fmax/area claim is added.
+
+## Stage5N.4h.1 atomic ownership and FNTT(c)
+
+sign_matrix_prepare and sign_challenge_prepare add take_valid/take_ready.
+Only retained READY may transfer. All physical services and pending consumer
+reads must be retired;clear has priority over take. A successful take edge
+invalidates the old publication and relinquishes its complete ownership mask,
+without releasing any physical region. A receiver must snapshot all handles,
+IDs and private header bytes before that edge and retain the exclusive outer
+operation lease. Unchanged diagnostic clients tie take_valid low.
+
+helpers/sign_challenge_transform.sv validates and snapshots both contexts,
+then joins their handshakes atomically. Neither owner may transfer alone.
+The caller must route the two valid/ready pairs consistently and retain the
+key AND raw-y contexts throughout busy,held done,READY and cleanup. Matrix
+and challenge source publications must stay stable until the transfer;their
+invalidation after transfer is expected. The new client owns yhat,w0,w1,c.
+
+It releases all dead yhat regions,chooses the lowest currently free region,
+and performs ordinary forward NTT(c) through the existing engine. Pre-NTT
+is not requested. Child result ID/region/code and acknowledged complete
+storage must validate before releasing coefficient-domain c. w0/w1 stay
+unchanged. The result is retained w0/w1 plus chat=NTT(c),ctilde and source
+matrix ID. chat has new command ID,mode3,level and NTT-domain metadata;
+w0/w1 retain the original matrix ID,mode0 and coefficient-domain metadata.
+
+| Code | Meaning | detail |
+|---|---|---|
+|0|Whole retained w0/w1/chat context ready|0 |
+|1|Invalid context,overlapping/duplicate handles,wrong digest length or missing source|0 |
+|2|No free destination after dead-yhat release|0 |
+|3|Physical NTT rejected the command|Child code |
+|4|NTT result identity/region/complete mismatch|0 |
+
+Before adoption,normal rejection leaves the old owners intact. After
+adoption,normal failure releases all adopted attempt regions and any new
+complete destination;it does not restore invalidated publications. Key/raw y
+remain retained so the attempt can be rebuilt. An incomplete physical write,
+physical fault or key/raw-y context loss HALTs until global reset.
+
+Success holds through done and READY. Clear drains pending consumers and
+releases only this context. Its own take interface permits the next owner to
+adopt all results without physical release. No polynomial payload RAM,new
+engine,main Sign host operation,secret products or rejection loop is added.
+
+## Stage5N.4g w1 packing and challenge client
+
+The existing single shared Bitpkg adds op3:w1. Level2 uses6 bits per high
+coefficient(range0..43),levels3/5 use4 bits(range0..15). All23 input bits
+are range-checked before encoding. Commands op0/t1,op1/t0 and op2/eta retain
+their formats. Param3 remains invalid;all four2-bit op values now have uses.
+The same87-bit reservoir and existing service record/ports are retained.
+
+helpers/sign_challenge_prepare.sv consumes a retained matrix context:
+valid,param2,source ID16,regions64,8x6-bit w1 handles,and mu512. Command ID16
+tags the new packing/hash/sampler work. The caller retains the key,mask and
+matrix contexts and exclusive outer Sign lease across all handoffs,held done,
+READY and clear. It drains previous engine AND packer owners before grant.
+Duplicate w1 handles or handles outside the retained matrix mask reject.
+Source regions must be reserved/complete;the lowest free region is chosen
+for c. Temporary command_ready backpressure is waited out,not a rejection.
+
+Read each source as64 x92-bit words,cache one word,and feed256 ordered23-bit
+coefficients to shared Bitpkg op3. Concatenate k packed polynomials in row
+order:768 bytes at levels2/3,1024 at level5. The existing signing formatter
+op2 absorbs mu64 || encoded_w1 into shared SHAKE256,returning ctilde32/48/64
+bytes. Exactly that actual RTL digest becomes the next SHAKE256 sampling
+message(mode3 SampleInBall);no nonce is appended. The resulting c contains
+256 canonical coefficients,with39/49/60 nonzero entries,each+1 or-1 mod q.
+
+| Parent code | Meaning | detail |
+|---|---|---|
+|0|Validated ctilde and complete c polynomial ready|0 |
+|1|Invalid context/handle set,missing source or non-quiescent grant|0 |
+|2|No free c destination|0 |
+|3|Source read identity/metadata error|0 |
+|4|Bitpkg rejected data/framing|Packer code |
+|5|Sampler returned an error|Sampler code |
+|6|Pack/hash/sampler identity,length,ordering or committed-result mismatch|0 |
+
+Each source read validates region,word,ID,mode0,level and coefficient domain.
+Packed output validates ID,index,8-byte count and final-word marker before
+forwarding. Raw hash beats validate ID,assigned core,16-byte size and total
+ctilde length;done must match ID/core. All k pack packets and raw/formatter
+owners retire before sampling can start. Sampler status and post-retirement
+complete storage must succeed before whole-parent publication.
+
+Normal read/pack failures drain the current shared pack packet using framed
+zero coefficients,consume its remaining output/done,and inject an invalid
+formatter payload beat to zero-fill its remaining declared message. Prior
+valid body words remain part of the diagnostic hash,which is discarded.
+Already failed packers terminate through their own held error done. Pending
+bank responses and raw hash output/done also drain;no next descriptor uses
+an invalid digest. Late tag failures may discard an otherwise correct hash.
+Sampler-result errors release any completed new c region before error done.
+
+Successful done holds,then READY retains private ctilde512,bytes7 and region6.
+Unused digest high bytes are zero. Results are zero/invalid until complete
+success. Explicit clear waits for pending consumers/packer readiness and
+releases c only;busy0/command_ready1 ends it. Key,y,yhat,w0,w1 and unrelated
+regions survive errors/clear. Physical fault or loss/change of retained valid,
+level,ID or region map halts until GLOBAL reset. No secure RAM erase/cancel
+or completed main Sign/Verify host interface is added.
+
+Storage is one92-bit cache,digest/header/control registers and the existing
+formatter/packer reservoirs. No complete message,encoded w1 or polynomial RAM,
+second Bitpkg or second Keccak/sampler is instantiated.
+
+## Stage5N.4f matrix/decomposition client contract
+
+helpers/sign_matrix_prepare.sv is a control-only client. The caller retains
+the validated key and mask contexts and grants exclusive services ownership
+until this client's busy drops,including child gaps,held done,READY and clear.
+Input command is ID16. The retained key supplies valid,param2,ID16,rho256 and
+regions64;the mask context supplies valid,ID16,regions64 and7x6-bit handles.
+Relevant fields are snapshotted on acceptance. Duplicate/mismatched mask
+handles,key/mask overlap,missing/incomplete sources or a non-quiescent grant
+reject before engine work. A valid prepared context is a caller precondition;
+this helper does not revalidate expanded-key bytes.
+
+The helper scans64 region descriptors and chooses the lowest free addresses
+for yhat[l],one reusable A row[l],w0[k],w1[k],accumulator,scratch and row w.
+Required workspace address counts are19/25/33 at levels2/3/5. The plan is
+logically leased by the outer owner before individual services allocate it.
+Insufficient capacity returns an error with no physical allocation. No bank
+dimensions,polynomial RAM or accelerators are added.
+
+Each y uses ordinary forward NTT(op0),retaining its original coefficient-
+domain source. A[row,column] is sampled directly in NTT representation from
+SHAKE128(rho || column8 || row8);it is not transformed again. Existing shared
+row service performs l PWM terms,destructive accumulator adds and inverse
+NTT. Existing sign process op0 decomposes w into canonical w0 residues and
+unsigned w1. Sampling status commits storage on its handshake edge;complete
+is checked after retirement. The decomposition child hides source w through
+its held done,so whole-plan completeness waits for that child to retire too.
+
+| Parent code | Meaning | detail |
+|---|---|---|
+|0|Entire yhat/w0/w1 vector complete|0 |
+|1|Invalid context/handle plan,missing/incomplete sources,non-quiescent grant|0 |
+|2|Insufficient free workspace addresses|0 |
+|3|Forward NTT rejected|Child code |
+|4|A sampling/formatter failed|Sampler code,or0 for formatter error |
+|5|Row service rejected|Child code |
+|6|Decomposition rejected|Child code |
+|7|Child identity,region,term-count or committed-result mismatch|0 |
+
+Every successful child result must match command ID,destination and completed
+allocation;row completion must also report l terms. All new persistent data
+uses the command ID16,including wraparound;original y keeps its mask ID.
+Output valid publishes only after all k rows,decomposition commits and row-
+temporary releases. The region mask and yhat[7]/w0[8]/w1[8] handle arrays are
+zero while invalid. Successful done holds,then READY retains the vector until
+clear. Raw w and the A row are released/reused after each validated row.
+
+Normal errors drain their child and release all new workspace allocations,
+including earlier complete rows,before reporting done. The original key,y and
+unrelated regions are preserved. Clear releases only this client's retained
+yhat/w0/w1,not key/y;caller stops new consumer requests and drains pending
+responses first. No separate clear result;busy0/command_ready1 ends cleanup.
+Loss/change of a live key/mask valid,ID,level or region map,physical child fault,
+or an unexplained incomplete allocation after retirement halts until GLOBAL
+reset. No timeout/cancel or secure RAM erase is implemented. Full main Sign,
+challenge/retry/signature encoding and Verify remain separate unfinished work.
+
+## Stage5N.4e retained-key hash and mask-vector client
+
+helpers/sign_mask_prepare.sv is a control client of the same services,not a
+complete Sign controller. Its caller holds sign_key_prepare in retained READY,
+drains prior service owners,and grants the services exclusively for the whole
+mask client's busy interval. The outer Sign lease also spans the gaps between
+these clients. Main dilithium.sv still implements KeyGen only.
+
+Command fields:ID16,message bytes16,context bytes9,initial nonce16,mask base6,
+rnd256. Prepared context supplies valid,param2,key ID16,regions64,K256,tr512.
+Accepted commands snapshot these fields. Pure-message absorption is
+tr || 00 || ctx_len8 || ctx || M. The payload stream carries ctx || M as
+data64/bytes4/index16/last;the existing formatter enforces exact framing and
+ignores unused high bytes. Supported absorption length is at most65535 bytes,
+context at most255 bytes. No prehash/external-mu API is added.
+
+The client computes mu64 bytes,then SHAKE256(K || rnd || mu,64),then ExpandMask
+for l=4/5/7 polynomials at nonces nonce+j. It requires nonce+l<=65536 and
+base+l<=64 before launching any hash. The contiguous mask plan must exclude
+the prepared key and every already reserved region. This is one attempt's y
+vector;the later rejection controller must select/increment its next nonce.
+
+Raw outputs must total exactly64 bytes in four16-byte beats,with assigned
+core and command ID matching at every beat and retirement. The formatter's
+absorption done is insufficient:the physical raw/sampler owner must retire
+and active must become zero before the next descriptor. Mask status must
+match ID/core,code0 and acknowledged complete allocation. A bad raw result
+never becomes a dependent seed;bad mask status discards the whole vector.
+
+| Parent done code | Meaning |
+|---|---|
+|0|Entire mu/seed/mask vector ready |
+|1|Missing/invalid prepared context or non-quiescent/incomplete-key grant |
+|2|Context/message length,region bounds,key alias or nonce overflow |
+|3|Mask plan already occupied |
+|4|Formatter/payload error |
+|5|Raw/sampler result tag,length,status or formatter ID error |
+
+Malformed payloads follow the existing zero-fill/drain rule;their digest is
+discarded. Earlier mask allocations are released before error done. Successful
+done holds until acknowledgment,then retained READY keeps mu512,seed512,
+regions64 and7x6-bit handles stable. Outputs are zero/invalid before complete
+success. New commands cannot overwrite a live vector. Explicit clear waits
+for consumers to drain,invalidates exposed results and releases only masks;
+busy0/command_ready1 signals clear completion. No separate clear result.
+
+Physical fault,loss/change of retained key valid/ID/level/region map during
+work,or an incomplete allocation after service retirement halts without
+normal done;global reset is required. The caller must not clear the key until
+mask work and later consumers have retired. Caller must stop new consumer
+requests while clearing;pending responses still drain. Reset clears metadata,
+not physical RAM contents. No secure-erasure/security signoff is claimed.
+
+All added storage is control/header/digest registers. No message RAM,polynomial
+RAM,encoded-key RAM,second Keccak/sampler/NTT or new physical bank is added.
+No synthesis result is implied for this uninstantiated main-Sign client.
+
+## Stage5N.4d retained key-preparation contract
+
+sign_key_prepare is a control-only services client,not a complete Sign
+controller. Commands snapshot level2-bit,ID16,raw base6 and scratch6. The raw
+plan has12/17/23 regions in s1,s2,t0 order. Scratch must be outside that plan
+and free. Bounds/alias/scratch occupancy and raw-plan occupancy reject before
+any key input. The caller must drain the previous services lease before
+granting this client;CHECK also rejects a non-quiescent grant.
+
+Input64/bytes4/index10/last retains the exact expanded-key stream contract.
+The validated load result is retained internally. Each s1/s2 polynomial uses
+Pre-NTT(op3);all validated eta2/4 coefficients meet its small-coefficient
+eligibility. t0 uses ordinary forward NTT(op0). Every result must match ID
+and destination and have acknowledged complete storage. Only then is its raw
+source released and reused as the next scratch region. No in-place NTT is used.
+
+| Parent done code | Meaning | detail |
+|---|---|---|
+|0|Entire prepared key ready|0 |
+|1|Invalid level|0 |
+|2|Raw bounds or scratch aliases raw plan|0 |
+|3|Scratch already occupied|0 |
+|4|Raw-plan conflict or loader rejection|Loader code;4 for preflight conflict |
+|5|NTT rejection|NTT code |
+|6|Non-quiescent grant or wrong child result ID/region/mask/reservation|Child code,or0 for grant/result identity error |
+
+done/ID/detail hold under backpressure. Successful context contains rho256,
+K256,tr512,param2,ID16,region mask64 and23 x6-bit polynomial handles;unused
+handles are zero. It becomes valid only after every transform and raw-source
+release,then persists across done retirement in READY. New commands cannot
+replace a live key. busy stays high;service_active becomes low in READY so
+the outer Sign owner may grant its other privileged service clients.
+
+clear_valid/clear_ready accepts only READY and quiescent services. The caller
+must stop new consumer requests on a clear request,while draining existing
+responses. Clear immediately invalidates/zeros exposed context and releases
+all owned transformed regions. Completion is busy=0 and command_ready=1;
+there is no separate clear-result channel. The caller keeps the outer lease
+through this cleanup. Reset clears context and shared allocation validity,
+not payload RAM erasure. Physical service faults halt without normal done and
+retain the outer lease until global reset. Silent truncated input also needs
+external cancellation/reset. Algebraic key consistency/full signatures are
+outside this component gate;main Sign/Verify still reject as unsupported.
+
+## Stage5N.4c2 shared key-load service
+
+request_t.load carries valid,param2,id16,base6,input_valid,input_data64,
+input_bytes4,input_index10,input_last and done_ready. response_t.load returns
+ready,busy,input_ready,done_valid,done_code3,done_id16,done_regions64 and
+rho256/key256/tr512. The decoder and loader byte/error contracts below remain
+unchanged. No external dilithium.sv ports are added;main Sign is still pending.
+
+New-command priority is row,NTT,scalar process,sign process,key load,raw hash,
+sampling,public read. Key loading waits for all existing Keccak/sampler owners,
+compute clients and pending public reads/responses to retire. Priority does
+not preempt an accepted key:its busy remains high through held done. Waiting
+row requests cannot mask that owner's input or done-ready.
+
+The bank arbiter blocks external release on the key acceptance edge and for
+the entire busy interval,including unrelated releases. Public reads are also
+blocked when a new key descriptor has priority. Internal rollback releases
+are routed directly to the same memory interface. The complete bitmap is
+filtered with the loader's whole-key hidden mask;that bitmap alone is not the
+access control. Successful header/region outputs must be captured at done
+retirement by the future Sign owner;they are not retained for a later caller.
+
+The standalone loader contract requires exclusive ownership;that requirement
+is now implemented by production services. The focused client gate below is
+preserved as earlier evidence,not a statement that wiring is still pending.
+
+## Stage5N.4c1 decoded-key ingestion contract
+
+sign_key_load is an exclusive memory client,not yet wired into production
+services/main Sign. Commands snapshot parameter,ID16 and base region6.
+Regions are contiguous in section order s1,s2,t0:12/17/23 for levels2/3/5.
+The7-bit exclusive end must be<=64. The entire plan must be free before any
+input or allocation;occupied plans reject. The caller prevents competing
+allocations for the entire busy interval,including held done.
+
+Core0 packs natural-order canonical23-bit coefficients,all in coefficient
+domain. s1/s2 retain mode1;t0 uses mode3 as a storage label,not a sampling
+command. Regions retain key ID and level. No algebraic key check is added.
+
+| done code | Meaning |
+|---|---|
+|0|Entire key decoded and all writes acknowledged |
+|1|Invalid parameter |
+|2|Unused eta encoding,from decoder |
+|3|Input framing error,from decoder |
+|4|Planned region already occupied |
+|5|Region plan extends beyond64 |
+
+Header rho256/K256/tr512 and done_regions64 are meaningful only during
+successful done;otherwise outputs are zero. Publication waits for whole-key
+success;busy/planned release locks persist through done retirement. Errors
+discard the active partial allocation with finish1,then release every earlier
+commit. Internal ordering/ID mismatch faults and halts until reset. Reset
+invalidates ownership/header outputs;RAM payload is not securely erased.
+Silent truncated input needs external reset/cancellation.
+
+## Stage5N.4b signing hash-message interface
+
+sign_hash_message is a standalone client verified against dilithium_services;
+it is not yet instantiated in main Sign. All fields are byte-aligned.
+
+| Opcode | Absorption bytes | Service / result |
+|---|---|---|
+|0 mu|tr64 ||00 ||ctx_len1 ||ctx ||M|Raw SHAKE256,64 bytes |
+|1 private mask seed|K32 ||rnd32 ||mu64|Raw SHAKE256,64 bytes |
+|2 challenge|mu64 ||encoded_w1|Raw SHAKE256,32/48/64 bytes at levels2/3/5 |
+|3 mask nonce|mask_seed64 ||nonce_le16|Sampler mode2,256 canonical coefficients |
+
+command_op3/param2,id16 and input fields are snapshotted. Relevant data ports:
+tr/mu/mask_seed512,key/rnd256,context_len9,message_len16,nonce16. Params0/1/2
+mean levels2/3/5;3 is invalid. Op0 context0..255;its total66+ctx_len+message_len
+must fit65535. Other command fields are irrelevant to that opcode.
+Private mask seed is FIPS204 rho-double-prime(the C rhoprime variable),not
+KeyGen's different rho-prime secret-sampling seed.
+
+Payload is ctx||M for op0 and already encoded w1 for op2. Expected w1 lengths
+are768/768/1024 bytes;the formatter checks framing,not individual w1 high values.
+No payload for op1/3. Payload64,index16,bytes4,last must name exact ordered
+words,valid bytes1..8 with partial bytes only on the final beat. Unused high
+bytes are ignored. Hash output stream input_data64/input_bytes4/index16/last
+is checked in the harness;the existing service consumes data64 by declared
+message length. Byte0 occupies bits7:0. request has mode1(SHAKE256),
+sampling1,param2,id16,message_len16,output_len16;output_len0 means sampler route,
+not a raw zero-length hash. A mask caller must set sampler job_mode2.
+
+done_code0 means absorption completed;1 invalid command/no descriptor;
+2 malformed payload with completed error drain;3 internal state error.
+Done is held and means neither hash success nor service-owner release.
+On code2,remaining declared bytes are replaced with zeros;the owner must
+discard EVERY output and retain service ownership until raw done or sampler
+status retires. Future Sign must not publish a signature from that result.
+The tested harness only commits a digest cache after code0 and service retirement.
+Reset cancels formatter and service together. Missing payload without an end
+event waits;external cancellation must reset/drain the owning operation.
+
+All16-bit PER-POLYNOMIAL nonces are accepted,including65535. Future vector/
+retry control must ensure kappa+j does not wrap. Arbitrarily long messages,
+non-byte messages,HashML-DSA prehash/OID formatting,external-mu API,w1 packing
+and main Sign control are not implemented by this client. The current
+descriptor limit is an explicit interface constraint,not the FIPS message limit.
+
+## Stage5N.4a expanded secret-key decoding
+
+process/sign_key_decode.sv implements the byte layout of final FIPS204
+skDecode,with an explicit additional strict check for unused eta encodings.
+It is a standalone process foundation,not yet driven by main Sign or bank DMA.
+
+| Interface | Contract |
+|---|---|
+| command_valid/ready,param2,id16 |Params0/1/2=levels2/3/5;param3 completes with code1;busy through done retirement |
+| input_valid/ready,data64,bytes4,index10,last1 |First byte in bits7:0;exact8 valid bytes/word;indices0..319/503/611;last only on final word |
+| header_valid/ready,rho256,K256,tr512,id16 |One held header after16 accepted words;byte ranges0..31,32..63,64..127 |
+| output_valid/ready,data23,id16 |Canonical coefficient modulo8380417,one accepted coefficient per handshake |
+| output_section2,poly3,index8 |Sections0 s1,1 s2,2 t0;poly starts0 in each section;coefficient0..255 |
+| output_last_poly,last_key |Last-poly iff index255;last-key iff last t0 polynomial's coefficient255 |
+| done_valid/ready,code3,id16 |Code0 complete success;1 invalid level;2 unused eta encoding;3 word index/byte count/last or internal framing failure |
+
+At levels2/3/5:(k,l,eta)=(4,4,2),(6,5,4),(8,7,2). Encoded key sizes
+are2560/4032/4896 bytes. s1 and s2 use3/4/3 bits/coefficient with decoded
+value eta-encoded;t0 uses13 bits with value4096-encoded. Negative values are
+converted to canonical23-bit residues. Unused eta bit patterns are rejected
+before emitting that coefficient. FIPS204 skDecode itself describes how such
+malformed inputs can decode out of range;our rejection is an explicit input
+validation choice,not a claim that the unchanged C unpacker rejects them.
+
+No full-key RAM. Header outputs,coefficient outputs and done fields remain
+stable under stalls. All emitted header/coefficient data is tentative until
+code0;on error,the future key-memory owner must discard the ENTIRE key,
+including earlier complete polynomials. Missing data alone cannot be detected
+without an external end/timeout;reset cancels a truncated stream. A supplied
+wrong final last flag is detected. Surplus unaccepted input can be canceled
+after terminal completion. This block checks format/range,not algebraic key
+consistency or side-channel security. Main external ports remain unchanged.
+
 ## Stage5N.3 checked memory-service contract
 
 Internal request_t.sign / response_t.sign reach sign_process_dma through

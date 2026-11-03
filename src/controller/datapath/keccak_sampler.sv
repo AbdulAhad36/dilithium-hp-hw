@@ -2,7 +2,8 @@
 // Commands supply the complete SHAKE absorption message on the64-bit stream.
 `default_nettype none
 module keccak_sampler #(
-  parameter bit RAW_SERVICE=0
+  parameter bit RAW_SERVICE=0,
+  parameter bit BANK_IO=0
 ) (
   input wire logic clk, rst,
   input wire logic job_valid_i, output logic job_ready_o, job_core_o,
@@ -34,7 +35,9 @@ module keccak_sampler #(
   input wire logic raw_output_ready_i,
   output logic raw_done_valid_o,raw_done_core_o,
   output logic [15:0] raw_done_id_o,
-  input wire logic raw_done_ready_i
+  input wire logic raw_done_ready_i,
+  output logic [91:0] output_bank_data_o,
+  output logic [4:0] output_bank_count_o
 );
   logic request_valid, request_ready, request_core, sampler_job_ready;
   logic hash_mode;
@@ -134,7 +137,7 @@ module keccak_sampler #(
   assign status_id_o = sampler_status_id;
   assign status_code_o = sampler_status_code;
 
-  sampler sample (
+  sampler #(.BANK_IO(BANK_IO)) sample (
     .clk(clk), .rst(rst), .job_valid_i(command_fire),
     .job_ready_o(sampler_job_ready), .job_core_i(request_core),
     .job_id_i(job_id_i), .job_mode_i(job_mode_i), .job_param_i(job_param_i),
@@ -144,7 +147,7 @@ module keccak_sampler #(
     .output_data_o(output_data_o), .output_core_o(output_core_o),
     .output_id_o(output_id_o), .output_index_o(output_index_o),
     .output_last_o(output_last_o), .output_valid_o(output_valid_o),
-    .output_ready_i(output_ready_i),
+    .output_ready_i(output_ready_i),.output_bank_data_o(output_bank_data_o),.output_bank_count_o(output_bank_count_o),
     .status_valid_o(sampler_status_valid), .status_ready_i(sampler_status_ready),
     .status_core_o(sampler_status_core), .status_id_o(sampler_status_id),
     .status_code_o(sampler_status_code), .active_o(sampler_active),

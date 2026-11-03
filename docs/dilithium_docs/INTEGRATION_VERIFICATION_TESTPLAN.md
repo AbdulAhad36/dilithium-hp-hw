@@ -1,5 +1,589 @@
 # Dilithium verification test plan
 
+## Stage7B.9 production top
+
+Drive the real51-group production boundary in the same33-scenario main UVM.
+Check every published byte,frame/index/tail,ID/status/verdict,held transfer,
+retry count,reset/recovery and empty-pool retirement. Internal read-only
+observers retain owner/occupancy checks. No legacy debug request is presented
+as production host stimulus. The raw-core focused benches retain debug access.
+Static audit requires all74 prior RTL and reference C/H unchanged,all three
+operations enabled in the wrapper and the6.757ns SDC unchanged. Compare all30
+latency records with the prior source and qualify the current-token negative
+gate. Collect fresh main coverage and full production-top fit/retention/timing.
+
+Result:all33 scenarios pass30 checked completions/3 reset aborts,zero errors.
+Same-token byte0 corruption receives zero checked outcomes/0of170 bins.
+All30 timestamps and every latency CSV field equal7B.7. Functional121/170;
+overall code316722/397459=79.69%. The full compile routes and assembles;
+retained bits pass. Setup at the unchanged6.757ns target FAILS. Stage7C must
+qualify any timing-path changes with independent arithmetic/handshake checks,
+current-source main/negative runs and new routed measurement. No Stage7
+coverage closure,netlist testing or board signoff is inferred from this baseline.
+
+## Stage7B.7 decoder preservation
+
+The existing383-case tb_verify_decode now instantiates a verification-only
+archived decoder through verify_decode_equivalence. Ready,busy and valid
+signals must match every checked cycle;all published header,coefficient and
+completion fields must match while valid,including stalls. Assertions in
+the old reference check HEADER word<8 and hint-input byte alignment. These
+are the preconditions for the narrowed storage writes. Existing C/Python
+comparison still checks705010 decoded values and all frame/header/error/reset
+records independently. The checker-negative suite remains required. This
+focused trace comparison does not contribute to main-UVM code or functional
+coverage. Fresh main33/negative and same-FPGA fitting qualify the whole design.
+
+## Stage7B.6 memory metadata equivalence
+
+Compare the old and candidate memory controllers under identical inputs.
+Check every ready/status pin and each valid response,including held data and
+metadata. The old controller is an exact archived copy with module rename,
+comments and a trailing newline only;it is never a synthesis source.
+The standalone unit covers64 completed slots,interleaved writers,all packed
+word addresses,destructive rewrite watermark,simultaneous complete-read and
+rewrite admission,cancel/reuse,reset/stale-tag rejection and protocol faults.
+Then enable the same comparator outside the DUT in the complete33-scenario
+main UVM. Independent published-byte checking remains active. Only that
+main UVM supplies the reported functional/code coverage. Confirm inferred
+tag RAM geometry and full routing in Quartus before hardware area claims.
+
+## Stage7 main UVM campaign
+
+Stage7B.4 adds serial descriptor validation in two Sign helpers. The focused
+tb_handle_scan gate checks every active duplicate position at all three
+levels,cross aliases,reported-mask mismatch,one-cycle source changes,reset
+at first/middle/final scan steps and valid recovery. It passes256 scenarios
+(24 valid/232 rejects/18 reset-recoveries). It must reject before adoption
+or any engine request. These unit checks are not merged into main-UVM
+functional/code coverage. The7B.4 main33/helper59 reruns pass;its measured
+Sign latency increase is0.022-0.060% in the selected profiles. Placement
+passes but routing fails. Candidate7B.6 must refresh those source gates.
+
+Stage7A creates the reusable full-operation UVM agent/driver/monitor/scoreboard/
+coverage environment in tb_uvm/tb_uvm_dilithium. The first 33 scenarios comprise
+18 original published cases (3 KeyGen, 6 Sign, 9 Verify), 6 command errors,
+3 wrong-length invalid Verify results, 3 active resets and 3 published-input
+same-ID recoveries. Expected outputs are read only by the scoreboard. Source
+coverage is collected from this UVM run, with a corrupted-key negative gate.
+Detailed sampling/credit rules, group mapping and GUI commands are in COVERAGE.md.
+
+| Feature family | Initial checks | Further Stage7 campaign |
+|---|---|---|
+|Operation/parameter control|All 3 operations x 3 supported parameters; invalid parameter and op3; accepted metadata poisoning|Every ordered pair, valid ID0/65535, wrap/reuse, long repeated command streams|
+|KeyGen|Whole published PK/SK, public-before-secret ordering, word tags/tails, stalled output and post-ACK cleanup|Seed diversity, blocked first/final words, internal row/sampling/Pre-NTT/P2R/hash witnesses|
+|Sign|Deterministic and supplied-randomness cases per level; whole signatures and retry-counter consistency|Empty/boundary messages and contexts, diverse retry/rejection reasons, nonce exhaustion, every input/key/packing failure|
+|Verify|Valid, equation-invalid and structural-invalid published cases per level; zero signature length; whole-frame or early-prefix checking|All wrong lengths, hint/norm boundaries, message/context mutations, decoder and hash/publication errors|
+|Transport|Original byte order, indices, valid-byte counts, last flags, poisoned unused input bytes, zero output tails, actual stalls, held completion|All tail sizes, long pauses, malformed framing, stalls at each internal handoff and final word|
+|Memory/services|One owner, debug isolation, actual occupancy, complete cleanup before reuse|All bank conflicts, retained operands, leases, allocator failures, source/destination hazards and internal ownership crosses|
+|Reset/recovery|Active reset per operation followed by same-ID published-input recovery|Idle, absorb, sampler, forward/Pre/inverse NTT, PWM, process, raw hash, output and held-completion phases|
+|Checker integrity|Corrupted first key byte must fail with zero coverage credit|Signature/verdict/tag/index/tail/status corruption and coverage-credit faults|
+|Implementation|Whole-main Quartus baseline at unchanged 6.757ns with all operations enabled|Measured critical-path changes, area/throughput improvements, correctness reruns and user acceptance|
+
+No full-main PPA/coverage closure or optimization result is implied by bringing
+up Stage7A. Post-synthesis/post-fit and FPGA work remain later gates.
+
+## Stage6 official full-operation qualification
+
+Use the actual main with FULL_KEYGEN=1, ENABLE_SIGN=1, ENABLE_VERIFY=1 for
+each official suite. Check the elaborated MAIN_CONFIG line in every run log.
+Run nist_keygen (75 original seeds), nist_sign (90 original SK/message/context/
+randomness inputs) and nist_verify (45 original PK/signature/message/context
+inputs) through the same DO and current source fingerprint. Compare complete
+encoded public/secret keys, every signature byte, and published Verify verdicts.
+The expected data is consumed only by the separate Python comparison.
+
+Require explicit simulation capture and independent comparison PASS markers,
+exact case/byte totals, complete cleanup and held-stream assertions. Corrupt
+captures to test each checker, including changed key/signature tails, missing
+or duplicated events, stale fingerprints and both directions of Verify verdict
+corruption. Retain the full original mode audits, with unsupported cases shown
+as excluded rather than passed. The independent C preparation gates must also
+match the published supported outputs.
+
+Keep Stage5V.4 error/reset/mixed-operation evidence separate. Stage6 changes
+test selection and checking only; verify every production RTL/C/H byte and the
+SDC against that archive. Freeze current fixtures, raw captures, comparisons,
+checker results, source and commands together in a create-only evidence ZIP.
+Full-system UVM coverage and whole-main Quartus/PPA are the following stage;
+official-vector passes alone do not establish either coverage closure or timing.
+
+Stage6 result: all 75 KeyGen / 90 Sign / 45 Verify output comparisons pass.
+Checker validation rejects 41/41, 152/152 and 158/158 corruptions respectively.
+All three captures use one fresh fingerprint and all operations enabled;
+final freshness and preservation of 74 RTL / 21 production C/H / SDC pass.
+Evidence: evidence/stage6_full_operation_qualification.zip and SHA256.
+
+## Stage5V.4 main Verify qualification gate
+
+Use one focused tb_full_verify on actual main dilithium,configured with
+FULL_KEYGEN=1 and both Sign/Verify enabled. Same Python/DO selector full_verify.
+Run118 scenarios:45 official pure external cases,15 mutations/boundaries,
+nine wrong-length invalids,19 command/framing/metadata errors,14 reset/fault
+aborts plus14 recoveries,and one real KeyGen/Sign each between Verify cases.
+Compare official verdicts directly;derive intermediate values independently
+with Python mathematical models/hashlib and unchanged production C functions.
+
+Check every Verify decode/sample/NTT/PWM/ADD/SUB write,commit and packed read;
+all raw descriptors/absorption/digests,UseHint/packer values,context headers/
+handles and atomic takes. Check physical allocation/rewrite maps and release
+lifetimes. Verify exact encoded keys/signature in mixed operations. Assert
+one main services owner,debug/Sign-input isolation,no unowned requests,stable
+held verdict,input stability and start refusal until acknowledgement/cleanup.
+Finite error paths must drain and free the entire operation before done.
+
+Reset in each frame,raw/math context handoffs,challenge output,FNTT output,
+matrix output,PWM output,packing,held verdict,cleanup and fatal raw-ID/memory
+faults. Follow every reset by a complete same-ID valid Verify request.
+Validate the checker with deleted/duplicate/mutated/stale/trailing captures,
+including false-positive/false-negative verdicts,computed domains and operands.
+After final prepare,rerun Sign45 and KeyGen-only16 compatibility under the
+same fingerprint. Sign's old unsupported-op2 fixture becomes op3;KeyGen-only
+benches explicitly disable both later features. Do not retag old captures or
+claim full-system UVM/PPA/netlist/FPGA/security completion from these gates.
+
+Final gates PASS:118 primary scenarios/45 published verdicts/2624604 exact
+Verify writes/51466 packed reads;170/170 checker mutations reject. C/Python60
+distinct full inputs agree. Fresh Sign45 and KeyGen-only16 compatibility pass.
+One RTL module is added and only the prior main dispatcher changes;all72 other
+RTL,21 production C/H and6.757ns SDC remain unchanged. Evidence:
+evidence/stage5v4_full_verify.zip with SHA256. Current-source complete published
+KeyGen/Sign/Verify batch qualification is the next Stage6 gate.
+
+## Stage5V.3 equation/verdict component gate
+
+Use verify_equation in the same Python/DO. Real prior preparation feeds the
+equation owner,with one physical services tree and a real foreign sentinel.
+The87 scenarios contain35 structurally valid official cases,9 cryptographic
+mutants,23 protocol errors and10 reset/fault phases each followed by recovery.
+Expected normal results are19 valid/35 invalid;the normal invalid verdict is
+code0,accept0. It must not be confused with a protocol error. Separate966
+UseHint unit cases exercise decomposition boundaries,wrap,low=0,invalid
+param/noncanonical coefficient and full-width invalid hints.
+
+Independently check every A,PWM,ADD,SUB and inverse coefficient,domain/ID,
+allocation/rewrite/commit/release,every W/h read,every corrected coefficient,
+packed byte,mu/body hash input,digest and completion. Test-only C calls the
+unchanged production matrix/NTT/UseHint/packing/SHAKE primitives;Python uses
+mathematical modular arithmetic and hashlib. No expected polynomial arrays
+are injected into the equation DUT. Matrix expansion uses rho||column||row.
+
+Directed errors cover duplicate handles,wrong ID,pending read,incomplete
+context,synthetic no-free-workspace report,wrong sampler/NTT/process/packer/
+formatter completion metadata,actual child source-ID rejection,bad read tag,
+full-width hint64 and changed context before take. Three levels cover each
+read/hint/packer failure. Read/packer errors must zero-drain hash/packer and
+free all adopted regions;pre-take errors preserve the upstream owner.
+
+Reset phases:held adoption,matrix absorption,matrix output,PWM output,in-place
+ADD output,UseHint/packing,held digest,cleanup,fatal raw-ID and physical-memory
+fault. Recover with a real full prepared context after each. Check held
+verdict/digest stability,foreign sentinel preservation and final empty pool.
+Validate the checker with deleted,duplicated,corrupted,stale and trailing
+records,including verdict,digest,domain,allocation and arithmetic operands.
+Rerun verify_math under the final source fingerprint. This is a focused
+component gate;main Verify/op2 and full-system UVM remain subsequent work.
+
+Final fresh gate PASS:87 scenarios,966 units,2104627 exact writes,49903 packed
+reads;172/172 checker corruptions rejected. C/Python44 inputs/519168 equation
+values agree. Fresh verify_math134-scenario capture/compare passes unchanged.
+Evidence:evidence/stage5v3_verify_equation.zip and SHA256. The6.757ns target,
+71 prior RTL files and21 production C/H files remain byte-identical.
+
+## Stage5V.2b mu,challenge and NTT gate
+
+One focused bench connects real5V.2a preparation to verify_math_prepare and
+ONE services tree. Use the same Python/DO selector verify_math.134 scenarios
+cover35 structurally acceptable original NIST Verify cases,18 message/context
+boundary cases,57 directed failures and12 reset/fault phases with recovery.
+The10 structurally invalid official cases remain covered by5V.1/5V.2a;none is
+silently credited as a math-preparation success. The26 crypto-invalid but
+structurally valid cases still require the later Verify equation.
+
+Independent C/Python checks cover56 distinct inputs,mu hashes and191232
+challenge/NTT coefficients. C uses unchanged production SHAKE256,poly_challenge,
+poly_shiftl and poly_ntt;Python uses hashlib,sampling rules and mathematical
+NTT. RTL checking covers every new scalar write,packed result/foreign word,
+header,digest,tag/domain,adoption,commit,source release and context handoff.
+
+Exercise empty ctx/M,partial words,maximum255-byte ctx,hash prefix/body merging,
+bad length/layout/ID,missing upstream completion,pending read,changed source
+before take,high payload-index bits,zero bytes,early/missing last,truncated/
+extended message frames,wrong sampler/NTT/formatter completion metadata and
+actual NTT source-ID rejection. Test-only response overrides report no free
+challenge/workspace regions;these are exhaustion-response tests,not physical
+full-pool capacity tests. Preserve a real sampled foreign polynomial throughout.
+
+Reset at held adoption,mu absorption/output,challenge input/output,NTT input/
+output,held completion,read response and cleanup;inject fatal raw-ID/memory
+faults and prove reset recovery. Clear must win over take and both must wait
+for pending reads. Validate the checker with missing/duplicate/mutated/stale/
+trailing records. Revalidate the earlier5V.2a gate under the final fingerprint.
+Existing70 RTL files remain unchanged;this adds a client without changing main
+Sign/KeyGen paths. Prior full Sign/KeyGen compatibility remains frozen in5V.2a.
+
+## Stage5V.2a load/hash ownership gate
+
+Use the same Python/DO with selector verify_prepare. Run133 scenarios:all45
+original official Verify PK/signature pairs,three maximum-fitting bases,63
+directed cases (21 per level),and11 reset/fault boundaries each followed by a
+recovery request. Structural rejects remain separate from official verdicts.
+
+Check every scalar coefficient and all successful packed words against direct
+Python unpacking/canonical hint rules. Verify SHAKE256(PK)->tr independently
+with Python hashlib and unchanged C SHAKE256. Track every allocation,partial
+discard,commit,release and ownership transfer. Preserve one sampled foreign
+region per case and read it back exactly before its explicit owner release.
+Test first-two-frame input gaps,poisoned unused bytes,independent decoder/raw
+stalls,held outputs/status,high input index,zero bytes,early/missing last,
+truncation/extension,bad parameter/length,overflow/collision and pending reads.
+Inject wrong loader ID/mask/header length;inject raw-tag/physical-memory faults.
+Reset at fork/header/coeff/hint/done/read/cleanup/raw-output boundaries and
+revalidate recovery. Deny competing bank clients during either load mode.
+Clear and take must wait for held read responses;clear wins when both offered.
+Validate the checker using missing,duplicate,mutated,stale and trailing records.
+
+Because the shared load response/arbitration changes,rerun the original
+sign_load_service,actual main full_sign and full_keygen compatibility gates.
+This focused integration gate does not collect full-system UVM/code coverage,
+prove final Verify verdicts,or provide physical/security signoff.
+
+## Stage5V.1 Verify frame checks
+
+Independent oracles:Python integer slicing/canonical hint rules vs unchanged
+C unpack_pk/unpack_sig/CNB. Full C Verify must separately match all45 official
+pure-API verdicts (9valid/36invalid);do not credit this as main RTL verification.
+
+Test PK10-bit extremes and all3 levels;z just inside and exactly at both norm
+bounds;maximum encodable z;empty/full hints,empty rows,indices0/255 and legal
+index repetition across rows. Reject decreasing/oversized counts,duplicate or
+descending indices within a row and nonzero padding. Exercise partial tails,
+poisoned unused bytes,all16 index bits,zero/oversized byte counts,early/missing
+last,truncated/extended frames,bad declared lengths/parameter,metadata snapshots,
+held input/header/coefficient/done and reset/recovery at nine boundaries.
+Only accepted handshakes credit exact decoded prefixes. Compare full data on
+success,exact error prefixes and legal reset prefixes. Deliberately corrupt
+capture fields/records/header/footer to validate the checker. Main op2 remains
+unsupported until later wiring;current results must retain that limitation.
+
+Fresh gate:383commands/705010values,275 structural successes/99 errors/
+9resets,37checker corruptions rejected. Full C Verify matches45/45 original
+verdicts;10 invalid signatures fail decoding and26 need the later arithmetic.
+Full-KeyGen compatibility8complete/3rejects/5aborts and37checker faults pass.
+Frozen source-bound evidence is linked in REFERENCE_VERIFICATION.md.
+
+## Stage5N.4h.7 official Sign vector gate
+
+Audit all360 pinned sigGen cases by(tgId,tcId);select90 external/public-API
+pure cases (15 deterministic+15 randomized per level). Audit CSV must list
+the270 unsupported prehash/internal-API cases without crediting them as passes.
+Match the complete original SK/context/message/rnd stream and every published
+signature byte using the actual main controller;never preload arithmetic
+intermediates. Deterministic rnd is32 zero bytes. Contexts0..255 and messages
+1..8192 bytes fit the existing interface without RTL changes.
+
+Reuse tb_full_sign with NIST_VECTORS1,including input/output/done stability,
+busy refusals,exclusive shared ownership,debug isolation and the physical
+allocate/rewrite/finish/release ledger. Every successful request must return
+all regions before main completion. Compare against the original NIST JSON,
+not the additional C preflight result. Corrupt fields/records/header/footer
+and missing/duplicate/truncated/trailing records to validate the file checker.
+Rerun the local45-case full_sign gate with NIST_VECTORS0 to check that adding
+the selector preserves error/reset/mixed-KeyGen behavior. Fresh execution
+results:90/90 official signatures/310680 bytes,152 checker corruptions rejected;
+local45 scenarios and196checker corruptions also pass. Details live in
+REFERENCE_VERIFICATION.md;earlier sections below are historical gates.
+Main Verify/full UVM/PPA remain separate work.
+
+## Stage5N.4h.6 main Sign and shared-operation gate
+
+| Requirement | Main-top check |
+|---|---|
+|Actual main Sign dispatch|Default ENABLE_SIGN1,op1 into real sign.sv and one physical services tree |
+|Independent complete output|Exact C-reference signatures;C Verify accepts each unique oracle result;three fixtures also Python math |
+|Approved host interface|SK then ctx||M;frame indices restart;empty body;partial high-byte poison;metadata snapshots |
+|Parameter/context boundaries|All3 levels,ctx0/7/255,empty/1/169-byte M;ctx256 and finite overflow reject |
+|Malformed inputs|Five SK faults including pre-narrowing high-index alias;four body framing faults |
+|Ownership and cleanup|Physical allocate/rewrite/finish/release ledger;zero regions at normal Sign done;no debug response theft |
+|Main operation transition|Actual KeyGen between Sign requests;next offer refused during KeyGen post-done cleanup |
+|Backpressure|Stable input,signature,keys and done;busy command offers refused |
+|Reset/fatal|Nine cases spanning key input/transform,hash,retry,encoding,held done,pending response and forced memory fault |
+|Checker validation|Field/record mutation,missing/duplicate/stale/truncated/trailing capture checks |
+|Compatibility|Rerun encoded KeyGen and rounded/debug-read KeyGen with explicit legacy ENABLE_SIGN0 |
+
+Known limits:finite pure-ML-DSA host descriptor,no external-mu/prehash command,
+main Verify unsupported,official NIST Sign vectors still next. Main encoder/
+publication-error propagation combinations remain for broader UVM;their child
+mechanisms were tested in previous focused gates. No full-coverage/PPA claim.
+
+## Stage5N.4h.5 signature encoder gate
+
+| Requirement | Evidence / check |
+|---|---|
+|Complete final-format signatures|Real key preparation+attempt loop ->encoder;all bytes compared with independent Python/C |
+|Independent software oracle|Original SK/message/rnd inputs;production pack_sig;nonce-zero also full C signing |
+|All levels and tail formats|2420/3309/4627 bytes;final4/5/3 bytes;zero unused tail bytes |
+|Z packing|18/20-bit gamma1-z;shared packer endpoints/invalid neighbors/noncanonical inputs/framing/stalls/reset |
+|Sparse hints|Ordered indices,zero padding,cumulative counts;binary value and omega checks |
+|Ownership|Preflight preserves old owner;one atomic take;whole cleanup;no foreign release;key/sentinel retained |
+|Errors|Invalid descriptor,z/hint data,hint metadata/error;fatal noncancelable Z read/physical fault reset |
+|Stalls and resets|Stable output/done;digest,Z,hints,final-word,done,pending-read reset/recovery |
+|Checker validation|163 corrupted captures rejected;separate packer15-fault gate |
+|Error while output stalled|Explicit HOLD witness:full hint word remains valid before bad read response is consumed |
+|Independent tags|Source-region ID differs from output ID;reads and output/done check their respective IDs |
+|Shared-interface compatibility|Expanded188-case packer and existing full KeyGen gate rerun |
+
+This is focused functional testing,not full UVM/code coverage or security
+signoff. Official full-operation NIST Sign outputs and main host Sign/Verify
+dispatch remain open. REFERENCE_VERIFICATION.md contains commands and results.
+
+## Stage5N.4h.4 retry-loop gate
+
+| Requirement | Evidence / independent check |
+|---|---|
+|Whole connected path|Real prepared key,streamed ctx/message/rnd;one shared physical services tree;no intermediate preload |
+|Independent whole-attempt oracle|New test adapter uses unchanged C SHAKE,sampling,matrix,NTT,PWM/INTT,norm and MakeHint functions from SK/message/rnd,not Python intermediates |
+|Real retries|Level2 nonce0 rejects then4 accepts;level3 nonce5 rejects six times then35 accepts;level3 nonce455 rejects hints then progresses to480;level5 rejects0/7/14/21 then28 accepts |
+|Private seed lifetime|Exactly one mu and one private-seed derivation per normal initial command;zero such requests on retries;actual absorption and digest bytes match Python |
+|New masks|Every accepted seed||LE16(nonce) input word,sampler descriptor/status and y coefficient matches the new nonce's independent model |
+|Publication order|Exactly six ordered child starts/results per complete attempt;no dependent command before predecessor retirement;strict maps/IDs and complete storage |
+|Header take|Rejected checker owns zero regions;actual mu/seed/nextnonce transfer occurs before new ExpandMask,all rejected payloads already freed |
+|No wrap|Initial nonce65536 launches no mask;final legal level2/3 vectors reject and stop at65536;final legal level5 vector accepts and reports65536 |
+|Hardware failures|Malformed initial payload,observed retry sampler-status ID corruption,real retry NTT bad-source-ID request,observed retry CNB result-ID corruption;stop without retrying an error |
+|Reset/fatal|Reset during retry mask generation,partial products,norm reads and held accepted done;fatal fault during retry mask writes,then global reset/recovery |
+|Physical ownership|Record every actual allocation,rewrite,commit/discard and release,including row-controller internal scratch releases and temporary tags;preserve key/sentinel |
+|Backpressure|Independently stall physical command,input,output,status,result and release channels;held public outcome stable |
+|Final consumers|Exact accepted z/hints/digest/metadata;held read blocks clear/take;clear priority;result transfers/release and final key-only map |
+|Checker sensitivity|Corrupt descriptors,seed/digest/nonce/mask bytes,verdicts,counters,memory events,headers and final reads;remove/duplicate events and reject stale/trailing captures |
+
+The new controller still produces candidate polynomials/digest,not encoded
+signature bytes. The focused gate is not full-UVM/functional/code coverage
+closure or a PPA/netlist/security result. Source-context rejection and direct
+parent-facing child publication corruption remain defensive guards;this gate
+does not claim every parent error code has been reached. Full Sign dispatch,
+signature bytes and Verify remain separate later acceptance gates.
+
+Final gate PASS:47 commands,19 accepted parent results,12 expected service
+errors,5 exhaustions,11 aborts;87 attempts/45 normal rejections,105667 exact
+y coefficients/56256 packed reads.152/152 checker corruptions reject.
+The default mask78-case regression and85/85 checker faults also pass.
+Independent full C/Python13 starting fixtures/26 attempts/24064 accepted
+z/hint coefficients agree. Source token,evidence and counting arithmetic
+are in REFERENCE_VERIFICATION.md and THROUGHPUT.md. No stage beyond candidate
+retry is inferred from these results.
+
+## Stage5N.4h.3 norm/hint acceptance gate
+
+| Requirement | Observation / independent check |
+|---|---|
+|Real connected inputs|Actual key load/transforms,mu/seed/y,A*y,decomposition,challenge hash/sampling,FNTT(c),products and response corrections;read all z/r0/w1/ct0 words before take |
+|Independent verdict|Python centered norms and mathematical HighBits inequality versus unchanged C poly_chknorm/poly_make_hint;local fixtures at all levels |
+|Genuine branches|Clean candidate at2/4,3/0,5/28;norm rejections2/0,3/5,5/0,5/7;norm-clean3/455 produces56 hints above omega55 |
+|Ownership|Products take under independent stalls;old owner invalidates and cannot clear;key/sentinel leases and exact values survive |
+|CNB order|z then r0 then ct0,first failing polynomial terminates;exact descriptors and individual child reject flags |
+|Hint arithmetic|Every in-place combined-low scalar and every0/1 hint scalar equals the independent model;exact polynomial and whole-vector weights |
+|Resource reuse|One first hint spare,then freed low-row destinations;release only after full child retirement;no duplicate,early or foreign release |
+|Rejection versus error|Norm/omega reject:code0 plus reason and retained retry headers;service failures:nonzero code,no result credit |
+|Ordinary errors|Duplicate source handles,no free hint address,actual bad source IDs in CNB/ADD/Mhint,observed CNB/ADD completion-ID corruption |
+|Interrupted ownership|Reset during norm reads,partial ADD,partial hints and held accepted done;force fatal fault during partial hints,then global reset/recovery |
+|Backpressure|Independently stall source take,child command/result and releases;held done/result fields remain stable |
+|Final consumers|Read exact z/hints/IDs/modes;hold pending consumer read across clear/take;verify private mu/seed/nextnonce transfer even on rejection |
+|Checker sensitivity|Fresh token,strict event ordering and footer;corrupt individual descriptors,verdicts,weights,payloads,headers,releases,reads and reset evidence;remove/duplicate events |
+
+These are focused source-integration tests,not functional/code coverage closure
+or security signoff. Eight distinct local FIPS-derived fixtures use three
+official KeyGen SK inputs;they are not official signature-output vectors.
+The ct0 norm-reject and exact whole-vector omega-equality boundary are not
+claimed reached by these honest fixtures. Existing process unit gates cover
+arbitrary coefficient boundaries separately. For valid secrets at levels3/5,
+tau*4096 is already below gamma2,so arbitrary ct0 rejection tests must not be
+misrepresented as normal key/attempt reachability. Full retry and signature
+bytes/main Sign/Verify remain later gates.
+
+Final results:59 cases=18 accepted+5 genuine rejects+21 expected errors+
+15 aborts;70944 exact writes/157888 packed reads,118/118 checker corruptions
+reject. Independent Python/C8 fixtures/25794 values PASS. Fresh unchanged
+products63-case regression and84/84 checker faults PASS. Archive and source
+token are recorded in REFERENCE_VERIFICATION.md. No full-UVM/code-coverage,
+PPA,netlist or security closure is inferred from these focused gates.
+
+## Stage5N.4h.2 product/response gate
+
+| Requirement | Check |
+|---|---|
+|Independent product oracle|Sparse negacyclic schoolbook convolution versus unchanged C unpack_sk/NTT/Montgomery/INTT/add/sub;all levels,nonce0 and nonce=l |
+|Actual inputs|Real upstream KeyGen SK load,secret transforms,mu/seed/y,matrix/decompose,challenge packing/hash/sampling and FNTT(c);no intermediate preload |
+|Atomic handoff|Mask and vector contexts transfer together under independent readiness stalls;old owners invalidate and cannot clear adopted regions |
+|Workspace|k+2 disjoint lowest-free addresses;real sampled capacity blockers leave only k+1,so reject before either ownership transfer |
+|Shared arithmetic|Every PWM,INTT and ADD/SUB descriptor,result and scalar write;ordered s1/s2/t0 groups and exact identities/domains |
+|In-place updates|y->z and w0->r0 only after adoption;readback new IDs/modes;no temporary result exposed as a whole attempt |
+|Reuse/lifetimes|Release PWM/inverse after last read,retain every ct0 row,release chat after all groups;no duplicate/foreign releases |
+|Normal errors|Duplicate y handles,insufficient capacity,real wrong-source-ID PWM/INTT/ADD-SUB rejections,observed late NTT/process result-ID faults |
+|Rollback/noninterference|After adoption,discard all attempt data,including modified prefixes;all prepared-key/sentinel/blocker readbacks unchanged;preflight errors preserve raw-y/vector sources |
+|Private retry headers|Exact mu,private seed,ctilde and nonce+l publication,held stability,header transfer to next owner;unused bits zero |
+|Reset/fault|Partial PWM,partial INTT,partial in-place write,partial later PWM after ct0 prefix,held done,parent HALT then global reset/recovery |
+|Compatibility|Fresh sign_transform gate exercises mask take tied low and prior matrix/challenge adoption/clear behavior |
+|Negative checker|Corrupted source/header/layout/value/tag/count;missing every event class;duplicate ownership,request/result,publication/completion/footer records |
+
+Arithmetic completion does not establish legal signature norms,hint weight or
+rejection-loop correctness. The current source fixtures use nonce0/nonce=l;
+full nonce exhaustion,algorithmic retry,hint/encoding edge cases and complete
+NIST signature comparison remain future full-Sign verification requirements.
+
+## Stage5N.4h.1 ownership/challenge-transform gate
+
+| Requirement | Check |
+|---|---|
+|Actual source chain|Real SK/key preparation,mu/seed/y,matrix/decomposition,packed challenge hash and SampleInBall;no expected intermediate injection |
+|Independent arithmetic|Python direct root evaluation of sparse c versus unchanged C poly_challenge/poly_ntt;nonce0 and nonce=l at each level |
+|Atomic adoption|Matrix/challenge transfers occur on the same edge under independent readiness stalls;old owners invalidate and cannot clear adopted data |
+|Lifetime reuse|Release every dead yhat exactly once before FNTT,lowest-free destination,retain raw c until acknowledged chat completion |
+|Full memory|Real sampled blockers fill every other slot;freeing yhat makes room without adding banks/RAM;read blockers back unchanged |
+|Result storage|Every actual chat scalar write and final packed read,all w0/w1 preserved,exact metadata and source IDs |
+|Preflight errors|Duplicate low handles and invalid ctilde length reject without ownership transfer;old contexts read back and clear normally |
+|Post-adoption errors|Real source-ID NTT rejection and observed result-ID fault;rollback all adopted/new regions;key/raw y preserved |
+|Retention/transfer|Held result and done;pending consumer read blocks clear AND outbound take;whole-result take followed by one new owner cleanup |
+|Reset/fault|Blocked adoption,partial yhat release,partial NTT output,held done,parent HALT;global reset and real-source recovery |
+|Compatibility|Fresh sign_challenge regression with new take inputs tied low exercises prior matrix/challenge behavior |
+|Negative checker|Corrupted values/IDs/layout/maps/counts,missing every event class,duplicate ownership/command/result/credit records |
+
+This gate stops at retained w0/w1/chat. Secret products,z,correction/hint/norm
+checks,rejection/retry,signature bytes,main Sign/Verify and full-system UVM
+coverage/PPA remain open;no coverage percentage is inferred from these cases.
+
+## Stage5N.4g challenge gate
+
+| Requirement | Check |
+|---|---|
+|Independent values|Python bit packing,SHAKE256 and sparse sampling versus unchanged C polyveck_pack_w1/poly_challenge at every level and nonce0/nonce=l |
+|Actual sources|Real key preparation,mu/seed/y,matrix multiplication and decomposition;no expected intermediate injection or RAM preload |
+|Packing|All rows,6/4-bit encodings,exact accepted inputs/outputs/tags/last;standalone t1/t0/eta regression plus new w1 ranges/frame/reset cases |
+|Hash|Exact mu prefix and concatenated body,32/48/64-byte actual raw outputs;retirement before sampler |
+|Sparse c|Every scalar write and final packed read,canonical0/1/q-1 values,weight39/49/60,exact seed forwarding |
+|Errors|Read ID/mode,value/frame rejection,pack output/done tags,raw tag/length/done,sampler tag/code,duplicate handles,real capacity blockers |
+|Drain/privacy|Consume abandoned current pack packet,zero-fill remaining hash body,discard invalid digest,no dependent sampling,no early result |
+|Retention|Held done/output,source leases,all key/y/yhat/w0/w1/sentinel/blocker readbacks;pending consumer response blocks clear |
+|Reset/fault|Partial pack input,held pack output,partial digest,partial c write,held done,parent HALT;global reset and real-source recovery |
+|Checker|Corrupt values/tags/metadata/counts;missing every record class;duplicate command/output/status/publication/completion/footer records |
+
+This gate proves the tested intermediate challenge flow. Full signatures,
+rejection/retry,main Sign/Verify,full-system UVM coverage and PPA remain open.
+
+## Stage5N.4f matrix/decomposition gate
+
+| Requirement | Check |
+|---|---|
+|Independent whole-intermediate oracle|Python SHAKE/sampling,direct root evaluation/inverse formula and mathematical decomposition versus unchanged C matrix expansion/NTT/PWM/INTT/decompose;both nonce0 and nonce=l at all levels |
+|Actual connected sources|Prepare expanded published SK,derive mu/seed/sample y through working clients;no RAM preload or expected-digest injection;reuse contexts between commands |
+|Forward y|Ordinary FNTT for every mask,exact writes and readbacks,original y retained;verify coefficient/NTT metadata and IDs |
+|Matrix row generation|Exact rho32/column8/row8 absorption,SHAKE128 sampling,all k*l coefficient sets;reuse the same A row only after releases |
+|Row arithmetic|Every PWM/accumulator ADD/inverse write versus independent expected values,complete term count,result ID/region and acknowledgment order |
+|Decomposition|Both w0/w1 writes,canonical signed low residues,high bounds,dual finish ACKs,all k rows before publication |
+|Capacity/privacy|Lowest-free disjoint plan,19/25/33 addresses;real sampled capacity blockers;zero physical work on insufficient space;whole-parent owner through gaps,held done and READY |
+|Normal errors|Real wrong-source-ID NTT,row and decomposition rejections;observed NTT/A/row/decompose result-tag faults after earlier work;no invalid dependent command;full workspace rollback |
+|Noninterference|Exact key,raw y,sentinel and capacity-blocker reads after each non-reset success/error;clear releases new outputs only |
+|Reset/fault|Partial forward write,partial A sample,partial row PWM,between low/high decomposition finish ACKs,held whole-vector done,and injected parent fault with global reset/reload/recovery |
+|Checker gate|Mutated values/tags/layout/provenance/counts,missing every record class and duplicate credit/ledger records;require independent compare and negative-checker PASS |
+
+This focused source gate is one signing attempt through decomposition. It
+does not supply full signature bytes,rejection-loop correctness,main Sign/
+Verify host behavior,full-system UVM coverage,PPA,netlist or board signoff.
+
+## Stage5N.4d key-context/preparation gate
+
+| Requirement | Check |
+|---|---|
+|Independent arithmetic/format oracle|75 official KeyGen SK inputs;Python direct root evaluation versus unchanged C unpack_sk/poly_ntt,164 source fixtures/709632 transformed values |
+|Full prepared key|All s1/s2 via eligible Pre,all t0 via ordinary FNTT;exact physical scalar/packed writes,64 ACKs per polynomial,final privileged reads and metadata |
+|Storage reuse|One free destination;release source only after validated result;track allocation generations and peak<=N+1;final ordered handles plus complete region mask |
+|Private retained header/context|No publication until all transforms/source releases;poison command fields;held done,retained READY,new-command refusal and explicit clear |
+|Input/layout rejection|Invalid level,bounds,scratch alias,occupied raw/scratch,unused eta,wrong input bytes/index/last;unrelated sampled sentinel preserved |
+|Normal failure rollback|Real source-ID NTT rejection,observed load/NTT result tag/mask faults after earlier work;drain child status and release all owned raw/replacements/results |
+|Fault/reset boundaries|Five exact progress resets plus three fatal service-fault/HALT/global-reset cases;same-ID/different-key reuse |
+|Clear barrier|Privileged read pending while clear is held;drain response before clear and release every owned region |
+|Checker fault gate|Mutated/missing command,input,child result,physical write/ACK,release,context,read,reset,clear and required witness records |
+
+This is focused source functional verification. Existing standalone module UVM
+is preserved;full-system Sign/Verify UVM,code/functional coverage,PPA,netlists,
+physical security/erasure and full official signature vectors are later gates.
+
+## Stage5N.4c2 production shared key-loader gate
+
+| Requirement | Check |
+|---|---|
+|One physical service tree|Actual dilithium_services;no bench RAM preload,force or alternate allocator |
+|Prior owner retirement|At all levels:sample status,raw output,raw done,public read,row,NTT,scalar process,sign process each hold a waiting key |
+|Acceptance edge|Every key descriptor blocks simultaneous external read/release;occupied destination remains occupied and rejects |
+|Exclusive key lease|Isolated queued request classes during payload;all classes together at held done;no new ready/public response/release |
+|Whole-key publication/rollback|All138 original client cases,physical packing/ACKs,late eta/framing failures and zero invalid header/region outputs |
+|Reset/reuse|Five exact reset prefixes,clear all shared ownership,then same-ID/different-key recovery |
+|Real sentinel isolation|SHAKE/sampler-generated unrelated region checked after133 non-reset key commands;8512 exact packed reads |
+|Physical raw-core isolation|Three real SHAKE256 empty-message17-byte outputs and retirement IDs/cores,held before key acceptance |
+|Real consumer handoff|95 successful keys consumed by existing read-only CNB before complete key readback/release |
+|Regression|Existing signing process/hash,KeyGen,row/process and standalone loader gates rerun against current source |
+
+This proves the shared ingestion/ownership milestone. Header retention and
+the full Sign schedule are next;no full signature/NIST sigGen,UVM coverage,
+netlist verification,board timing or new PPA result is claimed here.
+
+## Stage5N.4c1 whole-key bank client gate
+
+| Requirement | Evidence/check |
+|---|---|
+|Correct key fields/coefficient order|75 official KeyGen SKs plus local boundary patterns;independent Python/C decoder oracle |
+|Real storage correctness|449992 scalar writes,packing/ACK causality,105728 exact92-bit readbacks including ownership/domain/mode/small flag |
+|Whole-key publication|Earlier primitive commits stay hidden;success requires every64-word ACK and decoder done0 |
+|Late rollback|Invalid last s2 coefficient releases every earlier commit and discards active partial |
+|Occupied/overflow plans|Last-region collision,exclusive end64 accepted,65 rejected;sentinel survives |
+|Held ownership|Write/alloc/finish/release stalls;held done stable;external release probes blocked |
+|Reset/reuse|Partial header,first commit,held first/last coefficient,held done;clear validity and reuse ID with different key |
+|Checker trust|Corrupt command,input,allocation,scalar/packed/ACK/finish/release/header/read/status/reset records;missing/early events rejected |
+
+The bench implements exclusive-client gating around the actual memory
+primitive. Production arbitration clashes and owner handoff are explicitly
+the next Stage5N.4c2 gate;this is not a complete Sign/NIST sigGen result.
+
+## Stage5N.4b signing-message client
+
+| Requirement | Check |
+|---|---|
+| Correct messages |Independent Python byte assembly/hashlib versus unchanged C SHAKE,w1 packer and mask sampler;real shared service outputs |
+| Pure-message mu |tr64+00+context length+context+message;empty/tails/rate boundaries;max context255 and total65535 |
+| Private seed/challenge |K/rnd/mu order,zero rnd and supplied rnd,mu plus encoded w1,32/48/64-byte challenge results |
+| Mask nonce |LE16 order,all levels,nonces through65535;256 coefficients read from actual shared sampler/banks |
+| Alignment/snapshots |66-byte prefix across8-byte payload boundaries,poisoned unused bytes,all command fields changed after acceptance |
+| Invalid input |Reject level/context/length overflow before descriptor;bad payload index/bytes/last after launch triggers exact zero-filled drain and error |
+| Ownership |29 peer-core jobs;exact IDs/cores/data/statuses;service retirement precedes formatter acceptance;error digests not cache-valid |
+| Actual dependencies |9 actual RTL mu/private-seed outputs feed subsequent requests,with valid-cache checks |
+| Stalls/reset |Held descriptor/absorption/raw/status/done;5 reset checkpoints with exact prefixes;new-data/same-ID recovery |
+| Checker strength |61 corruptions rejected,including early service/formatter retirement,peer/forward faults,error-zero-fill and reset-prefix loss |
+| Regression |Fresh decoder,shared signing process and local full-KeyGen gates;previous55 RTL/clock unchanged |
+
+This is not full NIST signature generation,HashML-DSA,whole-system UVM or
+coverage closure. Encoded-w1 input is supplied by fixtures/C packer;its RTL
+packer and complete Sign control remain later work. See reference docs.
+
+## Stage5N.4a expanded signing-key decode
+
+| Requirement | Check |
+|---|---|
+| Correct standard key layout |All75 pinned official KeyGen sk byte strings;unchanged C unpack_sk/pack_sk and independent Python slicing |
+| Header fields |Exact rho32,K32,tr64 byte boundaries and little-endian64-bit words;ID held under stall |
+| Secret fields |All levels,eta2/4 encodings,negative canonical conversion;s1/s2/t0 section/poly/index/last ordering |
+| Boundary values |Local zero/max/adjacent/random raw encodings;t0 encodes13-bit range endpoints;eta valid values and every unused code |
+| Late error |Invalid final s2 coefficient rejects overall key;previous full polynomials remain tentative |
+| Framing |Wrong first/middle/final word index;bytes0/1/7/9/15;wrong header/payload/final last;invalid level |
+| Backpressure |Held input,header,coefficient,done remain stable;input held across bit-extraction waits and deliberate downstream stalls |
+| Reset |Exact prefixes at partial header,held header,first coefficient,last coefficient and done;no leaked completion;zeroed state and same-ID recovery |
+| Checker |35 deliberate corruptions reject,including bad/missing reset prefix,missing header/data/metadata/reset/witness/footer and stale token |
+| Regression |Fresh shared signing-service and local full-KeyGen capture/compare/selftest;all prior production RTL unchanged |
+
+This is not full Sign verification,decoder-memory ingestion,whole-system UVM
+or coverage closure. Missing bytes without a terminal event cannot imply an
+error by themselves;external cancel/reset handles truncated input. Strict eta
+validation does not prove algebraic key consistency. See reference docs for
+exact counts,commands and provenance. Next checkpoint is hash formatting.
+
 ## Stage5N.3 checked shared-bank signing processes
 
 | Requirement | Evidence/check |

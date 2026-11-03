@@ -1,5 +1,430 @@
 # Dilithium current interface and virtual pins
 
+Stage7C.7 keeps the same51 signal groups/1027 bits below. Production
+`dilithium_fpga` now forwards them to the compact `dilithium` core.
+All three operations remain enabled. Fresh210 official commands,88 protocol
+commands and main UVM33 pass through this actual production wrapper.
+The four-bank ownership and engine activity probes used by UVM are internal;
+no new debug or memory ports are exported. Device/clock/virtual-pin settings
+are unchanged. Stage7C.7 now routes on the same FPGA;current measured PPA
+and its still-open setup target are recorded in THROUGHPUT.md. Historical
+7B.9 physical results are not the new design's measurements.
+
+There are51 signal groups/1027 bits including clock:1026 nonclock bits use
+virtual-pin assignments. Clock stays a real clock input selected by the
+fitter;no board/package pin location is assigned here. These are port counts,
+not ALM counts. The encoded streams retain their existing framing and widths.
+
+|Signal|Direction at FPGA|Bits|Purpose|
+|---|---|---:|---|
+|key_valid_o|output|1|Encoded key word available|
+|key_ready_i|input|1|Host accepts an encoded key word|
+|key_data_o|output|64|Public/secret-key byte stream|
+|key_bytes_o|output|4|Valid bytes in the current key word|
+|key_type_o|output|1|0 public key;1 secret key|
+|key_last_o|output|1|Last word of the current key frame|
+|key_index_o|output|10|Word index within the current key frame|
+|key_id_o|output|16|Operation ID on the key stream|
+|clk|input|1|Core clock;6.757ns internal benchmark target|
+|rst|input|1|Active-high reset|
+|start_valid_i|input|1|Host presents a new command|
+|start_ready_o|output|1|Controller accepts a new command|
+|busy_o|output|1|Operation/control ownership active|
+|start_op_i|input|2|0 KeyGen;1 Sign;2 Verify;3 rejected|
+|start_param_i|input|2|0/1/2 selects level2/3/5 (ML-DSA-44/65/87)|
+|start_id_i|input|16|Command identity|
+|start_seed_i|input|256|32-byte KeyGen seed|
+|start_message_len_i|input|16|Message length in bytes|
+|start_context_len_i|input|9|Context length in bytes;accepted pure-API range0..255|
+|start_rnd_i|input|256|32-byte signing randomness|
+|sign_input_valid_i|input|1|Sign input word available|
+|sign_input_ready_o|output|1|Controller accepts a Sign input word|
+|sign_input_data_i|input|64|Expanded SK frame,then context\|\|message frame|
+|sign_input_bytes_i|input|4|Valid bytes in the Sign word|
+|sign_input_index_i|input|16|Sign word index;restarts at each frame|
+|sign_input_last_i|input|1|Last word of the current Sign frame|
+|start_signature_len_i|input|16|Verify signature length in bytes|
+|verify_input_valid_i|input|1|Verify input word available|
+|verify_input_ready_o|output|1|Controller accepts a Verify input word|
+|verify_input_data_i|input|64|Public key,signature,then context\|\|message frames|
+|verify_input_bytes_i|input|4|Valid bytes in the Verify word|
+|verify_input_index_i|input|16|Verify word index;restarts at each frame|
+|verify_input_last_i|input|1|Last word of the current Verify frame|
+|verify_accept_o|output|1|Valid Verify result;qualified by successful completion|
+|signature_valid_o|output|1|Signature output word available|
+|signature_ready_i|input|1|Host accepts a signature word|
+|signature_data_o|output|64|Encoded signature stream|
+|signature_bytes_o|output|4|Valid bytes in the signature word|
+|signature_index_o|output|10|Signature word index|
+|signature_last_o|output|1|Last signature word|
+|signature_id_o|output|16|Operation ID on the signature stream|
+|done_stage_o|output|3|Completion stage code;see SPECIFICATION.md|
+|done_detail_o|output|3|Completion detail code;see SPECIFICATION.md|
+|sign_attempts_o|output|17|Signing attempt count|
+|sign_rejections_o|output|17|Normal signing rejection count|
+|sign_next_nonce_o|output|17|Next signing nonce value|
+|done_valid_o|output|1|Completion status available|
+|done_ready_i|input|1|Host acknowledges completion|
+|done_code_o|output|3|Completion code;0 is normal completion|
+|done_id_o|output|16|Completed command identity|
+|fault_o|output|1|Fatal controller/service fault|
+
+Internal seed exports,rho/key/rhoprime,row inspection,raw memory readback
+and occupancy are not production pins. They remain in dilithium.sv and the
+standalone verification benches. The main UVM observes ownership/occupancy
+through internal probes;it drives only the real production inputs. Raw-core
+read request is tied inactive,row/result and read-response sinks are ready.
+
+### Earlier raw-core interface
+
+The historical sections below also list debug ports of dilithium.sv. They
+remain useful for verification and are not additional dilithium_fpga pins.
+
+
+## Stage5V.4 main Verify host signals
+
+These are RTL/virtual signals,not board package-pin assignments. The existing
+Sign stream remains separate;only the selected operation can accept input.
+
+| Signal | Direction | Width | Meaning |
+|---|---|---:|---|
+|start_op_i|in|2|0 KeyGen,1 Sign,2 Verify,3 unsupported|
+|start_param_i|in|2|0/1/2 selects level2/3/5 =ML-DSA-44/65/87|
+|start_id_i|in|16|Operation identity,snapshotted at start acceptance|
+|start_signature_len_i|in|16|Verify signature bytes;2420/3309/4627 by level|
+|start_message_len_i|in|16|Message bytes,excluding context|
+|start_context_len_i|in|9|Context bytes<=255;66+context+message must fit65535|
+|verify_input_valid_i/ready_o|in/out|1 each|One approved stream for all three Verify frames|
+|verify_input_data_i|in|64|Low-byte-first PK,signature,then ctx||M|
+|verify_input_bytes_i|in|4|1..8 valid bytes;unused high bytes ignored|
+|verify_input_index_i|in|16|Word index restarting0 for every frame|
+|verify_input_last_i|in|1|Final word of each frame;empty body needs no beat|
+|done_valid_o/ready_i/id_o|out/in|1/1/16|Held completion and acknowledgement|
+|done_code_o/stage_o/detail_o|out|3 each|Code0 is a valid/invalid check;nonzero is command/protocol/service error|
+|verify_accept_o|out|1|Meaningful with Verify done/code0;1 valid,0 invalid|
+|busy_o/fault_o|out|1 each|Active owner/fatal error requiring reset|
+
+Stop offering unused input after an early invalid/error completion. Verify
+releases all its regions before done;start_ready waits until every owner is
+idle and the services are quiescent. ENABLE_VERIFY=0 disables op2 explicitly.
+
+## Stage5V.3 internal equation interface
+
+No main or package pins change;this client consumes the real prepared context.
+
+| Signals | Direction | Width | Meaning |
+|---|---|---:|---|
+|command_valid_i/ready_o/id_i|in/out|1/1/16|Start a check;ID must match context|
+|context_valid_i/param_i/id_i/regions_i|in|1/2/16/64|Prepared owner valid,level,ID and complete region set|
+|context_t1hat_i/hints_i/zhat_i/chat_i|in|8x6/8x6/7x6/6|Region handles for equation and hint reads|
+|context_rho_i/mu_i/ctilde_i|in|256/512/512|Original headers;ctilde is zero-extended|
+|context_take_valid_o/ready_i|out/in|1 each|Atomic transfer;upstream context may drop afterward|
+|done_valid_o/ready_i/id_o/code_o/detail_o|out/in|1/1/16/3/3|Held completion after owned regions are released|
+|done_accept_o/done_digest_o|out|1/512|Meaningful only with code0;accept0 is normal invalid signature|
+|service_o/service_i|out/in|typed structs|Same shared sampler,NTT,process,pack,raw-hash and memory services|
+|busy_o/fault_o|out|1 each|Active owner/fatal error needing reset|
+
+## Stage5V.2b internal math-preparation interface
+
+No main or physical package pins change. The control helper uses typed shared
+services and atomically takes the raw context from5V.2a.
+
+| Signals | Direction | Width | Meaning |
+|---|---|---:|---|
+|command_valid_i/ready_o/id_i/message_len_i/context_len_i|in/out|1/1/16/16/9|New preparation request;ID matches upstream;lengths count bytes|
+|context_valid_i/param_i/id_i/regions_i|in|1/2/16/64|Stable upstream raw context until take|
+|context_t1_i/hints_i/z_i|in|8x6/8x6/7x6|Original raw region handles|
+|context_rho_i/tr_i/ctilde_i|in|256/512/512|Low-byte-first headers;ctilde zero-extended|
+|context_take_valid_o/ready_i|out/in|1 each|Atomic transfer of every upstream handle|
+|payload_valid_i/ready_o/data_i/bytes_i/index_i/last_i|in/out|1/1/64/4/16/1|Third context-and-message frame;unused high bytes ignored|
+|done_valid_o/ready_i/code_o/detail_o/id_o|out/in|1/1/3/3/16|Held preparation status,not final validity|
+|result_valid_o/param_o/id_o/regions_o|out|1/2/16/64|Successful arithmetic context only|
+|result_t1hat_o/hints_o/zhat_o/chat_o|out|8x6/8x6/7x6/6|Transformed t1,z,c;hints remain raw|
+|result_rho_o/mu_o/ctilde_o|out|256/512/512|Headers for matrix expansion and challenge comparison|
+|clear_valid_i/ready_o,take_valid_i/ready_o|in/out|1 each|Free/transfer result;clear wins;pending read blocks|
+|service_o/service_i|out/in|typed structs|Existing shared engines,allocator and four-bank pool|
+|busy_o/fault_o|out|1 each|Active owner;fatal protocol violation requires reset|
+
+## Stage5V.2a internal preparation interface
+
+Main/board ports are unchanged. This is a helper connected to typed shared
+services,not a new package-pin assignment or a wired main op2 interface.
+
+| Signals | Direction | Width | Meaning |
+|---|---|---:|---|
+|command_valid_i/command_ready_o|in/out|1 each|Snapshot new first-two-frame preparation request|
+|command_param_i/id_i/signature_len_i/base_i|in|2/16/16/6|Level0/1/2=2/3/5,tag,exact signature bytes,flat region base|
+|input_valid_i/ready_o/data_i/bytes_i/index_i/last_i|in/out|1/1/64/4/16/1|PK then signature;byte0 low,index restarts0 per frame|
+|done_valid_o/ready_i/code_o/detail_o/id_o|out/in|1/1/3/3/16|Held preparation status;not final Verify verdict|
+|context_valid_o/param_o/id_o/regions_o|out|1/2/16/64|Successful retained ownership only|
+|context_t1_o/hints_o/z_o|out|8x6/8x6/7x6|Flat region handles;unused entries0|
+|context_rho_o/tr_o/ctilde_o|out|256/512/512|Low-byte-first rho,tr and zero-extended ctilde|
+|clear_valid_i/ready_o,take_valid_i/ready_o|in/out|1 each|Free or transfer context;clear wins;pending read blocks both|
+|service_o/service_i|out/in|typed structs|Same shared Keccak/sampler/NTT/bank/process services|
+|busy_o/fault_o|out|1 each|Owner active;fatal protocol fault requires reset|
+
+## Stage5V.1 internal Verify decoder
+
+Main ports are unchanged;the approved three-frame Verify host contract is
+recorded in DILITHIUM_PLAN.md and is not wired to op2 yet. New internal signals:
+
+| Signal | Direction | Width | Meaning |
+|---|---|---:|---|
+|command_kind_i/command_param_i|in|1/2|0 PK,1 signature;level code0/1/2 |
+|command_id_i/command_length_i|in|16 each|Operation tag,declared frame byte length |
+|input_data_i/bytes_i/index_i/last_i|in|64/4/16/1|Byte0 low;strict ready/valid frame |
+|header_data_o/bytes_o/id_o|out|512/7/16|rho or ctilde,zero-extended;independent handshake |
+|output_data_o/section_o/poly_o/index_o|out|23/2/3/8|Canonical shifted t1,z or dense hint |
+|output_last_poly_o/output_last_frame_o|out|1 each|Tentative polynomial/frame boundaries |
+|output_id_o|out|16|Original command ID |
+|done_code_o/done_id_o|out|3/16|0 success,1 command,2 signature format/norm,3 transport |
+
+Each command/input/header/coefficient/completion boundary has the usual
+valid/ready handshake. These are RTL virtual signals,not FPGA package pins.
+
+Stage5N.4h.7 official-vector testing adds no RTL ports. The90 selected pure
+public-API Sign cases use the two-frame interface below;deterministic signing
+sets start_rnd_i to zero,randomized signing uses the original prompt rnd.
+No selector for prehash or external-mu is implemented by this verification step.
+
+## Stage5N.4h.6 new main Sign ports
+
+These are RTL interface/virtual signals,not physical FPGA package assignments.
+Existing KeyGen and debug-memory port widths remain unchanged.
+
+| Main signal | Direction | Bits | Meaning |
+|---|---|---:|---|
+|start_op_i|in|2|0 KeyGen,1 Sign,2 Verify still unsupported,3 reserved |
+|start_message_len_i|in|16|M length in bytes;Sign command metadata |
+|start_context_len_i|in|9|Context length0..255;larger values reject |
+|start_rnd_i|in|256|Explicit32-byte signing randomness |
+|sign_input_valid_i / sign_input_ready_o|in /out|1 each|Approved two-frame input handshake |
+|sign_input_data_i|in|64|Byte0 in bits7:0;SK first,then ctx||M |
+|sign_input_bytes_i|in|4|8 for every SK word,1..8 for body words |
+|sign_input_index_i|in|16|Word index starts0 separately for each frame |
+|sign_input_last_i|in|1|Last word of each frame;empty body has no beat |
+|signature_valid_o / signature_ready_i|out /in|1 each|Provisional signature stream handshake |
+|signature_data_o|out|64|Little-endian byte stream |
+|signature_bytes_o|out|4|1..8;final valid bytes4/5/3 by level |
+|signature_index_o|out|10|Signature word index from0 |
+|signature_last_o / signature_id_o|out|1 /16|Final word and operation ID |
+|done_stage_o / done_detail_o|out|3 each|Sign child stage/code;0 for KeyGen/unsupported op |
+|sign_attempts_o / sign_rejections_o / sign_next_nonce_o|out|17 each|Attempt/retry counters and flat polynomial nonce |
+
+The existing start_param_i encodes0/1/2 for labels2/3/5. Existing start_seed_i
+serves KeyGen;Sign uses its SK input frame. Signature bytes commit only on
+matching main code0. Read ready/response-valid are suppressed during Sign.
+The top-level parameter ENABLE_SIGN defaults1;FULL_KEYGEN behavior is unchanged.
+
+## Stage5N.4h.5 internal signature encoder ports
+
+No external FPGA/host pin assignments change. These are helper interfaces:
+
+| Group | Width / meaning |
+|---|---|
+|Command|valid/ready1,param2,output ID16 |
+|Accepted source|valid1,source ID16,map64,z7x6,hints8x6,ctilde512,ctilde bytes7 |
+|Ownership transfer|source_take valid/ready1;descriptor retained until handshake |
+|Signature output|valid/ready1,data64,bytes4,index10,last1,ID16 |
+|Completion|valid/ready1,code3,ID16;code0 validates the whole frame |
+|Services|Existing request_t/response_t;shared pack command op is now3 bits |
+|Control|busy1,fault1,global asynchronous reset;fatal faults require reset |
+
+Final signatures contain2420/3309/4627 bytes at levels2/3/5;last word has4/5/3
+valid bytes. A receiver must discard provisional bytes on error/reset.
+
+## Stage5N.4h.4 internal attempt-loop ports
+
+No external host/FPGA pin assignments change.
+
+| Group | Width / purpose |
+|---|---|
+|Prepared context|valid1,param2,id16,map64,handles23x6,rho256,key256,tr512 |
+|Command|valid/ready1,id16,message_len16,context_len9,base6,rnd256,nonce17 |
+|Payload|valid/ready1,data64,bytes4,index16,last1;initial ctx||M only |
+|Done|valid/ready1,code3,stage3,detail3,id16 |
+|Status|attempts17,rejections17,next_nonce17;stable through held done |
+|Accepted result|valid1,map64,z7x6,hints8x6,ctilde512,ctilde_bytes7 |
+|Retention|clear and take valid/ready1 each;clear priority,pending-read barrier |
+|Services|Existing request_t/response_t shared physical datapath |
+|Mask-helper retry inputs|retry1,mu512,seed512;normal callers tie allzero |
+
+The command nonce is a flat polynomial nonce. One vector consumes l consecutive
+values. Values ending at65536 are legal;starting a vector which would cross
+that boundary stops before any16-bit narrowing or sampling request.
+
+## Stage5N.4h.3 internal attempt-check interface
+
+No external host or FPGA pin changes. New helper ports are internal:
+
+| Group | Width / meaning |
+|---|---|
+|command valid/ready,id|1/1/16;one candidate verdict |
+|Prepared-key context|valid1,param2,id16,map64,23x6-bit handles;retained lease |
+|Products context|valid1,id16,high_id16,map64,z7x6,low/high/ct0 each8x6 |
+|Private headers|mu512,seed512,ctilde512,ctilde_bytes7,next_nonce17 |
+|Source take valid/ready|1/1;whole context including private headers |
+|done valid/ready,code,detail,id|1/1/3/3/16;actual errors use nonzero code |
+|done reject,reason,weight|1/3/12;normal code0 rejection,reason1..4;wide vector weight |
+|Retained result|valid1,reject1,map64,z7x6,hints8x6,z_id16 and private headers |
+|clear/take valid/ready|1/1 each;quiescent READY,clear priority |
+|Shared services|Existing request_t/response_t;no new physical engine interface |
+
+Rejected result maps/handles/ctilde/bytes arezero;only mu/seed/nextnonce remain.
+Read SPECIFICATION.md for reason codes and error/ownership semantics.
+
+## Stage5N.4h.2 internal response arithmetic ports
+
+No external main-host or physical/virtual pin assignment changes.
+
+| Port group | Width / purpose |
+|---|---|
+|Mask take_valid/ready|1/1;READY-only transfer of raw-y ownership AND mu/seed headers |
+|command_valid/ready,id|1/1/16;one full arithmetic schedule |
+|key_valid,param,id,regions,handles|1/2/16/64/23x6;retained prepared-key lease |
+|mask_valid,id,nonce,regions,handles,mu,seed|1/16/16/64/7x6/512/512;raw-y and retry context |
+|vector_valid,id,matrix_id,regions,low,high,chat,ctilde,bytes|1/16/16/64/8x6/8x6/6/512/7;retained transformed challenge context |
+|mask_take_valid/ready,vector_take_valid/ready|1 each;joined atomic source adoption |
+|done_valid/ready,code,detail,id|1/1/3/3/16;held whole schedule result |
+|result_valid,regions,z,low,high,ct0|1/64/7x6/8x6/8x6/8x6;complete coefficient-domain vectors |
+|result_high_id|16;unchanged w1 metadata ID;other new vectors use done_id |
+|result_mu,seed,ctilde,bytes,next_nonce|512/512/512/7/17;retry headers and nonce+l without16-bit wrap |
+|clear_valid/ready,take_valid/ready|1 each;release or transfer whole result context |
+|service request/response|Unchanged shared physical engine/bank records |
+
+## Stage5N.4h.1 internal ownership/transform ports
+
+No main host port or FPGA package/virtual-pin assignment changes.
+
+| Port group | Width / purpose |
+|---|---|
+|Matrix/challenge take_valid/ready|1/1 each;READY-only ownership transfer,no physical release;clear priority |
+|Transform command_valid/ready,id|1/1/16;one atomic adoption/reuse/FNTT schedule |
+|key_valid,mask_valid,param,key_id,mask_id|1/1/2/16/16;retained upstream leases |
+|key_regions,mask_regions|64 each;protected sources |
+|matrix_valid,id,regions,yhat,low,high|1/16/64/7x6/8x6/8x6;whole retained matrix result |
+|challenge_valid,id,region,bytes,ctilde|1/16/6/7/512;complete coefficient-domain c and challenge seed |
+|matrix_take_valid/ready,challenge_take_valid/ready|1 each;atomic joined source handoff |
+|done_valid/ready,code,detail,id|1/1/3/3/16;held completion |
+|result_valid,regions,low,high,matrix_id|1/64/8x6/8x6/16;retained low/high handles with original ID |
+|result_chat,ctilde,bytes|6/512/7;new NTT-domain c handle and seed |
+|clear_valid/ready,take_valid/ready|1 each;release or transfer the complete new context |
+|service request/response|Unchanged records and physical engines/banks |
+
+## Stage5N.4g internal challenge client
+
+These internal ports do not change the main host interface or package pins.
+
+| Port group | Width / purpose |
+|---|---|
+|command_valid/ready,id|1/1/16;start one challenge schedule |
+|context_valid,param,id|1/2/16;retained matrix-result lease |
+|context_regions,context_high|64/8x6;protected source map and ordered w1 handles |
+|context_mu|512;64-byte message representative |
+|done_valid/ready,code,detail,id|1/1/3/3/16;held result and rejection detail |
+|result_valid,ctilde,bytes,region|1/512/7/6;whole challenge publication,unused digest bits zero |
+|clear_valid/ready,busy,fault|1/1/1/1;retention,consumer drain and global-reset requirement |
+|service request/response|Existing shared records;no physical interface expansion |
+
+Bitpkg retains its existing2-bit operation field;op3 now means w1 packing.
+This replaces the formerly reserved opcode. Invalid parameter3 still rejects.
+
+## Stage5N.4f internal matrix client ports
+
+No main dilithium.sv external port or Quartus virtual-pin assignment changes.
+These are internal controller connections in the focused integration harness;
+they are not FPGA package pins or a completed main Sign host interface.
+
+| Port group | Width / purpose |
+|---|---|
+|command_valid/ready,id|1/1/16;start one yhat/A*y/decomposition schedule |
+|context_valid,param,id|1/2/16;retained prepared-key lease |
+|context_regions,rho|64/256;protected key regions and public matrix seed |
+|mask_valid,id,regions,handles|1/16/64/7x6;retained coefficient-domain y |
+|done_valid/ready,code,detail,id|1/1/3/3/16;held parent completion and child rejection detail |
+|result_valid,regions|1/64;whole validated new vector publication |
+|result_yhat|7x6;used entries l=4/5/7,unused entries zero |
+|result_low,result_high|8x6 each;used entries k=4/6/8,unused entries zero |
+|clear_valid/ready|1/1;release this client's results after consumer retirement |
+|busy,fault|1/1;exclusive client lifetime,global-reset requirement |
+|service request/response|Unchanged dilithium_service_pkg records,one physical services tree |
+
+The preceding internal sign_mask_prepare client accepts command ID16,
+message length16,context length9,nonce16,base6,rnd256;streams payload
+64/bytes4/index16/last1;publishes mu512,seed512,regions64 and7x6 handles.
+It receives retained key K256/tr512 plus valid/level/ID/region metadata.
+Both clients keep results private until whole-command success and retain them
+through READY. The outer owner must protect the key,y and all leased workspace
+from unrelated clients across child handoffs. Clear never authorizes a host
+to read secret polynomial storage.
+
+## Stage5N.4d internal key-preparation client ports
+
+No main dilithium.sv external port or virtual-pin change. The new helper is
+tested at the shared-services operation-owner boundary.
+
+| Port group | Width / purpose |
+|---|---|
+|command_param/id/base/work|2/16/6/6;level,key owner,raw plan,initial spare region |
+|input_data/bytes/index/last|64/4/10/1;expanded-key stream |
+|done_code/detail/id|3/3/16;parent result and child error detail |
+|context_valid/param/id|1/2/16;retained validated key metadata |
+|context_regions/handles|64 /23 x6;NTT-domain locations in polynomial order |
+|context_rho/key/tr|256/256/512;retained header |
+|clear_valid/ready|1/1;invalidate context and start release;busy=0 ends cleanup |
+|busy/service_active/fault|1 each;outer key lease,preparation service grant,fatal reset requirement |
+|service request/response|Existing packed service records;one physical engine/bank tree |
+
+Only the outer operation owner may route privileged consumer requests while
+the context is retained. It blocks unrelated host access and stops new
+consumer requests when clearing;existing responses can still drain.
+
+## Stage5N.4c2 production internal service record
+
+No dilithium.sv external port or virtual-pin assignment changes. The loader
+ports listed below now route through request_t.load/response_t.load in the
+existing services tree. KeyGen drives load='0. The record carries the same
+64-bit key input,byte/index/last framing,validated header/region outputs and
+held done handshake;it adds no physical memory or host interface.
+LOAD_SERVICE enables this client in production services;older focused row/
+bank benches explicitly tie the new request to zero.
+
+## Stage5N.4c1 internal key-loader interface
+
+No external dilithium.sv port or virtual-pin assignment changes. This client
+is not yet connected to the production shared-service tree.
+
+| Internal port group | Width / purpose |
+|---|---|
+|command_param/id/base|2/16/6;level,key owner,first flat region |
+|input_data/bytes/index/last|64/4/10/1;existing expanded-key framing |
+|done_code/id/regions|3/16/64;whole-key outcome and validated locations |
+|header_rho/key/tr|256/256/512;valid only during successful held done |
+|reserved / release_locks / hidden|64 each;availability,owner protection,privacy |
+|alloc_region/id/mode/param|6/16/2/2;existing core0 memory allocation |
+|write_data/index/id/last|23/8/16/1;canonical natural-order scalar writes |
+|finish_id/code|16/3;commit after ACKs or discard partial |
+|release_region|6;rollback earlier polynomial commits |
+
+Each transfer uses valid/ready. Busy owns the memory-client lease through held
+done. Internal fault halts until reset. See SPECIFICATION.md for error codes.
+
+## Stage5N.4b signing formatter ports
+
+No dilithium.sv external-port or virtual-pin changes. sign_hash_message exposes
+internal command fields,64-bit payload and absorption streams,and held
+descriptor/completion;all widths are in SPECIFICATION.md. The prepared Quartus
+source list adds the formatter;the selected top/6.757ns SDC are unchanged.
+No new synthesis/fit or placement claim.
+
+## Stage5N.4a key-decoder interface
+
+No main dilithium.sv external-port/virtual-pin changes. Standalone
+sign_key_decode.sv uses64-bit indexed input words,one1024-bit held header and
+tagged23-bit coefficient output,with a held completion. Full widths and
+error codes are in SPECIFICATION.md. The prepared Quartus file list includes
+the decoder;the selected top and6.757ns SDC are unchanged. No fresh fit.
+
 ## Stage5N.3 internal signing service
 
 No dilithium.sv external ports or virtual-pin changes. request_t.sign /

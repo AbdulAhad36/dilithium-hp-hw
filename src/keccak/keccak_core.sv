@@ -281,7 +281,8 @@ module keccak_core #(
     keccak_output_unit #(
         .OUTPUT_DWIDTH          (OUTPUT_DWIDTH),
         .OUTPUT_BYTES           (OUTPUT_BYTES),
-        .OUTPUT_BYTE_COUNT_WIDTH(OUTPUT_BYTE_COUNT_WIDTH)
+        .OUTPUT_BYTE_COUNT_WIDTH(OUTPUT_BYTE_COUNT_WIDTH),
+        .ALIGNED_COUNTER       (1'b1)
     ) KOU (
         .state_array_i          (KOU_STATE_ARRAY_I),
         .rate_i                 (KOU_RATE_I),
@@ -338,7 +339,7 @@ module keccak_core #(
                 end else if (msg_received) begin
                     next_state = STATE_SUFFIX_PADDING;
 
-                // PRIORITY 3: Check if there is valid input and to process if so
+                // PRIORITY 3: Check if there is valid input and to poly_process if so
                 end else if (input_valid_i) begin
                     next_state = STATE_ABSORB;
 
@@ -450,7 +451,7 @@ module keccak_core #(
                     // - when message matches rate (msg_received)
                     complete_absorb_en = 1'b1;
 
-                // PRIORITY 3: Check if there is valid input and to process if so
+                // PRIORITY 3: Check if there is valid input and to poly_process if so
                 end else if (input_valid_i) begin
                     absorb_wr_en = 1'b1;
                     state_array_wr_en = 1'b1;
@@ -670,6 +671,14 @@ module keccak_core #(
             $fatal(1,"Registered absorb readiness differs from core state");
     end
 `endif
+    // The only counter writes are zero and a whole OUTPUT_BYTES increment.
+    // Check the premise used by the combinational output-unit specialization.
+    // synthesis translate_off
+    always @(posedge clk) if (!rst && OUTPUT_BYTES > 1 &&
+        (OUTPUT_BYTES & (OUTPUT_BYTES-1)) == 0 &&
+        (bytes_squeezed & BYTE_ABSORB_WIDTH'(OUTPUT_BYTES-1)) !== '0)
+        $fatal(1,"Keccak squeeze counter lost whole-beat alignment");
+    // synthesis translate_on
 endmodule
 
 `default_nettype wire

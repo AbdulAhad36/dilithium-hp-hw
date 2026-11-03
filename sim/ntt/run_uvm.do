@@ -1,6 +1,9 @@
 # Main UVM with GUI/waves/functional and code coverage; run from sim/.
 if {![info exists NTT_MODE]} {set NTT_MODE uvm}
 if {$NTT_MODE ni {uvm vectors}} {error "NTT_MODE must be uvm or vectors"}
+set here [file normalize dilithium]
+source [file join $here setup_cyclonev.tcl]
+unset here
 if {[batch_mode]} {onerror {quit -code 1 -f}} else {onerror {abort}}
 if {![batch_mode]} {
   transcript on
@@ -13,10 +16,10 @@ set TB ../tb_uvm/tb_uvm_ntt_LightHD
 set CAND ntt
 if {![file exists $CAND/work_vectors]} {vlib $CAND/work_vectors}
 vmap work $CAND/work_vectors
-vlog -sv -work work $RTL/ntt_pkg.sv $RTL/mod_mul.sv $RTL/butterfly_unit.sv \
+vlog -sv -work work $RTL/ntt_pkg.sv $RTL/mod_mul.sv $RTL/butterfly_fused.sv $RTL/butterfly_unit.sv \
   $RTL/twiddle_rom.sv $RTL/ntt_core.sv $RTL/ntt_engine.sv \
   $TB/tb_ntt_vectors.sv
-vsim -wlf ntt/vectors.wlf -voptargs=+acc work.tb_ntt_vectors \
+vsim -L cyclonev_ver -wlf ntt/vectors.wlf -voptargs=+acc work.tb_ntt_vectors \
   +NTT_OUTPUT_FILE=$CAND/ntt_dut_outputs.txt
 onfinish stop
 if {![batch_mode]} {
@@ -59,11 +62,11 @@ vmap work $NTT_WORK
 set RTL ../src/ntt
 set TB ../tb_uvm/tb_uvm_ntt_LightHD
 vlog -sv -work work $RTL/ntt_pkg.sv
-vlog -sv +cover=sbceft -work work $RTL/mod_mul.sv $RTL/butterfly_unit.sv \
+vlog -sv +cover=sbceft -work work $RTL/mod_mul.sv $RTL/butterfly_fused.sv $RTL/butterfly_unit.sv \
   $RTL/twiddle_rom.sv $RTL/ntt_core.sv $RTL/ntt_engine.sv
 vlog -sv +incdir+$TB -L mtiUvm -work work $TB/ntt_ref_pkg.sv $TB/ntt_if.sv
 vlog -sv +define+NTT_FIFO +incdir+$TB -L mtiUvm -work work $TB/tb_top.sv
-vsim -wlf ntt/${NTT_TEST}.wlf -coverage -sv_seed $NTT_SEED -voptargs=+acc work.tb_top +UVM_TESTNAME=$NTT_TEST
+vsim -L cyclonev_ver -wlf ntt/${NTT_TEST}.wlf -coverage -sv_seed $NTT_SEED -voptargs=+acc work.tb_top +UVM_TESTNAME=$NTT_TEST
 coverage save -onexit $NTT_UCDB
 onfinish stop
 if {![batch_mode]} {

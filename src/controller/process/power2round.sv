@@ -1,5 +1,5 @@
 // FIPS204 D=13 decomposition; canonical input 0..q-1.
-// Pure combinational arithmetic. The shared process stage owns valid/tags.
+// Pure combinational arithmetic. The shared poly_process stage owns valid/tags.
 `default_nettype none
 module power2round (
   input wire logic [22:0] coefficient_i,

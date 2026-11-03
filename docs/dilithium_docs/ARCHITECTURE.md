@@ -1,5 +1,514 @@
 # Dilithium architecture
 
+C14 replaces private Sign/Verify hint encoders/decoders with one codec inside
+shared Process DMA:704 suffix bits and two shared index-word read ports.
+MHint connects directly;controllers provide phase/row/host-stream controls.
+Process port assignment uses direct phase equations with all bounds/format
+checks retained. Full210/protocol88/UVM33/negative and physical guards pass.
+Actual31,882 placed ALMs/56.72MHz is an area/timing tradeoff versus C12's
+33,056/57.38. No operation cycles change. Performance targets and remaining
+controller/memory reconstruction are open. C15's direct-memory prototype
+remains outside this qualified source snapshot until separately connected.
+
+C11R1 reuses KeyGen xi/rho-prime/tr lifetimes in one1024-bit workspace and
+one64-bit read selector. Sign/Verify formatters read retained owner fields
+under a checked stability contract;generic snapshot mode remains available.
+Encoding/control arithmetic is narrowed or uses exact fixed shifts/adds.
+Full source/routed gates pass at33066 placed ALMs/57.57MHz. The below20000
+and148MHz targets remain open. The user rejected shared controller-context
+RAM/one formatter. C12 instead corrects the published butterfly and compact
+decoder structure. Its qualified whole-main result is33056 placed ALMs/
+57.38MHz;area is effectively unchanged and Fmax falls0.33%. Performance
+targets remain open. All public operations and measured cycles are retained.
+
+## Current compact control boundary
+
+`dilithium_fpga` selects `dilithium`:three operation FSMs share one
+physical hash/sampler/NTT/Process set and four coefficient banks. C11R1 passes
+210 official commands,88 protocol commands and main33 UVM/negative. Controller
+workspace reuse and exact arithmetic reduce placement to33066 ALMs;worst
+reported Fmax57.57MHz. Setup remains open at148MHz and the below20000 area
+target is unachieved. Engine mathematics and public streams are fixed.
+
+```mermaid
+flowchart LR
+  READ["A/B read reports<br/>plus cached completed reads"] --> REDUCE["All source reads complete"]
+  REDUCE --> ARM["C10 read_release_r<br/>1 registered decision"]
+  ARM --> CMD["Renewal command<br/>and read retirement readiness"]
+  CMD --> ROUTE["Round-robin router<br/>16 owner bits<br/>8 deferred-retirement bits"]
+  ROUTE --> ADMIT["Captured descriptor<br/>one ADMIT validation clock"]
+  ADMIT --> RAM["RUN on physical A/B ports<br/>4 banks x1024 x92 bits"]
+  RAM --> FINAL["All result writes complete"]
+  FINAL --> FIN["C10 finish_ready_r<br/>1 registered decision"]
+  FIN --> DONE["Retire result lanes<br/>report NTT completion"]
+```
+
+The registered decisions break the measured ownership-to-completion-to-
+arbitration feedback path. They do not change the NTT core's arithmetic or
+pipeline. Deferred retirement prevents a losing renewal from releasing its
+physical lane;the client sees the old completion once. All20 new control bits
+are retained in the C10 fit. The new worst path is RAM-to-Process arithmetic;
+these control changes alone do not close148MHz timing.
+
+## Stage7C replacement under construction
+
+`controller/keygen.sv` is the first compact operation controller;
+`datapath/datapath.sv` owns one physical engine set. Controllers send
+scalar phase/address commands defined in `helpers/dilithium_pkg.sv`. They do
+not adopt leases or copy per-helper polynomial-handle arrays. The shared compact main passes210 official and88 protocol commands at the
+frozen7C.4 checkpoint. Production selection now points to this hierarchy;
+fresh production210/protocol88/main UVM33 and routed7C.7 qualification pass.
+The memory feedback loop is removed;148MHz setup remains open. Historical
+7B.9 PPA is not a measurement of this replacement.
+
+```mermaid
+flowchart TB
+  KG["Compact KeyGen FSM<br/>producer:two descriptors<br/>consumer:one row accumulator"]
+  SIGN["Compact Sign FSM<br/>cached secret transforms<br/>one rejection loop;row-local work"]
+  FUTURE["Compact Verify / main<br/>one operation owner;row-local equation"]
+  HASH["hash_sampler<br/>same dual Keccak + sampler<br/>raw SHAKE shares both cores"]
+  REGROUP["Fig5 secret regroup<br/>16 signed nibbles per packet"]
+  NTT["ntt_dma<br/>one4-BU /3-FIFO NTT<br/>streamed first stage / fused MAC"]
+  PROC["process_dma<br/>shared x4 Process + one BitPkg<br/>packed RAM or64-bit output"]
+  LOAD["Shared BitUnpkg/manual input route<br/>same sampler writer + secret regroup"]
+  HINT["Bounded sparse hint suffix<br/>ordered indices + row counts"]
+  ROUTER["memory_router<br/>8 physical lane owners<br/>round-robin atomic command admission"]
+  RAM["ONE physical coefficient array<br/>4 x1024 words x92 bits<br/>independent A/B bank-port FSMs"]
+  KG --> HASH
+  KG --> NTT
+  KG --> PROC
+  SIGN --> HASH
+  SIGN --> NTT
+  SIGN --> PROC
+  SIGN --> LOAD
+  LOAD --> Q["Two validated decoded packets<br/>92-bit payload each<br/>admit/commit counters and reset ownership"]
+  Q -->|"secret packets through same writer"| REGROUP
+  Q -->|"canonical packets through same writer"| ROUTER
+  PROC -->|"four MHint flags/word"| HINT
+  FUTURE -. shared requests .-> HASH
+  HASH --> REGROUP
+  REGROUP -->|"tagged B-port words"| ROUTER
+  HASH -->|"other modes:4 x23-bit words"| ROUTER
+  NTT <-->|"A/B bank streams"| ROUTER
+  PROC <-->|"packed word streams"| ROUTER
+  KG <-->|"encoded PK read / hash / host fork"| ROUTER
+  ROUTER <--> RAM
+```
+
+Sampler writes from both hash contexts share port B even when they alternate
+polynomials in one bank. The producer supplies each accepted word's address.
+NTT reserves output lanes before starting when the output bank differs from
+its source. For an in-place transform,the same owner atomically renews its
+finished read bursts as write bursts. Other clients cannot take those lanes
+in the gap before the non-stallable final NTT stage.
+
+KeyGen keeps raw compact secrets for the final SK stream and caches s1hat in
+the fixed transform bank. It samples A and s2 in bounded batches,uses at most
+nine A slots,and completes each MAC row,INTT,secret addition and P2R before
+reusing scratch. Packed t1 is stored above the A ring in the same BRAM4 so
+the approved full PK/SK streams and final FIPS tr64 need no extra key RAM.
+
+`sign.sv` now consumes the approved SK then ctx||M frames through
+that same datapath. It retains the128-byte SK header in `sign_input`,
+transforms s1/s2/t0 once, and keeps those fixed bank roles through all retries.
+Each attempt samples y and A in bounded producer batches, transforms y early,
+and uses one row accumulator. After row-local INTT/Decompose, packed w1 is
+hashed with mu. The A phase retires before its bank becomes z/chat/r0 storage.
+The same Process pipeline checks z/r0/ct0 and generates hints; the same BitPkg
+streams z after ctilde, followed by the bounded sparse suffix. Public completion
+waits for the physical services and suffix formatter to retire. All90 official
+signatures and69 protocol commands pass, with62 comparator faults rejected.
+These are the frozen7C.3 results. Production now selects the compact shared
+main and passes its fresh operation/protocol/UVM gates;physical fitting is
+in progress,so no new whole-design area/timing is claimed here.
+
+### Compact Verify and shared main candidate
+
+`verify.sv` now passes45 official verdicts (9 valid/36 invalid) and
+35 independent equation digests at its preserved initial checkpoint:
+`evidence/stage7c4_verify_official_initial.zip`, SHA256
+`4ccad7b198fe7130c26583c414c07b934a2c904e05851f56ea0c9c1baf17aae2`.
+It caches transformed z/t1 and chat in fixed banks, samples A in a bounded
+ring while transforms run, and finishes one equation row before reusing
+its accumulator/scratch. One shared UseHint/BitPkg writes packed w1, which
+the same SHAKE service hashes with mu. There are no per-helper leases or
+copied polynomial-handle contexts.
+
+`dilithium.sv` is the candidate main controller. Its51 port groups
+match the approved production boundary. A five-state owner FSM selects
+KeyGen, Sign or Verify requests into ONE physical `datapath`; the
+selected child latches command inputs directly at the public handshake.
+The main adds no copies of seeds or wide contexts. Busy and held-completion
+states block new commands, and ownership retires before the next start.
+The mixed diagnostic9,protocol88 and all210 interleaved official operations
+pass,with744280 exact published key/signature bytes and35 independent Verify
+equation digests. Protocol88 exercises29 errors,3 normal invalids,12 resets,
+44 cross-operation recoveries and44 blocked busy probes. Checkers reject90/90
+corruptions. This qualified the7C.4 candidate core. The7C.5 production wrapper
+now selects it;fresh210/88 and main UVM33 pass with real fixed-port ownership
+observations. Routed7C.7 has34302 actual placed ALMs and no combinational
+loop,but setup remains-12.556ns at the unchanged6.757ns constraint.
+
+## Historical Stage7B.9 production boundary
+
+`controller/dilithium_fpga.sv` is the main synthesis and main-UVM top. It wraps
+the existing `dilithium` core with full KeyGen, Sign and Verify enabled. All
+74 earlier RTL files are unchanged from Stage7B.7. The wrapper adds no state,
+arithmetic, memory or pipeline stage.
+
+```mermaid
+flowchart TB
+    host["Host: commands, streamed input, output backpressure"]
+    top["dilithium_fpga\n51 signal groups / 1027 bits including clock"]
+    main["dilithium core\nKeyGen / Sign / Verify controllers"]
+    service["Shared services and arbitration"]
+    engines["Dual Keccak / sampler / NTT / process blocks"]
+    memory["Four coefficient banks\n64 polynomial regions + metadata"]
+    monitor["Verification-only internal probes\nownership, occupancy and legacy-path guards"]
+    host --> top
+    top --> main
+    main --> service
+    service --> engines
+    service <--> memory
+    main -. read-only observation .-> monitor
+    memory -. read-only observation .-> monitor
+```
+
+The production boundary exposes command/data/status ports. Raw seed, legacy
+row/read and pool-occupancy outputs remain inside the original core. The
+unused legacy read request is tied inactive; its response and row sinks are
+tied ready. Main UVM drives the actual production interface and observes
+internal status without driving a second debug interface. Existing focused
+benches can still instantiate the original core for debug verification.
+
+There are 751 input bits including clock and 276 output bits; all 1026
+nonclock bits are virtual in the current Quartus project. These counts are
+interface geometry, not area estimates or a board pin assignment. Main33 and
+the current-token negative pass;all30 latency records equal7B.7. The fresh
+full compile routes at51162 actual placed ALMs,but the6.757ns setup target
+fails. THROUGHPUT.md records the four-corner measurements and the Verify
+arithmetic/packing critical path. Earlier failed-route counts are not current PPA.
+
+## Stage5V.4 one main owner for Verify
+
+`controller/verify.sv` sequences the existing three helpers. Main op2 grants
+it the physical services tree for the entire request,including handoffs and
+cleanup. The main mux now selects exactly one KeyGen,Sign or Verify client;
+debug reads are blocked while Sign/Verify owns it. A held completion blocks
+new starts. KeyGen's existing post-ack cleanup also retains ownership.
+The separate Verify input group carries the approved PK/SIG/body frames;
+no new RAM or arithmetic engine is added. FULL_KEYGEN=1 selects complete
+KeyGen;both ENABLE_SIGN/ENABLE_VERIFY default1. No synthesis top,clock target
+or accepted engine implementation is changed by this functional gate.
+
+## Stage5V.3 equation component
+
+`verify_equation` is a new services client after real raw/math preparation.
+The owner expands one A row with the existing sampler,uses shared PWM and
+in-place ADD/SUB in NTT domain,then one inverse NTT per row. Shared memory
+retains W rows while UseHint reads W/h pairs and feeds the existing Bitpkg
+and hash formatter. Recomputed c2 is compared with received ctilde;all adopted
+and temporary leases are released before completion. Only scalar UseHint is
+new arithmetic;NTT,matrix sampling,process DMA,packing and SHAKE are reused.
+Main op2 is not yet connected. See universal reference/memory docs.
+
+## Stage5V.2b Verify math owner
+
+The first-two-frame owner and math owner share ONE physical services tree.
+An atomic context take transfers all raw handles and header snapshots. The
+math client reuses sign_hash_message op0 to format pure-message mu,then uses
+the shared raw Keccak service for its64-byte digest. It samples c from the
+received ctilde through the shared challenge sampler. Shared FNTT transforms
+t1<<13 and z;the existing Pre-NTT transforms small c. Hints remain untransformed.
+
+One free scratch region rotates through source releases;result ownership is
+published only after all transforms retire. It contains13/18/24 regions plus
+rho,mu and ctilde. Pre-adoption errors preserve the old owner;later errors
+clean every adopted/new region. Foreign leases survive. Pending reads block
+clear/take. Fatal raw/service violations halt until reset.
+
+All70 existing RTL modules remain unchanged;one control module makes71 total.
+The same four banks,engines,synthesis top and6.757ns SDC remain. This is a
+focused source-level preparation gate,not main Verify arithmetic or a PPA run.
+
+## Stage5V.2a shared Verify front end
+
+The new verify_input_prepare helper connects the existing Verify decoder to
+the real four-bank memory and real shared Keccak engines. The existing load
+service selects SK or Verify mode;it uses one existing scalar memory writer.
+The PK stream forks through one64-bit elastic word into decoding and SHAKE256.
+The two sink credits are independent;paired descriptors prevent split start.
+Signature loading follows complete PK/hash retirement. Successful context owns
+K t1<<13,L z and K dense-hint regions plus rho,tr,ctilde header registers.
+It transfers or clears all regions together;pending reads preserve ownership.
+Error cleanup drains finite raw hashing and preserves unrelated bank regions.
+
+This is a first-two-frame helper,not the main Verify controller. ctx||M,mu,
+SampleInBall/NTT preparation and the Verify equation follow in5V.2b/5V.3.
+Main op2 is still unsupported. Existing services,engines,memory geometry,main
+host ports,synthesis top and6.757ns SDC remain;no new PPA claim is made.
+
+## Stage5V.1 Verify decoding component
+
+Approved host ordering is PK -> signature -> ctx||M. The new verify_decode
+component decodes a PK/signature frame with bounded reservoir/suffix storage.
+It is not connected to main op2 or the shared bank writer yet. All67 prior RTL
+files remain unchanged;the new module makes68 RTL files. The Quartus source
+list includes it,but the selected synthesis top and6.757ns SDC are unchanged.
+No new synthesis or full-main timing claim is made.
+
+The next client will own decoded t1/z/h and PK hashing in the existing pool.
+UseHint,Az-c*(2^13*t1),inverse NTT,packed-w1 hash and challenge comparison then
+complete the Verify arithmetic before main dispatch. The same services tree
+will remain exclusive to the active operation.
+
+Stage5N.4h.7 adds official Sign vectors to the existing main-top verification
+flow. All67 RTL files remain byte-identical to the4h.6 checkpoint;the ownership,
+engines and memory architecture below are unchanged. The selected pure public
+Sign cases use the existing interface. REFERENCE_VERIFICATION.md records the
+scope and results;unsupported ACVP APIs are not extra implemented hardware.
+
+## Stage5N.4h.6 main KeyGen/Sign ownership
+
+The main FSM now has KeyGen and Sign dispatch/result states. Default
+ENABLE_SIGN1 instantiates one Sign control client;legacy KeyGen-only tests
+explicitly select0. Main start readiness waits for both clients and physical
+services to be idle. The owner mux includes child cleanup,even if the main FSM
+has already returned to IDLE after KeyGen completion. Both owners cannot be
+active together. Sign suppresses external debug-read handshakes/responses.
+
+The new Sign client grants its key preparer,attempt loop or encoder exclusive
+services access in order. It reloads and frees the key per approved request.
+No new bank or crypto engine;the same SHAKE,sampler,NTT,process and Bitpkg
+hardware serves both operations. Main op2 Verify remains unsupported. The
+Quartus source list includes Sign;its selected synthesis top/6.757ns constraint
+are unchanged and no whole-main synthesis claim is made here.
+
+## Stage5N.4h.5 accepted attempt to encoded signature
+
+Attempt READY -> atomic take -> sign_signature_encode -> existing bank read
+port/shared Bitpkg ->64-bit signature stream -> release adopted regions ->held
+completion. No new bank,arithmetic engine,signature RAM or duplicate packer.
+Z extends Bitpkg to op4 with a3-bit op port;old operations and87-bit reservoir
+remain. The encoder stores descriptor/digest,a read cache,a hint word and counts.
+The outer scheduler retains the key and exclusive service lease. Output is
+provisional until code0. Main Sign host dispatch and main Verify remain open.
+
+## Stage5N.4h.4 one shared attempt loop
+
+sign_attempt_loop instantiates control clients for the six previously verified
+attempt stages. A request mux grants one client the same services tree at a
+time;ownership transfers still occur atomically between retained clients.
+The parent holds the prepared-key lease across all stages and retries. It
+rehashes mu/private seed only for the initial pass;retries select the mask
+helper's existing seed-to-ExpandMask path. A17-bit nonce and18-bit bound check
+prevent wrap. Reverse-order clear handles ordinary failures. No new hash,
+sampler,NTT,arithmetic engine,bank or polynomial/message RAM is introduced.
+This functionality-first schedule resamples A each attempt. Main Sign host
+dispatch and signature encoding remain later;no new PPA claim is implied.
+
+## Stage5N.4h.3 shared norm/hint checks
+
+New sign_attempt_check adopts the products context and sequences the existing
+sign-process DMA(CNB then Mhint) and scalar in-place ADD. One rotating hint
+address is sufficient;there is no polynomial copy or additional processing
+engine. Products releases ownership before any destructive update. The new
+owner retains key leases and headers across service gaps,held done and READY.
+Normal algorithmic rejection frees the complete attempt but retains private
+retry headers. Hardware errors are a separate completion category. This
+focused connected helper is not yet the main Sign controller or retry loop.
+
+## Stage5N.4h.2 shared response arithmetic
+
+sign_response_products adopts the mask and transformed-challenge contexts
+together. It retains mu/private-seed/ctilde metadata and uses existing PWM,
+INTT and in-place ADD/SUB clients sequentially. Two scratch handles are reused;
+the ct0 vector stays in existing banks. Key context is retained,raw y becomes
+z,and w0 becomes r0. w1 is unchanged. No new physical arithmetic or payload
+RAM is instantiated. Result handoff preserves headers for the future retry
+controller;this phase does not make norm/hint/signature decisions.
+
+## Stage5N.4h.1 ownership transfer and challenge transform
+
+The matrix and challenge clients can now relinquish their retained contexts
+through take_valid/ready. sign_challenge_transform joins both transfers on
+one edge,then owns yhat,w0,w1,c. No physical data moves at that edge. It frees
+dead yhat,uses existing FNTT for c,waits for complete storage and child
+retirement,and frees raw c. It retains w0/w1/chat and ctilde for secret products.
+Key/raw y stay protected by the outer owner. Clear or another whole-context
+take ends the new retained lifetime. The existing banks and service records
+are unchanged. No new physical engines or payload RAM are instantiated.
+
+## Stage5N.4g retained w1 to challenge
+
+sign_challenge_prepare is a control client of the same physical services.
+It reads each retained w1 row through the packed92-bit port,feeds the four
+23-bit lanes sequentially into shared Bitpkg op3,and forwards packed words
+to the existing sign_hash_message challenge formatter. SHAKE256 hashes
+mu64 || encoded_w1. Its actual32/48/64 digest bytes become the input to
+the same shared SampleInBall path;the resulting c occupies one free region.
+No duplicate packer,hash engine,sampler,polynomial RAM or encoded-w1 RAM is
+added. One92-bit read cache and512-bit digest register bridge the services.
+
+The outer owner preserves the prepared key,y and matrix result leases.
+Whole-result publication waits for hash and sampler retirement and complete
+storage. Normal errors drain current packing/hash work and discard its
+diagnostic digest;clear releases only c. Physical/context faults require
+global reset. Main Sign and retry scheduling remain unfinished.
+
+## Stage5N.4f connected signing-attempt arithmetic client
+
+The focused harness selects sign_key_prepare,sign_mask_prepare and the new
+sign_matrix_prepare around the same dilithium_services instance. The outer
+operation owner retains both key/mask contexts and excludes unrelated host
+commands across each child handoff. This is not yet the main Sign controller.
+
+sign_matrix_prepare allocates a descriptor plan from free existing regions,
+then schedules ordinary FNTT(y),one reusable sampled A row,the existing row
+PWM/ADD/INTT client,and the existing x4 decomposition DMA. yhat,w0,w1 remain
+private until the entire vector completes. All new payloads use existing
+banks;only rho/handles/ownership/FSM registers are added. Row temporaries are
+released between rows;original coefficient-domain y stays with the mask owner.
+Normal failures roll back all new workspace,including earlier completed rows.
+
+The decomposition source stays hidden through its done retirement. Parent
+whole-plan checks therefore distinguish a source lease from an incomplete
+physical write and wait until that lease retires. Fatal faults require global
+reset;normal errors preserve key/y for subsequent work. Full signature/retry/
+Verify,main host routing and PPA improvement remain later stages.
+
+## Stage5N.4d retained signing-key preparation client
+
+New helpers/sign_key_prepare.sv is a working control-only client of the same
+dilithium_services instance. It is tested at the operation-owner boundary;
+it does not add another engine/memory tree or enable unfinished main Sign.
+All57 previous RTL files are unchanged. The future Sign owner selects this
+client while service_active is high,then other signing clients while the
+validated key context remains retained in READY.
+
+```mermaid
+flowchart LR
+  IN["Expanded SK64-bit stream<br/>level /ID /base /scratch"] --> PREP["sign_key_prepare<br/>control +retained key context"]
+  PREP --> LOAD["Existing shared load service<br/>whole-key validation"]
+  LOAD --> MEM["One existing four-bank memory<br/>raw s1,s2,t0"]
+  PREP --> NTT["One existing shared NTT engine<br/>Pre for s1/s2,FNTT for t0"]
+  MEM --> NTT
+  NTT --> WORK["One free scratch region"]
+  WORK --> MOVE["Validate done /publish handle<br/>release old source<br/>old source becomes next scratch"]
+  MOVE --> PREP
+  PREP --> CTX["Validated rho,K,tr +level,ID<br/>23 x6-bit handles +region mask"]
+  CTX --> SIGN["Future Sign hash/vector clients<br/>same shared services"]
+```
+
+One spare region rotates through freed raw-source locations. Peak key storage
+is N+1 regions;steady prepared-key storage is N,where N=12/17/23. Header
+retention adds1024 bits and metadata,not encoded-key or polynomial RAM.
+The outer operation owner blocks unrelated host access between child jobs
+and throughout retained context. complete from the underlying services is
+not a public key-valid indication. Normal errors drain child status and clean
+all owned raw/transformed regions before done;physical faults halt the owner
+until global reset. An explicit clear invalidates context and releases it.
+
+## Stage5N.4c2 production key-loader connection
+
+The existing main-owned dilithium_services now exposes a nested load request/
+response record. It routes through the row wrapper to sign_key_load in the
+existing bank arbiter. The same memory allocator,scalar packer and four banks
+serve sampling,NTT,process operations and decoded-key writes. No second engine
+or RAM tree is added. KeyGen explicitly drives load='0;main Sign/Verify remain
+unsupported until their control schedules are implemented.
+
+```mermaid
+flowchart LR
+  CLIENT["KeyGen / future Sign owner"] --> REC["Single services request/response<br/>nested load record"]
+  REC --> ROW["Existing row wrapper<br/>row priority +owner tracking"]
+  ROW --> ARB["Existing bank arbiter<br/>NTT / scalar / sign process / key load"]
+  ARB --> LOAD["sign_key_load +existing decoder<br/>private whole-key plan"]
+  LOAD -->|"allocate /23-bit write /finish /rollback release"| MEM["One existing memory +packer<br/>four1024 x92-bit banks"]
+  ARB -->|"existing clients"| MEM
+  MEM -->|"ACKs +metadata"| LOAD
+  LOAD --> VALID["Whole-key done +header +region mask<br/>held through retirement"]
+```
+
+An accepted key load exclusively owns the bank client until done retires.
+Public reads/responses and releases,new sampling/raw requests,row,NTT and
+other compute clients remain blocked. Whole-key hidden masks filter complete;
+rollback releases use an internal mux while external releases stay blocked.
+Only a NEW load command is masked by waiting row priority;input and done-ready
+continue for the current owner,preventing a held-row retirement deadlock.
+
+## Stage5N.4c1 whole-key ingestion client
+
+```mermaid
+flowchart LR
+  SK["Expanded SK stream<br/>64 bits,8 bytes/beat"] --> DEC["sign_key_decode<br/>1024-bit header +76-bit reservoir"]
+  DEC -->|"23-bit coefficient + section/poly/index"| LOAD["sign_key_load<br/>plan,commit mask,one active region"]
+  LOAD -->|"allocate/write/finish"| MEM["Existing memory packer<br/>4 coefficients per92-bit word"]
+  MEM --> BANKS["Four dual-port banks<br/>each1024 x92 bits"]
+  BANKS -->|"64 write ACKs/poly"| LOAD
+  LOAD -->|"error:discard partial +release commits"| MEM
+  LOAD --> PUB["Whole-key success only<br/>rho,K,tr +region mask"]
+```
+
+This is the focused real-memory client gate,not a second production bank tree.
+The client is not yet instantiated in dilithium_services. Its future arbiter
+must grant exclusive access until done retires,mask complete with hidden_o,
+block public reads,and protect planned regions against release. The primitive
+can read internally COMPLETE polynomials before whole-key success;the client
+contract prohibits exposing that bypass.
+
+## Stage5N.4b signing hash client
+
+```mermaid
+flowchart LR
+  CMD["Sign fields / opcode / level / ID"]
+  BODY["ctx +message<br/>or already encoded w1"]
+  FMT["sign_hash_message<br/>1024-bit selected prefix<br/>128-bit merge reservoir"]
+  OWNER["Future Sign owner<br/>snapshot core/tag<br/>discard errors / wait for service retirement"]
+  SVC["Existing dilithium_services<br/>one Keccak pair / sampler / four banks"]
+  RAW["mu64 / private seed64<br/>challenge32,48,64 bytes"]
+  MASK["256 mask coefficients<br/>existing shared-bank result"]
+  CMD --> FMT
+  BODY --> FMT
+  FMT --> OWNER --> SVC
+  SVC --> RAW
+  SVC --> MASK
+  SVC --> OWNER
+```
+
+The focused TB supplies the owner logic and actual main-owned service;
+the formatter is not yet wired into main Sign. Actual RTL mu and private-seed
+results feed9 dependent requests.29 peer empty-hash jobs occupy the other
+physical core,with exact payload/core/tag/retirement checks. No existing RTL
+or bank geometry change,no new hash copy. Error drain completes declared
+absorption with dummy bytes;only code0 plus service retirement may commit a
+dependent digest. Separate hash/sampler lifetime is not hidden by formatter done.
+
+## Stage5N.4a key-input foundation
+
+The new standalone process/sign_key_decode.sv is not yet instantiated in
+dilithium_services or main Sign. Existing production RTL remains unchanged.
+
+```mermaid
+flowchart LR
+  SK["Expanded SK input<br/>64-bit data / bytes4 / index10 / last / ID16"]
+  DEC["sign_key_decode<br/>indexed framing + eta range checks<br/>76-bit little-endian reservoir"]
+  HDR["rho256 / K256 / tr512<br/>one held header"]
+  POLY["data23 / section2 / poly3<br/>index8 / last-poly / last-key / ID16"]
+  DONE["Held done/code/ID<br/>only code0 validates the whole key"]
+  FUTURE["Future signing key-memory owner<br/>discard entire tentative key on error"]
+  SK --> DEC --> HDR
+  DEC --> POLY
+  DEC --> DONE
+  HDR -.-> FUTURE
+  POLY -.-> FUTURE
+  DONE -.-> FUTURE
+```
+
+No main external-port change,full-key/poly RAM,engine copy or shared-bank
+allocation is introduced. The next checkpoint formats signing hash messages;
+bank ingestion and main Sign control remain later connection work.
+
 ## Stage5N.3 shared signing memory client
 
 The main-owned service enables SIGN_SERVICE and contains one new

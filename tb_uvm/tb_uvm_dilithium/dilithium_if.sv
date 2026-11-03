@@ -1,0 +1,63 @@
+`timescale 1ps/1ps
+interface dilithium_if(input logic clk);
+  // Actual production command/data/status pins.
+  logic  key_valid_o;
+  logic  key_ready_i;
+  logic [63:0] key_data_o;
+  logic [3:0] key_bytes_o;
+  logic  key_type_o;
+  logic  key_last_o;
+  logic [9:0] key_index_o;
+  logic [15:0] key_id_o;
+  logic  rst;
+  logic  start_valid_i;
+  logic  start_ready_o;
+  logic  busy_o;
+  logic [1:0] start_op_i;
+  logic [1:0] start_param_i;
+  logic [15:0] start_id_i;
+  logic [255:0] start_seed_i;
+  logic [15:0] start_message_len_i;
+  logic [8:0] start_context_len_i;
+  logic [255:0] start_rnd_i;
+  logic  sign_input_valid_i;
+  logic  sign_input_ready_o;
+  logic [63:0] sign_input_data_i;
+  logic [3:0] sign_input_bytes_i;
+  logic [15:0] sign_input_index_i;
+  logic  sign_input_last_i;
+  logic [15:0] start_signature_len_i;
+  logic  verify_input_valid_i;
+  logic  verify_input_ready_o;
+  logic [63:0] verify_input_data_i;
+  logic [3:0] verify_input_bytes_i;
+  logic [15:0] verify_input_index_i;
+  logic  verify_input_last_i;
+  logic  verify_accept_o;
+  logic  signature_valid_o;
+  logic  signature_ready_i;
+  logic [63:0] signature_data_o;
+  logic [3:0] signature_bytes_o;
+  logic [9:0] signature_index_o;
+  logic  signature_last_o;
+  logic [15:0] signature_id_o;
+  logic [2:0] done_stage_o;
+  logic [2:0] done_detail_o;
+  logic [16:0] sign_attempts_o;
+  logic [16:0] sign_rejections_o;
+  logic [16:0] sign_next_nonce_o;
+  logic  done_valid_o;
+  logic  done_ready_i;
+  logic [2:0] done_code_o;
+  logic [15:0] done_id_o;
+  logic  fault_o;
+  // Verification-only observations;not exposed by dilithium_fpga.
+  logic [7:0] bank_ports;
+  logic [1:0][3:0][1:0] bank_owners;
+  logic [3:0] bank_collision;
+  logic datapath_idle;
+  logic [2:0] owners,main_state;
+  logic [1:0] hash_active;
+  logic ntt_busy,process_busy,test_passed=0;
+endinterface
+

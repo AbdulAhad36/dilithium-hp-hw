@@ -1,572 +1,295 @@
-# Agent onboarding - integration
+# Integration workspace
 
-LATEST Stage5N.3:sign_process_dma connected to main-owned dilithium_services
-through nested sign request/response records,row wrapper and bank arbitration.
-One existing memory tree;no polynomial/key RAM or external top ports added.
-KeyGen drives sign='0;main Sign/Verify remain unsupported. New DMA checks
-every source read's owner/region/word/level/coefficient-domain/retained mode,
-validates high23 before6-bit narrowing,and stores negative low19 modulo q.
-CNB returns polynomial OR,Mhint writes0/1 and returns9-bit polynomial weight.
-No in-place signing writes. Sources/results leased through held done;both
-Decompose results publish after all64 word ACKs and both finish handshakes.
-Late read/data/high errors drain/discard tentative allocations via nonzero
-finish and clear process packet/reduction state;same-ID recovery is tested.
-Focused DMA PASS:71 commands/65 completions/21 expected errors/6 resets;
-14284 exact scalar writes/3570 packed ACKs,including1108/276 reset prefixes;
-32 checker corruptions rejected. Shared service PASS:33 commands/30 completions/
-9 expected errors/3 resets;192 sampled source words/768 exact result words;
-33 checker faults. All levels2/3/5;actual SHAKE/sampler sources/shared banks.
-Row/NTT/scalar/pending-read priority,held ownership and atomic publication pass.
-Selectors sign_dma/sign_service use existing run.do/single Python script.
-Current token:b224a41318be58d790ee39d066ce6d27290538fdf003a7ea282e7162265a86ac.
-All six current-source gates PASS:sign_dma,sign_service,sign_process,
-bank_process,full_keygen,nist_keygen. Local fullKeyGen8/3rejects/5aborts/
-37 checker faults;official NIST75/75 keypairs/433600 exact bytes/41 faults.
-All48 other prior RTL files/6.757ns unchanged. Only five previous RTL files
-change(service types/wrappers and KeyGen zero assignment),plus new DMA.
-Frozen evidence:evidence/stage5n3_sign_memory.zip +.sha256,create-only;
-preserve prior archives. Details in REFERENCE_VERIFICATION.md.
-Next Stage5N.4:signing key/input decode and hash formatting with independent
-byte/field checks;then vector norm/hint reduction,retry and signature packing.
-Stage5N overall unfinished. Keep functionality first/shared LightHD engines/
-four-bank memory and6.757ns SDC. No PPA/netlist/UVM stage advance,commit or
-branch operation. Ask only material decisions;routine choices delegated.
-Universal docs updated;preserve all immutable archives. Historical status below.
+## Source cleanup and naming
 
-LATEST Stage5N.2:working process/decompose.sv,decompose_x4.sv,cnb.sv,mhint.sv,
-sign_process.sv. One elastic x4 transport,64 ordered groups/polynomial;
-op0 Decompose,1 CNB,2 optimized low/high Mhint. Canonical23-bit inputs;
-Decompose low is signed19-bit,high6. CNB kind0/1/2 = z/r0/ct0 bounds.
-Lock ID/op/param/relevant kind;last iff63. Errors zero result and flush packet;
-reset cancels held result/tracker/prefix reductions. Per-polynomial CNB sticky
-OR and hint count9;vector reduction/retry/control remain later work.
-Focused PASS:7752 accepted/7746 outputs/45 expected errors/6 aborted groups/
-117 full packets(53 Decompose,44 CNB,20 Mhint),27 checker corruptions rejected.
-30996 Python/C lane fixtures PASS;C decomposition exhaustively passes8380417
-canonical inputs at each level. Do not call RTL tests exhaustive.
-Early CNB failure followed by passing groups,reset after nonzero prefix,
-isolated changing-op metadata and hint count256 are explicitly checked.
-Three current gates PASS:sign_process,full_keygen8/3/5/37 checker faults,
-nist_keygen75 keypairs/433600 bytes/41 checker faults. Source token:
-9c78215f9e0edec3dfd474b7999acd338ba37a30f6ab46c46d9ed4ed55d19bd2.
-All48 prior RTL files/6.757ns unchanged;full-key event streams equal Stage5N.1
-excluding freshness. No current-source rerun claim for older diagnostic gates.
-Immutable evidence:docs/dilithium_docs/evidence/stage5n2_sign_process.zip and
-stage5n2_sign_process.sha256;create-only,preserve prior archives.
-New selector sign_process uses same run.do/single Python prepare/compare/selftest.
-No integration into main Sign/memory DMA yet. Main Sign/Verify unsupported.
-Next Stage5N.3:checked shared-bank DMA/leases/acknowledged publication for x4
-processes;coefficient domain/owner/parameter checks;canonical low conversion;
-full stored-high validation before narrowing;error/abort/private partial data.
-Then signing input/key decode/hash/vector reduction/retry/signature packing.
-Stay within Stage5N;do not claim full Sign or start full UVM/PPA/netlists.
-No commit,branch operation or synthesis. Ask about material scope/interface/
-resource departures;routine shared LightHD-compatible choices are delegated.
-Earlier status paragraphs below describe historical accepted milestones.
+The superseded service/handle controller hierarchy and its dependent benches
+have been removed. Current RTL and focused benches have no `lighthd_` prefix;
+the main package is `dilithium_pkg`. Production sources are listed in
+`quartus/dilithium/dilithium_full.qsf`. `sim/dilithium/run.do` now defaults to
+the current main capture; obsolete Stage2-5 selectors are retired. Historical
+qualified scratch inputs, source freezes and evidence archives retain their
+original names and hashes. Their PPA results predate this nominal cleanup;
+do not compare those freezes directly to the renamed live source tree.
 
-LATEST Stage5N.1:main dilithium.sv owns dilithium_services(one existing
-keccak_sampler_row RAW_SERVICE=1 and one Bitpkg). keygen/keygen_encode are
-clients;new helpers/dilithium_service_pkg.sv defines packed full-width ports.
-No additional engine/bank/key RAM or request/response pipeline is introduced.
-keygen_owner covers DISPATCH and child_busy,including post-done cleanup while
-main is IDLE. Unowned requests zero;responses/faults remain visible.
-Full-key TB verifies routed requests,unowned quiescence and cleanup lifetime.
-Current gates PASS:full_keygen8/3rejects/5aborts/37faults;
-nist_keygen75pairs/433600bytes/41faults;keygen7/3/4,34rows/172304writes/
-8448reads/29faults;rounded_keygen7/3/4,34rows/190224writes/12800reads/36faults.
-Source token830c05c8b16215688d1923497ed1b147ecf6b2aea526d4cf54688e8a0ab4a345.
-Q local988082owned/195cleanup/52idle;NIST9142284/2225/151. Local campaign
-6676943064ps unchanged. All local/NIST events equal Stage5M except token/Q.
-All25 engines,row wrapper,Bitpkg and6.757ns unchanged. No PPA/synthesis claim.
-Frozen evidence:docs/dilithium_docs/evidence/stage5n1_shared_services.zip and
-stage5n1_shared_services.sha256;create-only,preserve previous archives.
-Next Stage5N.2:working Decompose x4,CNB,Mhint blocks with independent Python/C
-boundary tests;then shared DMA,signing input/key decode/hash/retry/packing
-substeps. Sign/Verify are still unsupported;Stage5N is not complete overall.
-Never duplicate accelerator trees or add fake sign/verify placeholders.
-Preserve complete KeyGen/NIST gates. Four gates above are freshly rerun;
-other historical focused results stay in prior archives. Same launcher/script
-and universal docs. No commit,branch operation or synthesis in this stage.
-Ask the user about material scope/interface/resource departures;routine
-LightHD-compatible choices are delegated. Earlier milestone text is historical.
+- Branch: integration. Do not commit,push or switch branches without instruction.
+- Preserve user-authored/uncommitted RTL,tests,reference models and NIST data.
+- Maintain src/keccak,src/ntt,src/sampler,src/controller/process and controller memory/FSM organization. Keep individual module verification/synthesis packages reusable.
+- Implement final FIPS204 ML-DSA-44/65/87 with user-facing level names2/3/5. Reconstruct published LightHD architecture accurately;do not claim equivalence to unavailable RTL.
 
-LATEST Stage5M:all75 official NIST ACVP KeyGen cases PASS,25 each at
-ML-DSA-44/65/87(level2/3/5).54200 exact64-bit key words/433600 bytes,
-18300 PK hash words,4800 tr bytes,112000 field-read metadata records.
-39/39 checker corruptions rejected. nist_keygen uses the same run.do,
-dilithium_vectors.py and tb_full_keygen(NIST_VECTORS=1);expected keys are
-copied directly from pinned NIST JSON,not generated by C/Python.
-Corpus:NIST/ML-DSA-keyGen-FIPS204;commit2972def23bf9f3680c2c531561ed9bdd0f1086ad.
-Raw files have script-pinned SHA256 and provenance.json. All75 C pairs also
-agree with NIST. Source token22f42dd20700ee8b0e014dee66c45118bcb0edc647f8ded54949f658bd0a6461.
-The local full_keygen gate freshly repeats8 success/3 rejects/5 aborts and
-35 checker faults on that token. These two current gates pass;the prior
-all16-gate result is preserved in Stage5L,not claimed freshly rerun here.
-All46 RTL SV files and6.757ns SDC unchanged from Stage5L.
-Frozen evidence:evidence/stage5m_nist_keygen.zip and stage5m_nist_keygen.sha256
-under docs/dilithium_docs;create-only,preserve earlier archives.
-Next Stage5N:shared-resource Sign integration,remaining Decompose/CNB/MakeHint
-and signing control in bounded steps. Expose existing datapath/packer ownership
-at main-controller arbitration;never duplicate whole accelerator trees.
-Keep full-KeyGen/NIST byte tests passing. Ask for material scope/interface/
-resource departures;routine LightHD-compatible choices are delegated.
-No Sign/Verify implementation,full UVM/PPA advance,commit/branch operation,
-synthesis or netlist run is claimed/authorized by this stage.
-Earlier Stage5L and older status statements below are historical milestones.
+## Current objective
 
-Current Stage5L:FULL_KEYGEN=1 on dilithium/keygen implements complete encoded
-PK/SK output through helpers/keygen_encode.sv,using existing banks/Bitpkg/raw
-Keccak. It enables P2R,accepts internal rows,hashes full PK into64-byte tr,
-then emits SK. Separate host/hash word acknowledgements prevent duplicates.
-No encoded-key RAM or second hash engine. Default0 preserves diagnostic modes.
-key_valid/ready,data64,bytes4,type1,index10,last1,ID16 ports now exist.
-External polynomial inspection is disabled in full-key mode.
+Reach150+MHz with positive setup slack while retaining correct outputs and roughly the current32K placed-ALM footprint. Area reduction is deferred. Same CycloneV5CGXFC7C7F23C8,6.500ns target,unchanged hold constraints. Do not hide failing timing with false paths or selectively report fast corners.
 
-Selector5/full_keygen passes8 complete C-reference keypairs(all3 levels),
-3 expected rejects,5 reset aborts;5433 exact output words,2058 hash words,
-656 tr bytes,11179 read-metadata records.35 checker corruptions reject.
-434 host-ahead/1939 hash-ahead cycles witness independent acknowledgement order.
-Test randombytes injects xi into unchanged C crypto_sign_keypair;13 valid
-fixture seeds produce complete expected pairs. These are local reference
-vectors,NOT official downloaded NIST conformance yet.
-All16 focused integration gates and their checker fault tests freshly PASS on
-source token b4c3284a2fe1cacad64c73cde32f43674e3ad3c17fd04b6197bd033a0b6b55b6.
-Frozen evidence:docs/dilithium_docs/evidence/stage5l_full_keygen.zip and
-stage5l_full_keygen.sha256;create-only,preserve all earlier archives.
-Next Stage5M:official NIST KeyGen vectors/provenance and exact comparison;
-then Sign/remaining LightHD blocks/Verify. No PPA/UVM-stage advance until
-required supported outputs. No commit/branch/netlist/synthesis authorized here.
-When adding Sign/Verify,lift/expose the existing datapath/packer ownership to
-main-controller arbitration;operation FSMs must share the current engines and
-banks,not instantiate duplicate accelerator trees. Keep whole-KeyGen byte
-tests passing through that future refactor.
-Older Stage5K planned-interface statements below are historical;Stage5L above
-is current. Keep all immutable archives and accepted engine sources.
+## Efficient workflow
 
-Stage5K frozen evidence:all15 focused gates,independent comparisons and checker
-fault tests freshly PASS on one source token. Preserve create-only archive
-docs/dilithium_docs/evidence/stage5k_rounding_bitpkg.zip and SHA256 sidecar.
+- One measured critical cone and one candidate at a time. Focused tests and a structural/synthesis screen precede any full fit.
+- Full NIST/UVM regression is for a candidate intended to be retained. No automatic chain of full runs after small edits.
+- Reuse existing runners and one scratch workspace. No per-trial scripts,JSONs,ZIPs or document copies.
+- Update Dilithium docs only for significant verified improvements,accepted milestones or major architectural decisions. Keep routine trial notes in existing local logs.
+- Give concise decision/result updates. Ask for major architectural decisions;routine implementation choices are already authorized.
+- Use actual final placed ALMs[A],worst four-corner Fmax/setup/hold and measured operation clocks/rates. Report failures and limitations plainly.
+- Do not advance to Stage8/netlist/FPGA acceptance without the user's gate.
+- Preserve current operation cycle counts. User declined the proposed Process
+  output buffer;use equivalent control/data rewrites without added latency.
 
-User direction reaffirmed2026-10-21:reconstruct LightHD's complete controller,
-shared processing blocks and four-bank reuse schedule;improve measured
-weaknesses and adapt interfaces for our accepted engines. Make routine
-architecture choices that support that goal;do not repeatedly ask for them.
-Do not claim source-identical reconstruction from an incomplete paper or treat
-compatibility changes as measured PPA improvements.
-Selected full-key output:tagged64-bit words with byte count/backpressure,
-retain t1/t0 in existing banks,no extra encoded-key RAM. This is our compatible
-interface choice,not a claimed published LightHD port specification.
-Next key sequencer should start SHAKE256(pk,64) only after matrix sampling
-finishes,share the existing raw Keccak service,and fork stable PK words to
-both hash/host sinks exactly once. Collect tr,then emit SK fields;cleanup
-waits for key output/completion acceptance. Specification records the planned
-word tags/order. This interface is selected,not yet implemented.
+## Active aligned Keccak output plus physical-duplication fit
 
-Stage5K:ROUND_OUTPUTS=1 on keygen/dilithium connects P2R and retains t0 at56+i,
-t1 at40+i through overall completion;cleanup releases them after raw secrets.
-Default0 preserves Stage5J. rounded_keygen test:7 complete,3 rejects,4 resets,
-34 rows,190224 scalar values,12800 exact92-bit reads,36 checker faults PASS.
-No additional physical/logical banks;both arrays use existing regions8..15.
+Qualified fallback remains protected trial87.17MHz/31959placedALMs. Previous
+selected FSM/packer fit was REJECTED despite lower area:31566placedALMs;
+slow85C85.89/-5.143/+.289,slow0C87.34/-4.950/+.195,
+fast85C175.22/+.793/+.129,fast0C198.41/+1.460/+.101. All239hashes/50guards
+passed,but Fmax priority lost versus87.17. Restored ALL59RTL exact baseline.
+No full210/protocol88/UVM33 replay for rejected fit. Controller FSM phase
+experiments and discarded-payload packer optimization are NOT live now.
 
-process/bitpkg.sv implements t1(10 bits),t0(13),eta-s(3/4) polynomial encoding.
-One87-bit reservoir;tagged64-bit words,held completion;not a complete key-byte
-sequencer yet. bitpkg test:97 commands,60 successes,31 expected errors,6 resets,
-18292 input values,2482 exact words,15 checker faults. Python/C packers agree on
-66 valid fixture packets/18496 bytes;prepare builds C models at levels2/3/5.
-New C wrapper:tb/tb_dilithium/bitpkg_reference.c;source token hashes dependencies.
-Use selectors5/rounded_keygen and5/bitpkg in the same run.do/Python.
-Next:bank read/Bitpkg routing,full key field order and SHAKE256(pk,64).
-User delegated the choice:use tagged64-bit key streaming and retained rounded
-arrays in existing banks,without encoded-key RAM. Independent rounding/packing
-work is authorized. No new PPA/commit/branch/netlist work.
+New ONLY live production RTL changes:src/keccak/keccak_output_unit.sv and
+src/keccak/keccak_core.sv. Output unit adds safe-default ALIGNED_COUNTER=0;
+core enables it because its counter writes are only0 or+OUTPUT_BYTES. New
+posedge assertion checks low counter bits stay0. Under that invariant,rate
+remaining is below one beat iff rate/counter high fields match;low rate bits
+give the tail. Original XOF clipping,permutation decision,data indexing and
+counter updates remain. Self-equality of rate bits preserves old procedural
+X behavior and is hardware true for known bits. No new RTL FFs or clocks.
 
-Current Stage5J:controller/keygen.sv autonomously samples all s1/s2 and all
-matrix rows,retains/Pre-transforms s1,and returns t=A*s1+s2 at all3 levels.
-controller/dilithium.sv is the actual operation FSM;op0 polynomial phase works;
-Sign/Verify explicitly unsupported(code2),not implemented. Invalid level code1.
-7 complete operations,3 rejects,4 reset aborts;34 rows,172304 exact scalar
-writes,8448 exact92-bit reads,29 checker corruptions PASS. Same-ID different-xi
-recovery,16-bit ID wrap and cleanup/restart are checked.136 pending-read
-handoff checks protect the final response before freeing output regions.
-All13 focused source/comparison/checker gates freshly PASS on one source token.
-Create-only evidence:docs/dilithium_docs/evidence/stage5j_keygen_polynomials.zip
-and matching SHA256 sidecar;preserve all checkpoints.
-Select5/keygen;read REFERENCE_VERIFICATION.md and MEMORY_MAP.md before edits.
+Actual qualified-output-unit comparison PASS:64bit2801712+128bit3563568=
+6365280 all-output checks;all2048rates/aligned8bitcounters;all65536XOF lengths
+per available bound;X/Z rate and XOF probes. Existing registered-launch TB
+also PASS18SHAKE128/256 outputs,offset0/1/26,stalls,pending-reset. New proof
+top tb_keccak_output_bounds was added to that EXISTING bench file,no new.do.
+Fresh main9NIST PASS27700exact key/signature bytes/3Verify digests;all9cycles
+exact8849,19791,11483,15183,29674,17150,24534,44489,27785. Core counter
+alignment assertions active. Golden models unchanged. No full210/88/UVM33
+for this candidate yet. Functional/code coverage remain baseline evidence.
 
-User's current layout:root memory.sv,keygen.sv,sign.sv,verify.sv,dilithium.sv;
-Sign/Verify files added with working implementation later,not placeholder FSMs.
-All LightHD process blocks belong in process/:P2R,Decompose x4,CNB,Mhint,
-Bitpkg plus required UseHint/checking helpers. power2round.sv now contains
-working extracted arithmetic;other new process blocks remain planned.
-Active bank_poly_store renamed module memory in root memory.sv;the historical
-scalar memory is slot_memory under legacy/. Other helper paths:datapath/,
-helpers/,memory/;build scripts/QSF/tests updated. Historical snapshots keep
-their old filenames;do not alter immutable archives. Engine RTL unchanged.
-Next:connect P2R and key bit packing,hash encoded public key,and compare full
-KeyGen key bytes. Ask about major external key storage/output choices.
-No new synthesis/PPA,netlist,commit or branch action authorized by continuation.
+Dual-Keccak helper counter->outputbytes7.772->7.488ns,counter->internal
+12.022->11.848ns;global worst data-path10.349->10.290ns. This is a small
+UNPLACED gain,not a fitted Fmax claim. Selected rejected layout's measured
+worst came from bytes_squeezed[4] fanout263 through output-byte metadata to
+Sign state,11.383ns;most delay was routing. Current test therefore enables
+PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION ON in SCRATCH probe.qsf ONLY. All
+other meaningful settings match protected trial/production. Production QSF
+still OFF;SDC unchanged6.500ns/samehold/device/seed. No registered-next-state
+or extra pipeline stage was introduced. Check fitter duplication logs before
+claiming that the compiler actually duplicated registers.
 
-Latest Stage5I PASS:seed-retaining keygen_sample_source.sv now drives actual
-sampling through optional RAW_SERVICE=1 on banked NTT/row wrappers. One shared
-dual Keccak,not a second hash engine. Test selector5/seed_row uses the existing
-tb_row_accumulate parameter SEED_SOURCE=1;selector row preserves its old path.
-190 commands=20 successful seed expansions+163 samples+7 adapter rejections.
-2560 exact hash bytes,1103 absorption words;rho/rho-prime/K match Python.
-13 complete rows,27 row rejections,7 row abort/recovery cases,12544 exact92-bit
-readbacks PASS;23 checker corruptions rejected. All11 prior focused gates
-freshly PASS on the same current source token. No new synthesis/PPA claim.
-Read REFERENCE_VERIFICATION.md for commands and exact scope. Seed fixtures are
-local FIPS-derived,not official full-KeyGen vectors. The bench still schedules
-commands;connected tests use s1 and two matrix rows per level. Next Stage5J:
-autonomous KeyGen polynomial scheduling,retain s2 and add it to inverse rows,
-then connect rounding/key encoding. Keep functionality-first scope and6.757ns.
-No commit/branch/netlist/synthesis work authorized by an ordinary continuation.
-Create-only Stage5I evidence:evidence/stage5i_seed_row.zip plus SHA256 sidecar
-under docs/dilithium_docs. Preserve it and all prior immutable archives.
+ONE fit now RUNNING:background Python PID16532(launcher98205),revision probe.
+Read probe_compile.log,probe_compile_console.log,probe_fit_errors.log. Header
+KOU_PHYS_POST_MAP_SOURCE_FREEZE contains239post-map hashes. Pre-fit audit
+passedall50permanentguards/8DSP/409446blockbits. Full unplaced source paths:
+counter->Sign12.157ns,counter->KeyGen13.054ns,global20.473ns (not better than
+20.469 baseline);physical duplication is a FITTER optimization,not yet applied
+in those map estimates. The post-map audit script had an indentation typo
+(NameError baseline);independent corrected audit verified all238other hashes
+and EXACTLY the one allowed QSF setting change. Valid synthesis/STA reports
+were reused,not rerun. Old probe_compile_errors.log records that resolved
+audit typo;current fitter errors are in probe_fit_errors.log.
 
-## Active direction: functionality first (user decision 2026-10-20)
+Pipeline runs fitter then permanent report_full.tcl with strict Tcl catch,
+all4corners and retention guard,critical_probe outputs. Require BOTH
+KOU_PHYS_FIT_REPORT_PASS and KOU_PHYS_FIT_AND_REPORT_COMPLETE before using PPA.
+Until then,critical_probe corner files are OLD rejected85.89MHz FSM results.
+Compare actual placed[A]ALMs,worst4cornerFmax/setup/hold against87.17;no area
+estimate substitution. Only if intended retained,run full210official/88protocol/
+33mainUVM and compare protected trial captures/latencies. No Stage8 or150+claim.
 
-The user explicitly stopped timing optimization before memory. Integrate the
-remaining blocks and establish correct full-operation outputs first; optimize
-Fmax, actual placed ALMs and throughput afterward in Stage7. This supersedes
-the earlier timing-first gate. Keep the 6.757 ns benchmark constraint; it is
-not a requirement for starting Stage3. Do not start more timing experiments.
+To revert this candidate:output-unit qualified snapshot is LAST in
+root_mux_reference.sv;extract full original /* Module Name:keccak_output_unit
+comment to EOF,rename keccak_output_timing_reference back. Core reversion
+removes only the added ALIGNED_COUNTER named parameter/comma and appended
+alignment-assertion block;verify resulting hash against trial_map.log BEFORE
+writing. This exact reconstruction already restored baseline for helper test.
+Do not overwrite snapshots blindly:verify live input hash and preserve edits.
+Root reference also preserves original controllers/Hint/Bitpkg;extract each
+full source only BEFORE next appended comment. Protected trial/kernel/baseline
+and other qualified slots remain untouched. No commit,push,branch change,
+Stage8,new archive,per-trial scripts/JSONs or universal-doc trial history.
 
-Branch: integration, created from sampler_v1 at e1b9c84. No commit or push
-without explicit instruction. Announce each stage, ask about major architecture
-decisions and report completed work with evidence and the next action.
-Preserve accepted standalone source/evidence and existing uncommitted work.
+## Earlier packer discard-payload screening
 
-Read docs/dilithium_docs/DILITHIUM_PLAN.md first. Integration == Dilithium:
-one universal documentation suite under docs/dilithium_docs. RTL layout is
-src/keccak, src/ntt, src/sampler, src/controller/process,
-src/controller/memory.sv and src/controller/dilithium.sv. Import each accepted
-module with its standalone UVM, sim, Quartus and docs assets when needed.
-Focused non-UVM tests under tb/tb_dilithium are authorized during integration.
-Full-operation reference checks precede comprehensive full-system UVM/PPA work.
+Hint word-mux trial was REJECTED after routing:32124placedALMs,8DSP,59M10K,
+409446bits;slow85C86.28/-5.090/+.298,slow0C85.72/-5.166/+.139,
+fast85C168.27/+.557/+.135,fast0C190.99/+1.264/+.108. All50 hardware guards
+passed and239fit hashes matched,but worst85.72 regressed qualified87.17.
+Reverted Hint and verified ALL59RTL exact baseline before the next edit.
+No full210/protocol88/UVM33 for that rejected trial. Details in synthesis.log.
 
-Stage1 Keccak import from keccak_v2 fe54a78 is complete: 904 source UVM
-transactions plus dual suites and 6364 published NIST output comparisons PASS.
-Its immutable import archive preserves the original RTL and standalone PPA.
-Current integration Keccak has subsequently verified control changes; do not
-apply historical standalone PPA to the modified source.
+Qualified fallback remains trial87.17MHz/31959placedALMs. Packer part of the live candidate
+is src/controller/process/bitpkg.sv:payload appends tentatively on push;
+invalid value/frame still clears logical count and enters REPORT with the
+SAME error code/edge. Removed validation-dependent bits_r clear. Reset and
+new-command reservoir clears unchanged. No new registers,buffers or cycles.
+Only discarded reservoir contents may differ in REPORT/IDLE after code2/3;
+all live payload,control,count,state and valid outputs must remain exact.
 
-Stage2 functional PASS. Current trial8 source has atomic ownership/command
-binding, a two-slot registered-credit bridge and handshake-before-stop draining.
-104 jobs: 88 complete, 8 expected errors, 8 reset aborts; 23089 exact coefficient
-checks. All24 mode/parameter/context combinations and12 checker faults PASS.
-The modified Keccak core also passes904 transactions plus dual suites and6364
-NIST outputs. Sampler RTL is unchanged. Trial8 cycle rows match trial7.
-Launcher:sim/dilithium/run.do; checker:sim/dilithium/dilithium_vectors.py.
-No full-operation Dilithium/NIST/UVM or integrated netlist completion is claimed.
+Existing tb_pack_stream has optional ALLOW_REJECT_PAYLOAD_RESIDUE=1 profile;
+default0 keeps strict old checking. The profile allows ONLY code2/3,non-FEED
+payload differences and asserts count0/output_valid0. All other comparisons
+remain strict. PASS360jobs/60resets/240malformed/7040words/16701clocks,
+793isolated discarded-payload clocks. Independent tb_bitpkg PASS125packets/
+15624coeffs/2497words/1654stalls. Models untouched. Existing Hint tests added
+last pass remain reusable;their optional baseline reference is preserved.
 
-Historical Stage2 main seed1 fit:11293 PLACED ALMs,7557 registers,15970 ALUTs,
-one M10K/1024bits,zero DSP;137.74MHz worst Fmax,setup-0.503ns/hold+0.157ns
-at6.757ns. All original sampler/Keccak structural guards PASS. Timing is OPEN.
-Main and isolated seed2 compiles have finished;seed2 is not selected.
-Keep verified trial8 functional RTL; no new timing experiments before memory.
-Initial evidence archive stage2_subsystem_initial.zip is immutable and describes
-the earlier single-slot source,not current-source PPA.
+Measured retained87.17 fitted packer path11.022ns via validation->144bit
+synchronous clear;trial.qsf was opened read-only at close and its hash exact.
+Helper unplaced data->bits18.019->10.784ns,error control12.964->9.214ns,
+overall19.520->16.294ns. These are NOT fitted PPA/Fmax gains.
+Full production constraints stay6.500ns/same hold. Full unplaced screen PASS:
+pack_raw/Process->packer bits16.681ns;Verify->writer10.593ns;global20.431ns
+(process_owner_r->Sign entropy_mask_store_r) versus baseline20.469ns. This
+barely changes the global estimate,so NO second routed fit was launched.
+Fresh main9 PASS27700NIST bytes/3Verify digests/3valid0invalid;token
+77beed954a7bb071594c1653d6273f0272a814dda12d87037615b2fde262c833.
+All9cycle counts exactly prior focused run:
+8849,19791,11483,15183,29674,17150,24534,44489,27785.
+All50permanent storage guard categories PASS;exact144original packer payload
+registers verified from fresh names and corrected raw collection query.
+One temporary extra-bracket typo made an optional Tcl count string144] and
+failed that extra probe;correct reread144 and independent audit resolved it.
+No hardware was missing. Map still8DSPs/409446blockbits. Original production
+QSF/SDC unchanged;probe QSF canonicalization is audited in probe_map.log.
 
-Stage3 is complete for the focused functional gate. The user approved the
-configurable four-slot pool on2026-10-20. memory.sv and keccak_sampler_memory.sv
-implement it.104 jobs/88 complete/8 errors/8 aborts,23180 exact writes and22528
-exact readbacks PASS;88 releases,99 rejected reads,8 pool-stall cycles,1321
-read-stall cycles and170 concurrent read/write cycles.8 memory fault kinds
-are contained;12 Python corruptions rejected. Stage2 freshly passes unchanged.
-Commit requires256 writes plus successful matching external status acceptance.
-Read data/metadata hold under stalls;release waits for pending responses;
-reset invalidates metadata,not RAM. Sticky protocol faults require reset.
-Read MEMORY_MAP.md for the full contract;Stage4 below adds the IN_USE leases.
-Create-only evidence:docs/dilithium_docs/evidence/stage3_subsystem.zip and
-stage3_subsystem.sha256;preserve them. The archive includes source/checker
-manifests and captures;no Stage3 fitted PPA is claimed.
-Stage4 is complete for its focused functional gate. Imported57 NTT package files
-from ntt_v2:577a34b2fff19864cb16b490b7629ed211613000. Six RTL files and existing
-UVM are byte-identical;ntt_import_manifest.csv records path adapters/provenance.
-Locations:src/ntt,tb_uvm/tb_uvm_ntt_LightHD,sim/ntt,quartus/ntt,FIPS204_NTT,
-docs/ntt_docs. No obsolete experiment tree or generated build database imported.
-Relocated standalone UVM748 jobs/191488 values PASS;32 group type mean90.4731%,
-raw code12990/14093=92.17%. Standalone Python18 cases/4608 values PASS.
-These are NTT-only results,not integrated coverage or a fresh synthesis result.
+At completion of that packer-only screen,all jobs had finished and that
+change was unfitted. Current combined fit status is given above. Keep qualified trial87.17MHz/31959placedALM and its evidence intact.
+No full210/protocol88/UVM33 replay for this candidate yet. Next measured work
+is remaining launch/control cones before another costly fit;qualified
+baseline's near-tied Verify state->writer fault11.225ns is still relevant.
+Current scratch:probe_map/sta/compile.log and probe_{launch,hint,setup}.rpt
+are PACKER UNPLACED;probe_retained_registers and probe_mapped_register_names
+are its fresh guard outputs. probe_proof.log mixes UTF16old/UTF8append;use
+read_bytes().decode('utf-8',errors='replace') for recent appended main9 PASS.
+probe_compile_console.log explicitly says no new routed result. critical_probe
+fitted corner files remain the REJECTED85.72MHz Hint layout,not packer PPA.
+Routine facts stay in synthesis.log;no new JSONs/scripts/archives/doc copies.
 
-New helper:keccak_sampler_ntt. Same four-slot pool now supports IN_USE locks,
-separate result reservations and explicit domain/bounded-eligibility metadata.
-Sequential sampling/compute;one outstanding DMA read. NTT uses canonical23-bit
-residues and Dilithium ordering;INTT scales by1/256. Matrix A goes straight to
-PWM. Pre checks all values represent[-4,4]. Invalid/stale source code1;domain/
-parameter/Pre rejection code2;success0. Invalid commands never start the engine.
-Compute source slots are protected even while waiting for a free destination;
-only unrelated slots may be released then. Inputs are preserved;PWM aliasing
-is allowed. Results publish only after256 writes and engine done. Faults halt
-the helper until coordinated reset. Do not mistake mode metadata for domain.
+root_mux_reference.sv now additionally appends exact qualified bitpkg as
+bitpkg_timing_reference. Restore from its original source comment to EOF,
+rename module back and verify trial_map source hash. Prior Hint snapshot now
+ENDS BEFORE the appended packer comment,so do not blindly take Hint to EOF.
+Qualified trial/kernel/baseline slots untouched. Routine notes only locallog;
+no Stage8,commit,branch change,new archive or universal-doc trial history.
 
-Stage4 source/Python PASS:16 sampled jobs,50 commands,30 complete results,
-17 rejects,3 reset aborts.4096 sampled values,9745 DMA values,7713 NTT outputs
-(7680 complete+33 aborted-prefix values),11776 readbacks.43 releases,6 invalid
-reads,4 resets. Witnesses:24 pool-wait cycles,188 completion-stall cycles,
-699 read-stall cycles,33 source locks.12 checker corruptions rejected.
-Reset targets:load17 values,coreRUN after256 loads,and writeback after32 outputs;
-same IDs recover using different messages. Stage2/3 freshly revalidated.
+## Earlier physical screens
 
-Default sim/dilithium/run.do runs Stage4;set DILITHIUM_STAGE 2 or3 for old gates.
-One Python prepare/check/compare/selftest script;--stage 2/3/4,default4.
-Shared sampling files plus stage4_expected.txt with26 arithmetic expectations.
-Quartus top is now keccak_sampler_ntt,294 virtual non-clock bits;6.757ns unchanged.
-NO Stage4 synthesis/fit/netlist/PPA run. Old Stage2 reports are historical only.
-Create-only Stage4 evidence:docs/dilithium_docs/evidence/stage4_subsystem.zip
-and stage4_subsystem.sha256. Preserve all existing milestone archives unchanged.
-Stage5A audit/shared arithmetic is implemented;Stage5 full controller is NOT done.
-User decision2026-10-20:implement final FIPS204 ML-DSA-44/65/87,retaining
-LightHD-style level2/3/5 names. Parameter port0/1/2 maps to44/65/87.
-These are naming aliases,not a claim of legacy round-3 byte equivalence.
-The user previously chose LightHD's full scope,but
-its printed32-byte tr/challenge rules conflict with our local software's64-byte
-tr,parameter-bound seed expansion and32/48/64-byte challenge lengths. The cited
-2023 draft itself uses64-byte tr. Do not infer a byte-exact paper implementation.
-Final FIPS204 now governs dependent seed/message/key bytes.
-Audit evidence/table and25-file reference_manifest.csv are in universal docs.
+These screens predate the active unfitted packer candidate above. At their
+completion,all59RTL hashes matched qualified87.17;production QSF/SDC unchanged.
+The split writer-fault RTL was rejected before fit:128sticky-state/event model
+checks and2997shadow clocks/17batches/2178writes/34completions/4resetrecoveries/
+8rejects passed,but helper overall16.620->16.590ns was negligible. Reverted.
+writer_probe_reference.sv preserves the exact prior writer for new optional
+CYCLE_REFERENCE in existing tb_sampler_writer_queue.sv;preserve this test input.
 
-Shared controller/process/poly_process.sv is independent of this choice:
-opcode0 ADD,1 SUB,2 Power2Round,3 invalid;canonical23-bit residues,D=13;
-rounding high10,signed low14,packed t0=4096-low13. Positive tie4096 is retained.
-One elastic stage transports ID/index/last;13 errors cover bad opcode,operand
-and framing. Scalar unit has no polynomial ordering/memory ownership yet.
-PASS:10349 accepted,10346 exact outputs,3 reset aborts,13 expected errors;
-9208 dense rounding points;10009 replacements,3505 input/3511 output stalls.
-Python/C agree on all cases;unchanged C Power2Round separately passes8380417
-canonical inputs(checksum1c750000). That exhaustive C check is NOT exhaustive RTL.
-12 process checker corruptions rejected. Stage2/3/4 all freshly pass again.
+Physical-only MAX_FANOUT16/PRESERVE_REGISTER ON for Verify state* was tested
+in scratch probe.qsf. Correct QSF targets need quotes,NOT literal braces.
+Mapping inserted17 copies;genuinely unplaced Verify->writer fault path improved
+11.006->9.754ns. But the FULL fit REGRESSED:32018placedALMs,worst85.12MHz/
+setup-5.248ns(slow0C),hold+.106ns(fast0C). All four corners:
+slow85C85.38/-5.212/+.282;slow0C85.12/-5.248/+.251;
+fast85C171.94/+.684/+.129;fast0C196.39/+1.408/+.106. REJECTED;not promoted.
+New fitted worst source moved to Keccak stop/state/arbiter->KeyGen state.
+Do not treat the local mapped gain as a full-design Fmax improvement.
 
-Main top/default stage remains4(keccak_sampler_ntt). Select DILITHIUM_STAGE 5
-and Python --stage 5 for the isolated process gate,NOT full KeyGen. prepare now
-needs GCC at C:/MinGW/bin/gcc.exe;build outputs stay in sim/dilithium/reference_build.
-No existing software/sampler RTL/UVM/Quartus source was changed. Quartus lists
-the process source but it is not connected to the top;294 virtual non-clock bits
-and6.757ns remain. No PPA work or new synthesis/netlist run.
-Create-only Stage5A evidence:evidence/stage5a_process.zip and .sha256 under
-docs/dilithium_docs. Preserve earlier archives unchanged.
+probe revision/output/probe.* and critical_probe are DISPOSABLE failed-trial
+artifacts inside the SAME timing_screen workspace. probe_map.log freezes
+59RTL plus actual scratch QSF and baseline production QSF/SDC/report;all63
+hashes matched final audit. Independent parsing checked every permanent
+retention category against its minimum,6originalVerify state FFs survived,
+8DSP/59M10K/409446bits retained. Interactive report emitted no qualifying
+failure;the independent guard audit was authoritative,not just a footer.
+All background jobs are finished. No full NIST/UVM replay:RTL was byte-identical,
+so retained87.17 baseline's full210/protocol88/UVM33 remains applicable.
 
-Stage5B keygen_hash_message.sv formats xi32||K||L,rho32||column||row,and
-rho-prime64||nonce_le16. Validates parameter,row/column and KeyGen secret nonce.
-165 commands/162 done(14 expected errors)/3 reset aborts PASS.883 absorption
-words and5888 exact real-Keccak SHAKE bytes match Python;12 corruptions rejected.
-All102 matrix positions/34 secret nonces tested. This is a message builder,
-not a seed-result collector or main-controller connection. Done means message
-accepted,not hash complete. Seed expansion requests128 finite bytes;sampling
-requests continuous0. Focused hash-only TB bounds sampling to32 output bytes.
-In Tcl:set DILITHIUM_STAGE 5;set DILITHIUM_TEST hash_format.
-Python:--stage 5 --unit hash_format. No accepted engine source changed.
+Only scratch profile and reusable optional writer-shadow bench changed. No
+production physical assignments,no commit/branch change,no Stage8,new archive,
+JSON,per-trial script or universal-doc history. Routine trial details remain
+in synthesis.log. Next work should inspect retained baseline near-tied control
+paths and avoid repeating this blanket Verify-state maxfan profile.
 
-Stage5C optional RAW_SERVICE in keccak_sampler and keygen_seed_collect now PASS.
-Same two hash cores;captured per-core type/ID/remaining bytes;registered held
-raw completion;ingress owner routes64-bit input;raw output bypasses sampler.
-Finite raw lengths1..65535;zero refuses raw request. Raw descriptor priority.
-26 commands,18 raw requests,7 sampled polynomials,7 seed results(including1
-parameter error),3 reset aborts;1699 exact SHAKE bytes/1792 coefficients PASS.
-Sampling uses actual RTL-collected rho/rho-prime,not Python seed injection.
-Both core tags,rate-boundary short beats,raw/raw and raw/sampling ownership,
-arbitration,held completions and coordinated reset/ID reuse pass.12 corruptions
-rejected. All Stage2/3/4 and Stage5 process/hash_format gates freshly pass.
-Use DILITHIUM_TEST shared_hash with stage5;Python --stage 5 --unit shared_hash.
-Main Stage3/4 wrappers tie raw ports off;top ports/four-slot capacity unchanged.
-New PROCESS_BLOCKS.md specifies implemented/planned processing;MEMORY_MAP.md
-has dimensioned memory diagram and the concrete KeyGen storage proposal.
+## Saved baseline
 
-User resolved the storage choice2026-10-20:"whatever LightHD is doing do that".
-Follow published four logical1024x92-bit dual-port banks,not either proposed
-scalar-pool alternative. Capacity376832bits=47104bytes=46KiB;this is NOT four
-physical M10Ks. Read MEMORY_MAP.md selected architecture/Sign region map.
-Do not allocate old proposal's extra7488 encoded-key bytes automatically.
-Final FIPS204 bytes/level2/3/5 labels remain selected.
+Current retained design:local ProcessDMA sink-credit clears. Each credit
+clears from the OTHER sinks' readiness,removing shared result_fire fanout.
+All three original sent registers remain;NO new registers,buffers or clocks
+were added to RTL. Prior KeyGen/Sign parallel-ID comparisons remain. All jobs
+stopped. Retained-hardware guards and237 source/config/reference hashes PASS.
 
-Stage5D foundation poly_bram.sv/memory_banks.sv now source/Python PASS.
-Full-word92-bit writes,independent A/B response slots per bank,A-priority
-serialization when same-address pair contains a write;dual reads allowed.
-14872 accepted/14864 responses,9509 exact92-bit reads,5355 write acks,
-8 reset-aborted acks and8 unaccepted blocked offers canceled.4096 words covered;
-73 collision events,4112 dual-read pairs,1031 all-eight-port cycles;12 corruptions
-rejected. No RAM reset;payload retention checked. RAM inference/PPA not measured.
-Use stage5,DILITHIUM_TEST bank_memory;Python --stage 5 --unit bank_memory.
-The old Stage4 top still uses memory.sv/four slots. Do not claim bank migration
-or LightHD32-cycle NTT loading:current NTT input remains scalar23-bit.
+Same CycloneV/6.500ns,unchanged hold constraints. Actual31959placedALMs/
+23238mappedregisters/59M10Ks/8hardDSPs/409446blockbits. Worst87.17MHz/
+setup-4.972ns(slow85C),hold+.124ns(fast0C),all four hold reports no violations.
+Versus86.48MHz:0.798%Fmax/rate-ceiling improvement,+100placedALMs,
+setup improved.092ns,NO new operation clocks. This is a SMALL gain;150+MHz/
+positive setup remain OPEN. Do not claim the target is achieved.
+Four corners(Fmax/setup/hold):slow85C87.17/-4.972/+.296;
+slow0C88.14/-4.846/+.290;fast85C162.47/+.345/+.135;
+fast0C186.92/+1.150/+.124. Report worst corners,not the fastest number.
 
-Stage5E bank_poly_store/keccak_sampler_banks now connect real sampling to banks.
-Caller-select bank2/region4;64 aligned64-word regions. Per-core92-bit packing,
-tag/index/canonical checks,64 write acks before successful external status
-commit;protected92-bit reads/release;domain and[-4,4]metadata;sticky fault/reset.
-PASS104 jobs:88 complete,8 errors,8 aborts;23173 coefficient checks,
-5792 packed writes,5790 acks,5632 read words=22528 complete coefficients.
-Partial aborted work accounts for645 coefficients/160 writes/158 acks;two
-writes are reset before ack acceptance;five coefficients remain partial words.
-All64 regions,24 core/mode/param combinations;occupied-target stalls8,read
-stalls1070,read/write overlaps50,held-read resets2,invalidreads11.
-Eight protocol fault cases contained;12 checker corruptions rejected.
-Use stage5,DILITHIUM_TEST bank_store;Python --stage 5 --unit bank_store.
-Main defaultStage4 still old all-engine top;bank sampler is a new connected
-path,not yet NTT or process migration. No new synthesis/netlist/PPA/coverage.
-All seven previous gates and their checker selftests freshly PASS. Immutable
-evidence:docs/dilithium_docs/evidence/stage5e_bank_store.zip and .sha256;
-115 members verified;do not overwrite. New source/TB files are captured there.
+Fresh full210official(75KeyGen/90Sign/45Verify)/744280bytes/35Verifydigests/
+9valid36invalid and protocol88/148704bytes PASS. All94312 full and18793
+protocol records exact86.48 except separate source tokens. Main33UVM PASS:
+30checked/3resetaborts,0errors/fatals;all30 outcome and latency rows exact86.48.
+Functional116/170=68.24%;raw code135852/178119=76.27%(modules135840/178012,
+package12/107). The coverage exporter now uses dilithium_pkg;this run completed
+its reporting normally. Checker90/first-byte negative were NOT rerun;prior
+C26 evidence remains prior. No Stage8,commit,push or branch change.
 
-Stage5F completes the banked NTT connection through keccak_sampler_ntt_banks.
-Sampling/compute are sequential;the existing bank_poly_store packer0 is reused
-after sampling drains. New allocation flags set computed domain explicitly.
-Sources lease at acceptance;release blocked through held completion retirement.
-Explicit destination aliases reject(code3);busy distinct destinations wait while
-unrelated regions may release. External pending reads block compute acceptance;
-allocated results cannot release before completion retirement. Each92-bit read
-feeds four23-bit scalar engine beats;PWM loads A then B. Publication waits for
-256 results,64 write acknowledgements and engine completion. No extra cores.
-Source/Python PASS:16 sample jobs,54 commands,30 results,21 rejections,3 aborts;
-4096 sample coefficients,9746 DMA values,7712 NTT outputs,2952 packed writes,
-2951 acks,2944 exact92-bit reads. Four banks,same-bank/cross-bank,A==B,all ops/
-params,source preservation,Pre bounds and resets tested. Ownership witnesses:
-24 destination waits,33 leases,4 read-lock checks,120 held-result checks.
-Checker19/19 faults rejected. All eight earlier focused gates and selftests
-freshly PASS at the current token. Use stage5/bank_ntt,Python --stage 5 --unit
-bank_ntt. Default4 and Quartus top remain legacy
-scalar baselines. No new PPA/netlist/full-system coverage/full-KeyGen claim.
+Focused proof:1024 arbitrary binary enable/credit/ready/valid combinations
+passed for all three flags. Existing tb_process_dma CYCLE_REFERENCE gate
+compared23 output ports plus three credits for17468 clocks;64 arithmetic/
+packing/stall/reset cases,11008coefficients,464packed words,3negative and
+3reset recoveries PASS. Main9:27700 published bytes/3digests PASS.
+Genuinely unplaced standalone screen:packed-ready worst9.368->8.845ns;
+matched hint-credit endpoint3.426->3.053ns. These are NOT fitted Fmax numbers.
+No per-trial script,JSON,ZIP or universal-doc experiment history was added.
+Routine rejected-trial notes remain in synthesis.log;do not retry parity-credit
+or append-before-pop rewrites without new evidence. Both passed correctness
+but failed the screen,and were restored before this candidate.
 
-Stage5G completes banked process reads/writeback. New process/poly_process_dma.sv
-uses the existing poly_process arithmetic and two92-bit caches. Optional
-PROCESS_SERVICE=1 in keccak_sampler_ntt_banks enables it;default0 preserves the
-NTT-only gate. Same four banks/two packers;exclusive sampling/NTT/process access.
-ADD/SUB require matching domains/parameters;P2R coefficient domain only. Source
-leases protect accepted commands while waiting for distinct explicit destinations.
-P2R low is canonical modulo q,high zero-extended10-bit,in separate64-word regions.
-No encoded-key bytes or extra polynomial RAM. Low/high commit separately but
-public visibility is atomic;both result/source leases last through held completion.
-Status0 success,1 source,2 domain/param,3 alias,4 invalid op. Fault requires reset.
-Source/Python/C PASS:23 samples,15 NTT commands,71 process commands(34 successes,
-33 rejections,4 aborts);8978 process inputs,8976 completed results,22297 scalar
-writes,5574 packed writes/acks,8512 exact92-bit reads. All three parameters,
-real PWM/ADD/SUB/INTT/P2R and canonical-low -> NTT chains,source preservation,
-busy destinations,held results and resets tested. Reset phases:initial DMA,
-partial writeback,between low/high writes,and after low commit before high commit.
-Witnesses36 wait checks,188 held-result checks,4 pending-read checks,22 actual
-partial-publication snapshots.29 checker corruptions rejected. Use selector5/
-bank_process and Python --stage 5 --unit bank_process. Main/default Quartus top
-remains legacy;no synthesis/netlist/PPA/full-system coverage/full-KeyGen claim.
-Exact commands and representation limits are in shared REFERENCE_VERIFICATION,
-MEMORY_MAP and PROCESS_BLOCKS docs. Preserve all earlier checkpoints unchanged.
-All nine earlier source/checker gates freshly pass at the current token.
-Create-only evidence:docs/dilithium_docs/evidence/stage5g_bank_process.zip and
-stage5g_bank_process.sha256;verify CRC/manifest/member hashes before reporting.
-That Stage5G snapshot uses distinct destinations;Stage5H below adds explicit
-destructive row accumulation with checked ownership/read-before-write.
+ONE workspace:sim/dilithium/reference_build/timing_screen.
+PROTECT trial.qsf/output/trial.* and critical_trial:NEW qualified87.17MHz fit.
+trial_map.log first line SOURCE_FREEZE has237 hashes(all exact final audit,
+including shared report.tcl). trial_full210.txt/trial_protocol88.txt preserve
+native captures;trial_uvm.* and trial_uvm_console.log preserve UVM evidence.
+trial_compile.log has TRIAL_FIT_AND_REPORT_PASS;trial_proof.log has the local
+shadow checks. Native simulations were started hidden in background and are
+finished. Current run has no post-map tool-name fixes/hash exceptions.
 
-Stage5H completes staged-row scheduling through row_accumulate.sv and
-keccak_sampler_row.sv(one existing banked subsystem,not another engine/RAM).
-Level2/3/5 use4/5/7 staged A_hat/s1_hat pairs. Validate all sources before child
-arithmetic;retain/lease sources throughout. First PWM initializes accumulator;
-later PWMs use scratch;explicit in-place ADD overwrites accumulator;release
-scratch after each ADD;final inverse writes u=A*s1;release accumulator.
-Hold output/source leases through row completion retirement. Busy/alias workspace
-code3 rejects before work;source1/domain-level2/invalid-param-row4;success0.
-Unexpected child errors halt until reset. Three workspace regions are caller-
-selected and distinct from sources. All outside interfaces block while row owns.
-Row index input4bits validates against k4/6/8;descriptor arrays7entries use l.
+PROTECT kernel.qsf/output/kernel.* and critical_kernel:qualified86.48MHz/
+31859ALMs/-5.064ns/+.124ns fallback. kernel_map.log freezes236 files;its
+appended QUALIFIED_ANALYSIS_TOOL hashes explicitly record two earlier naming
+fixes in report_full.tcl and report_uvm_coverage.tcl. Do not rewrite that freeze.
+kernel_full210.txt/kernel_protocol88.txt and kernel_uvm.* preserve its evidence.
+process_dma_trial_reference.sv is its exact pre-change DMA,renamed only to
+process_dma_timing_reference;preserve it. Restore the module name to recover
+the prior controller. Existing tb_process_dma.sv has the optional shadow gate.
+trial_reference.sv is the older83.90 pre-KeyGen-change controller;preserve it.
 
-New process_inplace_i defaults0 in old benches;1 allows ADD/SUB dest=A only.
-P2R still rejects in-place. Store alloc_rewrite_i rebinds a COMPLETE source to
-WRITING under new ID;private reads allowed only when4*word>=scalar write count.
-DMA caches both92-bit source words before writing any lane,so original values
-are consumed in order. Reset invalidates partial rewrite;payload RAM not reset.
-Ordinary flag0 process commands retain prior behavior. Row tests exercise ADD
-in-place,not in-place SUB. Old source A is consumed;retained secrets/B untouched.
+kernel_old/critical_kernel_old retain83.90MHz;baseline/critical_baseline retain
+83.28MHz;candidate/critical_candidate retain79.74MHz;screen/critical_full retain
+75.33MHz. These accepted revisions are NOT disposable. Their old source names/
+freezes predate cleanup;do not compare them with the renamed live tree.
+Next experiments need ONE reusable disposable revision in this SAME workspace;
+do not overwrite protected trial/kernel/kernel_old/baseline/candidate/screen.
+Main quartus/dilithium/output_full remains historicalC26(31923ALMs/72.36MHz/
+-7.320ns/+.088ns),NOT latest RTL evidence.
 
-Source/Python/C PASS:47 row commands=13 successes+27 rejections+7 aborts;
-163 real samples,161 NTT/Pre/PWM/INTT commands,55 in-place ADDs;96264 scalar
-writes,24066 packed writes/acks,12544 exact92-bit public reads,6918 checked
-old-word cache reads.6 reference rows also match independent coefficient-domain
-schoolbook products;C ADD13833 inputs/13832 completed results.26 checker faults
-rejected. Two different matrix rows reuse transformed secrets per level;eligible
-secrets use Pre-NTT and ordinary NTT. Resets:validation,PWM,first accumulator,
-partial destructive ADD,scratch release,inverse execution,held row completion.
-160 held-row refusal checks,4 pending-read checks;IDs reused with different row.
-Use selector5/row and Python --stage 5 --unit row. Fixture messages are final
-FIPS formatted but seed collection/message RTL are not connected by this gate.
-No full KeyGen,NIST whole-operation,UVM coverage or new synthesis/PPA claim.
-Default4 and Quartus top remain scalar baselines. Preserve earlier archives.
-All ten earlier source gates/checker selftests freshly PASS at the current
-source token. Create-only evidence:docs/dilithium_docs/evidence/stage5h_row.zip
-and stage5h_row.sha256;verify CRC,manifest hashes and member bytes. Keep all
-earlier checkpoints unchanged. No extra trial JSON/checkpoint trees are needed.
+Next measured cones:Verify state[0]->sampler-writer fault_o,11.225ns(slow85C),
+and Sign state[5]->shared hint indices,11.190ns. KeyGen-to-hint-credit is no
+longer worst. Inspect these actual paths/fanout before another candidate.
+Preserve operation clocks;user declined a new Process output buffer. Physical
+interconnect is substantial;consider placement/fanout work with unchanged RTL
+if further equivalent logic rewrites keep giving marginal gains.
 
-NEXT:shared seed/hash/nonce scheduling for first level2 KeyGen,then s2 addition,
-Power2Round and key byte encoding/full-reference comparison. Follow LightHD secret retention,row accumulator
-reuse,bounded A staging and later port-overlap schedule. Figure2 describes peak
-Sign regions,not a complete KeyGen FSM table;derive/check missing lifetimes.
-NTT still accepts
-one23-bit coefficient per beat;do not claim32-cycle loading yet. Aligned-region
-sampling metadata is not the final packed w1/key-field ownership policy.
-No extra key buffers/ports or PPA optimization silently added.
-Create-only Stage5C evidence:docs/dilithium_docs/evidence/stage5c_shared_hash.zip
-and stage5c_shared_hash.sha256.99 members verified;do not overwrite. Current
-PROCESS_BLOCKS corrects the snapshot's t1-shift explanation(1023<<13=q-1);
-no RTL/result changes from that documentation correction.
-MEMORY_MAP.md retains superseded scalar-pool proposals for context. The shared raw service is
-tested but not wired into the main Stage4 top;do not duplicate full engines.
-Do not silently expand memory or add key-output interfaces. Ask major decisions.
-Do not start PPA optimization or claim full Dilithium/KeyGen.
-Keep native128 sampler processing deferred:input beats still issue64-bit chunks.
+Screening caution:--post_map can load PLACED databases. Use genuinely unplaced
+screens and verify Unassigned locations. Standalone I/O screens used0 input
+delay only for matching before/after measurements;production SDC stayed exact.
 
-Scope:final FIPS204 KeyGen/Sign/Verify,using level2/3/5 names for44/65/87,
-starting level2. Full-operation official vectors must match this selected format.
-No full-operation conformance is established by the component tests.
+Qualified fallback archives remain in docs/dilithium_docs/evidence. C25R2 archive SHA256:3acb8226d54ebd8843e7e37550f5e06e5f620159876e85e09c298d3550e1efbb. Its fresh extraction replay passed without fixture regeneration. Preserve C20/C21/C22 and qualified checkpoints;failed scratch artifacts may be cleaned.
 
-The sampler history below is accepted standalone evidence. Its old instructions
-restricting integration are superseded by the user's integration authorization.
+## Tools and dependencies
 
-## Accepted sampler baseline inherited from sampler_v1
-
-User accepted Stage4.9r on2026-10-19. Main baseline:3537 actual placed ALMs,
-164.74MHz worst Fmax,+0.430ns setup,+0.141ns hold at unchanged6.500ns.
-3931 registers,4256 ALUTs,one M10K/1024bits,zero DSP. All4 corners0TNS.
-Quartus seed1,HIGH PERFORMANCE EFFORT,physical register retiming OFF.
-Original payload/sign/reservation structural guards pass. Area ALWAYS means
-actual final-placement ALMs. Never use needed estimates for area claims.
-
-Read README.md and docs/sampler_docs/post_midyear/SAMPLER_PLAN.md before work,
-then SPECIFICATION.md,COVERAGE.md,THROUGHPUT.md,STAGE4_9R_RESULTS.json and the
-user's docs/sampler_docs/LIGHTHD_SAMPLER.md and SAMPLER.md.
-Main UVM621 complete/182 expected errors/51 aborts/159628 comparisons PASS;
-functional1652/1721=95.99%,code15093/15799=95.53%. Python104/19456,C48/12288,
-checker12,performance96 and five zero-credit fault gates PASS. Source checks
-reuse byte-identical O after26 hashes;R has fresh fit/timing/structural evidence.
-All96 performance rows match the preceding selected implementation.
-
-Stage5 completed on2026-10-19 using DISTINCT current synthesis/fit netlists.
-Each main-UVM run:184 jobs,156 complete,24 expected errors,4 reset aborts,
-39936 checks,zero errors/fatals. All104-job source/synthesis/fit captures match
-byte-for-byte and Python19456 values. Fresh source621/159628,P/C48/12288,
-checker12 pass. Source functional95.99%,code95.53%;netlists1255/1721=72.92%,
-source-only groups unsampled. Timing/structural refresh passes unchanged.
-Read SAMPLER_NETLIST_RESULTS.json and evidence/sampler_stage5.zip. Preserve
-both accepted R and Stage5 evidence. The96 performance CSV rows match accepted
-archive;not rerun. CycloneV netlists are functional only;TimeQuest is timing.
-Next Stage6 requires separate integration-branch/import authorization. Do not
-start integration,change branches,import modules or commit without instruction.
-
-RTL:src/sampler;UVM:tb_uvm/tb_uvm_sampler;common templates:tb_uvm/tb_uvm_reusable;
-simulation:sim/sampler;Quartus:quartus/sampler;docs:docs/sampler_docs/post_midyear.
-Keep exactly3 .do launchers:run_uvm.do,run_post_synthesis.do,run_post_fit.do.
-Vectors/performance are modes of the main UVM. Independent models must not call
-DUT functions. Coverage credits only scoreboard-accepted observations. Genuine
-gaps stay visible;no artificial percentage ceiling or impossible bins.
-
-Native128 remains inactive:tagged128-bit beats issue64-bit chunks. Current
-pipeline:capture→staged prepare→extract→local compact→packed/admit→aligned
-commit→32-entry/context collectors→per-context read→shared formatted output.
-Mask conversion stays before packing;secret values remain4-bit encoded until
-output formatting. Preserve complete state,credit/quota ownership and drain
-before reuse. Do not relax6.500ns or waive original register guards.
-
-Frozen Stage4.9r JSON/ZIP/SHA are immutable;never overwrite them. Its recorded
-acceptance-pending field predates the explicit user acceptance. Mutable docs
-record that acceptance. User-confirmed cleanup on2026-10-19 removed obsolete
-checkpoint records/archives and leftover sim/ntt_LightHD and quartus/ntt_LightHD
-folders. Stage4.9r evidence remains,with the new Stage5 result/archive/checksum added. All49 protected
-source/model/settings/evidence files passed before/after hash checks. Two Python
-analysis/checkpoint helpers remain after automatic review rejected their deletion.
+- Production project: quartus/dilithium/dilithium_full.qpf;top dilithium_fpga;report_full.tcl.
+- Main simulation: sim/dilithium/run_uvm.do. Reference/vector CLI: sim/dilithium/dilithium_vectors.py.
+- Python:C:/Python314/python.exe;Questa:C:/questasim64_2024.1/win64;Quartus:F:/altera/quartus/bin64.
+- Current reusable qualification bundle:sim/dilithium/reference_build/stage7c26_*;C25R2 comparison data and C18R1 arithmetic proof dependencies are retained there.
+- Coherent admission is enabled only in the paired bank fabric. Keep safe standalone defaults and ownership/IDLE/grant-ready assertions.
+- Keep8hardDSPs,original Process/polynomial storage and required buffering. Physical-netlist simulation does not replace TimeQuest timing signoff.
+- Retained LightHD reading assets are under tmp/pdfs. Temporary compiled/extracted copies are disposable;never delete source dependencies indiscriminately.
