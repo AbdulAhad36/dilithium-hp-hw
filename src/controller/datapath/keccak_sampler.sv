@@ -3,7 +3,8 @@
 `default_nettype none
 module keccak_sampler #(
   parameter bit RAW_SERVICE=0,
-  parameter bit BANK_IO=0
+  parameter bit BANK_IO=0,
+  parameter bit PIPELINE_INPUT=0
 ) (
   input wire logic clk, rst,
   input wire logic job_valid_i, output logic job_ready_o, job_core_o,
@@ -63,6 +64,48 @@ module keccak_sampler #(
   logic raw_select,raw_fire,ingress_raw_r,hash_input_ready;
   logic [1:0] raw_r;
   logic [15:0] raw_ids_r[2],raw_remaining_r[2];
+  logic native_request_ready,source_ready,staged_valid,hash_ingress_core;
+  logic [63:0] staged_data;
+  logic ingress_room,ingress_push,ingress_pop;
+  logic [1:0] ingress_count_r;
+  logic ingress_read_r,ingress_write_r;
+  logic [15:0] ingress_left_r;
+  logic [1:0][63:0] ingress_data_r;
+  // Two slots break external command/formatter data and ready paths. Finite
+  // byte credit prevents accepting surplus words or crossing job boundaries.
+  // A descriptor cannot switch cores while an old input word is queued.
+  assign request_ready=native_request_ready && (!PIPELINE_INPUT || ingress_count_r==0);
+  generate if(PIPELINE_INPUT)begin:registered_ingress
+    assign source_ready=!rst && ingress_left_r!=0 && ingress_count_r<2;
+    assign staged_valid=!rst && ingress_count_r!=0;
+    assign staged_data=ingress_data_r[ingress_read_r];
+    assign ingress_push=source_ready && (ingress_raw_r?raw_input_valid_i:input_valid_i);
+    assign ingress_pop=staged_valid && hash_input_ready;
+    always_ff @(posedge clk or posedge rst)begin
+      if(rst)begin ingress_count_r<=0;ingress_read_r<=0;ingress_write_r<=0;ingress_left_r<=0;end
+      else begin
+        case({ingress_push,ingress_pop})
+          2'b10:ingress_count_r<=ingress_count_r+2'd1;
+          2'b01:ingress_count_r<=ingress_count_r-2'd1;
+          default:begin end
+        endcase
+        if(ingress_push)ingress_write_r<=~ingress_write_r;
+        if(ingress_pop)ingress_read_r<=~ingress_read_r;
+        if(request_valid && request_ready)ingress_left_r<=raw_select?raw_message_len_i:message_len_i;
+        else if(ingress_push)ingress_left_r<=(ingress_left_r<=16'd8)?16'd0:ingress_left_r-16'd8;
+      end
+    end
+    always_ff @(posedge clk)if(ingress_push)
+      ingress_data_r[ingress_write_r]<=ingress_raw_r?raw_input_data_i:input_data_i;
+  end else begin:direct_ingress
+    assign source_ready=hash_input_ready;
+    assign staged_valid=!rst && (ingress_raw_r?raw_input_valid_i:input_valid_i);
+    assign staged_data=ingress_raw_r?raw_input_data_i:input_data_i;
+    assign ingress_push=0;assign ingress_pop=0;
+    assign ingress_count_r=0;assign ingress_read_r=0;assign ingress_write_r=0;
+    assign ingress_left_r=0;assign ingress_data_r=0;
+  end endgenerate
+
 
   assign job_core_o = request_core;
   // Ownership outlives sampler activity and clears on its external status
@@ -81,19 +124,19 @@ module keccak_sampler #(
   // Sampling mode0 is A/SHAKE128;all other modes use SHAKE256. Keep the
   // decode outside the port expression for consistent Quartus enum handling.
   assign hash_mode = raw_select ? raw_mode_i : (job_mode_i != 2'd0);
-  assign input_ready_o = hash_input_ready && !ingress_raw_r && !rst;
-  assign raw_input_ready_o = RAW_SERVICE && hash_input_ready && ingress_raw_r && !rst;
+  assign input_ready_o = source_ready && !ingress_raw_r && !rst;
+  assign raw_input_ready_o = RAW_SERVICE && source_ready && ingress_raw_r && !rst;
 
   keccak_dual_interleaved hash (
     .clk(clk), .rst(rst),
-    .request_valid_i(request_valid), .request_ready_o(request_ready),
+    .request_valid_i(request_valid && (!PIPELINE_INPUT || ingress_count_r==0)), .request_ready_o(native_request_ready),
     .request_core_o(request_core),
     .keccak_mode_i(hash_mode),
     .message_len_i(raw_select ? raw_message_len_i : message_len_i),
     .output_len_i(raw_select ? raw_output_len_i : 16'd0),
-    .input_data_i(ingress_raw_r ? raw_input_data_i : input_data_i),
-    .input_valid_i(!rst && (ingress_raw_r ? raw_input_valid_i : input_valid_i)),
-    .input_ready_o(hash_input_ready), .input_core_o(),
+    .input_data_i(staged_data),
+    .input_valid_i(staged_valid),
+    .input_ready_o(hash_input_ready), .input_core_o(hash_ingress_core),
     .stop_i(stop_r), .core_busy_o(hash_busy), .core_done_o(hash_done), .busy_o(),
     .output_data_o(hash_data), .output_valid_o(hash_valid),
     .output_bytes_o(hash_bytes), .output_core_o(hash_core),
@@ -213,6 +256,15 @@ module keccak_sampler #(
 
 `ifndef SYNTHESIS
   always @(posedge clk) if (!rst) begin
+    if(PIPELINE_INPUT)begin
+      if(ingress_count_r>2 || (ingress_push && ingress_count_r==2) || (ingress_pop && ingress_count_r==0))
+        $fatal(1,"SHAKE ingress occupancy violation");
+      if(request_valid && request_ready && (ingress_count_r!=0 || ingress_left_r!=0))
+        $fatal(1,"SHAKE descriptor crossed queued input");
+      if(ingress_count_r!=0 && ((status_valid_o && status_core_o==hash_ingress_core) ||
+          (raw_done_valid_o && raw_done_core_o==hash_ingress_core)))
+        $fatal(1,"SHAKE completion before queued input drain");
+    end
     if ((sampler_active & ~owned_r) != 0) $fatal(1,"Sampler activity without ownership");
     if ((sampler_active & raw_r) != 0) $fatal(1,"Raw core also owns sampler state");
     if (raw_fire && command_fire) $fatal(1,"Two clients accepted one descriptor");

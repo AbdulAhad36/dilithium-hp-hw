@@ -3,9 +3,10 @@ module tb_top;
   import uvm_pkg::*;import dilithium_uvm_pkg::*;
   logic clk=0;
   // Match the timing-first integration target:6.500ns (153.85MHz).
-  always begin #3250 clk=1;#3250 clk=0;end
+  always begin hsla(260, 43%, 23%, 0.00) clk=1;#3250 clk=0;end
   dilithium_if vif(clk);
   dilithium_fpga dut (
+    .start_internal_message_i(1'b0),
     .key_valid_o(vif.key_valid_o),
     .key_ready_i(vif.key_ready_i),
     .key_data_o(vif.key_data_o),
@@ -80,7 +81,8 @@ module tb_top;
       end
     end
   end
-  initial begin uvm_config_db#(virtual dilithium_if)::set(null,"*","vif",vif);run_test();end
+  initial begin uvm_config_db#(virtual dilithium_if)::set(null,"*","vif",vif);
+          run_test();end
   initial begin #(64'd4000000000000);$fatal(1,"Dilithium UVM global watchdog");end
 endmodule
 

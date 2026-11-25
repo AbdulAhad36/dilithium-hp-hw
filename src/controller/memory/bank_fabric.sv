@@ -1,7 +1,7 @@
 // Sole coefficient storage for the compact controller. The three clients are
 // NTT,sampling and shared Process/host scheduling. No second payload array.
 `default_nettype none
-module bank_fabric (
+module bank_fabric #(parameter bit TIMING_PIPELINE=0,parameter bit REGISTER_RETIREMENT=0) (
   input wire logic clk,rst,
   input wire logic [2:0][1:0] client_command_valid_i,
   output logic [2:0][1:0] client_command_ready_o,
@@ -31,8 +31,9 @@ module bank_fabric (
   logic [1:0][3:0][9:0] memory_write_address_o;
   logic [1:0][3:0] memory_read_last_i,memory_done_valid_i,memory_done_error_i,memory_done_ready_o;
   logic [1:0][3:0] storage_busy;
-  memory_router #(.COHERENT_PORTS(1)) router(.*);
-  memory #(.COHERENT_ADMISSION(1)) storage(
+  memory_router #(.COHERENT_PORTS(1),.REGISTER_COMMANDS(TIMING_PIPELINE),
+    .ONEHOT_OWNERS(TIMING_PIPELINE),.REGISTER_RETIREMENT(REGISTER_RETIREMENT)) router(.*);
+  memory #(.COHERENT_ADMISSION(1),.LOCAL_DESCRIPTOR(TIMING_PIPELINE)) storage(
     .clk(clk),.rst(rst),.command_valid_i(memory_command_valid_o),.command_ready_o(memory_command_ready_i),.busy_o(storage_busy),
     .command_mask_i(memory_command_mask_o),.command_write_i(memory_command_write_o),
     .command_base_i(memory_command_base_o),.command_words_i(memory_command_words_o),.command_mode_i(memory_command_mode_o),

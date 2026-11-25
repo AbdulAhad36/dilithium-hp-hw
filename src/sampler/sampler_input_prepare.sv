@@ -25,7 +25,7 @@ module sampler_input_prepare(
   logic [18:0] saved_mask_r;
   logic [4:0] saved_bits_r,bytes_r;
   logic [1:0] saved_a_bytes_r;
-  logic wide_r;
+  logic wide_r,mode_a_r;
   logic [130:0] mask_fine_r;
   logic [2:0] mask_coarse_r;
   logic [146:0] mask_stream_r;
@@ -145,7 +145,7 @@ module sampler_input_prepare(
     word_stage_r<=word_i;
     if(rst)begin phase_r<=0;ready_o<=0;end
     else if(accept_i)begin
-      phase_r<=1;ready_o<=0;bytes_r<=bytes_i;wide_r<=wide_i;
+      phase_r<=1;ready_o<=0;bytes_r<=bytes_i;wide_r<=wide_i;mode_a_r<=mode_a_i;
       saved_mask_r<=mode_a_i ? 19'(a_carry_i):mask_carry_i;
       saved_bits_r<=mode_a_i ? {a_bytes_i,3'b000}:mask_bits_i;
       saved_a_bytes_r<=a_bytes_i;
@@ -160,13 +160,27 @@ module sampler_input_prepare(
       totals_r[1]<=8'(saved_bits_r)+{bytes_r,3'b000};
       a_totals_r[0]<=5'(saved_a_bytes_r)+(bytes_r>8 ? 5'd8:bytes_r);
       a_totals_r[1]<=5'(saved_a_bytes_r)+bytes_r;
+      // Matrix A uses only byte offsets 0/1/2,not the general mask shifter.
+      // Produce its stream and candidate counts together at this boundary.
+      // The next phase captures residual bytes before ready can become true.
+      if(mode_a_r)begin
+        case(saved_a_bytes_r)
+          0:mask_stream_r<=147'(word_stage_r)|147'(saved_mask_r);
+          1:mask_stream_r<={11'd0,word_stage_r,8'd0}|147'(saved_mask_r);
+          default:mask_stream_r<={3'd0,word_stage_r,16'd0}|147'(saved_mask_r);
+        endcase
+        a_counts_r[0]<=a_count(5'(saved_a_bytes_r)+(bytes_r>8 ? 5'd8:bytes_r));
+        a_counts_r[1]<=a_count(5'(saved_a_bytes_r)+bytes_r);
+        a_ends_r[0]<=a_remainder(5'(saved_a_bytes_r)+(bytes_r>8 ? 5'd8:bytes_r));
+        a_ends_r[1]<=a_remainder(5'(saved_a_bytes_r)+bytes_r);
+      end
       low_sum={1'b0,saved_bits_r}+{1'b0,offsets_r[0]};
       all_sum={1'b0,saved_bits_r}+{1'b0,offsets_r[1]};
       end_bits_r[0]<=5'(low_sum>=(wide_r?20:18) ? low_sum-(wide_r?20:18):low_sum);
       end_bits_r[1]<=5'(all_sum>=(wide_r?20:18) ? all_sum-(wide_r?20:18):all_sum);
     end
     if(phase_r==2)begin
-      mask_stream_r<=(147'(mask_fine_r)<<{mask_coarse_r,2'b00}) |147'(saved_mask_r);
+      if(!mode_a_r)mask_stream_r<=(147'(mask_fine_r)<<{mask_coarse_r,2'b00}) |147'(saved_mask_r);
       for(int half=0;half<2;half++)begin
         field_counts_r[half]<=field_count(totals_r[half],wide_r);
         for(int bit_index=0;bit_index<19;bit_index++)carry_masks_r[half][bit_index]<=bit_index<end_bits_r[half];
@@ -180,10 +194,9 @@ module sampler_input_prepare(
     // restarts preparation. Old payload is then invalid until the new word
     // finishes. Ready MUST retain reset/acceptance priority;the payload banks
     // need neither enable. This removes input-ready/exhaustion from data enables.
-    if(phase_r==3)begin
-      mask_carry_o<=carry_results;a_carry_o<=a_carries;
-    end
-    if(phase_r==3 && !rst && !accept_i)ready_o<=1;
+    if(phase_r==3)mask_carry_o<=carry_results;
+    if(phase_r==3 || (mode_a_r && phase_r==2))a_carry_o<=a_carries;
+    if((phase_r==3 || (mode_a_r && phase_r==2)) && !rst && !accept_i)ready_o<=1;
   end
   // synthesis translate_off
   logic accepted_previous_r;
@@ -192,8 +205,8 @@ module sampler_input_prepare(
     else begin
       if(accepted_previous_r)assert(!ready_o)
         else $fatal(1,"Preparation restart exposed stale ready");
-      if(ready_o)assert(phase_r==4)
-        else $fatal(1,"Preparation ready before completed phase4");
+      if(ready_o)assert(phase_r==4 || (mode_a_r && phase_r==3))
+        else $fatal(1,"Preparation ready before mode-specific completion");
       accepted_previous_r<=accept_i;
     end
   end

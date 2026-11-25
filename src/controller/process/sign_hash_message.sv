@@ -14,6 +14,7 @@ module sign_hash_message #(
   input wire logic [1:0] command_op_i,command_param_i,
   input wire logic [15:0] command_id_i,command_message_len_i,command_nonce_i,
   input wire logic [8:0] command_context_len_i,
+  input tri0 command_internal_message_i,
   input wire logic [511:0] command_tr_i,command_mu_i,command_mask_seed_i,
   input wire logic [255:0] command_key_i,command_rnd_i,
   input wire logic payload_valid_i,output logic payload_ready_o,
@@ -41,20 +42,20 @@ module sign_hash_message #(
   logic [63:0] chunk;
   logic push,pop;
   logic [1:0] prefix_op_r;
-  logic [7:0] context_byte_r;
+  logic [7:0] context_byte_r;logic internal_message_r;
   logic [15:0] nonce_r;
   logic [3:0] prefix_word_r;
   logic [1023:0] command_prefix,owned_prefix;
   logic [63:0] prefix_chunk;
   always_comb begin
     case(command_op_i)
-      0:command_prefix={496'd0,command_context_len_i[7:0],8'd0,command_tr_i};
+      0:command_prefix=command_internal_message_i?{512'd0,command_tr_i}:{496'd0,command_context_len_i[7:0],8'd0,command_tr_i};
       1:command_prefix={command_mu_i,command_rnd_i,command_key_i};
       2:command_prefix={512'd0,command_mu_i};
       default:command_prefix={496'd0,command_nonce_i,command_mask_seed_i};
     endcase
     case(prefix_op_r)
-      0:owned_prefix={496'd0,context_byte_r,8'd0,command_tr_i};
+      0:owned_prefix=internal_message_r?{512'd0,command_tr_i}:{496'd0,context_byte_r,8'd0,command_tr_i};
       1:owned_prefix={command_mu_i,command_rnd_i,command_key_i};
       2:owned_prefix={512'd0,command_mu_i};
       default:owned_prefix={496'd0,nonce_r,command_mask_seed_i};
@@ -64,14 +65,14 @@ module sign_hash_message #(
   always_comb begin
     command_body=0;command_total=0;
     case(command_op_i)
-      0:begin command_total=18'd66+18'(command_context_len_i)+18'(command_message_len_i);
-        command_body=16'(command_context_len_i)+command_message_len_i;end
+      0:begin command_total=(command_internal_message_i?18'd64:18'd66+18'(command_context_len_i))+18'(command_message_len_i);
+        command_body=(command_internal_message_i?16'd0:16'(command_context_len_i))+command_message_len_i;end
       1:command_total=128;
       2:begin command_body=command_param_i==2?16'd1024:16'd768;command_total=18'd64+18'(command_body);end
       3:command_total=66;
     endcase
     bad_command=command_param_i==3 || command_total>65535 ||
-      (command_op_i==0 && command_context_len_i>255);
+      (command_op_i==0 && (command_context_len_i>255 || (command_internal_message_i && command_context_len_i!=0)));
     take=0;chunk=0;push=0;
     expected_payload_bytes=payload_left_r>=8?4'd8:4'(payload_left_r);
     prefix_take=prefix_left_r>=8?4'd8:4'(prefix_left_r);
@@ -108,11 +109,11 @@ module sign_hash_message #(
       produced_r<=0;payload_left_r<=0;payload_word_r<=0;draining_r<=0;
       request_sampling_o<=0;request_param_o<=0;request_id_o<=0;request_message_len_o<=0;request_output_len_o<=0;
       input_index_o<=0;done_code_o<=0;
-      prefix_op_r<=0;context_byte_r<=0;nonce_r<=0;prefix_word_r<=0;
+      prefix_op_r<=0;context_byte_r<=0;internal_message_r<=0;nonce_r<=0;prefix_word_r<=0;
     end else case(state)
       IDLE:if(command_valid_i)begin
         prefix_r<=0;prefix_left_r<=0;bits_r<=0;count_r<=0;produced_r<=0;
-        prefix_op_r<=command_op_i;context_byte_r<=command_context_len_i[7:0];nonce_r<=command_nonce_i;prefix_word_r<=0;
+        prefix_op_r<=command_op_i;context_byte_r<=command_context_len_i[7:0];internal_message_r<=command_internal_message_i;nonce_r<=command_nonce_i;prefix_word_r<=0;
         if(!STABLE_PREFIX_INPUTS)prefix_r<=command_prefix;
         payload_left_r<=command_body;payload_word_r<=0;draining_r<=0;input_index_o<=0;
         request_sampling_o<=command_op_i==3;request_param_o<=command_param_i;request_id_o<=command_id_i;
@@ -120,7 +121,7 @@ module sign_hash_message #(
           (command_op_i==2?(command_param_i==0?16'd32:(command_param_i==1?16'd48:16'd64)):16'd64);
         done_code_o<=bad_command?3'd1:3'd0;
         case(command_op_i)
-          0:prefix_left_r<=66;
+          0:prefix_left_r<=command_internal_message_i?64:66;
           1:prefix_left_r<=128;
           2:prefix_left_r<=64;
           3:prefix_left_r<=66;

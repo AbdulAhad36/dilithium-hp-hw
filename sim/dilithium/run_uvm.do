@@ -11,10 +11,10 @@ set repo [file normalize [file join $here .. ..]]
 source [file join $here setup_cyclonev.tcl]
 if {[catch {exec python [file join $here dilithium_vectors.py] uvm_check} freshness]} {error $freshness}
 echo $freshness
-set prefix [file join $here stage7_uvm]
+set prefix [file join $here uvm]
 set extra {}
 if {[info exists DILITHIUM_INJECT_BAD_KEY] && $DILITHIUM_INJECT_BAD_KEY} {
-  set prefix [file join $here stage7_uvm_negative]
+  set prefix [file join $here uvm_negative]
   lappend extra +DILITHIUM_INJECT_BAD_KEY
 }
 if {![batch_mode]} {transcript file ${prefix}_gui.log}
@@ -33,10 +33,11 @@ foreach line [split $qsf "\n"] {
 }
 set tb [file join $repo tb_uvm tb_uvm_dilithium]
 vlog -sv -work dilithium_uvm_work [file join $tb dilithium_if.sv]
-vlog -sv -L mtiUvm -work dilithium_uvm_work [file join $tb dilithium_uvm_pkg.sv] [file join $tb tb_top.sv]
+vlog -sv -L mtiUvm +incdir+$tb -work dilithium_uvm_work [file join $tb dilithium_uvm_pkg.sv] [file join $tb tb_top.sv]
+if {![info exists DILITHIUM_UVM_TEST]} {set DILITHIUM_UVM_TEST dilithium_regression_test}
 set visibility {}
 if {![batch_mode]} {set visibility {-voptargs=+acc}}
-vsim -L cyclonev_ver -coverage {*}$visibility -sv_seed 20261024 -wlf ${prefix}.wlf dilithium_uvm_work.tb_top +UVM_TESTNAME=dilithium_stage7c5_test +DILITHIUM_DIR=$here +DILITHIUM_PREFIX=$prefix {*}$extra
+vsim -L cyclonev_ver -coverage {*}$visibility -sv_seed 20261024 -wlf ${prefix}.wlf dilithium_uvm_work.tb_top +UVM_TESTNAME=$DILITHIUM_UVM_TEST +DILITHIUM_DIR=$here +DILITHIUM_PREFIX=$prefix {*}$extra
 onfinish stop
 coverage save -onexit ${prefix}.ucdb
 if {![batch_mode]} {

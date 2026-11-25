@@ -2,10 +2,10 @@
 // Frames:PK,SIG,ctx||M. Encoding/norm failure and digest mismatch are invalid
 // signatures(code0/accept0);transport failure remains an explicit service error.
 `default_nettype none
-module verify (
+module verify #(parameter bit LOCAL_CONTROL=0) (
   input wire logic clk,rst,start_valid_i,output logic start_ready_o,busy_o,fault_o,
   input wire logic [1:0] start_param_i,input wire logic [15:0] start_id_i,start_message_len_i,start_signature_len_i,
-  input wire logic [8:0] start_context_len_i,
+  input wire logic [8:0] start_context_len_i,input tri0 start_internal_message_i,
   input wire logic input_valid_i,output logic input_ready_o,input wire logic [63:0] input_data_i,
   input wire logic [3:0] input_bytes_i,input wire logic [15:0] input_index_i,input wire logic input_last_i,
   output logic done_valid_o,input wire logic done_ready_i,output logic [15:0] done_id_o,
@@ -21,7 +21,7 @@ module verify (
   typedef struct packed {logic [3:0] row,column,slot;} descriptor_t;
   state_e state;producer_e producer;descriptor_t descriptor_r[2],current;
   logic [1:0] level_r,batch_size_r,batch_done_r;logic selected_r,section_r,accept_r,input_bad_r;
-  logic [15:0] id_r,message_r,signature_len_r;logic [8:0] context_r;logic [17:0] message_total;
+  logic [15:0] id_r,message_r,signature_len_r;logic [8:0] context_r;logic internal_message_r;logic [17:0] message_total;
   logic [3:0] k_r,l_r,poly_r,row_r,column_r,a_row_r,a_column_r,a_write_r,a_read_r,sample_word_r,challenge_word_r;
   logic [15:0] a_reserved_r,a_ready_r;logic [511:0] mu_r,digest_r;
   logic [255:0] rho;logic [511:0] tr,ctilde;
@@ -29,6 +29,7 @@ module verify (
   assign tr=mu_r; // tr->mu->computed challenge,one fixed512-bit bank.
   logic input_command_ready,input_done,input_fault,input_payload_ready;logic [2:0] input_code;logic [15:0] input_done_id;
   request_t input_request;
+  logic input_owner_r,select_input_request,bad_command;
   logic formatter_ready,formatter_done,formatter_payload_ready,format_request,format_sampling,format_mode,format_input_valid;
   logic [2:0] formatter_code;logic [15:0] formatter_done_id,format_id,format_length,format_output_length;
   logic [1:0] format_op,format_param;logic [63:0] format_input_data;logic [3:0] format_input_bytes;
@@ -45,8 +46,40 @@ module verify (
   function automatic logic [15:0] sample_id(input descriptor_t d,input logic [15:0] id);
     return id+16'd1024+{8'd0,d.row,d.column};
   endfunction
+  logic [1:0][15:0] expected_sample_id_r;
+  logic [1:0] expected_sample_valid_r,sample_match,sample_event_mask_r;
+  logic sample_take,sample_event_r,sample_bad;
+  logic challenge_take,challenge_event_r,challenge_consumed_r,challenge_bad;
+  logic [15:0] expected_challenge_id_r;
+  assign sample_take=producer!=P_IDLE && service_i.sample.done_valid && service_o.sample.done_ready;
+  assign challenge_take=state==CHAL_WAIT && service_i.sample.done_valid && service_o.sample.done_ready;
+  assign challenge_bad=service_i.sample.done_code!=0 || service_i.sample.done_id!=expected_challenge_id_r;
+  assign sample_bad=service_i.sample.done_code!=0 || sample_match==0 || sample_match==3 ||
+    |(sample_match & batch_done_r) || (sample_event_r && |(sample_match & sample_event_mask_r));
+  genvar completion_slot;
+  generate for(completion_slot=0;completion_slot<2;completion_slot=completion_slot+1)begin:g_completion_match
+    assign sample_match[completion_slot]=expected_sample_valid_r[completion_slot] &&
+      completion_slot<int'(batch_size_r) && service_i.sample.done_id==expected_sample_id_r[completion_slot];
+  end endgenerate
+  always_ff @(posedge clk or posedge rst)begin
+    if(rst)begin expected_sample_id_r<=0;expected_sample_valid_r<=0;sample_event_r<=0;sample_event_mask_r<=0;
+      challenge_event_r<=0;challenge_consumed_r<=0;expected_challenge_id_r<=0;end
+    else begin
+      sample_event_r<=LOCAL_CONTROL && sample_take && !sample_bad;
+      challenge_event_r<=LOCAL_CONTROL && challenge_take && !challenge_bad;
+      if(sample_take)sample_event_mask_r<=sample_match;
+      if(challenge_take)challenge_consumed_r<=1;
+      if(producer==P_IDLE)expected_sample_valid_r<=0;
+      if(producer==P_CMD && service_i.sample.ready)begin
+        expected_sample_id_r[selected_r]<=service_o.sample.id;expected_sample_valid_r[selected_r]<=1;
+      end
+      if(state==CHAL_CMD && service_i.sample.ready)begin
+        expected_challenge_id_r<=service_o.sample.id;challenge_consumed_r<=0;
+      end
+    end
+  end
   assign current=descriptor_r[selected_r];
-  assign message_total=18'd66+18'(start_context_len_i)+18'(start_message_len_i);
+  assign message_total=(start_internal_message_i?18'd64:18'd66+18'(start_context_len_i))+18'(start_message_len_i);
   assign ctilde_bytes=level_r==0?32:level_r==1?48:64;assign ctilde_words=level_r==0?4:level_r==1?6:8;
   assign w1_words=level_r==2?128:96;
   assign format_op=state==MU_CMD || state==MU_RUN?0:2;
@@ -75,6 +108,7 @@ module verify (
     .clk(clk),.rst(rst),.command_valid_i(state==MU_CMD || state==CHASH_CMD),.command_ready_o(formatter_ready),.busy_o(),
     .command_op_i(format_op),.command_param_i(level_r),.command_id_i(id_r+16'd256+16'(format_op)),
     .command_message_len_i(message_r),.command_nonce_i(16'd0),.command_context_len_i(context_r),
+    .command_internal_message_i(internal_message_r),
     .command_tr_i(tr),.command_mu_i(mu_r),.command_mask_seed_i(512'd0),.command_key_i(256'd0),.command_rnd_i(256'd0),
     .payload_valid_i(state==MU_RUN?input_valid_i:state==CHASH_RUN && service_i.bank.read_valid[0][1]),
     .payload_ready_o(formatter_payload_ready),.payload_data_i(state==MU_RUN?input_data_i:service_i.bank.read_data[0][1][63:0]),
@@ -102,7 +136,7 @@ module verify (
       service_o.sample.valid=state==CHAL_CMD;service_o.sample.batch_last=1;service_o.sample.mode=3;
       service_o.sample.bank=0;service_o.sample.base=960;service_o.sample.id=id_r+16'd512;service_o.sample.message_len=ctilde_bytes;
       service_o.sample.input_valid=state==CHAL_FEED;service_o.sample.input_data=ctilde[64*challenge_word_r+:64];
-      service_o.sample.done_ready=state==CHAL_WAIT;
+      service_o.sample.done_ready=state==CHAL_WAIT && (!LOCAL_CONTROL || !challenge_consumed_r);
     end
     service_o.ntt.done_ready=ntt_wait;
     case(state)
@@ -140,18 +174,31 @@ module verify (
     service_o.bank.base[0][1]=576;service_o.bank.words[0][1]=11'(w1_words);
     service_o.bank.read_ready[0][1]=state==CHASH_RUN && formatter_payload_ready;
     service_o.bank.done_ready[0][1]=state==CHASH_RUN || state==CHASH_DRAIN;
-    if(state==INPUT_CMD || state==INPUT_WAIT || state==INPUT_RETIRE)service_o=input_request;
+    if(select_input_request)service_o=input_request;
     if(fault_o)service_o='0;
+  end
+  assign bad_command=start_param_i==3 || start_context_len_i>255 ||
+    (start_internal_message_i && start_context_len_i!=0) || message_total>65535;
+  assign select_input_request=LOCAL_CONTROL?input_owner_r:
+    (state==INPUT_CMD || state==INPUT_WAIT || state==INPUT_RETIRE);
+  // Drive the wide request mux from a local register through input drain.
+  always_ff @(posedge clk or posedge rst)begin
+    if(rst)input_owner_r<=0;
+    else if(state==IDLE && start_valid_i && start_ready_o)
+      input_owner_r<=!bad_command;
+    else if(fault_o || (state==INPUT_RETIRE && input_command_ready))
+      input_owner_r<=0;
   end
   always_ff @(posedge clk or posedge rst)begin
     if(rst)begin
-      state<=IDLE;producer<=P_IDLE;level_r<=0;id_r<=0;message_r<=0;signature_len_r<=0;context_r<=0;
+      state<=IDLE;producer<=P_IDLE;level_r<=0;id_r<=0;message_r<=0;signature_len_r<=0;context_r<=0;internal_message_r<=0;
       k_r<=0;l_r<=0;poly_r<=0;row_r<=0;column_r<=0;section_r<=0;accept_r<=0;input_bad_r<=0;
       a_row_r<=0;a_column_r<=0;a_write_r<=0;a_read_r<=0;a_reserved_r<=0;a_ready_r<=0;
       descriptor_r[0]<='0;descriptor_r[1]<='0;batch_size_r<=0;batch_done_r<=0;selected_r<=0;sample_word_r<=0;challenge_word_r<=0;
       mu_r<=0;raw_count_r<=0;raw_expected<=0;raw_core_r<=0;format_finished_r<=0;raw_finished_r<=0;
       bank_finished_r<=0;format_code_r<=0;memory_word_r<=0;done_code_o<=0;done_stage_o<=0;done_detail_o<=0;fault_o<=0;
     end else begin
+      if(LOCAL_CONTROL && state==IDLE)mu_r<=0;
       if(input_tr_write)mu_r[128*input_tr_index+:128]<=input_tr_data;
       if((state==MU_CMD || state==CHASH_CMD) && formatter_ready)begin
         raw_count_r<=0;raw_expected<=state==MU_CMD?3'd4:level_r==0?3'd2:level_r==1?3'd3:3'd4;
@@ -195,12 +242,13 @@ module verify (
       endcase
       case(state)
         IDLE:if(start_valid_i && start_ready_o)begin
-          level_r<=start_param_i;id_r<=start_id_i;message_r<=start_message_len_i;signature_len_r<=start_signature_len_i;context_r<=start_context_len_i;
+          level_r<=start_param_i;id_r<=start_id_i;message_r<=start_message_len_i;signature_len_r<=start_signature_len_i;context_r<=start_context_len_i;internal_message_r<=start_internal_message_i;
           k_r<=rows(start_param_i);l_r<=columns(start_param_i);done_code_o<=0;done_stage_o<=0;done_detail_o<=0;
           accept_r<=0;input_bad_r<=0;section_r<=0;poly_r<=0;row_r<=0;column_r<=0;challenge_word_r<=0;
           a_row_r<=0;a_column_r<=0;a_write_r<=0;a_read_r<=0;a_reserved_r<=0;a_ready_r<=0;producer<=P_IDLE;
-          mu_r<=0;state<=INPUT_CMD;
-          if(start_param_i==3 || start_context_len_i>255 || message_total>65535)begin done_code_o<=1;state<=REPORT;end
+          if(!LOCAL_CONTROL)mu_r<=0;
+          state<=INPUT_CMD;
+          if(bad_command)begin done_code_o<=1;state<=REPORT;end
         end
         INPUT_CMD:if(input_command_ready)state<=INPUT_WAIT;
         INPUT_WAIT:if(input_done)begin
@@ -218,8 +266,8 @@ module verify (
         CHAL_FEED:if(service_i.sample.input_ready)begin
           if(challenge_word_r+1'b1==ctilde_words)state<=CHAL_WAIT;else challenge_word_r<=challenge_word_r+1'b1;
         end
-        CHAL_WAIT:if(service_i.sample.done_valid)begin
-          if(service_i.sample.done_id!=id_r+16'd512 || service_i.sample.done_code!=0)begin fault_o<=1;state<=HALT;end
+        CHAL_WAIT:if(LOCAL_CONTROL?challenge_event_r:service_i.sample.done_valid)begin
+          if(!LOCAL_CONTROL && (service_i.sample.done_id!=id_r+16'd512 || service_i.sample.done_code!=0))begin fault_o<=1;state<=HALT;end
           else state<=CHAL_NTT_CMD;
         end
         CHAL_NTT_CMD:if(service_i.ntt.ready)state<=CHAL_NTT_RUN;
@@ -256,13 +304,16 @@ module verify (
         HALT:state<=HALT;
         default:begin fault_o<=1;state<=HALT;end
       endcase
-      if(producer!=P_IDLE && service_i.sample.done_valid && service_o.sample.done_ready)begin
+      if(LOCAL_CONTROL?sample_event_r:sample_take)begin
         logic matched;matched=0;
-        for(int i=0;i<2;i++)if(i<int'(batch_size_r) && service_i.sample.done_id==sample_id(descriptor_r[i],id_r) && !batch_done_r[i])begin
+        for(int i=0;i<2;i++)if((LOCAL_CONTROL?sample_event_mask_r[i]:
+          (i<int'(batch_size_r) && service_i.sample.done_id==sample_id(descriptor_r[i],id_r))) && !batch_done_r[i])begin
           matched=1;batch_done_r[i]<=1;a_ready_r[descriptor_r[i].slot]<=1;
         end
-        if(!matched || service_i.sample.done_code!=0)begin fault_o<=1;state<=HALT;end
+        if(!matched || (!LOCAL_CONTROL && service_i.sample.done_code!=0))begin fault_o<=1;state<=HALT;end
       end
+      if(LOCAL_CONTROL && ((sample_take && sample_bad) || (challenge_take && challenge_bad)))fault_o<=1;
+      if(fault_o)state<=HALT;
       if(state!=IDLE && state!=REPORT && (input_fault || service_i.sample.fault ||
         (ntt_wait && service_i.ntt.done_valid && service_i.ntt.done_code!=0) ||
         (process_wait && service_i.poly_process.done_valid && service_i.poly_process.done_code!=0) ||

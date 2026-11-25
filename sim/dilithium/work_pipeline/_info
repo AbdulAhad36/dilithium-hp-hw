@@ -1,0 +1,2239 @@
+m255
+K4
+z2
+Z0 !s12c _opt2
+Z1 !s99 nomlopt
+Z2 !s12c _opt1
+R1
+Z3 !s12c _opt
+R1
+R0
+R1
+R2
+R1
+R3
+R1
+R0
+R1
+R2
+R1
+R3
+R1
+R0
+R1
+R2
+R1
+R3
+R1
+!s11f vlog 2024.1 2024.02, Feb  1 2024
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z4 dD:/GitHub/dilithium-hp-hw
+T_opt
+!s110 1794518942
+VE<X`>[L_eZ1BIo24Z<[GS2
+04 18 4 work tb_unpack_pipeline fast 0
+=1-b42e9911f333-6af62f9d-3c7-26e4
+R1
+Z5 !s12f OEM100
+Z6 !s12b OEM100
+Z7 !s124 OEM100
+o-quiet -auto_acc_if_foreign -work dilithium_pipeline_work -L cyclonev_ver -g PIPELINE_FIELDS=1 +acc=r
+Z8 tCvgOpt 0
+n@_opt
+Z9 OL;O;2024.1;79
+R4
+T_opt1
+!s110 1794518944
+VV>l]^fg5_`IXXgfXL5l<>0
+04 14 4 work tb_hint_shared fast 0
+=1-b42e9911f333-6af62fa0-d8-5b90
+R1
+R5
+R6
+R7
+o-quiet -auto_acc_if_foreign -work dilithium_pipeline_work -L cyclonev_ver -g BURST=1 -g PREDECODE_HINT=1 -g PIPELINE_APPEND=1 -g PIPELINE_COMMANDS=1 +acc=r
+R8
+n@_opt1
+R9
+R4
+T_opt2
+!s110 1794518946
+V0P^`=<fe6h37U<Kl46W0]2
+04 15 4 work tb_hash_sampler fast 0
+=1-b42e9911f333-6af62fa2-7-4208
+R1
+R5
+R6
+R7
+o-quiet -auto_acc_if_foreign -work dilithium_pipeline_work -L cyclonev_ver -g TIMING_PIPELINE=1 -g PIPELINE_INPUT=1 +acc=r
+R8
+n@_opt2
+R9
+vbank_fabric
+Z10 2D:/GitHub/dilithium-hp-hw/src/keccak/keccak_pkg.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_param_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_absorb_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/theta_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/rho_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/pi_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/chi_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/iota_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_step_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_output_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_core.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_dual_interleaved.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_pkg.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_input_prepare.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_mask_unpack.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_secret_lane.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_compact.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_ball.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler.sv|D:/GitHub/dilithium-hp-hw/src/ntt/ntt_pkg.sv|D:/GitHub/dilithium-hp-hw/src/ntt/mod_mul.sv|D:/GitHub/dilithium-hp-hw/src/ntt/butterfly_fused.sv|D:/GitHub/dilithium-hp-hw/src/ntt/butterfly_unit.sv|D:/GitHub/dilithium-hp-hw/src/ntt/twiddle_rom.sv|D:/GitHub/dilithium-hp-hw/src/ntt/ntt_core.sv|D:/GitHub/dilithium-hp-hw/src/controller/helpers/dilithium_pkg.sv|D:/GitHub/dilithium-hp-hw/src/controller/helpers/elastic_pair.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/poly_bram.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/bank_request_pipe.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_banks.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_port.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_router.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/bank_fabric.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/secret_regroup.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/power2round.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/cnb.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/mhint.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/poly_process.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/bitpkg.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/keccak_sampler.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/sampler_writer.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/bitunpkg.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/load_decode.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/hash_sampler.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/ntt_dma.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/process_dma.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/datapath.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/hint_codec.sv|D:/GitHub/dilithium-hp-hw/src/controller/verify_input.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/sign_hash_message.sv|D:/GitHub/dilithium-hp-hw/src/controller/verify.sv|D:/GitHub/dilithium-hp-hw/src/controller/keygen.sv|D:/GitHub/dilithium-hp-hw/src/controller/sign_input.sv|D:/GitHub/dilithium-hp-hw/src/controller/sign.sv|D:/GitHub/dilithium-hp-hw/src/controller/dilithium.sv|D:/GitHub/dilithium-hp-hw/src/controller/dilithium_fpga.sv
+Z11 DXx6 sv_std 3 std 0 22 9oUSJO;AeEaW`l:M@^WG92
+Z12 !s110 1794518834
+!i10b 1
+!s100 TObAcJ6X7aE5PNGAVBzSB2
+IeXjcVN?cU9<koORYE@h4>3
+S1
+R4
+Z13 w1793632528
+8D:/GitHub/dilithium-hp-hw/src/controller/memory/bank_fabric.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/memory/bank_fabric.sv
+!i122 0
+L0 4 45
+Z14 VDg1SIo80bB@j0V0VzS_@n1
+Z15 OL;L;2024.1;79
+r1
+!s85 0
+31
+Z16 !s108 1794518833.000000
+Z17 !s107 D:/GitHub/dilithium-hp-hw/src/controller/dilithium_fpga.sv|D:/GitHub/dilithium-hp-hw/src/controller/dilithium.sv|D:/GitHub/dilithium-hp-hw/src/controller/sign.sv|D:/GitHub/dilithium-hp-hw/src/controller/sign_input.sv|D:/GitHub/dilithium-hp-hw/src/controller/keygen.sv|D:/GitHub/dilithium-hp-hw/src/controller/verify.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/sign_hash_message.sv|D:/GitHub/dilithium-hp-hw/src/controller/verify_input.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/hint_codec.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/datapath.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/process_dma.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/ntt_dma.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/hash_sampler.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/load_decode.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/bitunpkg.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/sampler_writer.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/keccak_sampler.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/bitpkg.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/poly_process.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/mhint.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/cnb.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/power2round.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/secret_regroup.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/bank_fabric.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_router.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_port.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_banks.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/bank_request_pipe.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/poly_bram.sv|D:/GitHub/dilithium-hp-hw/src/controller/helpers/elastic_pair.sv|D:/GitHub/dilithium-hp-hw/src/controller/helpers/dilithium_pkg.sv|D:/GitHub/dilithium-hp-hw/src/ntt/ntt_core.sv|D:/GitHub/dilithium-hp-hw/src/ntt/twiddle_rom.sv|D:/GitHub/dilithium-hp-hw/src/ntt/butterfly_unit.sv|D:/GitHub/dilithium-hp-hw/src/ntt/butterfly_fused.sv|D:/GitHub/dilithium-hp-hw/src/ntt/mod_mul.sv|D:/GitHub/dilithium-hp-hw/src/ntt/ntt_pkg.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_ball.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_compact.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_secret_lane.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_mask_unpack.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_input_prepare.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_pkg.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_dual_interleaved.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_core.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_output_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_step_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/iota_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/chi_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/pi_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/rho_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/theta_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_absorb_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_param_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_pkg.sv|
+Z18 !s90 -sv|-sfcu|-work|dilithium_pipeline_work|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_pkg.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_param_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_absorb_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/theta_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/rho_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/pi_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/chi_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/iota_step.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_step_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_output_unit.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_core.sv|D:/GitHub/dilithium-hp-hw/src/keccak/keccak_dual_interleaved.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_pkg.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_input_prepare.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_mask_unpack.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_secret_lane.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_compact.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler_ball.sv|D:/GitHub/dilithium-hp-hw/src/sampler/sampler.sv|D:/GitHub/dilithium-hp-hw/src/ntt/ntt_pkg.sv|D:/GitHub/dilithium-hp-hw/src/ntt/mod_mul.sv|D:/GitHub/dilithium-hp-hw/src/ntt/butterfly_fused.sv|D:/GitHub/dilithium-hp-hw/src/ntt/butterfly_unit.sv|D:/GitHub/dilithium-hp-hw/src/ntt/twiddle_rom.sv|D:/GitHub/dilithium-hp-hw/src/ntt/ntt_core.sv|D:/GitHub/dilithium-hp-hw/src/controller/helpers/dilithium_pkg.sv|D:/GitHub/dilithium-hp-hw/src/controller/helpers/elastic_pair.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/poly_bram.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/bank_request_pipe.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_banks.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_port.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_router.sv|D:/GitHub/dilithium-hp-hw/src/controller/memory/bank_fabric.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/secret_regroup.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/power2round.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/cnb.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/mhint.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/poly_process.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/bitpkg.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/keccak_sampler.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/sampler_writer.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/bitunpkg.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/load_decode.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/hash_sampler.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/ntt_dma.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/process_dma.sv|D:/GitHub/dilithium-hp-hw/src/controller/datapath/datapath.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/hint_codec.sv|D:/GitHub/dilithium-hp-hw/src/controller/verify_input.sv|D:/GitHub/dilithium-hp-hw/src/controller/process/sign_hash_message.sv|D:/GitHub/dilithium-hp-hw/src/controller/verify.sv|D:/GitHub/dilithium-hp-hw/src/controller/keygen.sv|D:/GitHub/dilithium-hp-hw/src/controller/sign_input.sv|D:/GitHub/dilithium-hp-hw/src/controller/sign.sv|D:/GitHub/dilithium-hp-hw/src/controller/dilithium.sv|D:/GitHub/dilithium-hp-hw/src/controller/dilithium_fpga.sv|
+!i113 0
+Z19 o-sv -sfcu -work dilithium_pipeline_work -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+R8
+vbank_fixture
+Z20 2sim/dilithium/reference_build/timing_screen/formatter_reference.sv|tb/tb_dilithium/reference/hintpkg_c13_reference.sv|tb/tb_dilithium/reference/hint_decode_stage_reference.sv|tb/tb_dilithium/support/bank_fixture.sv|tb/tb_dilithium/unit/tb_formatter_timing.sv|tb/tb_dilithium/unit/tb_unpack_pipeline.sv|tb/tb_dilithium/unit/tb_hint_shared.sv|tb/tb_dilithium/unit/tb_hash_sampler.sv
+R11
+R12
+!i10b 1
+!s100 `<Ha[e5moY1bKgZHzX^k<0
+IZ8STA`2Cj@RDC;nHJ<cZ;1
+S1
+R4
+R13
+8tb/tb_dilithium/support/bank_fixture.sv
+Ftb/tb_dilithium/support/bank_fixture.sv
+!i122 1
+L0 4 101
+R14
+R15
+r1
+!s85 0
+31
+Z21 !s108 1794518834.000000
+Z22 !s107 tb/tb_dilithium/unit/tb_hash_sampler.sv|tb/tb_dilithium/unit/tb_hint_shared.sv|tb/tb_dilithium/unit/tb_unpack_pipeline.sv|tb/tb_dilithium/unit/tb_formatter_timing.sv|tb/tb_dilithium/support/bank_fixture.sv|tb/tb_dilithium/reference/hint_decode_stage_reference.sv|tb/tb_dilithium/reference/hintpkg_c13_reference.sv|sim/dilithium/reference_build/timing_screen/formatter_reference.sv|
+Z23 !s90 -sv|-sfcu|-work|dilithium_pipeline_work|sim/dilithium/reference_build/timing_screen/formatter_reference.sv|tb/tb_dilithium/reference/hintpkg_c13_reference.sv|tb/tb_dilithium/reference/hint_decode_stage_reference.sv|tb/tb_dilithium/support/bank_fixture.sv|tb/tb_dilithium/unit/tb_formatter_timing.sv|tb/tb_dilithium/unit/tb_unpack_pipeline.sv|tb/tb_dilithium/unit/tb_hint_shared.sv|tb/tb_dilithium/unit/tb_hash_sampler.sv|
+!i113 0
+R19
+R8
+vbank_request_pipe
+R10
+R11
+R12
+!i10b 1
+!s100 6R=4;JT951P1`GGi>Jk<o3
+IiM=@=Nn?LO:33?2Lj]R6@3
+S1
+R4
+w1793285032
+8D:/GitHub/dilithium-hp-hw/src/controller/memory/bank_request_pipe.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/memory/bank_request_pipe.sv
+!i122 0
+Z24 L0 7 70
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vbitpkg
+R10
+R11
+R12
+!i10b 1
+!s100 ?oeW2FIn>jcNZMj:Tm_D;1
+IU35]JoBzEWYU^ed;C46@l1
+S1
+R4
+w1793755863
+8D:/GitHub/dilithium-hp-hw/src/controller/process/bitpkg.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/process/bitpkg.sv
+!i122 0
+L0 6 188
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vbitunpkg
+R10
+R11
+R12
+!i10b 1
+!s100 ]ha=CG79ZPX^kikB@gC>g3
+ImzBSGS2Aoa]Gk<F8515Md0
+S1
+R4
+w1794518498
+8D:/GitHub/dilithium-hp-hw/src/controller/process/bitunpkg.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/process/bitunpkg.sv
+!i122 0
+L0 11 201
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vbutterfly_fused
+R10
+R11
+Z25 DXx4 work 7 ntt_pkg 0 22 S8KMaz<k8kGNJYJ:L>NB92
+R12
+!i10b 1
+!s100 VZ67QYeH;][3LBA1iIQbF2
+I`ELejYLL1^6dGdQ>M_P`51
+S1
+R4
+R13
+Z26 8D:/GitHub/dilithium-hp-hw/src/ntt/butterfly_fused.sv
+Z27 FD:/GitHub/dilithium-hp-hw/src/ntt/butterfly_fused.sv
+!i122 0
+R24
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vbutterfly_reduce
+R10
+R11
+R12
+!i10b 1
+!s100 Z@>?E<aPeT3bU`B0>dlUb0
+IZBa5O;eAB:OhFN]mckD^j3
+S1
+R4
+R13
+R26
+R27
+!i122 0
+L0 112 36
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vbutterfly_unit
+R10
+R11
+R25
+DXx4 work 22 butterfly_unit_sv_unit 0 22 YB<D9Yf8]k<Oz2R^a7R6S1
+R12
+R14
+r1
+!s85 0
+!i10b 1
+!s100 G3iC9>YGMN07]19nOYSYh1
+I;<Aobb]<e^lSMd9A^Vb=K1
+!s105 butterfly_unit_sv_unit
+S1
+R4
+R13
+Z28 8D:/GitHub/dilithium-hp-hw/src/ntt/butterfly_unit.sv
+Z29 FD:/GitHub/dilithium-hp-hw/src/ntt/butterfly_unit.sv
+!i122 0
+L0 4 9
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xbutterfly_unit_sv_unit
+R10
+R11
+R25
+R12
+VYB<D9Yf8]k<Oz2R^a7R6S1
+r1
+!s85 0
+!i10b 1
+!s100 O@8Ka7a`<aV0GAeX71b0_0
+IYB<D9Yf8]k<Oz2R^a7R6S1
+!i103 1
+S1
+R4
+R13
+R28
+R29
+!i122 0
+Z30 L0 3 0
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vchi_step
+R10
+R11
+Z31 DXx4 work 10 keccak_pkg 0 22 XRKCQW^73QcQl_TLNV8Mm1
+DXx4 work 16 chi_step_sv_unit 0 22 6>?k0Dl=FAVaoF199e<CT2
+Z32 !s110 1794518833
+R14
+r1
+!s85 0
+!i10b 1
+!s100 70aJm=HjNO:koeo@afJ?J0
+InzB`:5GTkeBgVTVGj>lAN3
+!s105 chi_step_sv_unit
+S1
+R4
+Z33 w1792426284
+Z34 8D:/GitHub/dilithium-hp-hw/src/keccak/chi_step.sv
+Z35 FD:/GitHub/dilithium-hp-hw/src/keccak/chi_step.sv
+!i122 0
+L0 18 15
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xchi_step_sv_unit
+R10
+R11
+R31
+R32
+V6>?k0Dl=FAVaoF199e<CT2
+r1
+!s85 0
+!i10b 1
+!s100 ORCL2CkA6mFiXoPTQnA2D1
+I6>?k0Dl=FAVaoF199e<CT2
+!i103 1
+S1
+R4
+R33
+R34
+R35
+!i122 0
+L0 16 0
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vcnb
+R10
+R11
+R12
+!i10b 1
+!s100 U2Dhb<J^V0@dYaL4O[J];3
+I64YSGPP225ke6z0bolXJF3
+S1
+R4
+w1793171403
+8D:/GitHub/dilithium-hp-hw/src/controller/process/cnb.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/process/cnb.sv
+!i122 0
+L0 4 38
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vdatapath
+R10
+R11
+Z36 DXx4 work 13 dilithium_pkg 0 22 Zo7ZODNg]U<7_4IgJ1WI>1
+R25
+R12
+!i10b 1
+!s100 em?4:Q9]5Xmf]Mn:_iKFV3
+I9>_C1IgB4DMZA]R=g<OlB2
+S1
+R4
+w1794518581
+8D:/GitHub/dilithium-hp-hw/src/controller/datapath/datapath.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/datapath/datapath.sv
+!i122 0
+L0 4 164
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vdilithium
+R10
+R11
+R36
+R12
+!i10b 1
+!s100 PMz=Wf2YaUGUEzmEUN3If0
+IM9ROc>_8jiS35ASzSdhHE2
+S1
+R4
+w1794518404
+8D:/GitHub/dilithium-hp-hw/src/controller/dilithium.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/dilithium.sv
+!i122 0
+L0 4 184
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vdilithium_fpga
+R10
+R11
+R12
+!i10b 1
+!s100 `DEQR5WURUfG8fR`<ED_l1
+IciM?KL0DiaUROjgT;H1@l3
+S1
+R4
+w1794518405
+8D:/GitHub/dilithium-hp-hw/src/controller/dilithium_fpga.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/dilithium_fpga.sv
+!i122 0
+L0 4 56
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xdilithium_pkg
+R10
+R11
+R12
+!i10b 1
+!s100 DIc[io[eW@0C_ZGZgLNz20
+IZo7ZODNg]U<7_4IgJ1WI>1
+S1
+R4
+Z37 w1793632694
+8D:/GitHub/dilithium-hp-hw/src/controller/helpers/dilithium_pkg.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/helpers/dilithium_pkg.sv
+!i122 0
+R30
+VZo7ZODNg]U<7_4IgJ1WI>1
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vdsp_fused_chain
+R10
+R11
+R12
+!i10b 1
+!s100 VTRa9P_LfzmD;`H^a@2]92
+IlWH;a7Phg0Y:hmNEl41Wd0
+S1
+R4
+R13
+R26
+R27
+!i122 0
+L0 85 22
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+velastic_pair
+R10
+R11
+R12
+!i10b 1
+!s100 5AeAMDAnz1j25?UDMlB^a0
+IESgNBNiiVdC;:>60NhLcO1
+S1
+R4
+w1794518178
+8D:/GitHub/dilithium-hp-hw/src/controller/helpers/elastic_pair.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/helpers/elastic_pair.sv
+!i122 0
+L0 4 34
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vhash_sampler
+R10
+R11
+R12
+!i10b 1
+!s100 jKbEa=C2[BoMO9zT9C=S:3
+Io68;Ib=mIX7RNmHMz<3CN3
+S1
+R4
+Z38 w1794518499
+8D:/GitHub/dilithium-hp-hw/src/controller/datapath/hash_sampler.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/datapath/hash_sampler.sv
+!i122 0
+L0 5 154
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vhint_codec
+R10
+R11
+R12
+!i10b 1
+!s100 _T<UcY:]TOib73Hn1a8IN2
+I]o7R_c^jnlUhRbUSl404C2
+S1
+R4
+w1794518579
+8D:/GitHub/dilithium-hp-hw/src/controller/process/hint_codec.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/process/hint_codec.sv
+!i122 0
+L0 6 482
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vhint_decode_stage_reference
+R20
+R11
+R12
+!i10b 1
+!s100 LnDa>kHP<XogE7?YMI:ca2
+IO5`Q6jmcYnbnbiOFgSRjh1
+S1
+R4
+R13
+8tb/tb_dilithium/reference/hint_decode_stage_reference.sv
+Ftb/tb_dilithium/reference/hint_decode_stage_reference.sv
+!i122 1
+L0 5 31
+R14
+R15
+r1
+!s85 0
+31
+R21
+R22
+R23
+!i113 0
+R19
+R8
+vhintpkg_c13_reference
+R20
+R11
+R12
+!i10b 1
+!s100 1_ST0:Snd9LOK6`zHzPU:2
+Ik8RKWhNI:enPkF5YFKZG;3
+S1
+R4
+R13
+8tb/tb_dilithium/reference/hintpkg_c13_reference.sv
+Ftb/tb_dilithium/reference/hintpkg_c13_reference.sv
+!i122 1
+L0 6 94
+R14
+R15
+r1
+!s85 0
+31
+R21
+R22
+R23
+!i113 0
+R19
+R8
+vhintunpkg_c13_reference
+Z39 2tb/tb_dilithium/reference/hintunpkg_c13_reference.sv|tb/tb_dilithium/unit/tb_formatter_timing.sv|tb/tb_dilithium/unit/tb_unpack_pipeline.sv|tb/tb_dilithium/unit/tb_hint_shared.sv|tb/tb_dilithium/unit/tb_hash_sampler.sv
+R11
+Z40 !s110 1794518934
+!i10b 1
+!s100 7Pg_<V2;LMfEcm6Tj0Q2H0
+I8nAMWC2485nQ9P8Y6XZlX3
+S1
+R4
+R13
+8tb/tb_dilithium/reference/hintunpkg_c13_reference.sv
+Ftb/tb_dilithium/reference/hintunpkg_c13_reference.sv
+!i122 2
+L0 5 102
+R14
+R15
+r1
+!s85 0
+31
+Z41 !s108 1794518934.000000
+Z42 !s107 tb/tb_dilithium/unit/tb_hash_sampler.sv|tb/tb_dilithium/unit/tb_hint_shared.sv|tb/tb_dilithium/unit/tb_unpack_pipeline.sv|tb/tb_dilithium/unit/tb_formatter_timing.sv|tb/tb_dilithium/reference/hintunpkg_c13_reference.sv|
+Z43 !s90 -sv|-sfcu|-work|dilithium_pipeline_work|tb/tb_dilithium/reference/hintunpkg_c13_reference.sv|tb/tb_dilithium/unit/tb_formatter_timing.sv|tb/tb_dilithium/unit/tb_unpack_pipeline.sv|tb/tb_dilithium/unit/tb_hint_shared.sv|tb/tb_dilithium/unit/tb_hash_sampler.sv|
+!i113 0
+R19
+R8
+viota_step
+R10
+R11
+R31
+DXx4 work 17 iota_step_sv_unit 0 22 MAcm7SbID^jIhgTA6B@9W3
+R32
+R14
+r1
+!s85 0
+!i10b 1
+!s100 3E7?D]oA?lFjama8LWNM30
+IVEYUdARc2:D7enLIS63Cn0
+!s105 iota_step_sv_unit
+S1
+R4
+R33
+Z44 8D:/GitHub/dilithium-hp-hw/src/keccak/iota_step.sv
+Z45 FD:/GitHub/dilithium-hp-hw/src/keccak/iota_step.sv
+!i122 0
+L0 19 64
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xiota_step_sv_unit
+R10
+R11
+R31
+R32
+VMAcm7SbID^jIhgTA6B@9W3
+r1
+!s85 0
+!i10b 1
+!s100 b<;zNY8]^G2nz7VJ2G[H^0
+IMAcm7SbID^jIhgTA6B@9W3
+!i103 1
+S1
+R4
+R33
+R44
+R45
+!i122 0
+L0 17 0
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vkeccak_absorb_unit
+R10
+R11
+R31
+DXx4 work 26 keccak_absorb_unit_sv_unit 0 22 8H>cU@[HDfelmmESVa2R60
+R32
+R14
+r1
+!s85 0
+!i10b 1
+!s100 6F4Hmm`IRBDCM:kNXk1Ji3
+IM=Q55L`aGmm2>7ZS:iTaP0
+!s105 keccak_absorb_unit_sv_unit
+S1
+R4
+R33
+Z46 8D:/GitHub/dilithium-hp-hw/src/keccak/keccak_absorb_unit.sv
+Z47 FD:/GitHub/dilithium-hp-hw/src/keccak/keccak_absorb_unit.sv
+!i122 0
+L0 21 123
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xkeccak_absorb_unit_sv_unit
+R10
+R11
+R31
+R32
+V8H>cU@[HDfelmmESVa2R60
+r1
+!s85 0
+!i10b 1
+!s100 _INamAPH4bN`ma7M_g3`b2
+I8H>cU@[HDfelmmESVa2R60
+!i103 1
+S1
+R4
+R33
+R46
+R47
+!i122 0
+Z48 L0 18 0
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vkeccak_core
+R10
+R11
+R31
+DXx4 work 19 keccak_core_sv_unit 0 22 B_z<BFTcKUh`g;jOfQM1T2
+R32
+R14
+r1
+!s85 0
+!i10b 1
+!s100 6GzC?;dRFgDIB8@JO[B0@0
+I<Ub@]5HHh^NKT1=JjASGM3
+!s105 keccak_core_sv_unit
+S1
+R4
+Z49 w1793682852
+Z50 8D:/GitHub/dilithium-hp-hw/src/keccak/keccak_core.sv
+Z51 FD:/GitHub/dilithium-hp-hw/src/keccak/keccak_core.sv
+!i122 0
+L0 35 648
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xkeccak_core_sv_unit
+R10
+R11
+R31
+R32
+VB_z<BFTcKUh`g;jOfQM1T2
+r1
+!s85 0
+!i10b 1
+!s100 <f3LnhC]0nUQ7[b7Y_eb:2
+IB_z<BFTcKUh`g;jOfQM1T2
+!i103 1
+S1
+R4
+R49
+R50
+R51
+!i122 0
+L0 33 0
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vkeccak_dual_interleaved
+R10
+R11
+R31
+DXx4 work 31 keccak_dual_interleaved_sv_unit 0 22 ?TibVU><;lWdQI?c@H1cL2
+R32
+R14
+r1
+!s85 0
+!i10b 1
+!s100 9kc4A7IPa1R^IUo_o?DNK3
+IR8He75hmJzO0fVV4j;d>f1
+!s105 keccak_dual_interleaved_sv_unit
+S1
+R4
+Z52 w1794518409
+Z53 8D:/GitHub/dilithium-hp-hw/src/keccak/keccak_dual_interleaved.sv
+Z54 FD:/GitHub/dilithium-hp-hw/src/keccak/keccak_dual_interleaved.sv
+!i122 0
+L0 15 241
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xkeccak_dual_interleaved_sv_unit
+R10
+R11
+R31
+R32
+V?TibVU><;lWdQI?c@H1cL2
+r1
+!s85 0
+!i10b 1
+!s100 Sn;4XnJ^Z[68U35A]RVz30
+I?TibVU><;lWdQI?c@H1cL2
+!i103 1
+S1
+R4
+R52
+R53
+R54
+!i122 0
+Z55 L0 13 0
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vkeccak_output_unit
+R10
+R11
+R31
+DXx4 work 26 keccak_output_unit_sv_unit 0 22 >m<fYFkMLAZgGJ8jG`6]m0
+R32
+R14
+r1
+!s85 0
+!i10b 1
+!s100 QZV0fnDWCJ`2>N1:m20:20
+I1Y1X9hQ?iaH?ol3VA^gJQ0
+!s105 keccak_output_unit_sv_unit
+S1
+R4
+R49
+Z56 8D:/GitHub/dilithium-hp-hw/src/keccak/keccak_output_unit.sv
+Z57 FD:/GitHub/dilithium-hp-hw/src/keccak/keccak_output_unit.sv
+!i122 0
+L0 12 96
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xkeccak_output_unit_sv_unit
+R10
+R11
+R31
+R32
+V>m<fYFkMLAZgGJ8jG`6]m0
+r1
+!s85 0
+!i10b 1
+!s100 cP=<UBz:P9VO879^`1cbM2
+I>m<fYFkMLAZgGJ8jG`6]m0
+!i103 1
+S1
+R4
+R49
+R56
+R57
+!i122 0
+L0 10 0
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vkeccak_param_unit
+R10
+R11
+R31
+DXx4 work 25 keccak_param_unit_sv_unit 0 22 @:KW@M:9C`;>k_2]5nh2j3
+R32
+R14
+r1
+!s85 0
+!i10b 1
+!s100 g4;Z?HNWg[l?Y[E9_Y46j3
+I6<Xd8e9U9R4@W]zGHJ^a:1
+!s105 keccak_param_unit_sv_unit
+S1
+R4
+R33
+Z58 8D:/GitHub/dilithium-hp-hw/src/keccak/keccak_param_unit.sv
+Z59 FD:/GitHub/dilithium-hp-hw/src/keccak/keccak_param_unit.sv
+!i122 0
+L0 20 31
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xkeccak_param_unit_sv_unit
+R10
+R11
+R31
+R32
+V@:KW@M:9C`;>k_2]5nh2j3
+r1
+!s85 0
+!i10b 1
+!s100 K?fj<8FlM=L7U`an8_E5E3
+I@:KW@M:9C`;>k_2]5nh2j3
+!i103 1
+S1
+R4
+R33
+R58
+R59
+!i122 0
+R48
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xkeccak_pkg
+R10
+R11
+R32
+!i10b 1
+!s100 Rg9`]dccoI7SATn;6_@9c2
+IXRKCQW^73QcQl_TLNV8Mm1
+S1
+R4
+R33
+8D:/GitHub/dilithium-hp-hw/src/keccak/keccak_pkg.sv
+FD:/GitHub/dilithium-hp-hw/src/keccak/keccak_pkg.sv
+!i122 0
+Z60 L0 1 0
+VXRKCQW^73QcQl_TLNV8Mm1
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vkeccak_sampler
+R10
+R11
+R12
+!i10b 1
+!s100 FjfPl7R5]@bV79oZd@@eG2
+IOel=VTnk7jh>_STF`Zk5d1
+S1
+R4
+w1794518408
+8D:/GitHub/dilithium-hp-hw/src/controller/datapath/keccak_sampler.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/datapath/keccak_sampler.sv
+!i122 0
+L0 4 288
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vkeccak_step_unit
+R10
+R11
+R31
+DXx4 work 24 keccak_step_unit_sv_unit 0 22 hhFMHCjBDiOg<g]2BS58<0
+R32
+R14
+r1
+!s85 0
+!i10b 1
+!s100 D3G[LAd1Cz`lFXNLf]WFB3
+IBaUZ;R8bdAmfP@FBf6:0F1
+!s105 keccak_step_unit_sv_unit
+S1
+R4
+R33
+Z61 8D:/GitHub/dilithium-hp-hw/src/keccak/keccak_step_unit.sv
+Z62 FD:/GitHub/dilithium-hp-hw/src/keccak/keccak_step_unit.sv
+!i122 0
+L0 14 21
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xkeccak_step_unit_sv_unit
+R10
+R11
+R31
+R32
+VhhFMHCjBDiOg<g]2BS58<0
+r1
+!s85 0
+!i10b 1
+!s100 NY7AnG4Vbe:P@b?O8hHkF1
+IhhFMHCjBDiOg<g]2BS58<0
+!i103 1
+S1
+R4
+R33
+R61
+R62
+!i122 0
+Z63 L0 12 0
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vkeygen
+R10
+R11
+R36
+R12
+!i10b 1
+!s100 4h>`0VFe6X68cT@8TB`Kj2
+Ic8`9?n_:E3bHQ>lZlZK370
+S1
+R4
+w1794518427
+8D:/GitHub/dilithium-hp-hw/src/controller/keygen.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/keygen.sv
+!i122 0
+L0 5 383
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vload_decode
+R10
+R11
+R12
+!i10b 1
+!s100 =ed`19gG7U>>:aJdS^j?_3
+IQde=NHlLDocgz^;R_d7b>0
+S1
+R4
+R38
+8D:/GitHub/dilithium-hp-hw/src/controller/datapath/load_decode.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/datapath/load_decode.sv
+!i122 0
+L0 6 121
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vmemory
+R10
+R11
+R12
+!i10b 1
+!s100 8UkIIk3Uj5>[[P1Y]Yo873
+I4CJHKNJ4f<R4_gja8WzJE1
+S1
+R4
+R13
+8D:/GitHub/dilithium-hp-hw/src/controller/memory/memory.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/memory/memory.sv
+!i122 0
+L0 4 53
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vmemory_banks
+R10
+R11
+R12
+!i10b 1
+!s100 ^c8OM:K7zQ=O<I9:IDN^83
+I]D7Yadh9B:h8<z>;m;UlU0
+S1
+R4
+w1793281848
+8D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_banks.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/memory/memory_banks.sv
+!i122 0
+L0 5 42
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vmemory_port
+R10
+R11
+R12
+!i10b 1
+!s100 5Bjn?[]QgYBGON0S4L`@Q3
+IA6XjZ_B3Pgzb8VWiW6;C33
+S1
+R4
+w1793758041
+8D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_port.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/memory/memory_port.sv
+!i122 0
+L0 5 163
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vmemory_router
+R10
+R11
+R12
+!i10b 1
+!s100 0E_5<Gj`@8E6<^fiU?fo73
+IBT>nSWN`d^G2igLzzkWWV3
+S1
+R4
+R13
+8D:/GitHub/dilithium-hp-hw/src/controller/memory/memory_router.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/memory/memory_router.sv
+!i122 0
+L0 6 130
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vmhint
+R10
+R11
+R12
+!i10b 1
+!s100 I3nGk^3`ARnR;2:dh8>6T0
+IG3WP8?d?^2HigbJUMfFHN2
+S1
+R4
+w1793171402
+8D:/GitHub/dilithium-hp-hw/src/controller/process/mhint.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/process/mhint.sv
+!i122 0
+L0 4 23
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vmod_mul
+R10
+R11
+R25
+DXx4 work 15 mod_mul_sv_unit 0 22 >M9Rc2XYST[ahVei4bL9P2
+R12
+R14
+r1
+!s85 0
+!i10b 1
+!s100 =;]Ld>PS9W1n>HOzND`JB3
+IVE<0<odckM_CS2QifRVRZ0
+!s105 mod_mul_sv_unit
+S1
+R4
+Z64 w1792467491
+Z65 8D:/GitHub/dilithium-hp-hw/src/ntt/mod_mul.sv
+Z66 FD:/GitHub/dilithium-hp-hw/src/ntt/mod_mul.sv
+!i122 0
+L0 27 111
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xmod_mul_sv_unit
+R10
+R11
+R25
+R12
+V>M9Rc2XYST[ahVei4bL9P2
+r1
+!s85 0
+!i10b 1
+!s100 TDdM77?J?d_fccUVfK^9K1
+I>M9Rc2XYST[ahVei4bL9P2
+!i103 1
+S1
+R4
+R64
+R65
+R66
+!i122 0
+L0 25 0
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vntt_core
+R10
+R11
+R25
+DXx4 work 16 ntt_core_sv_unit 0 22 GciER3Q<NCK8g4UIA?nKM0
+R12
+R14
+r1
+!s85 0
+!i10b 1
+!s100 BZ2JT<L6NV0V`MVDSVDS^1
+I41OPV?Uj9fITo>:jznd1X3
+!s105 ntt_core_sv_unit
+S1
+R4
+R13
+Z67 8D:/GitHub/dilithium-hp-hw/src/ntt/ntt_core.sv
+Z68 FD:/GitHub/dilithium-hp-hw/src/ntt/ntt_core.sv
+!i122 0
+L0 7 752
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xntt_core_sv_unit
+R10
+R11
+R25
+R12
+VGciER3Q<NCK8g4UIA?nKM0
+r1
+!s85 0
+!i10b 1
+!s100 69>`HohJP[94QKQC_Ye3Y2
+IGciER3Q<NCK8g4UIA?nKM0
+!i103 1
+S1
+R4
+R13
+R67
+R68
+!i122 0
+L0 5 0
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vntt_dma
+R10
+R11
+R25
+R12
+!i10b 1
+!s100 oHE]FTceWZ<EI_@GD@o;g2
+I4G1ddiM6Pl^?HKm0:a4g<0
+S1
+R4
+R13
+8D:/GitHub/dilithium-hp-hw/src/controller/datapath/ntt_dma.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/datapath/ntt_dma.sv
+!i122 0
+L0 5 236
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xntt_pkg
+R10
+R11
+R12
+!i10b 1
+!s100 CHTA3@Ig^6?cD6jM4=1_42
+IS8KMaz<k8kGNJYJ:L>NB92
+S1
+R4
+R64
+8D:/GitHub/dilithium-hp-hw/src/ntt/ntt_pkg.sv
+FD:/GitHub/dilithium-hp-hw/src/ntt/ntt_pkg.sv
+!i122 0
+R63
+VS8KMaz<k8kGNJYJ:L>NB92
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vpi_step
+R10
+R11
+R31
+DXx4 work 15 pi_step_sv_unit 0 22 4BnVSkN[9LA<fG`9Y:@dH2
+R32
+R14
+r1
+!s85 0
+!i10b 1
+!s100 619HGnd3f5L0E4k=W>coY3
+IEMQ;cHS3NPHPc=0<Amla<1
+!s105 pi_step_sv_unit
+S1
+R4
+R33
+Z69 8D:/GitHub/dilithium-hp-hw/src/keccak/pi_step.sv
+Z70 FD:/GitHub/dilithium-hp-hw/src/keccak/pi_step.sv
+!i122 0
+L0 20 21
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xpi_step_sv_unit
+R10
+R11
+R31
+R32
+V4BnVSkN[9LA<fG`9Y:@dH2
+r1
+!s85 0
+!i10b 1
+!s100 l]G7TeFnD:I863H5f5M1O1
+I4BnVSkN[9LA<fG`9Y:@dH2
+!i103 1
+S1
+R4
+R33
+R69
+R70
+!i122 0
+R48
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vpoly_bram
+R10
+R11
+R12
+!i10b 1
+!s100 JP9a=aZb@=V2XVB:M^8JW2
+IVkQ;aFK`K:5N>Bd7clLD91
+S1
+R4
+w1793016858
+8D:/GitHub/dilithium-hp-hw/src/controller/memory/poly_bram.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/memory/poly_bram.sv
+!i122 0
+L0 6 101
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vpoly_process
+R10
+R11
+R36
+R12
+!i10b 1
+!s100 JP@M=^TXagQQKO<HAobeb0
+INSTWRb7nOiaQnMnZX7efK0
+S1
+R4
+R37
+8D:/GitHub/dilithium-hp-hw/src/controller/process/poly_process.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/process/poly_process.sv
+!i122 0
+L0 9 165
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vpower2round
+R10
+R11
+R12
+!i10b 1
+!s100 UR:dz<64I4MkEld:EJIa@0
+I97jK?Wo3TeU[RWbPlOBiR2
+S1
+R4
+R37
+8D:/GitHub/dilithium-hp-hw/src/controller/process/power2round.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/process/power2round.sv
+!i122 0
+L0 4 13
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vprocess_dma
+R10
+R11
+R36
+R12
+!i10b 1
+!s100 R8_A75APz14CmfO>05^Sl0
+I6ZVaT>F<Tc`9>@zm@MYj]1
+S1
+R4
+w1794518580
+8D:/GitHub/dilithium-hp-hw/src/controller/datapath/process_dma.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/datapath/process_dma.sv
+!i122 0
+L0 6 336
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vrho_step
+R10
+R11
+R31
+DXx4 work 16 rho_step_sv_unit 0 22 GEmo05h?=n:`jGYlkFm6P1
+R32
+R14
+r1
+!s85 0
+!i10b 1
+!s100 lC4k>EoaJY0gAn82dzoH20
+I[oYWCIJ_[lof2G;emC]GF0
+!s105 rho_step_sv_unit
+S1
+R4
+R33
+Z71 8D:/GitHub/dilithium-hp-hw/src/keccak/rho_step.sv
+Z72 FD:/GitHub/dilithium-hp-hw/src/keccak/rho_step.sv
+!i122 0
+L0 20 40
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xrho_step_sv_unit
+R10
+R11
+R31
+R32
+VGEmo05h?=n:`jGYlkFm6P1
+r1
+!s85 0
+!i10b 1
+!s100 BB165@lI@2;^R<likASMm2
+IGEmo05h?=n:`jGYlkFm6P1
+!i103 1
+S1
+R4
+R33
+R71
+R72
+!i122 0
+R48
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vsampler
+R10
+R11
+Z73 DXx4 work 11 sampler_pkg 0 22 f7@`O@[98he=`4jzfefac1
+R12
+!i10b 1
+!s100 ;=O38lCBk>LLWMOQMmZez0
+I_<?ag]zBoVgL>Z5XEXj;@0
+S1
+R4
+w1792903195
+8D:/GitHub/dilithium-hp-hw/src/sampler/sampler.sv
+FD:/GitHub/dilithium-hp-hw/src/sampler/sampler.sv
+!i122 0
+L0 4 1040
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vsampler_ball
+R10
+R11
+R73
+R12
+!i10b 1
+!s100 ;RCLBH95RDgU`oi[Ihm>n0
+I=7h0Z7[><Hm75WK6YoIU@3
+S1
+R4
+w1792404851
+8D:/GitHub/dilithium-hp-hw/src/sampler/sampler_ball.sv
+FD:/GitHub/dilithium-hp-hw/src/sampler/sampler_ball.sv
+!i122 0
+L0 5 162
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vsampler_compact
+R10
+R11
+R12
+!i10b 1
+!s100 QDUl]SlX?@R34W[A]NhPF1
+I;e1NPT7OA1G0[1VamG9^71
+S1
+R4
+w1792165853
+8D:/GitHub/dilithium-hp-hw/src/sampler/sampler_compact.sv
+FD:/GitHub/dilithium-hp-hw/src/sampler/sampler_compact.sv
+!i122 0
+L0 3 32
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vsampler_input_prepare
+R10
+R11
+R12
+!i10b 1
+!s100 je<BOjfM5P_:Q6G_Za@Q23
+IJ;]BYgO;]Wf0gER;[_h8B0
+S1
+R4
+w1793688878
+8D:/GitHub/dilithium-hp-hw/src/sampler/sampler_input_prepare.sv
+FD:/GitHub/dilithium-hp-hw/src/sampler/sampler_input_prepare.sv
+!i122 0
+L0 4 211
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vsampler_mask_unpack
+R10
+R11
+R12
+!i10b 1
+!s100 8I>DHaA;CTMRV@f7SPl5:0
+I_Lgj6R<1ahlajIUmkjo_:3
+S1
+R4
+w1792293012
+8D:/GitHub/dilithium-hp-hw/src/sampler/sampler_mask_unpack.sv
+FD:/GitHub/dilithium-hp-hw/src/sampler/sampler_mask_unpack.sv
+!i122 0
+L0 4 62
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xsampler_pkg
+R10
+R11
+R12
+!i10b 1
+!s100 RYTYfD2=d05SWdJFIV3<K0
+If7@`O@[98he=`4jzfefac1
+S1
+R4
+w1792148482
+8D:/GitHub/dilithium-hp-hw/src/sampler/sampler_pkg.sv
+FD:/GitHub/dilithium-hp-hw/src/sampler/sampler_pkg.sv
+!i122 0
+R60
+Vf7@`O@[98he=`4jzfefac1
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vsampler_secret_lane
+R10
+R11
+R12
+!i10b 1
+!s100 U9oT4IM4DOAUC7Rj_DS7z2
+I7nf0JKZJ[0451RSm;;GiM0
+S1
+R4
+w1792165685
+8D:/GitHub/dilithium-hp-hw/src/sampler/sampler_secret_lane.sv
+FD:/GitHub/dilithium-hp-hw/src/sampler/sampler_secret_lane.sv
+!i122 0
+L0 3 27
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vsampler_writer
+R10
+R11
+R12
+!i10b 1
+!s100 T[BMFO`Z;aR^A:^ON61kN3
+I<AZne[5AAEM[gTVOKh4hW1
+S1
+R4
+w1793651821
+8D:/GitHub/dilithium-hp-hw/src/controller/datapath/sampler_writer.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/datapath/sampler_writer.sv
+!i122 0
+L0 5 175
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vsecret_regroup
+R10
+R11
+R12
+!i10b 1
+!s100 Zh[<zEfHA5i=9KkCHTmJ;3
+I=<8jHJ6oLW63F0Xm9GES93
+S1
+R4
+R13
+8D:/GitHub/dilithium-hp-hw/src/controller/process/secret_regroup.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/process/secret_regroup.sv
+!i122 0
+L0 5 58
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vsign
+R10
+R11
+R36
+R12
+!i10b 1
+!s100 99?9Sdn=CjigHzLTod^U90
+I^jZh`D1^>OS:9f]joHTn90
+S1
+R4
+w1794518496
+8D:/GitHub/dilithium-hp-hw/src/controller/sign.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/sign.sv
+!i122 0
+L0 4 554
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vsign_hash_message
+R10
+R11
+R12
+!i10b 1
+!s100 7I77g2BW4k:e3Wd7jcJBO2
+I2UiGB?n:c4Ll6nOiMcH>>2
+S1
+R4
+w1794518702
+8D:/GitHub/dilithium-hp-hw/src/controller/process/sign_hash_message.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/process/sign_hash_message.sv
+!i122 0
+L0 8 184
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vsign_hash_message_timing_reference
+R20
+R11
+R12
+!i10b 1
+!s100 la:R`ZKo;0bB0hS<lA>of2
+I=TUF=mOYKf@=cd@[z24[13
+S1
+R4
+w1793313582
+8sim/dilithium/reference_build/timing_screen/formatter_reference.sv
+Fsim/dilithium/reference_build/timing_screen/formatter_reference.sv
+!i122 1
+L0 8 154
+R14
+R15
+r1
+!s85 0
+31
+R21
+R22
+R23
+!i113 0
+R19
+R8
+vsign_input
+R10
+R11
+R12
+!i10b 1
+!s100 HL9?nJIYOWT<XfXLk>g<m2
+Ik61JIm^5WmX0n^9D;YcCF2
+S1
+R4
+R13
+8D:/GitHub/dilithium-hp-hw/src/controller/sign_input.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/sign_input.sv
+!i122 0
+L0 8 113
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vtb_formatter_timing
+R39
+R11
+R40
+!i10b 1
+!s100 0^eEA0QIn@Pm37i_RWd0^1
+Ih<5zSX_Y`<3FZNmBnchM83
+S1
+R4
+w1794518909
+8tb/tb_dilithium/unit/tb_formatter_timing.sv
+Ftb/tb_dilithium/unit/tb_formatter_timing.sv
+!i122 2
+L0 5 168
+R14
+R15
+r1
+!s85 0
+31
+R41
+R42
+R43
+!i113 0
+R19
+R8
+vtb_hash_sampler
+R39
+R11
+R40
+!i10b 1
+!s100 kYCm`4ZQc>UkhSJSfCRSR1
+IKlmLAPXFGfRm4Y1M1eI9X3
+S1
+R4
+w1794518912
+8tb/tb_dilithium/unit/tb_hash_sampler.sv
+Ftb/tb_dilithium/unit/tb_hash_sampler.sv
+!i122 2
+L0 2 177
+R14
+R15
+r1
+!s85 0
+31
+R41
+R42
+R43
+!i113 0
+R19
+R8
+vtb_hint_shared
+R39
+R11
+R40
+!i10b 1
+!s100 eemkLDSjM>m;k1J=a@o@n3
+I7bOAT1PSAETEd`ZHF]4hj2
+S1
+R4
+w1794518911
+8tb/tb_dilithium/unit/tb_hint_shared.sv
+Ftb/tb_dilithium/unit/tb_hint_shared.sv
+!i122 2
+L0 2 330
+R14
+R15
+r1
+!s85 0
+31
+R41
+R42
+R43
+!i113 0
+R19
+R8
+vtb_unpack_pipeline
+R39
+R11
+R40
+!i10b 1
+!s100 nh;MQeAjijd^^4jK?O[7k2
+IUWVT58cgI2PEHS9?g0z]a2
+S1
+R4
+w1794518910
+8tb/tb_dilithium/unit/tb_unpack_pipeline.sv
+Ftb/tb_dilithium/unit/tb_unpack_pipeline.sv
+!i122 2
+L0 2 134
+R14
+R15
+r1
+!s85 0
+31
+R41
+R42
+R43
+!i113 0
+R19
+R8
+vtheta_step
+R10
+R11
+R31
+DXx4 work 18 theta_step_sv_unit 0 22 8nVEgFN1LBPb9TPezL5e;1
+R32
+R14
+r1
+!s85 0
+!i10b 1
+!s100 [dG_dkg_noCcTPXGk:0lo2
+IHl1XO^M>L9Z;1@ezEe?@82
+!s105 theta_step_sv_unit
+S1
+R4
+Z74 w1792426285
+Z75 8D:/GitHub/dilithium-hp-hw/src/keccak/theta_step.sv
+Z76 FD:/GitHub/dilithium-hp-hw/src/keccak/theta_step.sv
+!i122 0
+L0 15 38
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xtheta_step_sv_unit
+R10
+R11
+R31
+R32
+V8nVEgFN1LBPb9TPezL5e;1
+r1
+!s85 0
+!i10b 1
+!s100 ;4kjHAZce;a9:8m_Lhgn41
+I8nVEgFN1LBPb9TPezL5e;1
+!i103 1
+S1
+R4
+R74
+R75
+R76
+!i122 0
+R55
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vtwiddle_rom
+R10
+R11
+R25
+DXx4 work 19 twiddle_rom_sv_unit 0 22 6I_Bz`Rn]OgmC2e8h4K`22
+R12
+R14
+r1
+!s85 0
+!i10b 1
+!s100 c6T0mZ@JkQcPk65<C<YcT2
+I7>cUl4aYCL4daiG?cCGIG1
+!s105 twiddle_rom_sv_unit
+S1
+R4
+R64
+Z77 8D:/GitHub/dilithium-hp-hw/src/ntt/twiddle_rom.sv
+Z78 FD:/GitHub/dilithium-hp-hw/src/ntt/twiddle_rom.sv
+!i122 0
+L0 16 82
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+Xtwiddle_rom_sv_unit
+R10
+R11
+R25
+R12
+V6I_Bz`Rn]OgmC2e8h4K`22
+r1
+!s85 0
+!i10b 1
+!s100 YOYLQUHnH[fg7ZdhaQMON3
+I6I_Bz`Rn]OgmC2e8h4K`22
+!i103 1
+S1
+R4
+R64
+R77
+R78
+!i122 0
+L0 14 0
+R15
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vverify
+R10
+R11
+R36
+R12
+!i10b 1
+!s100 =fMc0?`Dg1M]jV[ngc05M1
+IR1M9FaK_Y7C`Tk1ce2CR`0
+S1
+R4
+w1794518497
+8D:/GitHub/dilithium-hp-hw/src/controller/verify.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/verify.sv
+!i122 0
+L0 5 285
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8
+vverify_input
+R10
+R11
+R36
+R12
+!i10b 1
+!s100 mEB4BYW`Sn5:6lU^FdIMD3
+I6G6WY[`PZER7KLgG>NCVN0
+S1
+R4
+R37
+8D:/GitHub/dilithium-hp-hw/src/controller/verify_input.sv
+FD:/GitHub/dilithium-hp-hw/src/controller/verify_input.sv
+!i122 0
+L0 6 203
+R14
+R15
+r1
+!s85 0
+31
+R16
+R17
+R18
+!i113 0
+R19
+R8

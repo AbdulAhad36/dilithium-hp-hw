@@ -2,6 +2,7 @@
 module tb_keygen;
   import dilithium_pkg::*;
   parameter bit DIAGNOSTIC=0;
+  parameter bit PIPELINE_INPUT=0;
   parameter bit PROTOCOL=0;
   parameter bit CYCLE_REFERENCE=0;
   parameter bit ID_PROOF_ONLY=0;
@@ -15,7 +16,7 @@ module tb_keygen;
   logic [9:0] key_index_o;logic [15:0] key_id_o;
   logic done_valid_o,done_ready_i=0;logic [2:0] done_code_o;
   logic [15:0] done_id_o;logic fault_o,datapath_fault;
-  keygen controller(.*);
+  keygen #(.PIPELINE_INPUT(PIPELINE_INPUT)) controller(.*);
   // Optional actual pre-change controller, driven by the same real datapath
   // responses. Compare every public/control pin, including stalled cycles.
   generate if(CYCLE_REFERENCE)begin:timing_reference
@@ -59,8 +60,8 @@ module tb_keygen;
   datapath datapath(.clk(clk),.rst(rst),.service_i(service_o),.service_o(service_i),.fault_o(datapath_fault));
   int cycles=0,current=-1,completed=0,key_words=0,overlap_cycles=0,secret_overlap_cycles=0,max_ring=0,reset_phase=-1,reset_count=0,invalid_count=0;
   bit invalid_command=0;
-  int input_file,output_file,ledger_file,n,serials[75],levels[75],ids[75],phase_cycles[27];
-  logic [255:0] seeds[75];string token;
+  int text_file,input_file,output_file,ledger_file,n,serials[75],levels[75],ids[75],phase_cycles[27];
+  logic [255:0] seeds[75];string token,case_labels[75],plain_pk,plain_sk;
   logic held=0;logic [95:0] held_word;
   assign key_ready_i=!rst && cycles%13>3 &&
     !(PROTOCOL && ((reset_phase==6 && controller.state==controller.PK_BODY && key_index_o>=20) ||
@@ -100,6 +101,10 @@ module tb_keygen;
     if(key_valid_o && key_ready_i)begin
       if(key_id_o!=start_id_i || key_bytes_o!=8)$fatal(1,"Compact key identity/byte count");
       $fdisplay(output_file,"K %0d %0d %016h %0d %0d",key_type_o,key_index_o,key_data_o,key_bytes_o,key_last_o);key_words++;
+      if(!PROTOCOL)for(int lane=0;lane<int'(key_bytes_o);lane++)begin
+        if(key_type_o)plain_sk={plain_sk,$sformatf("%02h",key_data_o[8*lane+:8])};
+        else plain_pk={plain_pk,$sformatf("%02h",key_data_o[8*lane+:8])};
+      end
     end
     if(fault_o || datapath_fault)$fatal(1,"Compact KeyGen child fault case%0d state%0d producer%0d ntt%0d poly_process%0d sample%0d",
       current,controller.state,controller.producer,service_i.ntt.done_code,service_i.poly_process.done_code,service_i.sample.done_code);
@@ -107,16 +112,18 @@ module tb_keygen;
   initial begin:main_capture
     int watchdog,start_cycle,selected_case,expected_code,reset_action,limit;bit was_reset,busy_probe;
     if(ID_PROOF_ONLY)disable main_capture;
-    input_file=$fopen("sim/dilithium/stage7c_keygen_inputs.txt","r");
-    output_file=$fopen(PROTOCOL?"sim/dilithium/stage7c2_keygen_protocol_outputs.txt":DIAGNOSTIC?"sim/dilithium/stage7c2_keygen_diagnostic_outputs.txt":"sim/dilithium/stage7c2_keygen_outputs.txt","w");
-    ledger_file=$fopen(PROTOCOL?"sim/dilithium/stage7c2_keygen_protocol_cycles.csv":DIAGNOSTIC?"sim/dilithium/stage7c2_keygen_diagnostic_cycles.csv":"sim/dilithium/stage7c2_keygen_cycles.csv","w");
+    input_file=$fopen("sim/dilithium/keygen_inputs.txt","r");
+    output_file=$fopen(PROTOCOL?"sim/dilithium/keygen_protocol_outputs.txt":DIAGNOSTIC?"sim/dilithium/keygen_diagnostic_outputs.txt":"sim/dilithium/keygen_outputs.txt","w");
+    ledger_file=$fopen(PROTOCOL?"sim/dilithium/keygen_protocol_cycles.csv":DIAGNOSTIC?"sim/dilithium/keygen_diagnostic_cycles.csv":"sim/dilithium/keygen_cycles.csv","w");
     $fdisplay(ledger_file,"case,level,total,seed,secret_prepare,matrix_wait,multiply,inverse,add,round,public_key,secret_key");
     if(!input_file || !output_file || $fscanf(input_file,"%s %d",token,n)!=2 || n!=75)$fatal(1,"Prepare compact KeyGen fixtures");
-    for(int i=0;i<n;i++)if($fscanf(input_file,"%d %d %d %h",serials[i],levels[i],ids[i],seeds[i])!=4)$fatal(1,"Compact KeyGen seed records");
+    for(int i=0;i<n;i++)if($fscanf(input_file,"%d %d %d %h %s",serials[i],levels[i],ids[i],seeds[i],case_labels[i])!=5)$fatal(1,"Compact KeyGen seed records");
+    text_file=0;if(!PROTOCOL)begin text_file=$fopen("sim/dilithium/outputs_hw.txt","w");if(!text_file)$fatal(1,"Cannot open plain RTL outputs_hw.txt");end
     $fclose(input_file);limit=PROTOCOL?20:75;$fdisplay(output_file,"%s %0d",token,PROTOCOL?20:DIAGNOSTIC?3:75);
     repeat(3)@(negedge clk);rst=0;
     for(int i=0;i<limit;i++)begin
       if(DIAGNOSTIC && i!=0 && i!=25 && i!=50)continue;
+      plain_pk="";plain_sk="";
       selected_case=i;expected_code=0;reset_action=-1;busy_probe=0;
       if(PROTOCOL)begin
         selected_case=i<3?25*i:i<19?25*(((i-3)/2)%3):0;
@@ -152,6 +159,13 @@ module tb_keygen;
         done_code_o,controller.state,controller.producer,fault_o,service_i.sample.fault,datapath.polynomial.state,
         service_i.ntt.done_code,datapath.polynomial.inputs_r,datapath.polynomial.outputs_r,service_i.poly_process.done_code);
       $fdisplay(output_file,"D %0d %0d",done_code_o,cycles-start_cycle);
+      if(!PROTOCOL)begin
+        if(done_code_o!=0 || plain_pk.len()!=2*(levels[selected_case]==0?1312:levels[selected_case]==1?1952:2592) ||
+          plain_sk.len()!=2*(levels[selected_case]==0?2560:levels[selected_case]==1?4032:4896))$fatal(1,"Incomplete plain KeyGen output");
+        if(completed>0)$fdisplay(text_file,"");
+        $fdisplay(text_file,"[%s] level=%0d operation=keygen",case_labels[selected_case],levels[selected_case]==0?2:levels[selected_case]==1?3:5);
+        $fdisplay(text_file,"pk = %s",plain_pk);$fdisplay(text_file,"sk = %s",plain_sk);$fflush(text_file);
+      end
       $display("COMPACT_KEYGEN_CASE_PASS:case%0d level%0d cycles%0d",i,start_param_i,cycles-start_cycle);
       $fdisplay(ledger_file,"%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d",i,start_param_i,cycles-start_cycle,
         phase_cycles[1]+phase_cycles[2]+phase_cycles[3],phase_cycles[4]+phase_cycles[5]+phase_cycles[6],
@@ -165,7 +179,7 @@ module tb_keygen;
     end
     if(overlap_cycles==0 || max_ring>9)$fatal(1,"Compact schedule overlap/ring gate");
     if(PROTOCOL && (reset_count!=8 || invalid_count!=3 || completed!=20))$fatal(1,"Incomplete compact KeyGen protocol campaign");
-    $fdisplay(output_file,"F %0d",completed);$fclose(output_file);$fclose(ledger_file);
+    $fdisplay(output_file,"F %0d",completed);$fclose(output_file);$fclose(ledger_file);if(text_file)$fclose(text_file);
     $display("LIGHTHD_KEYGEN_CAPTURE_PASS:%0d outcomes/%0d words/overlap_cycles%0d/peak_A_ring%0d/reset%0d/invalid%0d;independent NIST comparison required",completed,key_words,overlap_cycles,max_ring,reset_count,invalid_count);
     $display("LIGHTHD_KEYGEN_SECRET_OVERLAP:cycles%0d",secret_overlap_cycles);
     $finish;

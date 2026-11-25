@@ -3,7 +3,7 @@
 // One144-bit reservoir;no full polynomial/key buffer. Four coefficients need
 // at most80 bits,so output bandwidth can apply backpressure for z packing.
 `default_nettype none
-module bitpkg (
+module bitpkg #(parameter bit PIPELINE_FORMAT=0) (
   input wire logic clk,rst,command_valid_i,
   output logic command_ready_o,
   input wire logic [2:0] command_op_i,
@@ -34,6 +34,67 @@ module bitpkg (
   logic [3:0][23:0] encoded;
   logic [79:0] group_bits;
   logic [6:0] group_width;
+  logic reservoir_ready,input_accept;
+  logic [79:0] accepted_bits;
+  logic accepted_bad,accepted_last;
+  (* ramstyle="logic" *) logic [79:0] format_bits_r[2];
+  logic [1:0] format_bad_r,format_frame_r,format_last_r;
+  logic format_read_r,format_write_r;
+  logic [1:0] format_count_r;
+  logic [6:0] admitted_r;
+  logic input_closed_r,input_bad_frame;
+  // One formatting boundary with two entries:166 payload/control bits plus
+  // pointers/count/admission/closed state=178bits. Registered occupancy cuts
+  // reservoir/output-ready feedback. Default0 retains standalone timing.
+  generate if(PIPELINE_FORMAT)begin:g_format_stage
+    assign input_ready_o=!rst && state==FEED && !input_closed_r && format_count_r<2;
+    assign input_accept=input_valid_i && input_ready_o;
+    assign push=(format_count_r!=0) && reservoir_ready;
+    assign accepted_bits=format_bits_r[format_read_r];
+    assign accepted_bad=format_bad_r[format_read_r];
+    assign accepted_last=format_last_r[format_read_r];
+    assign bad_frame=format_frame_r[format_read_r];
+    assign input_bad_frame=admitted_r>63 || input_index_i!=admitted_r[5:0] || input_last_i!=(admitted_r==63);
+    always_ff @(posedge clk or posedge rst)begin
+      if(rst)begin
+        format_count_r<=0;format_read_r<=0;format_write_r<=0;
+        admitted_r<=0;input_closed_r<=0;
+      end else if(state!=FEED)begin
+        format_count_r<=0;format_read_r<=0;format_write_r<=0;
+        admitted_r<=0;input_closed_r<=0;
+      end else begin
+        case({input_accept,push})
+          2'b10:format_count_r<=format_count_r+1'b1;
+          2'b01:format_count_r<=format_count_r-1'b1;
+          default:begin end
+        endcase
+        if(input_accept)begin
+          format_write_r<=!format_write_r;admitted_r<=admitted_r+1'b1;
+          if(input_last_i || bad_value || input_bad_frame)input_closed_r<=1;
+        end
+        if(push)format_read_r<=!format_read_r;
+        if(push && (accepted_bad || bad_frame))begin
+          format_count_r<=0;input_closed_r<=1;
+        end
+      end
+    end
+    always_ff @(posedge clk)if(input_accept)begin
+      format_bits_r[format_write_r]<=group_bits;
+      format_bad_r[format_write_r]<=bad_value;
+      format_frame_r[format_write_r]<=input_bad_frame;
+      format_last_r[format_write_r]<=input_last_i;
+    end
+    // synthesis translate_off
+    always @(posedge clk)if(!rst && format_count_r>2)$fatal(1,"Packer formatting queue overflow");
+    // synthesis translate_on
+  end else begin:g_direct_format
+    assign input_ready_o=reservoir_ready;
+    assign input_accept=input_valid_i && input_ready_o;
+    assign push=input_accept;
+    assign accepted_bits=group_bits;assign accepted_bad=bad_value;
+    assign accepted_last=input_last_i;
+    assign bad_frame=group_r>63 || input_index_i!=group_r[5:0] || input_last_i!=(group_r==63);
+  end endgenerate
   // Valid centered coefficients lie near zero or q;bit22 selects the
   // negative interval. One shared20-bit subtraction supplies all low-field
   // encodings. Invalid operands still take the unchanged rejection path.
@@ -61,29 +122,40 @@ module bitpkg (
   // count-64+group_width<=144 is count+group_width<=208. Without a beat,
   // count<64 and every supported group is <=80 bits,so both tests pass.
   // Keep the capacity arithmetic independent of downstream output_ready.
-  assign input_ready_o=!rst && state==FEED && !ended_r && (!output_valid_o || output_ready_i) &&
+  assign reservoir_ready=!rst && state==FEED && !ended_r && (!output_valid_o || output_ready_i) &&
     ({1'b0,count_r}+{2'b0,group_width})<=9'd208;
-  assign push=input_valid_i && input_ready_o;
   always_comb begin
-    bad_value=0;encoded=0;
+    logic [3:0] outside_q,outside_t1,outside_t0,outside_eta2,outside_eta4;
+    logic [3:0] outside_w1_6,outside_w1_4,outside_z18,outside_z20;
+    logic outside_format;
+    encoded=0;
     for(int i=0;i<4;i++)begin
-      bad_value|=input_data_i[i]>=23'd8380417;
+      outside_q[i]=input_data_i[i]>=23'd8380417;
+      outside_t1[i]=input_data_i[i]>1023;
+      outside_t0[i]=input_data_i[i]>4096 && input_data_i[i]<23'd8376322;
+      outside_eta2[i]=input_data_i[i]>2 && input_data_i[i]<23'd8380415;
+      outside_eta4[i]=input_data_i[i]>4 && input_data_i[i]<23'd8380413;
+      outside_w1_6[i]=input_data_i[i]>43;
+      outside_w1_4[i]=input_data_i[i]>15;
+      outside_z18[i]=input_data_i[i]>131072 && input_data_i[i]<23'd8249346;
+      outside_z20[i]=input_data_i[i]>524288 && input_data_i[i]<23'd7856130;
       case(op_r)
-        0:begin encoded[i]={1'b0,input_data_i[i]};bad_value|=input_data_i[i]>1023;end
-        1,2,4:begin
-          if(op_r==1)bad_value|=input_data_i[i]>4096 && input_data_i[i]<23'd8376322;
-          else if(op_r==2)bad_value|=eta_r==4?
-            (input_data_i[i]>4 && input_data_i[i]<23'd8380413):
-            (input_data_i[i]>2 && input_data_i[i]<23'd8380415);
-          else bad_value|=width_r==18?
-            (input_data_i[i]>131072 && input_data_i[i]<23'd8249346):
-            (input_data_i[i]>524288 && input_data_i[i]<23'd7856130);
-          encoded[i]=24'(encode_centered(input_data_i[i],op_r,width_r,eta_r));
-        end
-        3:begin encoded[i]={1'b0,input_data_i[i]};bad_value|=input_data_i[i]>(width_r==6?43:15);end
-        default:bad_value=1;
+        0,3:encoded[i]={1'b0,input_data_i[i]};
+        1,2,4:encoded[i]=24'(encode_centered(input_data_i[i],op_r,width_r,eta_r));
+        default:begin end
       endcase
     end
+    // Reduce each format's four independent comparisons before selecting
+    // the active format. Avoid a shared error accumulator across lanes.
+    case(op_r)
+      0:outside_format=|outside_t1;
+      1:outside_format=|outside_t0;
+      2:outside_format=eta_r==4?(|outside_eta4):(|outside_eta2);
+      3:outside_format=width_r==6?(|outside_w1_6):(|outside_w1_4);
+      4:outside_format=width_r==18?(|outside_z18):(|outside_z20);
+      default:outside_format=1;
+    endcase
+    bad_value=(|outside_q) || outside_format;
     // Fixed slices select encodings;no lane-index times variable-width mux.
     case(op_r)
       0:group_bits=80'({encoded[3][9:0],encoded[2][9:0],encoded[1][9:0],encoded[0][9:0]});
@@ -96,10 +168,9 @@ module bitpkg (
         {encoded[3][19:0],encoded[2][19:0],encoded[1][19:0],encoded[0][19:0]};
       default:group_bits=0;
     endcase
-    bad_frame=group_r>63 || input_index_i!=group_r[5:0] || input_last_i!=(group_r==63);
     bits_next=pop?(bits_r>>64):bits_r;count_next=count_after_pop;
-    if(push && !bad_value && !bad_frame)begin
-      bits_next=bits_next | (144'(group_bits)<<count_after_pop);
+    if(push && !accepted_bad && !bad_frame)begin
+      bits_next=bits_next | (144'(accepted_bits)<<count_after_pop);
       count_next=count_after_pop+{1'b0,group_width};
     end
   end
@@ -122,9 +193,9 @@ module bitpkg (
         if(pop || push)begin bits_r<=bits_next;count_r<=count_next;end
         if(pop)begin output_index_o<=output_index_o+1'b1;if(output_last_o)state<=REPORT;end
         if(push)begin
-          if(bad_value || bad_frame)begin
+          if(accepted_bad || bad_frame)begin
             done_code_o<=bad_frame?3'd3:3'd2;bits_r<=0;count_r<=0;state<=REPORT;
-          end else begin group_r<=group_r+1'b1;if(input_last_i)ended_r<=1;end
+          end else begin group_r<=group_r+1'b1;if(accepted_last)ended_r<=1;end
         end
       end
       REPORT:if(done_ready_i)state<=IDLE;

@@ -1,0 +1,10 @@
+BEGIN 1:keccak_dual_interleaved:fast:dilithium_pipeline_work
+    input_ready_o :  1:tb_hash_sampler:fast:dilithium_pipeline_work
+END 
+BEGIN 1:keccak_sampler:fast:dilithium_pipeline_work
+    ingress_left_r :  1:tb_hash_sampler:fast:dilithium_pipeline_work
+    ingress_count_r :  1:tb_hash_sampler:fast:dilithium_pipeline_work
+END 
+BEGIN 1:memory_router:fast:dilithium_pipeline_work
+    owner_r :  1:bank_fabric:fast:dilithium_pipeline_work
+END 

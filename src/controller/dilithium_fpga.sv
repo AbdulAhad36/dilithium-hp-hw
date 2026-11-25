@@ -21,6 +21,7 @@ module dilithium_fpga (
   input wire logic [255:0] start_seed_i,
   input wire logic [15:0] start_message_len_i,
   input wire logic [8:0] start_context_len_i,
+  input tri0 start_internal_message_i, // 0:message+context; 1:already formatted message
   input wire logic [255:0] start_rnd_i,
   input wire logic  sign_input_valid_i,
   output logic  sign_input_ready_o,

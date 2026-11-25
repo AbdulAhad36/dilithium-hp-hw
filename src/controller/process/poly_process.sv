@@ -32,6 +32,8 @@ module poly_process (
   logic [3:0] valid_r;
   logic advance,norm_error,hint_error;
   logic [3:0] norm_reject,hints;
+  logic [3:0] invalid_a,invalid_b,invalid_hint_high,invalid_hint_bit;
+  logic operation_error;
   logic [2:0] hint_count;
   logic [3:0][5:0] hint_high;
   logic [3:0][9:0] rounded_high;
@@ -60,6 +62,10 @@ module poly_process (
     power2round p2r(.coefficient_i(input_a_i[lane]),.high_o(rounded_high[lane]),
       .low_o(rounded_low[lane]),.packed_t0_o(rounded_packed[lane]));
     assign hint_high[lane]=input_b_i[lane][5:0];
+    assign invalid_a[lane]=input_a_i[lane]>=Q;
+    assign invalid_b[lane]=input_b_i[lane]>=Q;
+    assign invalid_hint_high[lane]=|input_b_i[lane][22:6];
+    assign invalid_hint_bit[lane]=|input_b_i[lane][22:1];
   end endgenerate
   cnb norm(.param_i(input_param_i),.kind_i(input_kind_i),.data_i(input_a_i),
     .reject_o(norm_reject),.error_o(norm_error));
@@ -74,16 +80,23 @@ module poly_process (
   assign output_hint_o=value_r[3].hint;assign output_weight_o=value_r[3].weight;
   always_comb begin
     computed='0;computed.op=input_op_i;computed.tag=input_tag_i;
-    computed.error=input_param_i==3;
+    // Check each error class in parallel. Operation decode qualifies a
+    // reduced flag, without feeding an error accumulator through the lanes.
+    case(input_op_i)
+      PROC_ADD,PROC_SUB:operation_error=|invalid_b;
+      PROC_CNB:operation_error=norm_error;
+      PROC_MHINT:operation_error=hint_error || (|invalid_hint_high);
+      PROC_USEHINT:operation_error=|invalid_hint_bit;
+      default:operation_error=0;
+    endcase
+    computed.error=(input_param_i==3) || (|invalid_a) || operation_error;
     for(int i=0;i<4;i++)begin
       logic [23:0] sum,biased;logic subtract;
-      computed.error|=input_a_i[i]>=Q;
       subtract=input_op_i==PROC_SUB;
       biased={1'b0,input_a_i[i]}+24'd127;
       sum={1'b0,input_a_i[i]}+({1'b0,input_b_i[i]}^{24{subtract}})+24'(subtract);
       case(input_op_i)
         PROC_ADD,PROC_SUB:begin
-          computed.error|=input_b_i[i]>=Q;
           computed.data[i]=sum[22:0];computed.high[i][0]=sum[23];
         end
         PROC_P2R:begin
@@ -91,16 +104,15 @@ module poly_process (
           computed.data[i]=input_a_i[i][12:0]>13'd4096 ?
             {9'h1ff,({1'b0,input_a_i[i][12:0]}+14'd1)}:{10'd0,input_a_i[i][12:0]};
         end
-        PROC_CNB:begin computed.error|=norm_error;computed.reject=norm_reject;end
+        PROC_CNB:computed.reject=norm_reject;
         PROC_MHINT:begin
-          computed.error|=hint_error || input_b_i[i][22:6]!=0;
           computed.hint=hints;computed.weight=hint_count;computed.data[i]=23'(hints[i]);
         end
         PROC_DECOMPOSE,PROC_USEHINT:begin
           computed.data[i]={biased[22:7],input_a_i[i][6:0]};
           computed.weight={1'b0,input_param_i};
           if(input_op_i==PROC_USEHINT)begin
-            computed.error|=input_b_i[i]>1;computed.hint[i]=input_b_i[i]==1;
+            computed.hint[i]=input_b_i[i]==1;
           end
         end
         PROC_PACK:computed.data[i]=input_a_i[i];

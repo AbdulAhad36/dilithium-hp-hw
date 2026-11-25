@@ -60,3 +60,26 @@
 /stage2_jobs.csv
 /modelsim.ini
 /transcript
+
+# Regenerated fixtures for retired Stage2-5 flows.
+/stage[2345]*.txt
+/stage[2345]*.csv
+
+# Checked-result exports for selectable full UVM tests (including random stalls).
+/stage7_uvm*_checked.csv
+/stage7_uvm*_latency.csv
+
+/outputs_hw.txt
+
+# Active generated artifacts use descriptive names; frozen evidence stays separate.
+/work_main_*/
+/main*_inputs.txt
+/main*_outputs.txt
+/keygen*_inputs.txt
+/keygen*_outputs.txt
+/sign*_inputs.txt
+/sign*_outputs.txt
+/verify*_inputs.txt
+/verify*_outputs.txt
+/uvm*_checked.csv
+/uvm*_latency.csv

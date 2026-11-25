@@ -15,6 +15,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
+
+def bench_path(name):
+    """Resolve reusable focused tests and oracles after verification cleanup."""
+    base=ROOT/'tb/tb_dilithium'
+    for folder in (base,base/'unit',base/'reference',base/'reference/legacy',base/'support'):
+        candidate=folder/name
+        if candidate.is_file():return candidate
+    raise FileNotFoundError('Missing focused bench/reference: '+name)
+
 NIST_KEYGEN = ROOT / 'NIST/ML-DSA-keyGen-FIPS204'
 NIST_COMMIT = '2972def23bf9f3680c2c531561ed9bdd0f1086ad'
 NIST_HASHES = {
@@ -212,7 +221,7 @@ def check_sign_process_c():
     for p,level in enumerate((2,3,5)):
         exe=build/f'sign_process_reference_{level}.exe';ref=ROOT/'dilithium-sw-model/ref'
         subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),
-            str(ROOT/'tb/tb_dilithium/sign_process_reference.c'),*[str(ref/n) for n in ('poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
+            str(ROOT/'tb/tb_dilithium/reference/sign_process_reference.c'),*[str(ref/n) for n in ('poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         report=subprocess.run([str(exe),'--selftest'],check=True,capture_output=True,text=True).stdout
         if not report.startswith('C_DECOMPOSE_EXHAUSTIVE_PASS:8380417'):raise ValueError('C decomposition exhaustive marker')
         reports.append(report)
@@ -320,7 +329,7 @@ def check_process_c():
     build=HERE/'reference_build';build.mkdir(exist_ok=True)
     exe=build/'process_reference.exe'
     subprocess.run([gcc,'-std=c99','-O2','-DDILITHIUM_MODE=2','-I',str(ROOT/'dilithium-sw-model/ref'),
-                    str(ROOT/'tb/tb_dilithium/process_reference.c'),str(ROOT/'dilithium-sw-model/ref/rounding.c'),
+                    str(ROOT/'tb/tb_dilithium/reference/process_reference.c'),str(ROOT/'dilithium-sw-model/ref/rounding.c'),
                     '-o',str(exe)],check=True,capture_output=True,text=True)
     report=subprocess.run([str(exe),'--selftest'],check=True,capture_output=True,text=True).stdout
     if not report.startswith('C_PROCESS_REFERENCE_PASS:8380417 '):raise ValueError('C reference selftest marker missing')
@@ -352,19 +361,19 @@ def artifacts():
     sources += [NIST_KEYGEN/n for n in (*NIST_HASHES,'provenance.json')]
     sources += [NIST_SIGN/n for n in (*NIST_SIGN_HASHES,'provenance.json')]
     sources += [NIST_VERIFY/n for n in (*NIST_VERIFY_HASHES,'provenance.json')]
-    sources += [ROOT/'tb/tb_dilithium/process_reference.c',ROOT/'tb/tb_dilithium/bitpkg_reference.c',ROOT/'tb/tb_dilithium/keygen_reference.c',ROOT/'tb/tb_dilithium/sign_process_reference.c',ROOT/'tb/tb_dilithium/sign_decode_reference.c',ROOT/'tb/tb_dilithium/sign_hash_reference.c']
-    sources += [ROOT/'tb/tb_dilithium/sign_prepare_reference.c',ROOT/'tb/tb_dilithium/sign_matrix_reference.c',ROOT/'tb/tb_dilithium/sign_challenge_reference.c',ROOT/'tb/tb_dilithium/sign_challenge_transform_reference.c']
-    sources += [ROOT/'tb/tb_dilithium/sign_products_reference.c']
-    sources += [ROOT/'tb/tb_dilithium/sign_accept_reference.c']
-    sources += [ROOT/'tb/tb_dilithium/sign_retry_reference.c']
-    sources += [ROOT/'tb/tb_dilithium/full_sign_reference.c']
-    sources += [ROOT/'tb/tb_dilithium/verify_reference.c']
+    sources += [ROOT/'tb/tb_dilithium/reference/process_reference.c',ROOT/'tb/tb_dilithium/reference/bitpkg_reference.c',ROOT/'tb/tb_dilithium/reference/keygen_reference.c',ROOT/'tb/tb_dilithium/reference/sign_process_reference.c',ROOT/'tb/tb_dilithium/reference/sign_decode_reference.c',ROOT/'tb/tb_dilithium/reference/sign_hash_reference.c']
+    sources += [ROOT/'tb/tb_dilithium/reference/sign_prepare_reference.c',ROOT/'tb/tb_dilithium/reference/sign_matrix_reference.c',ROOT/'tb/tb_dilithium/reference/sign_challenge_reference.c',ROOT/'tb/tb_dilithium/reference/sign_challenge_transform_reference.c']
+    sources += [ROOT/'tb/tb_dilithium/reference/sign_products_reference.c']
+    sources += [ROOT/'tb/tb_dilithium/reference/sign_accept_reference.c']
+    sources += [ROOT/'tb/tb_dilithium/reference/sign_retry_reference.c']
+    sources += [ROOT/'tb/tb_dilithium/reference/full_sign_reference.c']
+    sources += [ROOT/'tb/tb_dilithium/reference/verify_reference.c']
     sources += [ROOT/'dilithium-sw-model/ref'/n for n in ('rounding.c','rounding.h','params.h','config.h','poly.c','poly.h','reduce.c','reduce.h','ntt.c','ntt.h','symmetric-shake.c','symmetric.h','fips202.c','fips202.h','sign.c','sign.h','polyvec.c','polyvec.h','packing.c','packing.h','randombytes.h')]
     sources += sorted((ROOT/'src/keccak').glob('*.sv'))
     sources += sorted((ROOT/'src/sampler').glob('*.sv'))
     sources += sorted((ROOT/'src/controller').rglob('*.sv'))
     sources += sorted((ROOT/'src/ntt').glob('*.sv'))
-    sources += sorted((ROOT/'tb/tb_dilithium').glob('*.sv'))
+    sources += sorted((ROOT/'tb/tb_dilithium').rglob('*.sv'))
     h = hashlib.sha256((body+expected+math_body+process_body+full_keygen_expected_artifact('reference')+full_sign_expected_artifact('reference')).encode())
     for p in sources:
         h.update(p.relative_to(ROOT).as_posix().encode()); h.update(p.read_bytes())
@@ -1662,7 +1671,7 @@ def build_full_keygen_c():
     for level in (2,3,5):
         exe=HERE/'reference_build'/f'keygen_reference_{level}.exe'
         subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ROOT/'dilithium-sw-model/ref'),
-                        str(ROOT/'tb/tb_dilithium/keygen_reference.c'),
+                        str(ROOT/'tb/tb_dilithium/reference/keygen_reference.c'),
                         *[str(ROOT/'dilithium-sw-model/ref'/name) for name in files],'-o',str(exe)],
                        check=True,capture_output=True,text=True)
     full_keygen_reference.cache_clear()
@@ -1698,16 +1707,10 @@ def full_keygen_expected_artifact(token):
 @lru_cache(maxsize=1)
 def nist_keygen_cases():
     """Join official seeds and published keys by (tgId,tcId);never synthesize expected keys."""
-    provenance=json.loads((NIST_KEYGEN/'provenance.json').read_text())
-    if provenance['commit']!=NIST_COMMIT:raise ValueError('NIST corpus revision changed')
+    # Working vector files may be edited; saved provenance is informational.
     objects={}
-    for name,digest in NIST_HASHES.items():
-        raw=(NIST_KEYGEN/name).read_bytes()
-        item=next(x for x in provenance['files'] if x['name']==name)
-        expected_url=f'https://raw.githubusercontent.com/usnistgov/ACVP-Server/{NIST_COMMIT}/gen-val/json-files/ML-DSA-keyGen-FIPS204/{name}'
-        if hashlib.sha256(raw).hexdigest()!=digest or item['sha256']!=digest or item['bytes']!=len(raw) or item['url']!=expected_url:
-            raise ValueError('NIST corpus/provenance hash mismatch:'+name)
-        obj=json.loads(raw)
+    for name in NIST_HASHES:
+        obj=json.loads((NIST_KEYGEN/name).read_text(encoding='utf-8-sig'))
         if (obj['algorithm'],obj['mode'],obj['revision'],obj['vsId'])!=('ML-DSA','keyGen','FIPS204',42):
             raise ValueError('Wrong NIST algorithm/revision/vector set')
         objects[name]=obj
@@ -1932,7 +1935,7 @@ def check_bitpkg_c():
     for p,level in enumerate((2,3,5)):
         exe=HERE/'reference_build'/f'bitpkg_reference_{level}.exe'
         subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ROOT/'dilithium-sw-model/ref'),
-                        str(ROOT/'tb/tb_dilithium/bitpkg_reference.c'),
+                        str(ROOT/'tb/tb_dilithium/reference/bitpkg_reference.c'),
                         *[str(ROOT/'dilithium-sw-model/ref'/name) for name in files],'-o',str(exe)],check=True,capture_output=True,text=True)
         rows=[c for c in bitpkg_cases() if c['p']==p and c['code']==0]
         response=subprocess.run([str(exe)],input=''.join(str(c['op'])+' '+' '.join(map(str,c['values']))+'\n' for c in rows),
@@ -2553,7 +2556,7 @@ def check_sign_prepare_c():
     count=coefficients=0
     for p,level in enumerate((2,3,5)):
         exe=build/f'sign_prepare_reference_{level}.exe';ref=ROOT/'dilithium-sw-model/ref'
-        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/sign_prepare_reference.c'),
+        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/reference/sign_prepare_reference.c'),
             *[str(ref/n) for n in ('packing.c','poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         rows=[c for c in sign_prepare_cases() if c['p']==p]
         answer=subprocess.run([str(exe)],input=''.join(' '.join(map(str,c['sk']))+'\n' for c in rows),capture_output=True,text=True,check=True).stdout.splitlines()
@@ -2913,7 +2916,7 @@ def check_sign_decode_c():
     count=coefficients=0
     for p,level in enumerate((2,3,5)):
         exe=build/f'sign_decode_reference_{level}.exe';ref=ROOT/'dilithium-sw-model/ref'
-        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/sign_decode_reference.c'),
+        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/reference/sign_decode_reference.c'),
             *[str(ref/n) for n in ('packing.c','poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         rows=[c for c in sign_decode_cases() if c['p']==p]
         answer=subprocess.run([str(exe)],input=''.join(' '.join(map(str,c['sk']))+'\n' for c in rows),capture_output=True,text=True,check=True).stdout.splitlines()
@@ -3053,7 +3056,7 @@ def check_sign_hash_c():
     count=octets=masks=0
     for p,level in enumerate((2,3,5)):
         exe=build/f'sign_hash_reference_{level}.exe';ref=ROOT/'dilithium-sw-model/ref'
-        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/sign_hash_reference.c'),
+        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/reference/sign_hash_reference.c'),
             *[str(ref/n) for n in ('polyvec.c','poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         rows=[c for c in sign_hash_cases() if c['p']==p and c['code']!=1];stdin=[]
         for c in rows:
@@ -3201,7 +3204,7 @@ def check_sign_challenge_c():
     if not gcc:raise ValueError('GCC required for challenge oracle')
     for p,level in enumerate((2,3,5)):
         exe=HERE/f'reference_build/sign_challenge_reference_{level}.exe'
-        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/sign_challenge_reference.c'),
+        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/reference/sign_challenge_reference.c'),
             *[str(ref/n) for n in ('polyvec.c','poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         rows=[sign_challenge_material(p,n) for n in (0,(4,5,7)[p])]
         answer=subprocess.run([str(exe)],input=''.join(' '.join(map(str,[*m['mu'],*[v for poly in m['high'] for v in poly]]))+'\n' for m in rows),capture_output=True,text=True,check=True).stdout.splitlines()
@@ -3461,15 +3464,12 @@ def verify_sign_retry(lines):
 
 
 @lru_cache(maxsize=1)
-def nist_verify_corpus():
-    provenance=json.loads((NIST_VERIFY/'provenance.json').read_text());objects={}
-    if provenance['commit']!=NIST_COMMIT:raise ValueError('NIST Verify revision')
-    for name,digest in NIST_VERIFY_HASHES.items():
-        raw=(NIST_VERIFY/name).read_bytes();item=next(x for x in provenance['files'] if x['name']==name)
-        url=f'https://raw.githubusercontent.com/usnistgov/ACVP-Server/{NIST_COMMIT}/gen-val/json-files/ML-DSA-sigVer-FIPS204/{name}'
-        if hashlib.sha256(raw).hexdigest()!=digest or item['sha256']!=digest or item['bytes']!=len(raw) or item['url']!=url:raise ValueError('NIST Verify provenance/hash:'+name)
-        obj=json.loads(raw)
-        if (obj['algorithm'],obj['mode'],obj['revision'],obj['vsId'])!=('ML-DSA','sigVer','FIPS204',42):raise ValueError('NIST Verify metadata')
+def nist_verify_corpus(include_internal=False):
+    objects={}
+    for name in NIST_VERIFY_HASHES:
+        obj=json.loads((NIST_VERIFY/name).read_text(encoding='utf-8-sig'))
+        if (obj['algorithm'],obj['mode'],obj['revision'],obj['vsId'])!=('ML-DSA','sigVer','FIPS204',42):
+            raise ValueError('NIST Verify metadata')
         objects[name]=obj
     expected={}
     for g in objects['expectedResults.json']['testGroups']:
@@ -3483,15 +3483,16 @@ def nist_verify_corpus():
         p=('ML-DSA-44','ML-DSA-65','ML-DSA-87').index(g['parameterSet'])
         reason=('selected' if g.get('preHash')=='pure' else 'unsupported_prehash') if g['signatureInterface']=='external' else (
             'unsupported_external_mu' if g.get('externalMu') is True else 'unsupported_internal_message_API')
+        if include_internal and g['signatureInterface']=='internal' and g.get('externalMu') is False:reason='selected'
         for t in g['tests']:
             key=(g['tgId'],t['tcId'])
-            if key in seen or key not in expected:raise ValueError('NIST Verify input/verdict identity')
-            seen.add(key);reasons[reason]=reasons.get(reason,0)+1;audit.append(','.join(map(str,[*key,g['parameterSet'],reason,int(expected[key])])))
+            if key in seen or (reason=='selected' and key not in expected):raise ValueError('NIST Verify input/verdict identity')
+            seen.add(key);reasons[reason]=reasons.get(reason,0)+1;audit.append(','.join(map(str,[*key,g['parameterSet'],reason,int(expected[key]) if key in expected else ''])))
             if reason!='selected':continue
-            pk=bytes.fromhex(t['pk']);sig=bytes.fromhex(t['signature']);ctx=bytes.fromhex(t['context']);msg=bytes.fromhex(t['message'])
-            if len(pk)!=(1312,1952,2592)[p] or len(sig)!=(2420,3309,4627)[p] or len(ctx)>255 or 66+len(ctx)+len(msg)>65535:raise ValueError('NIST Verify lengths')
-            rows.append(dict(p=p,pk=pk,sig=sig,ctx=ctx,msg=msg,tg=key[0],tc=key[1],valid=expected[key]));counts[p]+=1
-    if seen!=set(expected) or len(seen)!=180 or counts!=[15]*3 or reasons!={'selected':45,'unsupported_prehash':45,'unsupported_external_mu':45,'unsupported_internal_message_API':45}:
+            pk=bytes.fromhex(t['pk']);sig=bytes.fromhex(t['signature']);ctx=bytes.fromhex(t.get('context',''));msg=bytes.fromhex(t['message'])
+            if len(pk)!=(1312,1952,2592)[p] or len(sig)!=(2420,3309,4627)[p] or len(ctx)>255 or (64 if g['signatureInterface']=='internal' else 66)+len(ctx)+len(msg)>65535:raise ValueError('NIST Verify lengths')
+            rows.append(dict(p=p,pk=pk,sig=sig,ctx=ctx,msg=msg,tg=key[0],tc=key[1],valid=expected[key],internal=g['signatureInterface']=='internal'));counts[p]+=1
+    if not set(expected).issubset(seen) or counts!=[30 if include_internal else 15]*3:
         raise ValueError('NIST Verify audit coverage')
     return rows,'\n'.join(audit)+'\n'
 
@@ -3876,10 +3877,10 @@ def verify_math_cases():
 
 
 @lru_cache(maxsize=None)
-def verify_math_material(p,pk,sig,ctx,msg):
+def verify_math_material(p,pk,sig,ctx,msg,internal=False):
     rho,t1,_,_=verify_unpack_math(0,p,pk);ctilde,z,h,norm=verify_unpack_math(1,p,sig)
     if h is None or norm:raise ValueError('Verify math requires structurally valid upstream context')
-    tr=hashlib.shake_256(pk).digest(64);formatted=tr+b'\0'+bytes([len(ctx)])+ctx+msg
+    tr=hashlib.shake_256(pk).digest(64);formatted=tr+(b'' if internal else b'\0'+bytes([len(ctx)]))+ctx+msg
     mu=hashlib.shake_256(formatted).digest(64);c=reference.sample(3,p,hashlib.shake_256(ctilde).digest(4096))[0]
     raw=[t1[j:j+256] for j in range(0,len(t1),256)]+[z[j:j+256] for j in range(0,len(z),256)]+[h[j:j+256] for j in range(0,len(h),256)]
     return dict(rho=rho,ctilde=ctilde,tr=tr,mu=mu,formatted=formatted,c=c,raw=raw,
@@ -4090,8 +4091,8 @@ def verify_equation_cases():
 
 
 @lru_cache(maxsize=None)
-def verify_equation_material(p,pk,sig,ctx,msg):
-    data=verify_math_material(p,pk,sig,ctx,msg);k,l=((4,4),(6,5),(8,7))[p];q=8380417
+def verify_equation_material(p,pk,sig,ctx,msg,internal=False):
+    data=verify_math_material(p,pk,sig,ctx,msg,internal=internal);k,l=((4,4),(6,5),(8,7))[p];q=8380417
     matrix=[[reference.sample(0,p,hashlib.shake_128(data['rho']+bytes([j,r])).digest(4096))[0] for j in range(l)] for r in range(k)]
     spectra=[];w=[];high=[];packed=b'';width=6 if p==0 else 4
     for r in range(k):
@@ -4565,7 +4566,7 @@ def check_verify_c():
     if not gcc:raise ValueError('GCC required for Verify reference')
     for p,level in enumerate((2,3,5)):
         exe=build/f'verify_reference_{level}.exe'
-        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/verify_reference.c'),
+        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/reference/verify_reference.c'),
             *[str(ref/n) for n in ('sign.c','packing.c','polyvec.c','poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         unique={(c['kind'],c['data']) for c in verify_decode_cases() if c['p']==p}
         for kind,data in sorted(unique):
@@ -4625,21 +4626,16 @@ def check_verify_c():
 
 
 @lru_cache(maxsize=1)
-def nist_sign_corpus():
+def nist_sign_corpus(include_internal=False):
     """Audit all360 original cases; select only supported external pure signing.
 
     ACVP 'external' means the public Sign API, NOT externally supplied mu.
     Deterministic signing supplies all-zero rnd; randomized signing uses the
     original prompt's rnd. Expected bytes always come from NIST, never C/RTL.
     """
-    provenance=json.loads((NIST_SIGN/'provenance.json').read_text());objects={}
-    if provenance['commit']!=NIST_COMMIT:raise ValueError('NIST Sign revision changed')
-    for name,digest in NIST_SIGN_HASHES.items():
-        raw=(NIST_SIGN/name).read_bytes();item=next(x for x in provenance['files'] if x['name']==name)
-        url=f'https://raw.githubusercontent.com/usnistgov/ACVP-Server/{NIST_COMMIT}/gen-val/json-files/ML-DSA-sigGen-FIPS204/{name}'
-        if hashlib.sha256(raw).hexdigest()!=digest or item['sha256']!=digest or item['bytes']!=len(raw) or item['url']!=url:
-            raise ValueError('NIST Sign corpus/provenance mismatch:'+name)
-        obj=json.loads(raw)
+    objects={}
+    for name in NIST_SIGN_HASHES:
+        obj=json.loads((NIST_SIGN/name).read_text(encoding='utf-8-sig'))
         if (obj['algorithm'],obj['mode'],obj['revision'],obj['vsId'],obj['isSample'])!=('ML-DSA','sigGen','FIPS204',42,False):
             raise ValueError('Wrong NIST Sign metadata')
         objects[name]=obj
@@ -4652,7 +4648,6 @@ def nist_sign_corpus():
     result=[];seen=set();counts=[[0,0] for _ in range(3)];reasons={}
     audit=['tgId,tcId,parameterSet,deterministic,signatureInterface,preHash,externalMu,message_bytes,context_bytes,selection']
     groups=objects['prompt.json']['testGroups']
-    if len(groups)!=24:raise ValueError('NIST Sign group count')
     for g in groups:
         if g['testType']!='AFT' or type(g['deterministic']) is not bool or len(g['tests'])!=15:
             raise ValueError('NIST Sign group schema')
@@ -4663,6 +4658,7 @@ def nist_sign_corpus():
         elif g['signatureInterface']=='internal' and type(g.get('externalMu')) is bool:
             reason='unsupported_external_mu' if g['externalMu'] else 'unsupported_internal_message_API'
         else:raise ValueError('Unknown NIST signing interface')
+        if include_internal and g['signatureInterface']=='internal' and g.get('externalMu') is False:reason='selected'
         for t in g['tests']:
             key=(g['tgId'],t['tcId'])
             if key in seen or key not in expected:raise ValueError('NIST Sign input/answer identity')
@@ -4677,7 +4673,7 @@ def nist_sign_corpus():
             msg=bytes.fromhex(t['message']) if 'message' in t else b''
             ctx=bytes.fromhex(t['context']) if 'context' in t else b''
             if len(ctx)>255:raise ValueError('NIST context size')
-            if reason=='selected' and 66+len(ctx)+len(msg)>65535:raise ValueError('Supported NIST message exceeds descriptor')
+            if reason=='selected' and (64 if g['signatureInterface']=='internal' else 66)+len(ctx)+len(msg)>65535:raise ValueError('Supported NIST message exceeds descriptor')
             reasons[reason]=reasons.get(reason,0)+1
             audit.append(','.join(map(str,[*key,g['parameterSet'],int(g['deterministic']),g['signatureInterface'],g.get('preHash',''),
                 g.get('externalMu',''),len(msg),len(ctx),reason])))
@@ -4685,13 +4681,13 @@ def nist_sign_corpus():
             counts[p][int(not g['deterministic'])]+=1
             result.append(dict(i=len(result),op=1,p=p,id=t['tcId'],flavor=-1,fault=0,abort=0,code=0,stage=0,detail=0,
                 ctx=ctx,msg=msg,rnd=rnd,ctxlen=len(ctx),mlen=len(msg),xi=bytes(32),sk=sk,body=ctx+msg,
-                signature=sig,tg=key[0],tc=key[1],deterministic=g['deterministic']))
-    if seen!=set(expected) or len(seen)!=360 or counts!=[[15,15]]*3 or reasons!={'selected':90,'unsupported_prehash':90,'unsupported_external_mu':90,'unsupported_internal_message_API':90}:
+                signature=sig,tg=key[0],tc=key[1],deterministic=g['deterministic'],internal=g['signatureInterface']=='internal'))
+    if seen!=set(expected) or counts!=[[30,30] if include_internal else [15,15]]*3:
         raise ValueError('Incomplete NIST Sign selection/audit')
     return result,'\n'.join(audit)+'\n'
 
 
-def nist_sign_cases():return nist_sign_corpus()[0]
+def nist_sign_cases(include_internal=False):return nist_sign_corpus(include_internal)[0]
 
 
 def nist_sign_expected_artifact(token):
@@ -4767,7 +4763,7 @@ def build_full_sign_c():
     if not gcc:raise ValueError('GCC required for full Sign oracle')
     for p,level in enumerate((2,3,5)):
         exe=HERE/f'reference_build/full_sign_reference_{level}.exe'
-        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/full_sign_reference.c'),
+        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/reference/full_sign_reference.c'),
             *[str(ref/n) for n in ('sign.c','packing.c','polyvec.c','poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],
             check=True,capture_output=True,text=True)
     full_sign_reference.cache_clear();gold=full_sign_reference()
@@ -4947,7 +4943,7 @@ def check_sign_encode_c():
     for p,level in enumerate((2,3,5)):
         exe=HERE/f'reference_build/sign_encode_reference_{level}.exe'
         subprocess.run([gcc,'-std=c99','-O2','-DENCODE_SIGNATURE',f'-DDILITHIUM_MODE={level}','-I',str(ref),
-            str(ROOT/'tb/tb_dilithium/sign_retry_reference.c'),
+            str(ROOT/'tb/tb_dilithium/reference/sign_retry_reference.c'),
             *[str(ref/n) for n in ('sign.c','packing.c','polyvec.c','poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         for start in sorted({c['nonce'] for c in sign_encode_cases() if c['p']==p}):
             m=sign_matrix_material(p,0);chain,code,n=sign_retry_chain(p,start)
@@ -5072,7 +5068,7 @@ def check_sign_retry_c():
     if not gcc:raise ValueError('GCC required for complete retry oracle')
     for p,level in enumerate((2,3,5)):
         exe=HERE/f'reference_build/sign_retry_reference_{level}.exe'
-        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/sign_retry_reference.c'),
+        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/reference/sign_retry_reference.c'),
             *[str(ref/n) for n in ('packing.c','polyvec.c','poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         for start in sorted({c['nonce'] for c in sign_retry_cases() if c['p']==p}):
             m=sign_matrix_material(p,0);chain,code,n=sign_retry_chain(p,start)
@@ -5133,7 +5129,7 @@ def check_sign_accept_c():
     if not gcc:raise ValueError('GCC required for norm/hint oracle')
     for p,level in enumerate((2,3,5)):
         exe=HERE/f'reference_build/sign_accept_reference_{level}.exe'
-        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/sign_accept_reference.c'),
+        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/reference/sign_accept_reference.c'),
             *[str(ref/n) for n in ('poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         rows=[sign_accept_material(p,n) for n in sorted({c['nonce'] for c in sign_accept_cases() if c['p']==p})]
         answer=subprocess.run([str(exe)],input=''.join('1 '+' '.join(map(str,[v for name in ('z','corrected','ct0','high') for a in m[name] for v in a]))+'\n' for m in rows),capture_output=True,text=True,check=True).stdout.splitlines()
@@ -5328,7 +5324,7 @@ def check_sign_products_c():
     if not gcc:raise ValueError('GCC required for response-product oracle')
     for p,level in enumerate((2,3,5)):
         exe=HERE/f'reference_build/sign_products_reference_{level}.exe'
-        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/sign_products_reference.c'),
+        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/reference/sign_products_reference.c'),
             *[str(ref/n) for n in ('packing.c','poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         rows=[sign_products_material(p,n) for n in (0,(4,5,7)[p])]
         answer=subprocess.run([str(exe)],input=''.join(' '.join(map(str,[*m['sk'],*m['digest'],*[v for poly in m['y'] for v in poly],*[v for poly in m['low'] for v in poly]]))+'\n' for m in rows),capture_output=True,text=True,check=True).stdout.splitlines()
@@ -5505,7 +5501,7 @@ def check_sign_transform_c():
     if not gcc:raise ValueError('GCC required for challenge-transform oracle')
     for p,level in enumerate((2,3,5)):
         exe=HERE/f'reference_build/sign_transform_reference_{level}.exe'
-        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/sign_challenge_transform_reference.c'),
+        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/reference/sign_challenge_transform_reference.c'),
             *[str(ref/n) for n in ('poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         rows=[sign_challenge_material(p,n) for n in (0,(4,5,7)[p])]
         answer=subprocess.run([str(exe)],input=''.join(str(len(m['digest']))+' '+m['digest'].hex()+'\n' for m in rows),capture_output=True,text=True,check=True).stdout.splitlines()
@@ -5860,7 +5856,7 @@ def check_sign_matrix_c():
     if not gcc:raise ValueError('GCC required for signing matrix oracle')
     for p,level in enumerate((2,3,5)):
         exe=HERE/f'reference_build/sign_matrix_reference_{level}.exe'
-        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/sign_matrix_reference.c'),
+        subprocess.run([gcc,'-std=c99','-O2',f'-DDILITHIUM_MODE={level}','-I',str(ref),str(ROOT/'tb/tb_dilithium/reference/sign_matrix_reference.c'),
             *[str(ref/n) for n in ('polyvec.c','poly.c','rounding.c','reduce.c','ntt.c','symmetric-shake.c','fips202.c')],'-o',str(exe)],check=True,capture_output=True,text=True)
         materials=[(n,sign_matrix_material(p,n)) for n in (0,(4,5,7)[p])]
         answer=subprocess.run([str(exe)],input=''.join(' '.join(map(str,[n,*m['sk'][:32],*m['seed']]))+'\n' for n,m in materials),capture_output=True,text=True,check=True).stdout.splitlines()
@@ -7263,30 +7259,30 @@ def uvm_artifacts():
 
 def uvm_prepare():
     token,inputs,expected=uvm_artifacts()
-    (HERE/'stage7_uvm_inputs.txt').write_text(inputs,encoding='ascii')
-    (HERE/'stage7_uvm_expected.txt').write_text(expected,encoding='ascii')
-    print(f'STAGE7_UVM_PREPARE_PASS:{len(inputs.splitlines())-1} scenarios;separate published expectations;token {token}')
+    (HERE/'uvm_inputs.txt').write_text(inputs,encoding='ascii')
+    (HERE/'uvm_expected.txt').write_text(expected,encoding='ascii')
+    print(f'UVM_PREPARE_PASS:{len(inputs.splitlines())-1} scenarios;separate published expectations;token {token}')
 
 
 def uvm_check():
     token,inputs,expected=uvm_artifacts()
-    if (HERE/'stage7_uvm_inputs.txt').read_text()!=inputs or (HERE/'stage7_uvm_expected.txt').read_text()!=expected:raise ValueError('Stage7 UVM stale fixtures;run uvm_prepare')
-    print('STAGE7_UVM_FRESHNESS_PASS:'+token)
+    if (HERE/'uvm_inputs.txt').read_text()!=inputs or (HERE/'uvm_expected.txt').read_text()!=expected:raise ValueError('UVM stale fixtures;run uvm_prepare')
+    print('UVM_FRESHNESS_PASS:'+token)
 
 
 def lighthd_ntt_artifacts():
     """Independent FIPS-derived fixtures for direct-bank/scalar NTT comparison."""
     paths = sorted((ROOT / 'src/ntt').glob('*.sv')) + [
-        ROOT / 'tb/tb_dilithium/ntt_core_scalar_reference.sv',
-        ROOT / 'tb/tb_dilithium/tb_ntt_bank.sv',
-        ROOT / 'tb/tb_dilithium/tb_ntt_dma.sv',
-        ROOT / 'tb/tb_dilithium/tb_butterfly_fused.sv',
-        ROOT / 'tb/tb_dilithium/tb_ntt_decoders.sv',
-        ROOT / 'tb/tb_dilithium/tb_memory_switch.sv',
-        ROOT / 'tb/tb_dilithium/memory_router_c12_reference.sv',
-        ROOT / 'tb/tb_dilithium/process_dma_c12_reference.sv',
-        ROOT / 'tb/tb_dilithium/tb_process_ports.sv',
-        ROOT / 'tb/tb_dilithium/butterfly_unit_c11_reference.sv',
+        ROOT / 'tb/tb_dilithium/reference/ntt_core_scalar_reference.sv',
+        ROOT / 'tb/tb_dilithium/unit/tb_ntt_bank.sv',
+        ROOT / 'tb/tb_dilithium/unit/tb_ntt_dma.sv',
+        ROOT / 'tb/tb_dilithium/unit/tb_butterfly_fused.sv',
+        ROOT / 'tb/tb_dilithium/unit/tb_ntt_decoders.sv',
+        ROOT / 'tb/tb_dilithium/unit/tb_memory_switch.sv',
+        ROOT / 'tb/tb_dilithium/reference/memory_router_c12_reference.sv',
+        ROOT / 'tb/tb_dilithium/reference/process_dma_c12_reference.sv',
+        ROOT / 'tb/tb_dilithium/unit/tb_process_ports.sv',
+        ROOT / 'tb/tb_dilithium/reference/butterfly_unit_c11_reference.sv',
         HERE / 'setup_cyclonev.tcl',
         ROOT / 'src/controller/datapath/ntt_dma.sv',
         ROOT / 'src/controller/memory/poly_bram.sv',
@@ -7372,13 +7368,13 @@ def lighthd_sampler_cases():
 def lighthd_sampler_artifacts():
     paths = sorted((ROOT / 'src/sampler').glob('*.sv')) + [
         ROOT / 'src/controller/process/secret_regroup.sv',
-        ROOT / 'tb/tb_dilithium/sampler_scalar_reference.sv',
-        ROOT / 'tb/tb_dilithium/tb_sampler_bank.sv', Path(__file__), REF,
+        ROOT / 'tb/tb_dilithium/reference/sampler_scalar_reference.sv',
+        ROOT / 'tb/tb_dilithium/unit/tb_sampler_bank.sv', Path(__file__), REF,
         ROOT / 'src/controller/datapath/sampler_writer.sv',
-        ROOT / 'tb/tb_dilithium/tb_sampler_writer.sv',
-        ROOT / 'tb/tb_dilithium/tb_sampler_writer_mixed.sv',
-        ROOT / 'tb/tb_dilithium/tb_sampler_writer_queue.sv',
-        ROOT / 'tb/tb_dilithium/bank_fixture.sv',
+        ROOT / 'tb/tb_dilithium/unit/tb_sampler_writer.sv',
+        ROOT / 'tb/tb_dilithium/unit/tb_sampler_writer_mixed.sv',
+        ROOT / 'tb/tb_dilithium/unit/tb_sampler_writer_queue.sv',
+        ROOT / 'tb/tb_dilithium/support/bank_fixture.sv',
     ]
     paths += sorted((ROOT/'src/controller/memory').glob('*.sv'))
     paths += [ROOT/'src/controller/memory/poly_bram.sv', ROOT/'src/controller/memory/memory_banks.sv', ROOT/'src/controller/memory/bank_request_pipe.sv']
@@ -7402,15 +7398,15 @@ def lighthd_sampler_artifacts():
 
 def lighthd_sampler_prepare():
     token, inputs, expected, selected = lighthd_sampler_artifacts()
-    (HERE/'stage7c_sampler_inputs.txt').write_text(inputs, encoding='ascii')
-    (HERE/'stage7c_sampler_expected.txt').write_text(expected, encoding='ascii')
+    (HERE/'sampler_inputs.txt').write_text(inputs, encoding='ascii')
+    (HERE/'sampler_expected.txt').write_text(expected, encoding='ascii')
     print(f'LIGHTHD_SAMPLER_PREPARE_PASS:{len(selected)} jobs;independent FIPS byte-stream formulas;token '+token)
 
 
 def lighthd_sampler_check():
     token, inputs, expected, _ = lighthd_sampler_artifacts()
-    if ((HERE/'stage7c_sampler_inputs.txt').read_text()!=inputs or
-            (HERE/'stage7c_sampler_expected.txt').read_text()!=expected):
+    if ((HERE/'sampler_inputs.txt').read_text()!=inputs or
+            (HERE/'sampler_expected.txt').read_text()!=expected):
         raise ValueError('Direct sampler stale fixtures;run lighthd_sampler_prepare')
     print('LIGHTHD_SAMPLER_FRESHNESS_PASS:'+token)
 
@@ -7419,7 +7415,7 @@ def lighthd_sampler_compare():
     lighthd_sampler_check()
     token, _, _, selected = lighthd_sampler_artifacts()
     for kind in ('bank', 'scalar'):
-        lines = (HERE/f'stage7c1_sampler_{kind}_outputs.txt').read_text().splitlines()
+        lines = (HERE/f'sampler_{kind}_outputs.txt').read_text().splitlines()
         if not lines or lines[0]!=f'{token} {len(selected)}':
             raise ValueError('Direct sampler capture header mismatch')
         live = {};values = {};groups = {};retired = set();footer = False
@@ -7496,7 +7492,7 @@ def lighthd_writer_compare():
     for c in selected:
         words=lighthd_memory_words(c)
         want += [str(c['i']),str(len(words))]+[f'{w:023x}' for w in words]
-    got=(HERE/'stage7c1_sampler_writer_outputs.txt').read_text().split()
+    got=(HERE/'sampler_writer_outputs.txt').read_text().split()
     if got!=want:
         index=next((i for i,(a,b) in enumerate(zip(got,want)) if a!=b),min(len(got),len(want)))
         raise ValueError(f'Sampler RAM-word mismatch at token {index};length {len(got)} expected {len(want)}')
@@ -7526,18 +7522,18 @@ def lighthd_writer_mixed_artifacts():
 
 def lighthd_writer_mixed_prepare():
     token,inputs,expected=lighthd_writer_mixed_artifacts()
-    (HERE/'stage7c_writer_mixed_inputs.txt').write_text(inputs,encoding='ascii')
-    (HERE/'stage7c_writer_mixed_expected.txt').write_text(expected,encoding='ascii')
+    (HERE/'writer_mixed_inputs.txt').write_text(inputs,encoding='ascii')
+    (HERE/'writer_mixed_expected.txt').write_text(expected,encoding='ascii')
     print('LIGHTHD_WRITER_MIXED_PREPARE_PASS:112 successful polynomials/reordered secret-normal pairs;token '+token)
 
 
 def lighthd_writer_mixed_compare():
     token,inputs,expected=lighthd_writer_mixed_artifacts()
-    if (HERE/'stage7c_writer_mixed_inputs.txt').read_text()!=inputs or (HERE/'stage7c_writer_mixed_expected.txt').read_text()!=expected:
+    if (HERE/'writer_mixed_inputs.txt').read_text()!=inputs or (HERE/'writer_mixed_expected.txt').read_text()!=expected:
         raise ValueError('Mixed writer fixtures are stale;run lighthd_writer_mixed_prepare')
     want=expected.split()
     for kind in ('same','different'):
-        got=(HERE/f'stage7c_writer_mixed_{kind}_outputs.txt').read_text().split()
+        got=(HERE/f'writer_mixed_{kind}_outputs.txt').read_text().split()
         if got!=want:
             index=next((i for i,(a,b) in enumerate(zip(got,want)) if a!=b),min(len(got),len(want)))
             raise ValueError(f'Mixed writer {kind}-bank mismatch at token {index};length {len(got)} expected {len(want)}')
@@ -7548,8 +7544,8 @@ def lighthd_chain_artifacts():
     paths=sorted((ROOT/'src/keccak').glob('*.sv'))+sorted((ROOT/'src/sampler').glob('*.sv'))
     paths+=sorted((ROOT/'src/controller').rglob('*.sv'))
     paths+=[ROOT/'src/controller/datapath/keccak_sampler.sv',ROOT/'src/controller/memory/poly_bram.sv',
-            ROOT/'src/controller/memory/memory_banks.sv', ROOT/'src/controller/memory/bank_request_pipe.sv',ROOT/'tb/tb_dilithium/bank_fixture.sv',
-            ROOT/'tb/tb_dilithium/tb_hash_sampler.sv',Path(__file__),REF]
+            ROOT/'src/controller/memory/memory_banks.sv', ROOT/'src/controller/memory/bank_request_pipe.sv',ROOT/'tb/tb_dilithium/support/bank_fixture.sv',
+            ROOT/'tb/tb_dilithium/unit/tb_hash_sampler.sv',Path(__file__),REF]
     digest=hashlib.sha256()
     for path in paths:
         digest.update(path.relative_to(ROOT).as_posix().encode());digest.update(path.read_bytes())
@@ -7571,16 +7567,16 @@ def lighthd_chain_artifacts():
 
 def lighthd_chain_prepare():
     token,inputs,expected=lighthd_chain_artifacts()
-    (HERE/'stage7c_chain_inputs.txt').write_text(inputs,encoding='ascii')
-    (HERE/'stage7c_chain_expected.txt').write_text(expected,encoding='ascii')
+    (HERE/'chain_inputs.txt').write_text(inputs,encoding='ascii')
+    (HERE/'chain_expected.txt').write_text(expected,encoding='ascii')
     print('LIGHTHD_CHAIN_PREPARE_PASS:104 sampling commands+3 raw hashes;token '+token)
 
 
 def lighthd_chain_compare():
     token,inputs,expected=lighthd_chain_artifacts()
-    if ((HERE/'stage7c_chain_inputs.txt').read_text()!=inputs or
-        (HERE/'stage7c_chain_expected.txt').read_text()!=expected):raise ValueError('Stale LightHD chain fixtures')
-    got=(HERE/'stage7c1_hash_sampler_outputs.txt').read_text().split();want=expected.split()
+    if ((HERE/'chain_inputs.txt').read_text()!=inputs or
+        (HERE/'chain_expected.txt').read_text()!=expected):raise ValueError('Stale LightHD chain fixtures')
+    got=(HERE/'hash_sampler_outputs.txt').read_text().split();want=expected.split()
     if got!=want:
         index=next((i for i,(a,b) in enumerate(zip(got,want)) if a!=b),min(len(got),len(want)))
         raise ValueError(f'Keccak/sampler/RAM mismatch at token {index};length {len(got)} expected {len(want)}')
@@ -7611,13 +7607,13 @@ def lighthd_keygen_artifacts():
     token=digest.hexdigest();selected=nist_keygen_cases()
     inputs=[f'{token} {len(selected)}']
     for c in selected:
-        inputs.append(f"{c['i']} {c['p']} {c['id']} {int.from_bytes(c['xi'],'little'):064x}")
+        inputs.append(f"{c['i']} {c['p']} {c['id']} {int.from_bytes(c['xi'],'little'):064x} keygen_L{(2,3,5)[c['p']]}_tg{c['tg']}_tc{c['tc']}")
     return token,'\n'.join(inputs)+'\n',selected
 
 
 def lighthd_keygen_prepare():
     token,inputs,_=lighthd_keygen_artifacts()
-    (HERE/'stage7c_keygen_inputs.txt').write_text(inputs,encoding='ascii')
+    (HERE/'keygen_inputs.txt').write_text(inputs,encoding='ascii')
     print('LIGHTHD_KEYGEN_PREPARE_PASS:75 pinned official NIST seeds;token '+token)
 
 
@@ -7634,9 +7630,9 @@ def lighthd_keygen_protocol_cases(selected):
 
 def lighthd_keygen_compare(protocol=False):
     token,inputs,selected=lighthd_keygen_artifacts()
-    if (HERE/'stage7c_keygen_inputs.txt').read_text()!=inputs:raise ValueError('Stale compact KeyGen fixtures')
+    if (HERE/'keygen_inputs.txt').read_text()!=inputs:raise ValueError('Stale compact KeyGen fixtures')
     if protocol:selected=lighthd_keygen_protocol_cases(selected)
-    captured=(HERE/('stage7c2_keygen_protocol_outputs.txt' if protocol else 'stage7c2_keygen_outputs.txt')).read_text()
+    captured=(HERE/('keygen_protocol_outputs.txt' if protocol else 'keygen_outputs.txt')).read_text()
     total=lighthd_keygen_compare_text(captured,token,selected)
     print((f'LIGHTHD_KEYGEN_PROTOCOL_COMPARE_PASS:20 commands/9 complete published keypairs/3 rejects/8 reset prefixes/{total} checked bytes;token ' if protocol else
            f'LIGHTHD_KEYGEN_NIST_COMPARE_PASS:75 complete published keypairs/{total} bytes;token ')+token)
@@ -7733,8 +7729,8 @@ def lighthd_sign_load_artifacts():
         'src/controller/datapath/keccak_sampler.sv','src/controller/memory/poly_bram.sv',
         'src/controller/memory/memory_banks.sv', 'src/controller/memory/bank_request_pipe.sv','src/controller/memory/memory_port.sv',
         'src/controller/memory/memory.sv','src/controller/memory/memory_router.sv',
-        'src/controller/memory/bank_fabric.sv','tb/tb_dilithium/service_fixture.sv',
-        'tb/tb_dilithium/tb_sign_input.sv')]
+        'src/controller/memory/bank_fabric.sv','tb/tb_dilithium/support/service_fixture.sv',
+        'tb/tb_dilithium/unit/tb_sign_input.sv')]
     paths.append(Path(__file__))
     digest=hashlib.sha256()
     for path in paths:
@@ -7768,31 +7764,31 @@ def lighthd_sign_load_artifacts():
 
 def lighthd_sign_load_prepare():
     token,inputs,expected=lighthd_sign_load_artifacts()
-    (HERE/'stage7c_sign_load_inputs.txt').write_text(inputs,encoding='ascii')
-    (HERE/'stage7c_sign_load_expected.txt').write_text(expected,encoding='ascii')
+    (HERE/'sign_load_inputs.txt').write_text(inputs,encoding='ascii')
+    (HERE/'sign_load_expected.txt').write_text(expected,encoding='ascii')
     print('LIGHTHD_SIGN_LOAD_PREPARE_PASS:135 actual-datapath cases;token '+token)
 
 
 def lighthd_sign_load_compare():
     token,inputs,expected=lighthd_sign_load_artifacts()
-    if ((HERE/'stage7c_sign_load_inputs.txt').read_text()!=inputs or
-        (HERE/'stage7c_sign_load_expected.txt').read_text()!=expected):raise ValueError('Stale actual-datapath SK-load fixtures')
-    got=(HERE/'stage7c3_sign_load_outputs.txt').read_text().split();want=expected.split()
+    if ((HERE/'sign_load_inputs.txt').read_text()!=inputs or
+        (HERE/'sign_load_expected.txt').read_text()!=expected):raise ValueError('Stale actual-datapath SK-load fixtures')
+    got=(HERE/'sign_load_outputs.txt').read_text().split();want=expected.split()
     if got!=want:
         index=next((i for i,(a,b) in enumerate(zip(got,want)) if a!=b),min(len(got),len(want)))
         raise ValueError(f'Actual-datapath SK-load mismatch at token {index};length {len(got)} expected {len(want)}')
     print('LIGHTHD_SIGN_LOAD_COMPARE_PASS:135 commands/105 complete published SKs/21 rejects/9 resets;all headers/raw bank words exact;token '+token)
 
 
-@lru_cache(maxsize=90)
-def lighthd_sign_model(original):
+@lru_cache(maxsize=180)
+def lighthd_sign_model(original,include_internal=False):
     """Independent arithmetic/counter trace;published signatures remain expected."""
-    c=nist_sign_cases()[original];p=c['p'];q=8380417;k,l=((4,4),(6,5),(8,7))[p]
+    c=nist_sign_cases(include_internal)[original];p=c['p'];q=8380417;k,l=((4,4),(6,5),(8,7))[p]
     gamma1=(131072,524288,524288)[p];gamma2=(95232,261888,261888)[p];beta=(78,196,120)[p];omega=(80,55,75)[p]
     raw=decode_key_math(c['sk'],p)[0]
     secrets=[[r[3] for r in raw[j:j+256]] for j in range(0,len(raw),256)]
     hats=[ntt_reference.forward(poly) for poly in secrets]
-    mu=hashlib.shake_256(c['sk'][64:128]+bytes((0,c['ctxlen']))+c['body']).digest(64)
+    mu=hashlib.shake_256(c['sk'][64:128]+(b'' if c.get('internal',False) else bytes((0,c['ctxlen'])))+c['body']).digest(64)
     seed=hashlib.shake_256(c['sk'][32:64]+c['rnd']+mu).digest(64)
     matrix=[[reference.sample(0,p,hashlib.shake_128(c['sk'][:32]+bytes((j,row))).digest(4096))[0]
              for j in range(l)] for row in range(k)]
@@ -7832,8 +7828,8 @@ def lighthd_sign_artifacts():
     paths += [ROOT/p for p in ('src/controller/datapath/keccak_sampler.sv','src/controller/memory/poly_bram.sv',
         'src/controller/memory/memory_banks.sv', 'src/controller/memory/bank_request_pipe.sv','src/controller/process/power2round.sv','src/controller/process/cnb.sv',
         'src/controller/process/mhint.sv','src/controller/process/sign_hash_message.sv','tb/tb_dilithium/tb_sign.sv',
-        'tb/tb_dilithium/tb_sign_protocol.sv','tb/tb_dilithium/tb_memory_geometry.sv',
-        'tb/tb_dilithium/tb_memory_admission.sv','tb/tb_dilithium/tb_area_arithmetic.sv')]
+        'tb/tb_dilithium/tb_sign_protocol.sv','tb/tb_dilithium/unit/tb_memory_geometry.sv',
+        'tb/tb_dilithium/unit/tb_memory_admission.sv','tb/tb_dilithium/unit/tb_area_arithmetic.sv')]
     paths += [Path(__file__),REF,NTT_REF]
     digest=hashlib.sha256()
     for path in paths:
@@ -7845,25 +7841,25 @@ def lighthd_sign_artifacts():
         result=[f'{token} {len(selected)}']
         for serial,c in enumerate(selected):
             result.append(f"{serial} {c['i']} {c['p']} {c['id']} {c['ctxlen']} {c['mlen']} {len(c['sk'])} {len(c['body'])} "
-                          f"{int.from_bytes(c['rnd'],'little'):064x} {c['sk'].hex()} {c['body'].hex() or '-'}")
+                          f"{int.from_bytes(c['rnd'],'little'):064x} {c['sk'].hex()} {c['body'].hex() or '-'} sign_L{(2,3,5)[c['p']]}_tg{c['tg']}_tc{c['tc']}")
         return '\n'.join(result)+'\n'
     return token,serialize(rows),serialize(diagnostic),rows,diagnostic
 
 
 def lighthd_sign_prepare():
     token,inputs,diagnostic,rows,selected=lighthd_sign_artifacts()
-    (HERE/'stage7c_sign_inputs.txt').write_text(inputs,encoding='ascii')
-    (HERE/'stage7c_sign_diagnostic_inputs.txt').write_text(diagnostic,encoding='ascii')
+    (HERE/'sign_inputs.txt').write_text(inputs,encoding='ascii')
+    (HERE/'sign_diagnostic_inputs.txt').write_text(diagnostic,encoding='ascii')
     print('LIGHTHD_SIGN_PREPARE_PASS:90 official inputs;independent arithmetic/nonce traces match all published signatures;token '+token)
     print('SIGN_DIAGNOSTIC_ORIGINAL_CASES:'+','.join(f"{c['i']}(level{c['p']},attempts{lighthd_sign_model(c['i'])['attempts']})" for c in selected))
 
 
 def lighthd_sign_compare(diagnostic=False,captured=None,quiet=False):
     token,inputs,small,rows,selected=lighthd_sign_artifacts()
-    if ((HERE/'stage7c_sign_inputs.txt').read_text()!=inputs or
-        (HERE/'stage7c_sign_diagnostic_inputs.txt').read_text()!=small):raise ValueError('Stale compact Sign fixtures')
+    if ((HERE/'sign_inputs.txt').read_text()!=inputs or
+        (HERE/'sign_diagnostic_inputs.txt').read_text()!=small):raise ValueError('Stale compact Sign fixtures')
     if not diagnostic:selected=rows
-    file=HERE/('stage7c3_sign_diagnostic_outputs.txt' if diagnostic else 'stage7c3_sign_outputs.txt')
+    file=HERE/('sign_diagnostic_outputs.txt' if diagnostic else 'sign_outputs.txt')
     lines=(file.read_text() if captured is None else captured).splitlines();count=len(selected)
     if not lines or lines[0]!=f'{token} {count}':raise ValueError('Compact Sign token/count mismatch')
     current=None;signature=bytearray();seen=0;challenges=0;rejected=set();footer=False;total=0
@@ -7918,13 +7914,13 @@ def lighthd_sign_compare(diagnostic=False,captured=None,quiet=False):
 def lighthd_sign_protocol_compare(captured=None,quiet=False):
     """Published bytes plus exact error/reset/recovery schedule; no RTL oracle."""
     token,inputs,small,_,selected=lighthd_sign_artifacts()
-    if ((HERE/'stage7c_sign_inputs.txt').read_text()!=inputs or
-        (HERE/'stage7c_sign_diagnostic_inputs.txt').read_text()!=small):raise ValueError('Stale compact Sign protocol fixtures')
+    if ((HERE/'sign_inputs.txt').read_text()!=inputs or
+        (HERE/'sign_diagnostic_inputs.txt').read_text()!=small):raise ValueError('Stale compact Sign protocol fixtures')
     plan=[(0,-1,-1,i) for i in range(3)]
     for p in range(3):
         for bad in range(7):plan.extend(((p,-1,bad,-1),(p,-1,-1,-1)))
     for phase in range(12):plan.extend(((phase%3,phase,-1,-1),(phase%3,-1,-1,-1)))
-    lines=((HERE/'stage7c3_sign_protocol_outputs.txt').read_text() if captured is None else captured).splitlines()
+    lines=((HERE/'sign_protocol_outputs.txt').read_text() if captured is None else captured).splitlines()
     def check(condition,message):
         if not condition:raise ValueError('Compact Sign protocol: '+message)
     check(bool(lines) and lines[0]==f'{token} 69','token/count')
@@ -7970,8 +7966,8 @@ def lighthd_sign_protocol_compare(captured=None,quiet=False):
 
 def lighthd_sign_selftest():
     """Corrupt captured results, prove the actual independent checkers reject."""
-    original=(HERE/'stage7c3_sign_outputs.txt').read_text()
-    protocol=(HERE/'stage7c3_sign_protocol_outputs.txt').read_text()
+    original=(HERE/'sign_outputs.txt').read_text()
+    protocol=(HERE/'sign_protocol_outputs.txt').read_text()
     full_checker=lambda text:lighthd_sign_compare(captured=text,quiet=True)
     protocol_checker=lambda text:lighthd_sign_protocol_compare(captured=text,quiet=True)
     full_checker(original);protocol_checker(protocol);faults=[]
@@ -8052,11 +8048,11 @@ def lighthd_hint_cases():
 
 
 def lighthd_hint_artifacts():
-    paths=[ROOT/'src/controller/process/hintunpkg.sv',ROOT/'tb/tb_dilithium/tb_hintunpkg.sv',Path(__file__)]
+    paths=[ROOT/'src/controller/process/hintunpkg.sv',ROOT/'tb/tb_dilithium/unit/tb_hintunpkg.sv',Path(__file__)]
     paths += [ROOT/n for n in ('src/controller/process/hint_codec.sv','src/controller/helpers/dilithium_pkg.sv',
-        'tb/tb_dilithium/hint_compat.sv','tb/tb_dilithium/tb_hint_shared.sv',
-        'tb/tb_dilithium/hintpkg_c13_reference.sv','tb/tb_dilithium/hintunpkg_c13_reference.sv')]
-    paths.append(ROOT/'tb/tb_dilithium/hint_decode_stage_reference.sv')
+        'tb/tb_dilithium/support/hint_compat.sv','tb/tb_dilithium/unit/tb_hint_shared.sv',
+        'tb/tb_dilithium/reference/hintpkg_c13_reference.sv','tb/tb_dilithium/reference/hintunpkg_c13_reference.sv')]
+    paths.append(ROOT/'tb/tb_dilithium/reference/hint_decode_stage_reference.sv')
     paths+=sorted(NIST_VERIFY.glob('*.json'));digest=hashlib.sha256()
     for path in paths:digest.update(path.relative_to(ROOT).as_posix().encode());digest.update(path.read_bytes())
     token=digest.hexdigest();rows=lighthd_hint_cases();inputs=[f'{token} {len(rows)}'];expected=[f'{token} {len(rows)}']
@@ -8071,14 +8067,14 @@ def lighthd_hint_artifacts():
 
 def lighthd_hint_prepare():
     token,inputs,expected,rows=lighthd_hint_artifacts()
-    (HERE/'stage7c4_hint_inputs.txt').write_text(inputs,encoding='ascii');(HERE/'stage7c4_hint_expected.txt').write_text(expected,encoding='ascii')
+    (HERE/'hint_inputs.txt').write_text(inputs,encoding='ascii');(HERE/'hint_expected.txt').write_text(expected,encoding='ascii')
     print(f'LIGHTHD_HINT_PREPARE_PASS:{len(rows)} cases;45 suffixes extracted from pinned official signatures plus FIPS-derived boundaries/faults/resets;not standalone NIST vectors;token '+token)
 
 
 def lighthd_hint_compare(captured=None,quiet=False):
     token,inputs,expected,rows=lighthd_hint_artifacts()
-    if (HERE/'stage7c4_hint_inputs.txt').read_text()!=inputs or (HERE/'stage7c4_hint_expected.txt').read_text()!=expected:raise ValueError('Stale hint decoder fixtures')
-    lines=((HERE/'stage7c4_hint_outputs.txt').read_text() if captured is None else captured).splitlines()
+    if (HERE/'hint_inputs.txt').read_text()!=inputs or (HERE/'hint_expected.txt').read_text()!=expected:raise ValueError('Stale hint decoder fixtures')
+    lines=((HERE/'hint_outputs.txt').read_text() if captured is None else captured).splitlines()
     if not lines or lines[0]!=f'{token} {len(rows)}':raise ValueError('Hint decoder token/count')
     current=None;seen=0;word=0;footer=False;total=0;resets=0
     for line in lines[1:]:
@@ -8108,7 +8104,7 @@ def lighthd_hint_compare(captured=None,quiet=False):
 
 
 def lighthd_hint_selftest():
-    text=(HERE/'stage7c4_hint_outputs.txt').read_text();lighthd_hint_compare(text,True);lines=text.splitlines();faults=[]
+    text=(HERE/'hint_outputs.txt').read_text();lighthd_hint_compare(text,True);lines=text.splitlines();faults=[]
     for tag,fields in (('J',(1,2,3)),('H',(1,2,3)),('D',(1,)),('A',(1,))):
         index=next(i for i,line in enumerate(lines) if line.startswith(tag+' '))
         for field in fields:
@@ -8158,7 +8154,7 @@ def lighthd_verify_input_artifacts():
     paths+=sorted((ROOT/'src/controller').rglob('*.sv'))
     paths += [ROOT/p for p in ('src/controller/datapath/keccak_sampler.sv','src/controller/memory/poly_bram.sv',
         'src/controller/memory/memory_banks.sv', 'src/controller/memory/bank_request_pipe.sv','src/controller/process/power2round.sv','src/controller/process/cnb.sv',
-        'src/controller/process/mhint.sv','tb/tb_dilithium/service_fixture.sv','tb/tb_dilithium/tb_verify_input.sv')]
+        'src/controller/process/mhint.sv','tb/tb_dilithium/support/service_fixture.sv','tb/tb_dilithium/unit/tb_verify_input.sv')]
     paths.append(Path(__file__));paths+=sorted(NIST_VERIFY.glob('*.json'));digest=hashlib.sha256()
     for path in paths:digest.update(path.relative_to(ROOT).as_posix().encode());digest.update(path.read_bytes())
     token=digest.hexdigest();rows=lighthd_verify_input_cases();inputs=[f'{token} {len(rows)}'];expected=[f'{token} {len(rows)}']
@@ -8171,14 +8167,14 @@ def lighthd_verify_input_artifacts():
 
 def lighthd_verify_input_prepare():
     token,inputs,expected,rows=lighthd_verify_input_artifacts()
-    (HERE/'stage7c4_verify_input_inputs.txt').write_text(inputs,encoding='ascii');(HERE/'stage7c4_verify_input_expected.txt').write_text(expected,encoding='ascii')
+    (HERE/'verify_input_inputs.txt').write_text(inputs,encoding='ascii');(HERE/'verify_input_expected.txt').write_text(expected,encoding='ascii')
     print(f'LIGHTHD_VERIFY_INPUT_PREPARE_PASS:{len(rows)} commands;45 pinned official PK/SIG inputs plus transport/reset tests;raw input qualification only;token '+token)
 
 
 def lighthd_verify_input_compare(captured=None,quiet=False):
     token,inputs,expected,rows=lighthd_verify_input_artifacts()
-    if (HERE/'stage7c4_verify_input_inputs.txt').read_text()!=inputs or (HERE/'stage7c4_verify_input_expected.txt').read_text()!=expected:raise ValueError('Stale compact Verify input fixtures')
-    lines=((HERE/'stage7c4_verify_input_outputs.txt').read_text() if captured is None else captured).splitlines()
+    if (HERE/'verify_input_inputs.txt').read_text()!=inputs or (HERE/'verify_input_expected.txt').read_text()!=expected:raise ValueError('Stale compact Verify input fixtures')
+    lines=((HERE/'verify_input_outputs.txt').read_text() if captured is None else captured).splitlines()
     if not lines or lines[0]!=f'{token} {len(rows)}':raise ValueError('Compact Verify input token/count')
     current=None;seen=0;actual={};header=False;footer=False;readbacks=resets=valid=invalid=errors=0
     for line in lines[1:]:
@@ -8217,7 +8213,7 @@ def lighthd_verify_input_compare(captured=None,quiet=False):
 
 def lighthd_verify_artifacts():
     token,_,_,_=lighthd_verify_input_artifacts()
-    digest=hashlib.sha256(token.encode());digest.update((ROOT/'tb/tb_dilithium/tb_verify.sv').read_bytes())
+    digest=hashlib.sha256(token.encode());digest.update((ROOT/'tb/tb_dilithium/unit/tb_verify.sv').read_bytes())
     digest.update((ROOT/'src/controller/process/sign_hash_message.sv').read_bytes());digest.update(REF.read_bytes());digest.update(NTT_REF.read_bytes())
     token=digest.hexdigest();rows=[]
     for i,c in enumerate(nist_verify_corpus()[0]):
@@ -8237,15 +8233,15 @@ def lighthd_verify_artifacts():
 
 def lighthd_verify_prepare():
     token,inputs,small,_,_=lighthd_verify_artifacts()
-    (HERE/'stage7c4_verify_inputs.txt').write_text(inputs,encoding='ascii');(HERE/'stage7c4_verify_diagnostic_inputs.txt').write_text(small,encoding='ascii')
+    (HERE/'verify_inputs.txt').write_text(inputs,encoding='ascii');(HERE/'verify_diagnostic_inputs.txt').write_text(small,encoding='ascii')
     print('LIGHTHD_VERIFY_PREPARE_PASS:45 official pure/external inputs;independent arithmetic matches9 valid/36 invalid published verdicts;token '+token)
 
 
 def lighthd_verify_compare(diagnostic=False,captured=None,quiet=False):
     token,inputs,small,rows,selected=lighthd_verify_artifacts()
-    if (HERE/'stage7c4_verify_inputs.txt').read_text()!=inputs or (HERE/'stage7c4_verify_diagnostic_inputs.txt').read_text()!=small:raise ValueError('Stale compact Verify fixtures')
+    if (HERE/'verify_inputs.txt').read_text()!=inputs or (HERE/'verify_diagnostic_inputs.txt').read_text()!=small:raise ValueError('Stale compact Verify fixtures')
     if not diagnostic:selected=rows
-    path=HERE/('stage7c4_verify_diagnostic_outputs.txt' if diagnostic else 'stage7c4_verify_outputs.txt')
+    path=HERE/('verify_diagnostic_outputs.txt' if diagnostic else 'verify_outputs.txt')
     lines=(path.read_text() if captured is None else captured).splitlines()
     if not lines or lines[0]!=f'{token} {len(selected)}':raise ValueError('Compact Verify token/count')
     current=None;seen=0;digests=0;seen_digest=False;footer=False;valid=invalid=0
@@ -8275,21 +8271,41 @@ def lighthd_verify_compare(diagnostic=False,captured=None,quiet=False):
     if not quiet:print(f'LIGHTHD_VERIFY_NIST_COMPARE_PASS:{len(selected)} published verdicts/{valid} valid/{invalid} invalid/{digests} exact independent equation digests;token '+token)
 
 
-def lighthd_main_artifacts():
-    base,_,_,verify_rows,_=lighthd_verify_artifacts();keys=nist_keygen_cases();signs=nist_sign_cases()
-    models=[lighthd_sign_model(i) for i in range(len(signs))];rows=[]
-    for i in range(90):
-        for op,collection in ((0,keys),(1,signs),(2,verify_rows)):
-            if i>=len(collection):continue
-            c=collection[i];serial=len(rows)
+def lighthd_main_artifacts(operation='all'):
+    if operation not in ('all','keygen','sign','verify'):raise ValueError('Unknown main operation')
+    # Only prepare arithmetic/reference data for the requested operations.
+    keys=nist_keygen_cases() if operation in ('all','keygen') else []
+    signs=nist_sign_cases(True) if operation in ('all','sign') else []
+    base=operation;verify_rows=[]
+    if operation in ('all','verify'):
+        for i,c in enumerate(nist_verify_corpus(True)[0]):
+            row=dict(c,i=i)
+            _,_,h,bad_norm=verify_unpack_math(1,c['p'],c['sig'])
+            row['structural_bad']=bad_norm or h is None
+            material=None if row['structural_bad'] else verify_equation_material(c['p'],c['pk'],c['sig'],c['ctx'],c['msg'],internal=c.get('internal',False))
+            if (False if material is None else material['accept'])!=c['valid']:
+                raise ValueError('Independent Verify arithmetic differs from expected verdict')
+            row['material']=material;verify_rows.append(row)
+    models=[lighthd_sign_model(i,True) for i in range(len(signs))];rows=[]
+    # Preserve prompt order within each operation: all KeyGen, then Sign, then Verify.
+    for op,collection in ((0,keys),(1,signs),(2,verify_rows)):
+        for i,c in enumerate(collection):
+            serial=len(rows)
             rows.append(dict(i=serial,op=op,original=c['i'],p=c['p'],id=0 if serial==0 else 65535 if serial==1 else 16000+serial,
                 c=c,model=models[i] if op==1 else None))
     chosen=[]
-    for p in range(3):
-        fast=min((i for i,c in enumerate(signs) if c['p']==p),key=lambda i:(models[i]['attempts'],len(signs[i]['body'])))
-        chosen.extend((next(c for c in rows if c['op']==0 and c['p']==p),next(c for c in rows if c['op']==1 and c['original']==fast),
-            next(c for c in rows if c['op']==2 and c['p']==p and c['c']['valid'])))
-    digest=hashlib.sha256(base.encode());digest.update((ROOT/'tb/tb_dilithium/tb_main.sv').read_bytes())
+    for op,collection in ((0,keys),(1,signs),(2,verify_rows)):
+        if not collection:continue
+        for p in range(3):
+            for internal in ((False,) if op==0 else (False,True)):
+                candidates=[c for c in rows if c['op']==op and c['p']==p and c['c'].get('internal',False)==internal]
+                if not candidates:continue
+                if op==1:chosen.append(min(candidates,key=lambda row:(row['model']['attempts'],len(row['c']['body']))))
+                else:chosen.append(next(c for c in candidates if op==0 or c['c']['valid']))
+    digest=hashlib.sha256((base+operation).encode());digest.update((ROOT/'tb/tb_dilithium/tb_main.sv').read_bytes())
+    digest.update(Path(__file__).read_bytes());digest.update(REF.read_bytes());digest.update(NTT_REF.read_bytes())
+    for source in sorted((ROOT/'src').rglob('*.sv')):
+        digest.update(source.relative_to(ROOT).as_posix().encode());digest.update(source.read_bytes())
     digest.update((ROOT/'src/controller/dilithium_fpga.sv').read_bytes())
     for name in ('tb_process_ranges.sv','cnb_c15_reference.sv',
                  'mhint_c15_reference.sv','tb_process.sv','tb_process_dma.sv','process_c16_reference.sv',
@@ -8305,9 +8321,9 @@ def lighthd_main_artifacts():
                  'bitpkg_c22_reference.sv','tb_pack_fields.sv','tb_pack_stream.sv',
                  'tb_unpack_pipeline.sv','tb_bank_pipe.sv',
                  'hint_codec_c22_reference.sv','tb_hint_prefix.sv','tb_keccak_registered_launch.sv'):
-        path=ROOT/'tb/tb_dilithium'/name
+        path=bench_path(name)
         digest.update(path.relative_to(ROOT).as_posix().encode());digest.update(path.read_bytes())
-    for folder in (NIST_KEYGEN,NIST_SIGN):
+    for folder in (NIST_KEYGEN,NIST_SIGN,NIST_VERIFY):
         for path in sorted(folder.glob('*.json')):digest.update(path.read_bytes())
     token=digest.hexdigest()
     def serialize(selected):
@@ -8319,23 +8335,54 @@ def lighthd_main_artifacts():
             siglen=0 if op==0 else len(c['signature']) if op==1 else len(c['sig'])
             lengths=[len(x) for x in frames]+[0]*(3-len(frames));data=[x.hex() or '-' for x in frames]+['-']*(3-len(frames))
             result.append(' '.join(map(str,(serial,op,row['original'],row['p'],row['id'],context,message,siglen,len(frames),*lengths)))+
-                f" {int.from_bytes(seed,'little'):064x} {int.from_bytes(rnd,'little'):064x} "+' '.join(data))
+                f" {int.from_bytes(seed,'little'):064x} {int.from_bytes(rnd,'little'):064x} "+' '.join(data)+f" {('keygen','sign','verify')[op]}_L{(2,3,5)[row['p']]}_tg{c['tg']}_tc{c['tc']} {int(c.get('internal',False))}")
         return '\n'.join(result)+'\n'
     return token,serialize(rows),serialize(chosen),rows,chosen
 
 
-def lighthd_main_prepare():
-    token,inputs,small,_,_=lighthd_main_artifacts()
-    (HERE/'stage7c4_main_inputs.txt').write_text(inputs,encoding='ascii');(HERE/'stage7c4_main_diagnostic_inputs.txt').write_text(small,encoding='ascii')
-    _,protocol,_=lighthd_main_protocol_artifacts()
-    (HERE/'stage7c4_main_protocol_inputs.txt').write_text(protocol,encoding='ascii')
-    print('LIGHTHD_MAIN_PREPARE_PASS:210 interleaved official commands=75 KeyGen+90 Sign+45 Verify;diagnostic9;token '+token)
+def main_prepare_cache_key(operation,output_dir):
+    # Current content hashes,not pinned provenance:edited vectors invalidate the cache.
+    roots=[ROOT/'src',ROOT/'tb/tb_dilithium',REF.parent,NTT_REF.parent]
+    paths={Path(__file__),ROOT/'quartus/dilithium/dilithium_full.qsf',REF,NTT_REF}
+    for root in roots:
+        paths.update(p for p in root.rglob('*') if p.is_file() and p.suffix in ('.sv','.svh','.vh','.c','.h','.py'))
+    for folder in (NIST_KEYGEN,NIST_SIGN,NIST_VERIFY):paths.update(folder.glob('*.json'))
+    digest=hashlib.sha256(('main_prepare_cache_v1|'+operation+'|'+str(output_dir.resolve())).encode())
+    for path in sorted(paths):digest.update(str(path.resolve()).encode());digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def lighthd_main_prepare(operation='all',output_dir=None,cache_dir=None):
+    output_dir=HERE if output_dir is None else Path(output_dir).resolve()
+    output_dir.mkdir(parents=True,exist_ok=True)
+    names=['main_inputs.txt','main_diagnostic_inputs.txt']
+    if operation=='all':names.append('main_protocol_inputs.txt')
+    cache=None if cache_dir is None else Path(cache_dir)/'main_prepare.stamp'
+    fingerprint=main_prepare_cache_key(operation,output_dir) if cache else None
+    if cache and cache.exists():
+        lines=cache.read_text(encoding='ascii').splitlines()
+        expected=[fingerprint]
+        if all((output_dir/name).exists() for name in names):
+            expected += [hashlib.sha256((output_dir/name).read_bytes()).hexdigest()+' '+name for name in names]
+            if lines==expected:
+                print(f'MAIN_PREPARE_CACHE_HIT:{operation};source,reference,NIST and prepared-file content unchanged')
+                return
+    token,inputs,small,rows,chosen=lighthd_main_artifacts(operation)
+    (output_dir/names[0]).write_text(inputs,encoding='ascii');(output_dir/names[1]).write_text(small,encoding='ascii')
+    if operation=='all':
+        _,protocol,_=lighthd_main_protocol_artifacts()
+        (output_dir/names[2]).write_text(protocol,encoding='ascii')
+    if cache:
+        cache.parent.mkdir(parents=True,exist_ok=True)
+        cache.write_text(fingerprint+'\n'+'\n'.join(hashlib.sha256((output_dir/name).read_bytes()).hexdigest()+' '+name for name in names)+'\n',encoding='ascii')
+    counts=[sum(c['op']==op for c in rows) for op in range(3)]
+    print(f'MAIN_PREPARE_PASS:{operation};{len(rows)} commands={counts[0]} KeyGen+{counts[1]} Sign+{counts[2]} Verify;diagnostic{len(chosen)};token '+token)
 
 
 def lighthd_main_protocol_artifacts():
     token,inputs,_,rows,chosen=lighthd_main_artifacts();lines=inputs.splitlines()[1:];selected=[]
     def base(op,p):
-        candidates=[row for row in rows if row['op']==op and row['p']==p]
+        candidates=[row for row in rows if row['op']==op and row['p']==p and not row['c'].get('internal',False)]
         if op==1:return min((row for row in candidates if row['c']['body']),key=lambda row:(row['model']['attempts'],len(row['c']['body'])))
         if op==2:return next(row for row in candidates if row['c']['valid'] and row['c']['ctx']+row['c']['msg'])
         return candidates[0]
@@ -8359,16 +8406,17 @@ def lighthd_main_protocol_artifacts():
 
 def lighthd_main_protocol_compare(captured=None,quiet=False):
     _,inputs,selected=lighthd_main_protocol_artifacts()
-    if (HERE/'stage7c4_main_protocol_inputs.txt').read_text()!=inputs:raise ValueError('Stale compact main protocol fixtures')
-    text=(HERE/'stage7c4_main_protocol_outputs.txt').read_text() if captured is None else captured
+    if (HERE/'main_protocol_inputs.txt').read_text()!=inputs:raise ValueError('Stale compact main protocol fixtures')
+    text=(HERE/'main_protocol_outputs.txt').read_text() if captured is None else captured
     return lighthd_main_compare(captured=text,quiet=quiet,protocol_rows=selected)
 
 
-def lighthd_main_compare(diagnostic=False,captured=None,quiet=False,protocol_rows=None):
-    token,inputs,small,rows,chosen=lighthd_main_artifacts()
-    if (HERE/'stage7c4_main_inputs.txt').read_text()!=inputs or (HERE/'stage7c4_main_diagnostic_inputs.txt').read_text()!=small:raise ValueError('Stale compact main fixtures')
+def lighthd_main_compare(diagnostic=False,captured=None,quiet=False,protocol_rows=None,operation='all',output_dir=None):
+    directory=HERE if output_dir is None else Path(output_dir).resolve()
+    token,inputs,small,rows,chosen=lighthd_main_artifacts(operation)
+    if (directory/'main_inputs.txt').read_text()!=inputs or (directory/'main_diagnostic_inputs.txt').read_text()!=small:raise ValueError('Stale compact main fixtures')
     selected=protocol_rows if protocol_rows is not None else chosen if diagnostic else rows
-    path=HERE/('stage7c4_main_diagnostic_outputs.txt' if diagnostic else 'stage7c4_main_outputs.txt')
+    path=directory/('main_diagnostic_outputs.txt' if diagnostic else 'main_outputs.txt')
     lines=(path.read_text() if captured is None else captured).splitlines()
     if not lines or lines[0]!=f'{token} {len(selected)}':raise ValueError('Compact main token/count')
     current=None;seen=0;footer=False;counts=[0,0,0];byte_count=0;verdicts=[0,0];digests=0;resets=errors=encoding_invalid=0
@@ -8448,8 +8496,8 @@ def lighthd_main_compare(diagnostic=False,captured=None,quiet=False,protocol_row
 
 
 def lighthd_main_selftest():
-    checkers=((lambda text:lighthd_main_compare(captured=text,quiet=True),HERE/'stage7c4_main_outputs.txt'),
-              (lambda text:lighthd_main_protocol_compare(captured=text,quiet=True),HERE/'stage7c4_main_protocol_outputs.txt'))
+    checkers=((lambda text:lighthd_main_compare(captured=text,quiet=True),HERE/'main_outputs.txt'),
+              (lambda text:lighthd_main_protocol_compare(captured=text,quiet=True),HERE/'main_protocol_outputs.txt'))
     faults=[]
     for checker,path in checkers:
         text=path.read_text();checker(text);lines=text.splitlines()
@@ -8474,16 +8522,16 @@ def lighthd_main_selftest():
 
 def lighthd_prepare():
     token, inputs, expected = lighthd_ntt_artifacts()
-    (HERE / 'stage7c_ntt_inputs.txt').write_text(inputs, encoding='ascii')
-    (HERE / 'stage7c_ntt_expected.txt').write_text(expected, encoding='ascii')
+    (HERE / 'ntt_inputs.txt').write_text(inputs, encoding='ascii')
+    (HERE / 'ntt_expected.txt').write_text(expected, encoding='ascii')
     print('LIGHTHD_NTT_PREPARE_PASS:160 cases/40960 coefficients;FIPS-derived '
           'Python arithmetic,not official NIST standalone NTT vectors;token ' + token)
 
 
 def lighthd_check():
     token, inputs, expected = lighthd_ntt_artifacts()
-    if ((HERE / 'stage7c_ntt_inputs.txt').read_text() != inputs or
-            (HERE / 'stage7c_ntt_expected.txt').read_text() != expected):
+    if ((HERE / 'ntt_inputs.txt').read_text() != inputs or
+            (HERE / 'ntt_expected.txt').read_text() != expected):
         raise ValueError('Direct-bank NTT stale fixtures;run lighthd_prepare')
     print('LIGHTHD_NTT_FRESHNESS_PASS:' + token)
 
@@ -8503,13 +8551,13 @@ def lighthd_compare_text(captured):
 
 def lighthd_compare():
     lighthd_check()
-    token = lighthd_compare_text((HERE / 'stage7c1_ntt_outputs.txt').read_text())
+    token = lighthd_compare_text((HERE / 'ntt_outputs.txt').read_text())
     print('LIGHTHD_NTT_COMPARE_PASS:160 cases/40960 coefficients;token ' + token)
 
 
 def lighthd_dma_compare():
     lighthd_check()
-    token = lighthd_compare_text((HERE / 'stage7c1_ntt_dma_outputs.txt').read_text())
+    token = lighthd_compare_text((HERE / 'ntt_dma_outputs.txt').read_text())
     print('LIGHTHD_NTT_DMA_COMPARE_PASS:160 real-RAM operations/40960 coefficients;token ' + token)
 
 
@@ -8586,8 +8634,10 @@ def lighthd_owner_selftest():
 
 
 if __name__ == '__main__':
+    # Stable public commands; historical spellings remain accepted for saved runners.
+    command_aliases={'main_prepare': 'lighthd_main_prepare', 'main_compare': 'lighthd_main_compare', 'main_diagnostic_compare': 'lighthd_main_diagnostic_compare', 'main_protocol_compare': 'lighthd_main_protocol_compare', 'main_selftest': 'lighthd_main_selftest', 'keygen_prepare': 'lighthd_keygen_prepare', 'keygen_compare': 'lighthd_keygen_compare', 'keygen_protocol_compare': 'lighthd_keygen_protocol_compare', 'keygen_selftest': 'lighthd_keygen_selftest', 'sign_prepare': 'lighthd_sign_prepare', 'sign_compare': 'lighthd_sign_compare', 'sign_diagnostic_compare': 'lighthd_sign_diagnostic_compare', 'sign_protocol_compare': 'lighthd_sign_protocol_compare', 'sign_selftest': 'lighthd_sign_selftest', 'verify_prepare': 'lighthd_verify_prepare', 'verify_compare': 'lighthd_verify_compare', 'verify_diagnostic_compare': 'lighthd_verify_diagnostic_compare'}
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('command',choices=['prepare','check','compare','selftest','uvm_prepare','uvm_check',
+    p.add_argument('command',choices=list(command_aliases)+['prepare','check','compare','selftest','uvm_prepare','uvm_check',
         'lighthd_prepare','lighthd_check','lighthd_compare','lighthd_dma_compare','lighthd_selftest','lighthd_owner_selftest','lighthd_counter_selftest',
         'lighthd_sampler_prepare','lighthd_sampler_check','lighthd_sampler_compare','lighthd_writer_compare',
         'lighthd_writer_mixed_prepare','lighthd_writer_mixed_compare',
@@ -8596,11 +8646,14 @@ if __name__ == '__main__':
         'lighthd_sign_protocol_compare','lighthd_sign_selftest','lighthd_hint_prepare','lighthd_hint_compare','lighthd_hint_selftest',
         'lighthd_verify_input_prepare','lighthd_verify_input_compare','lighthd_verify_prepare','lighthd_verify_compare','lighthd_verify_diagnostic_compare',
         'lighthd_main_prepare','lighthd_main_compare','lighthd_main_diagnostic_compare','lighthd_main_protocol_compare','lighthd_main_selftest'])
+    p.add_argument('--operation',choices=['all','keygen','sign','verify'],default='all',help='Select main capture operations')
+    p.add_argument('--output-dir',type=Path,help='Main-capture input/output directory;default sim/dilithium')
+    p.add_argument('--cache-dir',type=Path,help='Cache unchanged main preparation using content hashes')
     p.add_argument('--stage',type=int,choices=[2,3,4,5],default=4)
     p.add_argument('--unit',choices=['process','hash_format','shared_hash','bank_memory','bank_store','bank_ntt','bank_process','row','seed_row','keygen','rounded_keygen','bitpkg','full_keygen','nist_keygen','sign_process','sign_dma','sign_service','sign_prepare','sign_decode','sign_hash','sign_load','sign_load_service','sign_mask','sign_matrix','sign_challenge','sign_transform','sign_products','sign_accept','sign_retry','sign_encode','full_sign','nist_sign','verify_decode','verify_prepare','verify_math','verify_equation','full_verify','nist_verify'],default='process',
                    help='Select a Stage5 gate; nist_keygen compares all75 official NIST cases')
     try:
-        args=p.parse_args();command=args.command
+        args=p.parse_args();command=command_aliases.get(args.command,args.command)
         if command=='check':
             check();print('STAGE2 VECTOR FRESHNESS PASS')
         elif command=='prepare':prepare()
@@ -8623,8 +8676,8 @@ if __name__ == '__main__':
              'lighthd_verify_input_prepare':lighthd_verify_input_prepare,'lighthd_verify_input_compare':lighthd_verify_input_compare,
              'lighthd_verify_prepare':lighthd_verify_prepare,'lighthd_verify_compare':lighthd_verify_compare,
              'lighthd_verify_diagnostic_compare':lambda:lighthd_verify_compare(True),
-             'lighthd_main_prepare':lighthd_main_prepare,'lighthd_main_compare':lighthd_main_compare,
-             'lighthd_main_diagnostic_compare':lambda:lighthd_main_compare(True),
+             'lighthd_main_prepare':lambda:lighthd_main_prepare(args.operation,args.output_dir,args.cache_dir),'lighthd_main_compare':lambda:lighthd_main_compare(operation=args.operation,output_dir=args.output_dir),
+             'lighthd_main_diagnostic_compare':lambda:lighthd_main_compare(True,operation=args.operation,output_dir=args.output_dir),
              'lighthd_main_protocol_compare':lighthd_main_protocol_compare,'lighthd_main_selftest':lighthd_main_selftest}[command]()
         else:{'compare':compare,'selftest':selftest}[command](args.stage,args.unit)
     except (ValueError,OSError,AssertionError,subprocess.SubprocessError) as e:

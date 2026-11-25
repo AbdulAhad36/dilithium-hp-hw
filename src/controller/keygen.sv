@@ -2,7 +2,7 @@
 // No64-region allocator,leases or per-helper copied contexts. One A ring,
 // one row accumulator,and early secret Pre-NTT overlap with the sampler.
 `default_nettype none
-module keygen (
+module keygen #(parameter bit PIPELINE_INPUT=0,parameter bit LOCAL_CONTROL=0) (
   input wire logic clk,rst,start_valid_i,output logic start_ready_o,
   input wire logic [1:0] start_param_i,input wire logic [15:0] start_id_i,
   input wire logic [255:0] start_seed_i,
@@ -14,7 +14,7 @@ module keygen (
   output logic [2:0] done_code_o,output logic [15:0] done_id_o,output logic fault_o
 );
   import dilithium_pkg::*;
-  typedef enum logic [5:0] {IDLE,SEED_CMD,SEED_FEED,SEED_WAIT,S1_READY,S1_CMD,S1_RUN,
+  typedef enum logic  [5:0] {IDLE,SEED_CMD,SEED_FEED,SEED_WAIT,S1_READY,S1_CMD,S1_RUN,
     TERM_READY,TERM_CMD,TERM_RUN,INV_CMD,INV_RUN,ADD_READY,ADD_CMD,ADD_RUN,ROUND_CMD,ROUND_RUN,
     PK_MEM_CMD,PK_HASH_CMD,PK_HEADER,PK_BODY,PK_DRAIN,SK_HEADER,SK_FIELD_CMD,SK_FIELD_STREAM,REPORT,HALT} state_e;
   typedef enum logic [1:0] {P_IDLE,P_CMD,P_FEED,P_WAIT} producer_e;
@@ -45,6 +45,52 @@ module keygen (
   logic [15:0] sample_nonce;
   logic [1:0] sample_bank;
   logic [9:0] sample_base;
+  logic raw_source_valid,raw_source_ready,sample_source_valid,sample_source_ready;
+  logic [63:0] raw_source_data,sample_source_data;
+  logic [63:0] input_stage_data_r;
+  logic input_stage_raw_r,input_stage_valid_r,input_stage_room,input_stage_push,input_stage_pop;
+  // One shared66-bit input boundary for the two mutually framed hash sources.
+  // The engine retains message/core ownership from command acceptance until
+  // its actual final input beat,so a buffered tail cannot enter the next job.
+  generate if(PIPELINE_INPUT)begin:g_message_stage
+    assign input_stage_pop=input_stage_valid_r &&
+      (input_stage_raw_r?service_i.raw.input_ready:service_i.sample.input_ready);
+    assign input_stage_room=!rst && state!=IDLE && state!=REPORT && state!=HALT &&
+      (!input_stage_valid_r || input_stage_pop);
+    assign raw_source_ready=input_stage_room;
+    assign sample_source_ready=input_stage_room && !raw_source_valid;
+    assign input_stage_push=input_stage_room && (raw_source_valid || sample_source_valid);
+    always_ff @(posedge clk or posedge rst)begin
+      if(rst)input_stage_valid_r<=0;
+      else if(state==IDLE || state==REPORT || state==HALT)input_stage_valid_r<=0;
+      else case({input_stage_push,input_stage_pop})
+        2'b10:input_stage_valid_r<=1;
+        2'b01:input_stage_valid_r<=0;
+        default:begin end
+      endcase
+    end
+    always_ff @(posedge clk)if(input_stage_push)begin
+      input_stage_data_r<=raw_source_valid?raw_source_data:sample_source_data;
+      input_stage_raw_r<=raw_source_valid;
+    end
+    // synthesis translate_off
+    logic held;logic [64:0] held_word;
+    always @(posedge clk)begin
+      if(rst || state==IDLE || state==REPORT || state==HALT)held<=0;
+      else begin
+        if(held && (!input_stage_valid_r || {input_stage_raw_r,input_stage_data_r}!==held_word))
+          $fatal(1,"KeyGen staged message changed while stalled");
+        held<=input_stage_valid_r && !input_stage_pop;
+        held_word<={input_stage_raw_r,input_stage_data_r};
+      end
+    end
+    // synthesis translate_on
+  end else begin:g_direct_input
+    assign raw_source_ready=service_i.raw.input_ready;
+    assign sample_source_ready=service_i.sample.input_ready;
+    assign input_stage_data_r=0;assign input_stage_valid_r=0;assign input_stage_raw_r=0;
+  end endgenerate
+
   function automatic logic [9:0] public_words(input logic [3:0] k);
     return 10'd4+{1'b0,k,5'b0}+{3'b0,k,3'b0};
   endfunction
@@ -81,6 +127,28 @@ module keygen (
   function automatic descriptor_t matrix_descriptor(input int row,column,slot);
     descriptor_t d;d='0;d.kind=1;d.row=4'(row);d.column=4'(column);d.slot=4'(slot);return d;
   endfunction
+  logic [1:0][15:0] expected_sample_id_r;
+  logic [1:0] expected_sample_valid_r,sample_match,sample_event_mask_r;
+  logic sample_take,sample_event_r,sample_bad;
+  assign sample_take=service_i.sample.done_valid && service_o.sample.done_ready;
+  assign sample_bad=service_i.sample.done_code!=0 || sample_match==0 || sample_match==3 ||
+    |(sample_match & batch_done_r) || (sample_event_r && |(sample_match & sample_event_mask_r));
+  genvar completion_slot;
+  generate for(completion_slot=0;completion_slot<2;completion_slot=completion_slot+1)begin:g_completion_match
+    assign sample_match[completion_slot]=expected_sample_valid_r[completion_slot] &&
+      completion_slot<int'(batch_size_r) && service_i.sample.done_id==expected_sample_id_r[completion_slot];
+  end endgenerate
+  always_ff @(posedge clk or posedge rst)begin
+    if(rst)begin expected_sample_id_r<=0;expected_sample_valid_r<=0;sample_event_r<=0;sample_event_mask_r<=0;end
+    else begin
+      sample_event_r<=LOCAL_CONTROL && sample_take && !sample_bad;
+      if(sample_take)sample_event_mask_r<=sample_match;
+      if(producer==P_IDLE)expected_sample_valid_r<=0;
+      if(producer==P_CMD && service_i.sample.ready)begin
+        expected_sample_id_r[selected_r]<=service_o.sample.id;expected_sample_valid_r[selected_r]<=1;
+      end
+    end
+  end
   assign current=descriptor_r[selected_r];
   assign sample_id=descriptor_id(current,id_r,l_r);
   assign sample_nonce=current.kind==2?16'(l_r)+16'(current.index):16'(current.index);
@@ -107,8 +175,15 @@ module keygen (
   assign material_word=material_r[64*material_read_word+:64];
   assign material_write_word=state<=SEED_WAIT?raw_count_r[2:0]:3'd2+{1'b0,tr_count_r[1:0]};
   assign source_data=state==PK_HEADER?material_word:service_i.bank.read_data[0][3][63:0];
-  assign source_ready=(host_sent_r || key_ready_i) && (hash_sent_r || service_i.raw.input_ready);
+  assign source_ready=(host_sent_r || key_ready_i) && (hash_sent_r || raw_source_ready);
   assign source_fire=source_valid && source_ready;
+  assign raw_source_valid=state==SEED_FEED || (source_valid && !hash_sent_r);
+  assign sample_source_valid=producer==P_FEED;
+  assign raw_source_data=state==SEED_FEED?
+    (seed_word_r==4?{48'd0,4'd0,l_r,4'd0,k_r}:material_word):source_data;
+  assign sample_source_data=current.kind==1?
+    (sample_word_r==4?{48'd0,4'd0,current.row,4'd0,current.column}:material_word):
+    (sample_word_r==8?{48'd0,sample_nonce}:material_word);
   always_comb begin
     service_o='0;key_valid_o=0;key_data_o=0;
     service_o.sample.valid=producer==P_CMD;
@@ -116,18 +191,15 @@ module keygen (
     service_o.sample.mode=current.kind==1?0:1;service_o.sample.param=level_r;
     service_o.sample.bank=sample_bank;service_o.sample.base=sample_base;service_o.sample.id=sample_id;
     service_o.sample.message_len=current.kind==1?34:66;
-    service_o.sample.input_valid=producer==P_FEED;
-    service_o.sample.input_data=current.kind==1?
-      (sample_word_r==4?{48'd0,4'd0,current.row,4'd0,current.column}:material_word):
-      (sample_word_r==8?{48'd0,sample_nonce}:material_word);
+    service_o.sample.input_valid=PIPELINE_INPUT?(input_stage_valid_r && !input_stage_raw_r):sample_source_valid;
+    service_o.sample.input_data=PIPELINE_INPUT?input_stage_data_r:sample_source_data;
     service_o.sample.done_ready=producer!=P_IDLE;
     service_o.raw.mode=1;service_o.raw.id=state<=SEED_WAIT?id_r:id_r+16'd1024;
     service_o.raw.message_len=state<=SEED_WAIT?34:16'(pk_words)*16'd8;
     service_o.raw.output_len=state<=SEED_WAIT?128:64;
     service_o.raw.valid=state==SEED_CMD || state==PK_HASH_CMD;
-    service_o.raw.input_valid=state==SEED_FEED || (source_valid && !hash_sent_r);
-    service_o.raw.input_data=state==SEED_FEED?
-      (seed_word_r==4?{48'd0,4'd0,l_r,4'd0,k_r}:material_word):source_data;
+    service_o.raw.input_valid=PIPELINE_INPUT?(input_stage_valid_r && input_stage_raw_r):raw_source_valid;
+    service_o.raw.input_data=PIPELINE_INPUT?input_stage_data_r:raw_source_data;
     // IDLE is not a raw-hash owner. Other operations share this response bus.
     service_o.raw.output_ready=state>=SEED_CMD && state<=SEED_WAIT?raw_count_r<8:state>=PK_HASH_CMD && state<=PK_DRAIN && tr_count_r<4;
     service_o.raw.done_ready=state==SEED_WAIT?raw_count_r==8:
@@ -172,7 +244,7 @@ module keygen (
   end
   always_ff @(posedge clk or posedge rst)begin
     if(rst)material_r<=0;
-    else if(state==IDLE && start_valid_i)material_r[255:0]<=start_seed_i;
+    else if(state==IDLE && (LOCAL_CONTROL || start_valid_i))material_r[255:0]<=start_seed_i;
     else if(service_i.raw.output_valid && service_o.raw.output_ready &&
       service_i.raw.output_id==service_o.raw.id && service_i.raw.output_bytes==16)
       material_r[128*material_write_word+:128]<=service_i.raw.output_data;
@@ -194,7 +266,7 @@ module keygen (
       if(source_fire)begin host_sent_r<=0;hash_sent_r<=0;end
       else if(source_valid)begin
         if(key_valid_o && key_ready_i)host_sent_r<=1;
-        if(service_o.raw.input_valid && service_i.raw.input_ready)hash_sent_r<=1;
+        if(raw_source_valid && raw_source_ready)hash_sent_r<=1;
       end
       if(service_i.raw.output_valid && service_o.raw.output_ready)begin
         if(service_i.raw.output_id!=service_o.raw.id || service_i.raw.output_bytes!=16)begin fault_o<=1;state<=HALT;done_code_o<=2;end
@@ -241,7 +313,7 @@ module keygen (
           end
         end
         P_CMD:if(service_i.sample.ready)begin sample_word_r<=0;producer<=P_FEED;end
-        P_FEED:if(service_i.sample.input_ready)begin
+        P_FEED:if(sample_source_ready)begin
           if(sample_word_r==(current.kind==1?4:8))begin
             if(selected_r+2'd1==batch_size_r)producer<=P_WAIT;
             else begin selected_r<=1;producer<=P_CMD;end
@@ -250,9 +322,10 @@ module keygen (
         P_WAIT:if(batch_done_r==(batch_size_r==1?1:3))producer<=P_IDLE;
         default:producer<=P_IDLE;
       endcase
-      if(service_i.sample.done_valid && service_o.sample.done_ready)begin
+      if(LOCAL_CONTROL?sample_event_r:sample_take)begin
         logic matched;matched=0;
-        for(int i=0;i<2;i++)if(i<int'(batch_size_r) && descriptor_matches(descriptor_r[i],id_r,service_i.sample.done_id,l_r) && !batch_done_r[i])begin
+        for(int i=0;i<2;i++)if((LOCAL_CONTROL?sample_event_mask_r[i]:
+          (i<int'(batch_size_r) && descriptor_matches(descriptor_r[i],id_r,service_i.sample.done_id,l_r))) && !batch_done_r[i])begin
           matched=1;batch_done_r[i]<=1;
           case(descriptor_r[i].kind)
             0:s1_ready_r[descriptor_r[i].index]<=1;
@@ -260,8 +333,9 @@ module keygen (
             2:s2_ready_r[descriptor_r[i].index]<=1;
           endcase
         end
-        if(!matched || service_i.sample.done_code!=0)begin fault_o<=1;state<=HALT;done_code_o<=2;end
+        if(!matched || (!LOCAL_CONTROL && service_i.sample.done_code!=0))begin fault_o<=1;state<=HALT;done_code_o<=2;end
       end
+      if(LOCAL_CONTROL && sample_take && sample_bad)begin fault_o<=1;done_code_o<=2;end
       case(state)
         IDLE:if(start_valid_i)begin
           level_r<=start_param_i;id_r<=start_id_i;k_r<=rows(start_param_i);l_r<=columns(start_param_i);
@@ -270,11 +344,11 @@ module keygen (
           done_code_o<=start_param_i==3?1:0;state<=start_param_i==3?REPORT:SEED_CMD;
           producer<=P_IDLE;s1_next_r<=0;s2_next_r<=0;a_row_r<=0;a_column_r<=0;a_write_r<=0;a_read_r<=0;
           transform_r<=0;row_r<=0;column_r<=0;s1_ready_r<=0;s2_ready_r<=0;a_ready_r<=0;a_reserved_r<=0;
-          s1_credit_r<=0;secret_phase_r<=1;released_prev_r<=0;raw_count_r<=0;seed_word_r<=0;key_index_o<=0;
+          s1_credit_r<=0;secret_phase_r<=1;released_prev_r<=0;rawkeccak_sampler_count_r<=0;seed_word_r<=0;key_index_o<=0;
           tr_count_r<=0;hash_retired_r<=0;bank_retired_r<=0;host_sent_r<=0;hash_sent_r<=0;section_r<=0;
         end
         SEED_CMD:if(service_i.raw.ready)state<=SEED_FEED;
-        SEED_FEED:if(service_i.raw.input_ready)begin
+        SEED_FEED:if(raw_source_ready)begin
           if(seed_word_r==4)state<=SEED_WAIT;else seed_word_r<=seed_word_r+1'b1;
         end
         SEED_WAIT:if(service_i.raw.done_valid && service_o.raw.done_ready)state<=S1_READY;
@@ -330,6 +404,7 @@ module keygen (
         (service_i.poly_process.done_valid && service_o.poly_process.done_ready && service_i.poly_process.done_code!=0)))begin
         fault_o<=1;done_code_o<=2;state<=HALT;
       end
+      if(fault_o)state<=HALT;
     end
   end
 endmodule

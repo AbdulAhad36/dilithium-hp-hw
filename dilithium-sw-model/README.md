@@ -4,6 +4,10 @@
 
 This repository contains the official reference implementation of the [Dilithium](https://www.pq-crystals.org/dilithium/) signature scheme, and an optimized implementation for x86 CPUs supporting the AVX2 instruction set. Dilithium is standardized as [FIPS 204](https://csrc.nist.gov/pubs/fips/204/final).
 
+## File-based golden model
+
+For explicit inputs, stored NIST comparisons, full keys/signatures and actual matrix dumps at levels 2/3/5, see [golden/README.md](golden/README.md). The adapter keeps the reference algorithms unchanged.
+
 ## Build instructions
 
 The implementations contain several test and benchmarking programs and a Makefile to facilitate compilation.

@@ -3,7 +3,8 @@
 // addresses/counters. Low writes and packed-high consumption have independent
 // credits,so backpressure never duplicates a word or couples bank ownership.
 `default_nettype none
-module process_dma #(parameter bit SHARED_HINT=0) (
+module process_dma #(parameter bit SHARED_HINT=0,parameter bit PIPELINE_PACK=0,
+  parameter bit PIPELINE_OPERANDS=0,parameter bit PIPELINE_RESULTS=0) (
   input wire logic clk,rst,command_valid_i,output logic command_ready_o,
   input var dilithium_pkg::process_op_e command_op_i,
   input wire logic [1:0] command_param_i,command_kind_i,
@@ -51,6 +52,19 @@ module process_dma #(parameter bit SHARED_HINT=0) (
   logic [1:0] sent_r;
   logic pack_sent_r,pack_finished_r,low_sent_r,high_sent_r,hint_sent_r;
   logic bad_command,available,all_commands,all_done;
+  logic packed_base_bad;
+  // Compare the base against each CONSTANT bound in parallel. Operation
+  // selection follows those comparisons instead of preceding an 11-bit add.
+  // Equality at base+words==1024 remains legal;no command/pipeline clocks added.
+  assign packed_base_bad=command_op_i==PROC_P2R?(command_h_base_i>10'd984):
+    command_op_i==PROC_PACK?
+      command_pack_op_i==0?(command_h_base_i>10'd984):
+      command_pack_op_i==1?(command_h_base_i>10'd972):
+      command_pack_op_i==2?(command_param_i==1?(command_h_base_i>10'd1008):(command_h_base_i>10'd1012)):
+      command_pack_op_i==3?(command_param_i==0?(command_h_base_i>10'd1000):(command_h_base_i>10'd1008)):
+      (command_param_i==0?(command_h_base_i>10'd952):(command_h_base_i>10'd944)):
+    command_param_i==0?(command_h_base_i>10'd1000):(command_h_base_i>10'd1008);
+
   logic a_busy_a,a_busy_b,a_accepted,b_busy_a,b_busy_b,b_accepted;
   logic [1:0] selected_bank[4];logic [9:0] selected_base[4];
   logic [6:0] consumed_r,produced_r;
@@ -64,10 +78,27 @@ module process_dma #(parameter bit SHARED_HINT=0) (
   logic [91:0] operand_a_r,operand_b_r;
   logic [6:0] operand_tag_r;
   logic [3:0][22:0] process_a,process_b,result_data,pack_data;
-  logic [3:0][9:0] result_high;
+  logic operand_feed_valid;
+  logic [3:0][22:0] operand_feed_a,operand_feed_b;
+  logic [6:0] operand_feed_tag;
+  logic [3:0][9:0] arithmetic_high;
   logic [3:0] result_reject,result_hint;
   logic [2:0] result_weight;
   logic [7:0] result_tag;
+  typedef struct packed {
+    logic [3:0][22:0] data;
+    logic [3:0] reject,hint;
+    logic [2:0] weight;
+    logic [7:0] tag;
+    logic error;
+  } process_result_t;
+  typedef struct packed {
+    process_result_t result;
+    logic [3:0][22:0] pack_fields;
+  } queued_result_t;
+  process_result_t arithmetic_result,result_head;
+  logic [3:0][22:0] selected_pack_fields;
+  logic arithmetic_valid,arithmetic_ready;
   logic pack_command,pack_command_ready,pack_input_valid,pack_input_ready,pack_output_valid,pack_output_ready,pack_done;
   logic [63:0] packed_data;logic [3:0] packed_bytes;
   logic [6:0] packed_index;logic packed_last;logic [2:0] packed_code;
@@ -77,7 +108,7 @@ module process_dma #(parameter bit SHARED_HINT=0) (
   assign hint_consumer_ready=SHARED_HINT?
     (hint_encode_i.feed_enable && codec_hint_ready):hint_ready_i;
   generate if(SHARED_HINT)begin:shared_hint
-    hint_codec codec(
+    hint_codec #(.PIPELINE_APPEND(1),.PREDECODE_HINT(1)) codec(
       .clk(clk),.rst(rst),.idle_o(hint_idle_o),
       .e_cancel_i(hint_encode_i.cancel),.e_command_valid_i(hint_encode_i.valid),
       .e_command_ready_o(hint_encode_o.ready),.e_command_param_i(hint_encode_i.param),.e_command_id_i(hint_encode_i.id),
@@ -150,10 +181,7 @@ module process_dma #(parameter bit SHARED_HINT=0) (
     // Keep all descriptor bounds/format checks;only allocation is replaced.
     for(int s=0;s<4;s++)begin
       if(enabled[s])begin
-        bad_command|=s==3?({1'b0,selected_base[s]}+(command_op_i==PROC_P2R?11'd40:command_op_i==PROC_PACK?
-          command_pack_op_i==0?11'd40:command_pack_op_i==1?11'd52:command_pack_op_i==2?(command_param_i==1?11'd16:11'd12):
-          command_pack_op_i==3?(command_param_i==0?11'd24:11'd16):(command_param_i==0?11'd72:11'd80):
-          command_param_i==0?11'd24:11'd16)>1024):selected_base[s][5:0]!=0;
+        bad_command|=s==3?packed_base_bad:selected_base[s][5:0]!=0;
       end
     end
   end
@@ -189,13 +217,11 @@ module process_dma #(parameter bit SHARED_HINT=0) (
       (!b_enable_r || memory_read_valid_i[port_r[1]][bank_r[1]]);
     operand_ready=operand_count_r<2;
     operand_take=!rst && state==STREAM && consumed_r<64 && available && operand_ready;
-    process_valid=!rst && state==STREAM && operand_valid_r;
     memory_read_ready_o=0;
     if(operand_take)begin
       memory_read_ready_o[port_r[0]][bank_r[0]]=1;
       if(b_enable_r)memory_read_ready_o[port_r[1]][bank_r[1]]=1;
     end
-    for(int lane=0;lane<4;lane++)pack_data[lane]=pack_raw_r?result_data[lane]:23'(result_high[lane]);
     pack_input_valid=result_valid && pack_r && !high_sent_r;
     memory_write_valid_o=0;memory_write_data_o=0;
     if(low_enable_r)begin
@@ -222,13 +248,57 @@ module process_dma #(parameter bit SHARED_HINT=0) (
   assign packed_data_o=packed_data;assign packed_index_o=packed_index;assign packed_last_o=packed_last;
   assign hint_valid_o=result_valid && hint_enable_r && !hint_sent_r;
   assign hint_mask_o=result_hint;assign hint_word_o=result_tag[5:0];assign hint_last_o=result_tag==63;
+  assign {result_data,result_reject,result_hint,result_weight,result_tag,result_error}=result_head;
+  genvar pack_lane;
+  generate for(pack_lane=0;pack_lane<4;pack_lane=pack_lane+1)begin:select_pack_field
+    assign selected_pack_fields[pack_lane]=pack_raw_r?
+      arithmetic_result.data[pack_lane]:23'(arithmetic_high[pack_lane]);
+  end endgenerate
+
+  generate if(PIPELINE_RESULTS)begin:g_result_queue
+    queued_result_t offered,head_r,tail_r;
+    logic [1:0] count_r;
+    logic push_result;
+    // The arithmetic pipeline sees only registered occupancy. The external
+    // sinks may accept their portions independently from the fixed head.
+    assign arithmetic_ready=!rst && count_r<2;
+    assign push_result=arithmetic_valid && arithmetic_ready;
+    assign result_valid=!rst && count_r!=0;
+    assign offered={arithmetic_result,selected_pack_fields};
+    assign result_head=head_r.result;
+    assign pack_data=head_r.pack_fields;
+    always_ff @(posedge clk)begin
+      if(result_fire && count_r==2)head_r<=tail_r;
+      else if(push_result && (count_r==0 || result_fire))head_r<=offered;
+      if(push_result && count_r==1 && !result_fire)tail_r<=offered;
+    end
+    always_ff @(posedge clk or posedge rst)begin
+      if(rst)count_r<=0;
+      else case({push_result,result_fire})
+        2'b10:count_r<=count_r+1'b1;
+        2'b01:count_r<=count_r-1'b1;
+        default:begin end
+      endcase
+    end
+    // synthesis translate_off
+    always @(posedge clk)if(!rst && ((count_r!=0 && state!=STREAM) || count_r>2))
+      $fatal(1,"Process result queue left its active command");
+    // synthesis translate_on
+  end else begin:g_direct_result
+    assign arithmetic_ready=result_ready;
+    assign result_valid=arithmetic_valid;
+    assign result_head=arithmetic_result;
+    assign pack_data=selected_pack_fields;
+  end endgenerate
+
   poly_process process_unit(
     .clk(clk),.rst(rst),.input_valid_i(process_valid),.input_ready_o(process_ready),
-    .input_op_i(op_r),.input_param_i(level_r),.input_kind_i(kind_r),.input_tag_i({1'b0,operand_tag_r}),
-    .input_a_i(process_a),.input_b_i(process_b),.output_valid_o(result_valid),.output_ready_i(result_ready),
-    .output_op_o(),.output_tag_o(result_tag),.output_error_o(result_error),.output_data_o(result_data),
-    .output_high_o(result_high),.output_reject_o(result_reject),.output_hint_o(result_hint),.output_weight_o(result_weight));
-  bitpkg packer(
+    .input_op_i(op_r),.input_param_i(level_r),.input_kind_i(kind_r),.input_tag_i({1'b0,operand_feed_tag}),
+    .input_a_i(operand_feed_a),.input_b_i(operand_feed_b),.output_valid_o(arithmetic_valid),.output_ready_i(arithmetic_ready),
+    .output_op_o(),.output_tag_o(arithmetic_result.tag),.output_error_o(arithmetic_result.error),.output_data_o(arithmetic_result.data),
+    .output_high_o(arithmetic_high),.output_reject_o(arithmetic_result.reject),
+    .output_hint_o(arithmetic_result.hint),.output_weight_o(arithmetic_result.weight));
+  bitpkg #(.PIPELINE_FORMAT(PIPELINE_PACK)) packer(
     .clk(clk),.rst(rst),.command_valid_i(pack_command),.command_ready_o(pack_command_ready),
     .command_op_i(pack_op_r),.command_param_i(level_r),.command_id_i(16'd0),
     .input_valid_i(pack_input_valid),.input_ready_o(pack_input_ready),.input_data_i(pack_data),
@@ -243,7 +313,36 @@ module process_dma #(parameter bit SHARED_HINT=0) (
   assign operand_a_r=operand_a_store_r[operand_read_r];
   assign operand_b_r=operand_b_store_r[operand_read_r];
   assign operand_tag_r={1'b0,operand_tag_store_r[operand_read_r]};
-  assign operand_pop=process_valid && process_ready;
+  assign operand_feed_valid=!rst && state==STREAM && operand_valid_r;
+  generate if(PIPELINE_OPERANDS)begin:g_operand_stage
+    logic valid_r,room;
+    logic [3:0][22:0] a_r,b_r;
+    logic [6:0] tag_r;
+    assign room=!valid_r || process_ready;
+    assign operand_pop=operand_feed_valid && room;
+    assign process_valid=!rst && state==STREAM && valid_r;
+    assign operand_feed_a=a_r;
+    assign operand_feed_b=b_r;
+    assign operand_feed_tag=tag_r;
+    // Keep selection/compact expansion separate from Process arithmetic.
+    // Refill on the same edge as consumption to sustain one group per clock.
+    always_ff @(posedge clk or posedge rst)begin
+      if(rst)valid_r<=0;
+      else if(state!=STREAM)valid_r<=0;
+      else if(room)valid_r<=operand_feed_valid;
+    end
+    always_ff @(posedge clk)if(operand_pop)begin
+      a_r<=process_a;
+      b_r<=process_b;
+      tag_r<=operand_tag_r;
+    end
+  end else begin:g_direct_operands
+    assign process_valid=operand_feed_valid;
+    assign operand_pop=operand_feed_valid && process_ready;
+    assign operand_feed_a=process_a;
+    assign operand_feed_b=process_b;
+    assign operand_feed_tag=operand_tag_r;
+  end endgenerate
   always_ff @(posedge clk or posedge rst)begin
     if(rst)begin operand_count_r<=0;operand_read_r<=0;operand_write_r<=0;end
     else if(state!=STREAM)begin operand_count_r<=0;operand_read_r<=0;operand_write_r<=0;end

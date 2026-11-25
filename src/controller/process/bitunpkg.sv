@@ -34,7 +34,8 @@ module bitunpkg (
   logic [7:0] count_r,count_next,group_bits,refill_limit_r;
   logic [4:0] width_r;
   logic [2:0] op_r,eta_r;
-  logic [6:0] input_words_r,word_r;
+  logic [6:0] penultimate_word_r,word_r;
+  logic expect_last_r;
   logic [8:0] coefficients_r;
   logic ended_r,pop,push,enough,bad_value,bad_frame,count_consume;
   logic [7:0] count_after_group,count_with_word,count_group_with_word;
@@ -124,8 +125,10 @@ module bitunpkg (
       1,4:decoded[lane]=decode_centered(field[lane],width_r);
       default:decoded[lane]=0;
     endcase
-    bad_frame=input_bytes_i!=8 || input_index_i!=word_r || input_last_i!=(word_r+1'b1==input_words_r);
-    case({count_consume,push && !bad_frame})
+    bad_frame=input_bytes_i!=8 || input_index_i!=word_r || input_last_i!=expect_last_r;
+    // The bad-frame override clears count and sets the result code at
+    // this same edge. Keep that check off the ordinary count selector.
+    case({count_consume,push})
       2'b01:count_next=count_with_word;
       2'b10:count_next=count_after_group;
       2'b11:count_next=count_group_with_word;
@@ -135,7 +138,8 @@ module bitunpkg (
   always_ff @(posedge clk or posedge rst)begin
     if(rst)begin
       state<=IDLE;count_r<=0;read_slot_r<=0;write_slot_r<=0;bit_offset_r<=0;op_r<=0;width_r<=0;eta_r<=0;
-      input_words_r<=0;word_r<=0;coefficients_r<=0;ended_r<=0;done_code_o<=0;done_id_o<=0;
+      penultimate_word_r<=0;word_r<=0;expect_last_r<=0;
+      coefficients_r<=0;ended_r<=0;done_code_o<=0;done_id_o<=0;
       group_bits<=0;refill_limit_r<=0;window_valid_r<=0;
     end else case(state)
       IDLE:if(command_valid_i)begin
@@ -143,11 +147,12 @@ module bitunpkg (
         width=command_op_i==0 || command_op_i==5?10:command_op_i==1?13:command_op_i==2?
           (command_param_i==1?4:3):command_op_i==3?(command_param_i==0?6:4):(command_param_i==0?18:20);
         window_valid_r<=0;
-        op_r<=command_op_i;width_r<=width;input_words_r<={width,2'b0};
+        op_r<=command_op_i;width_r<=width;penultimate_word_r<={width,2'b0}-7'd2;
         group_bits<=command_op_i==2?(8'(width)<<4):(8'(width)<<2);
         refill_limit_r<=8'd80+(command_op_i==2?(8'(width)<<4):(8'(width)<<2));
         eta_r<=command_param_i==1?4:2;
-        count_r<=0;read_slot_r<=0;write_slot_r<=0;bit_offset_r<=0;word_r<=0;coefficients_r<=0;ended_r<=0;done_id_o<=command_id_i;
+        count_r<=0;read_slot_r<=0;write_slot_r<=0;bit_offset_r<=0;word_r<=0;expect_last_r<=0;
+        coefficients_r<=0;ended_r<=0;done_id_o<=command_id_i;
         done_code_o<=command_op_i>5 || command_param_i==3?1:0;
         state<=command_op_i>5 || command_param_i==3?REPORT:FEED;
       end
@@ -171,7 +176,11 @@ module bitunpkg (
         end
         if(push)begin
           if(bad_frame)begin done_code_o<=3;state<=REPORT;count_r<=0;end
-          else begin word_r<=word_r+1'b1;if(input_last_i)ended_r<=1;end
+          else begin
+            word_r<=word_r+1'b1;
+            expect_last_r<=word_r==penultimate_word_r;
+            if(input_last_i)ended_r<=1;
+          end
         end
         if(window_valid_r && enough && bad_value)begin done_code_o<=2;state<=REPORT;count_r<=0;end
       end

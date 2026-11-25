@@ -15,7 +15,7 @@ module tb_sign;
   logic done_valid_o,done_ready_i=0;logic [2:0] done_code_o,done_stage_o,done_detail_o;
   logic [15:0] done_id_o;logic [16:0] attempts_o,rejections_o,next_nonce_o;
   request_t service_o;response_t service_i;logic datapath_fault;
-  sign controller(.*);
+  sign controller(.start_internal_message_i(1'b0),.*);
   generate if(CYCLE_REFERENCE || ID_PROOF_ONLY || ID_FAULT_PROBE!=0 || FORCE_RETRY)begin:timing_reference
     request_t reference_service;
     logic reference_start_ready,reference_busy,reference_fault,reference_input_ready;
@@ -148,9 +148,9 @@ module tb_sign;
     end
   end endgenerate
   datapath datapath(.clk(clk),.rst(rst),.service_i(service_o),.service_o(service_i),.fault_o(datapath_fault));
-  int input_file,output_file,ledger_file,n,serial,original,level,id,context_len,message_len,sk_len,body_len;
+  int text_file,input_file,output_file,ledger_file,n,serial,original,level,id,context_len,message_len,sk_len,body_len;
   int phase_cycles[16];
-  string token,sk_hex,body_hex;
+  string token,sk_hex,body_hex,case_label,plain_sig;
   logic [7:0] sk[6000],body[65535];
   int cycles=0,current=-1,got=0,total_words=0,completed=0,start_cycle,prep_count=0,pre_count=0,overlap=0,max_ring=0;
   logic held=0;logic [94:0] snapshot;
@@ -209,6 +209,7 @@ module tb_sign;
         signature_last_o!=(got+signature_bytes_o==length) || (signature_data_o>>(8*int'(signature_bytes_o)))!=0)
         $fatal(1,"Compact signature identity/order/byte count/padding");
       $fdisplay(output_file,"S %0d %016h %0d %0d",signature_index_o,signature_data_o,signature_bytes_o,signature_last_o);
+      for(int lane=0;lane<int'(signature_bytes_o);lane++)plain_sig={plain_sig,$sformatf("%02h",signature_data_o[8*lane+:8])};
       got+=int'(signature_bytes_o);total_words++;
     end
     if(fault_o || datapath_fault)$fatal(1,"Compact Sign fault case%0d state%0d ntterror%0d procerror%0d loaderror%0d",current,controller.state,
@@ -233,15 +234,17 @@ module tb_sign;
   endtask
   initial if(!ID_PROOF_ONLY)begin
     int watchdog,k,l,phase_sum;
-    input_file=$fopen(DIAGNOSTIC?"sim/dilithium/stage7c_sign_diagnostic_inputs.txt":"sim/dilithium/stage7c_sign_inputs.txt","r");
-    output_file=$fopen(DIAGNOSTIC?"sim/dilithium/stage7c3_sign_diagnostic_outputs.txt":"sim/dilithium/stage7c3_sign_outputs.txt","w");
-    ledger_file=$fopen(DIAGNOSTIC?"sim/dilithium/stage7c3_sign_diagnostic_cycles.csv":"sim/dilithium/stage7c3_sign_cycles.csv","w");
+    input_file=$fopen(DIAGNOSTIC?"sim/dilithium/sign_diagnostic_inputs.txt":"sim/dilithium/sign_inputs.txt","r");
+    output_file=$fopen(DIAGNOSTIC?"sim/dilithium/sign_diagnostic_outputs.txt":"sim/dilithium/sign_outputs.txt","w");
+    ledger_file=$fopen(DIAGNOSTIC?"sim/dilithium/sign_diagnostic_cycles.csv":"sim/dilithium/sign_cycles.csv","w");
     if(!input_file || !output_file || !ledger_file || $fscanf(input_file,"%s %d",token,n)!=2)$fatal(1,"Prepare compact signing fixtures");
+    text_file=$fopen("sim/dilithium/outputs_hw.txt","w");if(!text_file)$fatal(1,"Cannot open plain RTL outputs_hw.txt");
     $fdisplay(ledger_file,"case,original,level,total,attempts,key_load,secret_transforms,mu_and_seed,y_prepare,matrix_wait,mac,row_inverse,decompose,challenge_hash,challenge_poly,z_products_and_norm,r0_products_and_norm,ct0_products_and_norm,hints,signature_output,retry");
     $fdisplay(output_file,"%s %0d",token,n);repeat(3)@(negedge clk);rst=0;
     for(int test=0;test<n;test++)begin
-      if($fscanf(input_file,"%d %d %d %d %d %d %d %d %h %s %s",serial,original,level,id,context_len,message_len,sk_len,body_len,start_rnd_i,sk_hex,body_hex)!=11 || serial!=test)
+      if($fscanf(input_file,"%d %d %d %d %d %d %d %d %h %s %s %s",serial,original,level,id,context_len,message_len,sk_len,body_len,start_rnd_i,sk_hex,body_hex,case_label)!=12 || serial!=test)
         $fatal(1,"Compact Sign fixture schema");
+      plain_sig="";
       for(int i=0;i<sk_len;i++)sk[i]=8'(sk_hex.substr(2*i,2*i+1).atohex());
       for(int i=0;i<body_len;i++)body[i]=8'(body_hex.substr(2*i,2*i+1).atohex());
       @(negedge clk);current=serial;start_param_i=2'(level);start_id_i=16'(id);
@@ -260,6 +263,10 @@ module tb_sign;
       if(done_code_o!=0 || done_stage_o!=0 || done_detail_o!=0 || done_id_o!=start_id_i ||
         prep_count!=l+2*k || pre_count!=l+k || !service_i.idle)$fatal(1,"Compact Sign completion/cache/retirement gate");
       $fdisplay(output_file,"D %0d %0d %0d %0d %0d %0d %0d",done_code_o,done_stage_o,done_detail_o,attempts_o,rejections_o,next_nonce_o,cycles-start_cycle);
+      if(done_code_o!=0 || plain_sig.len()!=2*(level==0?2420:level==1?3309:4627))$fatal(1,"Incomplete plain Sign output");
+      if(completed>0)$fdisplay(text_file,"");
+        $fdisplay(text_file,"[%s] level=%0d operation=sign",case_label,level==0?2:level==1?3:5);
+      $fdisplay(text_file,"signature = %s",plain_sig);$fflush(text_file);
       $display("COMPACT_SIGN_CASE_PASS:serial%0d original%0d level%0d cycles%0d attempts%0d",serial,original,level,cycles-start_cycle,attempts_o);
       phase_sum=0;for(int phase=0;phase<16;phase++)phase_sum+=phase_cycles[phase];
       if(phase_sum+1!=cycles-start_cycle)$fatal(1,"Signing cycle ledger does not sum");
@@ -268,7 +275,7 @@ module tb_sign;
       repeat(3)begin @(negedge clk);if(!done_valid_o || done_code_o!=0)$fatal(1,"Compact Sign completion unstable");end
       done_ready_i=1;@(negedge clk);done_ready_i=0;completed++;
     end
-    $fdisplay(output_file,"F %0d",completed);$fclose(input_file);$fclose(output_file);$fclose(ledger_file);
+    $fdisplay(output_file,"F %0d",completed);$fclose(input_file);$fclose(output_file);$fclose(ledger_file);$fclose(text_file);
     $display("LIGHTHD_SIGN_CAPTURE_PASS:%0d signatures/%0d words/overlap%0d/peak_A_ring%0d;independent published-signature comparison required",completed,total_words,overlap,max_ring);
     $finish;
   end

@@ -2,7 +2,7 @@
 // Each selected bank advances independently:irregular packing writes do not
 // stall reads on another bank. No polynomial IDs,leases or copied contexts.
 `default_nettype none
-module memory_port #(parameter bit COHERENT_ADMISSION=0) (
+module memory_port #(parameter bit COHERENT_ADMISSION=0,parameter bit LOCAL_DESCRIPTOR=0) (
   input wire logic clk,rst,command_valid_i,
   output logic command_ready_o,
   output logic [3:0] busy_o,
@@ -111,14 +111,33 @@ module memory_port #(parameter bit COHERENT_ADMISSION=0) (
         mask_bad_r<=command_mask_i==0 || (command_write_i & ~command_mask_i)!=0;
       end
       for(int b=0;b<4;b++)begin
+      // The paired router grants only IDLE/retiring REPORT lanes. Capture
+      // base locally in those inactive states,including the acceptance edge;
+      // keep it frozen throughout ADMIT/RUN. This removes the router's late
+      // grant/mask cone from the40 base-register enables without a new cycle.
+      // Ungranted base values are private invalid metadata,never RAM requests.
+      // Standalone admission keeps the original handshake-qualified capture.
+      if(COHERENT_ADMISSION && (state[b]==IDLE || state[b]==REPORT))
+        base_r[b]<=command_base_i[b];
+      // The paired router reserves and starts the selected lanes atomically.
+      // Inactive metadata may track the staged descriptor locally; only the
+      // state/error bits require its late grant. Never alter active bursts.
+      if(COHERENT_ADMISSION && LOCAL_DESCRIPTOR && (state[b]==IDLE || state[b]==REPORT))begin
+        write_r[b]<=command_write_i[b];mode_r[b]<=command_mode_i[b];
+        words_r[b]<=command_words_i[b];issued_r[b]<=0;retired_r[b]<=0;
+        issue_open_r[b]<=command_words_i[b]!=0;
+      end
       // A retired read burst can turn directly into a write burst for the
       // SAME owner. There is no idle cycle in which another writer can steal
       // the lane before an in-place NTT's non-stallable result phase.
       if(command_valid_i && (COHERENT_ADMISSION || command_ready_o) && effective_mask[b])begin
-        write_r[b]<=command_write_i[b];mode_r[b]<=command_mode_i[b];
-        base_r[b]<=command_base_i[b];words_r[b]<=command_words_i[b];
-        issued_r[b]<=0;retired_r[b]<=0;done_error_o[b]<=0;
-        issue_open_r[b]<=command_words_i[b]!=0;
+        if(!LOCAL_DESCRIPTOR || !COHERENT_ADMISSION)begin
+          write_r[b]<=command_write_i[b];mode_r[b]<=command_mode_i[b];
+          words_r[b]<=command_words_i[b];issued_r[b]<=0;retired_r[b]<=0;
+          issue_open_r[b]<=command_words_i[b]!=0;
+        end
+        if(!COHERENT_ADMISSION)base_r[b]<=command_base_i[b];
+        done_error_o[b]<=0;
         state[b]<=ADMIT;
       end else case(state[b])
       ADMIT:begin

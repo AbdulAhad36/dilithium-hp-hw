@@ -3,7 +3,7 @@
 // Encoding and decoding commands are mutually exclusive;both FIPS formats
 // retain their original framing,canonicality,reset and backpressure checks.
 `default_nettype none
-module hint_codec(
+module hint_codec #(parameter bit PIPELINE_APPEND=0,parameter bit PREDECODE_HINT=0) (
   input wire logic clk,rst,
   output logic idle_o,
   input wire logic  e_cancel_i,
@@ -52,11 +52,25 @@ module hint_codec(
   output logic [15:0] d_done_id_o
 );
   logic [9:0][63:0] indices_r;
+  // Validate the canonical suffix once,then emit direct four-bit masks.
+  // Local row clear reuses d_COUNT;index insertion reuses d_ORDER. No bulk
+  // reset or extra cycles. This avoids lookup/match/popcount/pointer feedback.
+  (* ramstyle="logic" *) logic [7:0][63:0][3:0] decoded_masks_r;
+  logic [7:0] decoded_insert_r,decoded_clear_r;
   logic [7:0][7:0] counts_r;
   logic [3:0] shared_read_index,shared_read_next;
   logic [3:0] read_index_r;
   logic [63:0] shared_read_first,shared_read_second;
   logic [31:0] decoded_window;
+  // One append-metadata stage. It accepts one four-coefficient group per
+  // clock;byte writes never read/modify a whole suffix word. The final group
+  // drains before any encoded output is published. Standalone default is old.
+  logic append_valid_r;
+  logic [3:0] append_mask_r;
+  logic [3:0][6:0] append_target_r;
+  logic [5:0] append_word_r;
+  logic e_publish_ready;
+  assign e_publish_ready=!PIPELINE_APPEND || !append_valid_r;
   logic d_output_pending_r,d_stage_ready;
   logic [3:0] d_generated_hints,d_registered_hints;
   logic [2:0] d_registered_row;
@@ -79,8 +93,8 @@ module hint_codec(
   assign e_command_ready_o=!rst && e_state==e_IDLE && d_state==d_IDLE;
   assign e_input_ready_o=!rst && !e_cancel_i && e_state==e_FEED;
   assign e_push=e_input_valid_i && e_input_ready_o;
-  assign e_result_valid_o=!rst && !e_cancel_i && (e_state==e_OUTPUT || e_state==e_REPORT);
-  assign e_output_valid_o=!rst && !e_cancel_i && e_state==e_OUTPUT;
+  assign e_result_valid_o=!rst && !e_cancel_i && ((e_state==e_OUTPUT && e_publish_ready) || e_state==e_REPORT);
+  assign e_output_valid_o=!rst && !e_cancel_i && e_state==e_OUTPUT && e_publish_ready;
   assign e_output_index_o=e_word_out_r;
   assign e_output_last_o=8'(e_word_out_r)*8'd8+8'd8>={1'b0,e_omega_r}+8'(e_k_r);
   assign e_output_bytes_o=e_output_last_o?4'({1'b0,e_omega_r}+8'(e_k_r)-8'(e_word_out_r)*8'd8):4'd8;
@@ -143,7 +157,7 @@ module hint_codec(
           end else e_word_r<=e_word_r+1'b1;
         end
       end
-      e_OUTPUT:if(e_output_ready_i)begin
+      e_OUTPUT:if(e_output_ready_i && e_publish_ready)begin
         if(e_output_last_o)e_state<=e_REPORT;else e_word_out_r<=e_word_out_r+1'b1;
       end
       e_REPORT:if(e_done_ready_i)e_state<=e_IDLE;
@@ -160,6 +174,31 @@ module hint_codec(
   logic [2:0] d_matched_positions;
   logic [3:0] d_matches;
   logic [1:0] d_matches_low,d_matches_high;
+  genvar cache_row;
+  generate if(PREDECODE_HINT)begin:predecoded_masks
+    // d_previous_r already captures the validated index. Use it on the next
+    // clock instead of routing a suffix lookup straight into2048 write enables.
+    // The ORDER end marker drains the last insert before the next COUNT clear.
+    // Registered one-hot row credits keep the binary row selector away
+    // from the wide row clears and per-bit write enables.
+    always_ff @(posedge clk or posedge rst)begin
+      if(rst)begin decoded_insert_r<=0;decoded_clear_r<=0;end
+      else for(int row=0;row<8;row++)begin
+        decoded_insert_r[row]<=d_state==d_ORDER && d_position_r!=d_end_r && d_row_r==row;
+        decoded_clear_r[row]<=d_state==d_COUNT && d_row_r==row;
+      end
+    end
+    for(cache_row=0;cache_row<8;cache_row=cache_row+1)begin:row_cache
+      always_ff @(posedge clk)if(!rst)begin
+        if(decoded_clear_r[cache_row])decoded_masks_r[cache_row]<=0;
+        else if(decoded_insert_r[cache_row])
+          decoded_masks_r[cache_row][d_previous_r[7:2]][d_previous_r[1:0]]<=1'b1;
+      end
+    end
+  end else begin:compact_masks
+    assign decoded_masks_r=0;assign decoded_insert_r=0;assign decoded_clear_r=0;
+  end endgenerate
+
   // Both directions use the SAME two consecutive index-word read ports.
   // Decode scans/emission only consume positions below omega;row counts
   // come directly from the separate eight-byte count bank.
@@ -197,6 +236,7 @@ module hint_codec(
         d_matches[d_offset]=1;
       end
     end
+    if(PREDECODE_HINT)d_generated_hints=decoded_masks_r[d_row_r][d_word_r];
   end
   // Count two pairs in parallel. Precompute each possible advance so the
   // index lookup does not feed a second,seven-bit carry chain in this cycle.
@@ -211,6 +251,22 @@ module hint_codec(
     4:d_next_position=d_position_r+7'd4;
     default:d_next_position=d_position_r;
   endcase
+  // Avoid lookup -> popcount -> position mux -> read-index feedback.
+  // At most four accepted positions can cross one eight-byte boundary.
+  logic d_crosses_word;logic [3:0] d_next_read_index;
+  always_comb begin
+    d_crosses_word=0;
+    case(d_position_r[2:0])
+      4:d_crosses_word=&d_matches;
+      5:d_crosses_word=(d_matches[0] && d_matches[1] && (d_matches[2] || d_matches[3])) ||
+                       (d_matches[2] && d_matches[3] && (d_matches[0] || d_matches[1]));
+      6:d_crosses_word=(d_matches[0] && d_matches[1]) || (d_matches[2] && d_matches[3]) ||
+                       ((d_matches[0] || d_matches[1]) && (d_matches[2] || d_matches[3]));
+      7:d_crosses_word=|d_matches;
+      default:begin end
+    endcase
+    d_next_read_index=d_crosses_word?d_position_r[6:3]+4'd1:d_position_r[6:3];
+  end
   // Payload is overwritten by the complete suffix before validation;no reset.
   
   always_ff @(posedge clk or posedge rst)begin
@@ -240,17 +296,23 @@ module hint_codec(
         if(d_position_r==d_end_r)begin
           if({1'b0,d_row_r}+4'd1==d_k_r)d_state<=d_PADDING;
           else begin d_row_r<=d_row_r+1'b1;d_state<=d_COUNT;end
-        end else if(d_position_r>d_start_r && d_position_byte<=d_previous_r)begin d_done_code_o<=2;d_state<=d_REPORT;end
-        else begin d_previous_r<=d_position_byte;d_position_r<=d_position_r+1'b1;end
+        end else begin
+          if(PREDECODE_HINT)begin d_previous_r<=d_position_byte;d_position_r<=d_position_r+1'b1;end
+          if(d_position_r>d_start_r && d_position_byte<=d_previous_r)begin d_done_code_o<=2;d_state<=d_REPORT;end
+          else if(!PREDECODE_HINT)begin d_previous_r<=d_position_byte;d_position_r<=d_position_r+1'b1;end
+        end
       end
       d_PADDING:begin
         if(d_position_r==d_omega_r)d_state<=d_SETUP;
-        else if(d_position_byte!=0)begin d_done_code_o<=2;d_state<=d_REPORT;end
-        else d_position_r<=d_position_r+1'b1;
+        else begin
+          if(PREDECODE_HINT)d_position_r<=d_position_r+1'b1;
+          if(d_position_byte!=0)begin d_done_code_o<=2;d_state<=d_REPORT;end
+          else if(!PREDECODE_HINT)d_position_r<=d_position_r+1'b1;
+        end
       end
       d_SETUP:begin d_row_r<=0;d_word_r<=0;d_position_r<=0;d_end_r<=7'(counts_r[0]);d_state<=d_EMIT;end
       d_EMIT:if(d_push)begin
-        d_position_r<=d_next_position;
+        if(!PREDECODE_HINT)d_position_r<=d_next_position;
         if(d_word_r==63)begin
           if({1'b0,d_row_r}+4'd1==d_k_r)d_state<=d_REPORT;
           else begin d_row_r<=d_row_r+1'b1;d_word_r<=0;d_end_r<=7'(counts_r[3'(d_row_r+3'd1)]);end
@@ -270,12 +332,12 @@ module hint_codec(
     else if(d_state!=d_IDLE)begin
       case(d_state)
         d_ORDER:if(d_position_r!=d_end_r &&
-          !(d_position_r>d_start_r && d_position_byte<=d_previous_r))
+          (PREDECODE_HINT || !(d_position_r>d_start_r && d_position_byte<=d_previous_r)))
           read_index_r<=4'(7'(d_position_r+7'd1)>>3);
-        d_PADDING:if(d_position_r!=d_omega_r && d_position_byte==0)
+        d_PADDING:if(d_position_r!=d_omega_r && (PREDECODE_HINT || d_position_byte==0))
           read_index_r<=4'(7'(d_position_r+7'd1)>>3);
         d_SETUP:read_index_r<=0;
-        d_EMIT:if(d_push)read_index_r<=d_next_position[6:3];
+        d_EMIT:if(d_push && !PREDECODE_HINT)read_index_r<=PIPELINE_APPEND?d_next_read_index:d_next_position[6:3];
         default:begin end
       endcase
     end else if(e_command_valid_i && e_command_ready_o)read_index_r<=0;
@@ -285,7 +347,7 @@ module hint_codec(
         if(e_word_r==63 && e_row_r+1'b1==e_k_r)read_index_r<=0;
         else read_index_r<=e_new_total[6:3];
       end
-      e_OUTPUT:if(e_output_ready_i)read_index_r<=e_word_out_r+4'd1;
+      e_OUTPUT:if(e_output_ready_i && e_publish_ready)read_index_r<=e_word_out_r+4'd1;
       default:begin end
     endcase
   end
@@ -295,14 +357,34 @@ module hint_codec(
   // still enter REPORT immediately;no masks are published from rejected data.
   // New decode commands refill all required bytes before count/order checking.
   assign decode_write=d_input_valid_i && d_input_ready_o;
-  // One shared first-word write route and the encoder's optional second word.
-  always_ff @(posedge clk)if(!rst)begin
-    if(decode_write && d_input_word_r<10)indices_r[d_input_word_r]<=d_masked_input;
-    else if(!e_cancel_i && e_push && !e_bad_frame && !e_result_reject_o && !e_overflow && e_first_write)
-      indices_r[e_first_index]<=e_first_word;
-    if(!e_cancel_i && e_push && !e_bad_frame && !e_result_reject_o && !e_overflow && e_second_write)
-      indices_r[e_second_index]<=e_second_word;
-  end
+  generate if(PIPELINE_APPEND)begin:registered_append
+    always_ff @(posedge clk or posedge rst)begin
+      if(rst)append_valid_r<=0;
+      else if(e_cancel_i)append_valid_r<=0;
+      else append_valid_r<=e_push && !e_bad_frame && !e_result_reject_o && !e_overflow;
+    end
+    always_ff @(posedge clk)if(e_push)begin
+      append_mask_r<=e_input_hints_i;append_target_r<=e_target;append_word_r<=e_word_r;
+    end
+    always_ff @(posedge clk)if(!rst)begin
+      if(decode_write && d_input_word_r<10)indices_r[d_input_word_r]<=d_masked_input;
+      else if(append_valid_r && !e_cancel_i)begin
+        for(int lane=0;lane<4;lane++)if(append_mask_r[lane])
+          indices_r[append_target_r[lane][6:3]][8*append_target_r[lane][2:0]+:8]<={append_word_r,2'(lane)};
+      end
+    end
+  end else begin:original_append
+    assign append_valid_r=0;
+    assign append_mask_r=0;assign append_target_r=0;assign append_word_r=0;
+    // Original standalone handshake,word writes and operation clocks.
+    always_ff @(posedge clk)if(!rst)begin
+      if(decode_write && d_input_word_r<10)indices_r[d_input_word_r]<=d_masked_input;
+      else if(!e_cancel_i && e_push && !e_bad_frame && !e_result_reject_o && !e_overflow && e_first_write)
+        indices_r[e_first_index]<=e_first_word;
+      if(!e_cancel_i && e_push && !e_bad_frame && !e_result_reject_o && !e_overflow && e_second_write)
+        indices_r[e_second_index]<=e_second_word;
+    end
+  end endgenerate
   always_ff @(posedge clk or posedge rst)begin
     if(rst)for(int i=0;i<8;i++)counts_r[i]<=0;
     else begin
@@ -327,6 +409,8 @@ module hint_codec(
 `ifndef SYNTHESIS
   // synthesis translate_off
   always @(posedge clk)if(!rst)begin
+    if(PREDECODE_HINT && ((decoded_insert_r & decoded_clear_r)!=0 || (|decoded_insert_r) && d_state==d_COUNT))
+      $fatal(1,"Hint row clear crossed pending index insertion");
     if((d_state==d_ORDER || d_state==d_PADDING || d_state==d_EMIT) &&
       read_index_r!==d_position_r[6:3])$fatal(1,"Hint decoder cached read address mismatch");
     if(!e_cancel_i && (e_state==e_FEED || e_state==e_OUTPUT) &&

@@ -21,6 +21,7 @@ module dilithium (
   input wire logic [255:0] start_seed_i,
   input wire logic [15:0] start_message_len_i,
   input wire logic [8:0] start_context_len_i,
+  input tri0 start_internal_message_i, // 0:message+context; 1:already formatted message
   input wire logic [255:0] start_rnd_i,
   input wire logic  sign_input_valid_i,
   output logic  sign_input_ready_o,
@@ -88,9 +89,9 @@ module dilithium (
     ((state==EXECUTE || state==RETIRE) && op_r==0)})
       $fatal(1,"Registered main owner differs from original state decode");
   // synthesis translate_on
-  assign message_total=18'd66+18'(start_context_len_i)+18'(start_message_len_i);
+  assign message_total=(start_internal_message_i?18'd64:18'd66+18'(start_context_len_i))+18'(start_message_len_i);
   assign bad_opcode=start_op_i==3;
-  assign bad_command=start_param_i==3 || (start_op_i!=0 && (start_context_len_i>255 || message_total>65535));
+  assign bad_command=start_param_i==3 || (start_op_i!=0 && (start_context_len_i>255 || (start_internal_message_i && start_context_len_i!=0) || message_total>65535));
   assign command_fire=start_valid_i && start_ready_o;
   assign fault_o=physical_fault || k_fault || s_fault || v_fault || state==HALT;
   assign start_ready_o=!rst && !fault_o && state==IDLE && response.idle && k_ready && s_ready && v_ready;
@@ -109,17 +110,17 @@ module dilithium (
   assign k_take=selected_k && state==EXECUTE && done_valid_o && done_ready_i;
   assign s_take=selected_s && state==EXECUTE && done_valid_o && done_ready_i;
   assign v_take=selected_v && state==EXECUTE && done_valid_o && done_ready_i;
-  keygen keygen_controller(
+  keygen #(.PIPELINE_INPUT(1),.LOCAL_CONTROL(1)) keygen_controller(
     .clk(clk),.rst(rst),.start_valid_i(command_fire && !bad_opcode && !bad_command && start_op_i==0),
     .start_ready_o(k_ready),.start_param_i(start_param_i),.start_id_i(start_id_i),.start_seed_i(start_seed_i),
     .key_valid_o(k_key_valid),.key_ready_i(selected_k && state==EXECUTE && key_ready_i),.key_data_o(key_data_o),
     .key_bytes_o(key_bytes_o),.key_type_o(key_type_o),.key_last_o(key_last_o),.key_index_o(key_index_o),.key_id_o(key_id_o),
     .done_valid_o(k_done),.done_ready_i(k_take),.done_code_o(k_code),.done_id_o(k_id),.fault_o(k_fault),
     .service_o(k_request),.service_i(response));
-  sign sign_controller(
+  sign #(.LOCAL_CONTROL(1),.PIPELINE_STORE(1)) sign_controller(
     .clk(clk),.rst(rst),.start_valid_i(command_fire && !bad_opcode && !bad_command && start_op_i==1),
     .start_ready_o(s_ready),.busy_o(),.fault_o(s_fault),.start_param_i(start_param_i),.start_id_i(start_id_i),
-    .start_message_len_i(start_message_len_i),.start_context_len_i(start_context_len_i),.start_rnd_i(start_rnd_i),
+    .start_message_len_i(start_message_len_i),.start_context_len_i(start_context_len_i),.start_internal_message_i(start_internal_message_i),.start_rnd_i(start_rnd_i),
     .input_valid_i(state==EXECUTE && selected_s && sign_input_valid_i),.input_ready_o(sign_input_ready_o),
     .input_data_i(sign_input_data_i),.input_bytes_i(sign_input_bytes_i),.input_index_i(sign_input_index_i),.input_last_i(sign_input_last_i),
     .signature_valid_o(s_signature_valid),.signature_ready_i(selected_s && state==EXECUTE && signature_ready_i),
@@ -127,10 +128,10 @@ module dilithium (
     .signature_last_o(signature_last_o),.signature_id_o(signature_id_o),
     .done_valid_o(s_done),.done_ready_i(s_take),.done_code_o(s_code),.done_stage_o(s_stage),.done_detail_o(s_detail),.done_id_o(s_id),
     .attempts_o(attempts),.rejections_o(rejections),.next_nonce_o(next_nonce),.service_o(s_request),.service_i(response));
-  verify verify_controller(
+  verify #(.LOCAL_CONTROL(1)) verify_controller(
     .clk(clk),.rst(rst),.start_valid_i(command_fire && !bad_opcode && !bad_command && start_op_i==2),
     .start_ready_o(v_ready),.busy_o(),.fault_o(v_fault),.start_param_i(start_param_i),.start_id_i(start_id_i),
-    .start_message_len_i(start_message_len_i),.start_context_len_i(start_context_len_i),.start_signature_len_i(start_signature_len_i),
+    .start_message_len_i(start_message_len_i),.start_context_len_i(start_context_len_i),.start_internal_message_i(start_internal_message_i),.start_signature_len_i(start_signature_len_i),
     .input_valid_i(state==EXECUTE && selected_v && verify_input_valid_i),.input_ready_o(verify_input_ready_o),
     .input_data_i(verify_input_data_i),.input_bytes_i(verify_input_bytes_i),.input_index_i(verify_input_index_i),.input_last_i(verify_input_last_i),
     .done_valid_o(v_done),.done_ready_i(v_take),.done_code_o(v_code),.done_stage_o(v_stage),.done_detail_o(v_detail),
@@ -145,7 +146,19 @@ module dilithium (
       default:begin end
     endcase
     if(selected_k)request=k_request;else if(selected_s)request=s_request;else if(selected_v)request=v_request;
-    if(fault_o)request='0;
+    // Quarantine gates admission,not the wide inactive payload/retirement bus.
+    // Existing operations may retire internally on the fatal edge;public
+    // outputs suppress immediately and owner_select_r clears at next-edge HALT.
+    // No command,input beat or host RAM write can be admitted after a fault.
+    if(fault_o)begin
+      request.sample.valid=0;request.sample.input_valid=0;
+      request.raw.valid=0;request.raw.input_valid=0;
+      request.ntt.valid=0;request.poly_process.valid=0;
+      request.bank.command_valid=0;request.bank.write_valid=0;
+      request.load.valid=0;request.load.input_valid=0;
+      request.hint_encode.valid=0;request.hint_encode.feed_enable=0;request.hint_encode.cancel=0;
+      request.hint_decode.valid=0;request.hint_decode.input_valid=0;
+    end
   end
   always_ff @(posedge clk or posedge rst)begin
     if(rst)begin state<=IDLE;op_r<=0;id_r<=0;error_code_r<=0;end

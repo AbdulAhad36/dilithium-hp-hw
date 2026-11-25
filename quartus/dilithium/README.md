@@ -7,9 +7,11 @@ operations and the shared Keccak, NTT, sampler, Process and memory resources.
 
 The device remains Cyclone V 5CGXFC7C7F23C8 with the existing 6.500 ns target
 and unchanged hold constraints. `report_full.tcl` checks retained hardware
-and reports all timing corners. The alternate `dilithium.qpf` now uses the
-same production source list rather than the retired Stage4 subsystem.
+and reports all timing corners. The alternate `dilithium.qpf` uses the
+same production source list.
 
-Existing generated reports predate source cleanup/renaming. The latest
-qualified timing evidence is in the protected timing-screen workspace,
-not necessarily `output_full`. Source renaming alone is not a new fit.
+Current-source physical qualification is pending. Generated output directories
+are not proof that their reports match the live source. Protected source-bound
+evidence is retained separately; its index is in docs/dilithium_docs/PAST_BUILDS.md.
+Source renaming alone is not a new fit. Keep stable production filenames when
+promoting an accepted improvement and preserve the replaced build in evidence.

@@ -3,7 +3,7 @@
 // fields remain tentative:zero-fill only the bounded remaining polynomial,
 // retire the physical write,then return the original decode error to owner.
 `default_nettype none
-module load_decode (
+module load_decode #(parameter bit PIPELINE_FRAME=0) (
   input wire logic clk,rst,command_valid_i,output logic command_ready_o,
   input wire logic [2:0] command_op_i,input wire logic [1:0] command_param_i,command_bank_i,
   input wire logic [9:0] command_base_i,input wire logic [15:0] command_id_i,
@@ -31,6 +31,14 @@ module load_decode (
   logic unpack_command_ready,unpack_input_ready,unpack_valid,unpack_ready,unpack_last,unpack_done;
   logic [91:0] unpack_data;logic [4:0] unpack_count;logic [7:0] unpack_index;
   logic [15:0] unpack_id,unpack_done_id;logic [2:0] unpack_code;
+  typedef struct packed {
+    logic [63:0] data;
+    logic [6:0] index;
+    logic [3:0] bytes;
+    logic last;
+  } frame_word_t;
+  frame_word_t unpack_word;
+  logic unpack_word_valid;
   // Two decoded words decouple value validation from the bank writer's ready
   // path. The polynomial remains in the physical banks;only this handoff is
   // buffered. IDs/count/index/last are checked BEFORE a word is admitted.
@@ -39,7 +47,44 @@ module load_decode (
   logic [1:0] packet_count_r;
   logic [8:0] decoded_r;
   assign command_ready_o=!rst && state==IDLE && !fault_o;
-  assign input_ready_o=state==FEED && !fault_o && unpack_input_ready;
+  generate if(PIPELINE_FRAME)begin:g_frame_queue
+    frame_word_t head_r,tail_r;
+    logic [1:0] count_r;
+    logic last_queued_r,push_word,pop_word;
+    frame_word_t offered;
+    assign offered={input_data_i,input_index_i,input_bytes_i,input_last_i};
+    assign input_ready_o=!rst && state==FEED && !fault_o && !unpack_done &&
+      !last_queued_r && count_r<2;
+    assign unpack_word_valid=!rst && state==FEED && !fault_o && count_r!=0;
+    assign unpack_word=head_r;
+    assign push_word=input_valid_i && input_ready_o;
+    assign pop_word=unpack_word_valid && unpack_input_ready;
+
+    // The fixed head feeds the unpacker without another payload mux. One
+    // queued tail allows a new acceptance while the unpacker stalls.
+    always_ff @(posedge clk)begin
+      if(pop_word && count_r==2)head_r<=tail_r;
+      else if(push_word && (count_r==0 || pop_word))head_r<=offered;
+      if(push_word && count_r==1 && !pop_word)tail_r<=offered;
+    end
+    always_ff @(posedge clk or posedge rst)begin
+      if(rst)begin count_r<=0;last_queued_r<=0;end
+      else if(state!=FEED || unpack_done || fault_o)begin
+        count_r<=0;last_queued_r<=0;
+      end else begin
+        case({push_word,pop_word})
+          2'b10:count_r<=count_r+1'b1;
+          2'b01:count_r<=count_r-1'b1;
+          default:begin end
+        endcase
+        if(push_word && input_last_i)last_queued_r<=1;
+      end
+    end
+  end else begin:g_direct_frame
+    assign input_ready_o=state==FEED && !fault_o && unpack_input_ready;
+    assign unpack_word_valid=input_valid_i && state==FEED && !fault_o;
+    assign unpack_word={input_data_i,input_index_i,input_bytes_i,input_last_i};
+  end endgenerate
   assign done_valid_o=!rst && !fault_o && (state==REPORT || (state==WRITER_WAIT && writer_done_valid_i));
   assign done_id_o=id_r;assign done_code_o=code_r;
   assign writer_job_valid_o=!rst && state==WRITER_START && !fault_o;
@@ -62,8 +107,8 @@ module load_decode (
   bitunpkg unpacker(
     .clk(clk),.rst(rst),.command_valid_i(state==DECODE_START),.command_ready_o(unpack_command_ready),
     .command_op_i(op_r),.command_param_i(level_r),.command_id_i(id_r),
-    .input_valid_i(input_valid_i && state==FEED && !fault_o),.input_ready_o(unpack_input_ready),
-    .input_data_i(input_data_i),.input_index_i(input_index_i),.input_bytes_i(input_bytes_i),.input_last_i(input_last_i),
+    .input_valid_i(unpack_word_valid),.input_ready_o(unpack_input_ready),
+    .input_data_i(unpack_word.data),.input_index_i(unpack_word.index),.input_bytes_i(unpack_word.bytes),.input_last_i(unpack_word.last),
     .output_valid_o(unpack_valid),.output_ready_i(unpack_ready),.output_data_o(unpack_data),.output_count_o(unpack_count),
     .output_index_o(unpack_index),.output_last_o(unpack_last),.output_id_o(unpack_id),
     .done_valid_o(unpack_done),.done_ready_i(state==FEED && packet_count_r==0),.done_code_o(unpack_code),.done_id_o(unpack_done_id));

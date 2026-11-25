@@ -17,5 +17,36 @@
       "bytes": 13956,
       "sha256": "99c5b82abf37bdf6f7bd11c6976e4d8007d70f9953dc13566232404647865bb8"
     }
-  ]
+  ],
+  "local_filter": {
+    "date": "2026-11-11",
+    "description": "Removed preHash=preHash and externalMu=true groups from local working files. Retained group/test IDs and contents are unchanged. Original download hashes above describe the unfiltered upstream files.",
+    "backup": "../before_mode_filter_2026-11-11.zip",
+    "retained_tgIds": [
+      1,
+      3,
+      5,
+      8,
+      10,
+      12
+    ],
+    "removed_tgIds": [
+      2,
+      4,
+      6,
+      7,
+      9,
+      11
+    ],
+    "working_files": {
+      "prompt.json": {
+        "sha256": "ae62954345f45601ecdf673963c9855b4eca87590209e32ef28844831c047fe8",
+        "bytes": 1727817
+      },
+      "expectedResults.json": {
+        "sha256": "2bc8afbb36583c360a2e047511e401910cf73edabfd27e12eddb24373ac57824",
+        "bytes": 7443
+      }
+    }
+  }
 }

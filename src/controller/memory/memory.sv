@@ -1,7 +1,7 @@
 // Direct Figure1/2 memory boundary:two independently scheduled bank ports.
 // Exactly one four-bank payload array. Phase controllers own fixed addresses.
 `default_nettype none
-module memory #(parameter bit COHERENT_ADMISSION=0) (
+module memory #(parameter bit COHERENT_ADMISSION=0,parameter bit LOCAL_DESCRIPTOR=0) (
   input wire logic clk,rst,
   input wire logic [1:0] command_valid_i,
   output logic [1:0] command_ready_o,
@@ -30,7 +30,7 @@ module memory #(parameter bit COHERENT_ADMISSION=0) (
   logic [1:0][3:0][91:0] request_data,response_data;
   genvar p;
   generate for(p=0;p<2;p=p+1)begin:port_fsm
-    memory_port #(.COHERENT_ADMISSION(COHERENT_ADMISSION)) scheduler(
+    memory_port #(.COHERENT_ADMISSION(COHERENT_ADMISSION),.LOCAL_DESCRIPTOR(LOCAL_DESCRIPTOR)) scheduler(
       .clk(clk),.rst(rst),.command_valid_i(command_valid_i[p]),
       .command_ready_o(command_ready_o[p]),.busy_o(busy_o[p]),
       .command_mask_i(command_mask_i[p]),.command_write_i(command_write_i[p]),

@@ -2,7 +2,7 @@
 // Final FIPS absorption messages arrive on the existing64-bit stream. Finite
 // raw hashes share those SAME two cores;no private KeyGen/Sign/Verify hash.
 `default_nettype none
-module hash_sampler (
+module hash_sampler #(parameter bit PIPELINE_INPUT=0,parameter bit PIPELINE_LOAD_FRAME=0) (
   input wire logic clk,rst,job_valid_i,output logic job_ready_o,job_core_o,
   input wire logic job_batch_last_i,input wire logic [1:0] job_mode_i,job_param_i,job_bank_i,
   input wire logic [9:0] job_base_i,input wire logic [15:0] job_id_i,message_len_i,
@@ -63,7 +63,7 @@ module hash_sampler (
   assign done_code_o=bad_pending_r?3'd3:completion_code_r;
   assign writer_done_ready=load_owned_r?manual_done_ready:!completion_valid_r && !bad_pending_r;
   assign status_ready=!load_owned_r && writer_status_ready;
-  keccak_sampler #(.RAW_SERVICE(1),.BANK_IO(1)) engine(
+  keccak_sampler #(.RAW_SERVICE(1),.BANK_IO(1),.PIPELINE_INPUT(PIPELINE_INPUT)) engine(
     .clk(clk),.rst(rst),.job_valid_i(hash_job_valid),.job_ready_o(hash_job_ready),.job_core_o(job_core_o),
     .job_id_i(job_id_i),.message_len_i(message_len_i),.job_mode_i(job_mode_i),.job_param_i(job_param_i),
     .input_data_i(input_data_i),.input_valid_i(input_valid_i),.input_ready_o(input_ready_o),
@@ -95,7 +95,7 @@ module hash_sampler (
     .memory_command_base_o(memory_command_base_o),.memory_command_words_o(memory_command_words_o),.memory_command_mode_o(memory_command_mode_o),
     .memory_write_valid_o(memory_write_valid_o),.memory_write_ready_i(memory_write_ready_i),.memory_write_data_o(memory_write_data_o),.memory_write_address_o(memory_write_address_o),
     .memory_done_valid_i(memory_done_valid_i),.memory_done_error_i(memory_done_error_i),.memory_done_ready_o(memory_done_ready_o));
-  load_decode decoder(
+  load_decode #(.PIPELINE_FRAME(PIPELINE_LOAD_FRAME)) decoder(
     .clk(clk),.rst(rst),.command_valid_i(load_valid_i && load_ready_o),.command_ready_o(decoder_ready),
     .command_op_i(load_op_i),.command_param_i(load_param_i),.command_bank_i(load_bank_i),.command_base_i(load_base_i),.command_id_i(load_id_i),
     .input_valid_i(load_input_valid_i),.input_ready_o(load_input_ready_o),.input_data_i(load_input_data_i),

@@ -1,0 +1,6 @@
+BEGIN 1:bitunpkg:fast:dilithium_pipeline_work
+    window_capture :  1:tb_unpack_pipeline:fast:dilithium_pipeline_work
+    pop :  1:tb_unpack_pipeline:fast:dilithium_pipeline_work
+    bits_r :  1:tb_unpack_pipeline:fast:dilithium_pipeline_work
+    window_valid_r :  1:tb_unpack_pipeline:fast:dilithium_pipeline_work
+END 

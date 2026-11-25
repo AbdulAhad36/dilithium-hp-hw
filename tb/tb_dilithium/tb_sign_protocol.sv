@@ -14,12 +14,12 @@ module tb_sign_protocol;
   logic done_valid_o,done_ready_i=0;logic [2:0] done_code_o,done_stage_o,done_detail_o;
   logic [15:0] done_id_o;logic [16:0] attempts_o,rejections_o,next_nonce_o;
   request_t service_o;response_t service_i;logic datapath_fault;
-  sign controller(.*);
+  sign controller(.start_internal_message_i(1'b0),.*);
   datapath datapath(.clk(clk),.rst(rst),.service_i(service_o),.service_o(service_i),.fault_o(datapath_fault));
   int cycles=0,current=-1,selected=0,action=-1,corruption=-1,got=0,completed=0,aborted=0,errors=0,valids=0,busy_probes=0;
   int output_file,input_file,n,serial,originals[3],levels[3],ids[3],context_lengths[3],message_lengths[3],sk_lengths[3],body_lengths[3];
   logic [255:0] randoms[3];logic [7:0] sk[3][6000],body[3][65535];
-  string token,sk_hex,body_hex;
+  string token,sk_hex,body_hex,case_label;
   bit invalid_command=0,reset_happened=0;
   logic held=0;logic [94:0] snapshot;
   always @(negedge clk)cycles++;
@@ -136,11 +136,11 @@ module tb_sign_protocol;
     current++;completed++;
   endtask
   initial begin
-    input_file=$fopen("sim/dilithium/stage7c_sign_diagnostic_inputs.txt","r");
-    output_file=$fopen("sim/dilithium/stage7c3_sign_protocol_outputs.txt","w");
+    input_file=$fopen("sim/dilithium/sign_diagnostic_inputs.txt","r");
+    output_file=$fopen("sim/dilithium/sign_protocol_outputs.txt","w");
     if(!input_file || !output_file || $fscanf(input_file,"%s %d",token,n)!=2 || n!=3)$fatal(1,"Prepare Sign protocol fixtures");
     for(int i=0;i<3;i++)begin
-      if($fscanf(input_file,"%d %d %d %d %d %d %d %d %h %s %s",serial,originals[i],levels[i],ids[i],context_lengths[i],message_lengths[i],sk_lengths[i],body_lengths[i],randoms[i],sk_hex,body_hex)!=11 || serial!=i)
+      if($fscanf(input_file,"%d %d %d %d %d %d %d %d %h %s %s %s",serial,originals[i],levels[i],ids[i],context_lengths[i],message_lengths[i],sk_lengths[i],body_lengths[i],randoms[i],sk_hex,body_hex,case_label)!=12 || serial!=i)
         $fatal(1,"Sign protocol fixture schema");
       for(int j=0;j<sk_lengths[i];j++)sk[i][j]=8'(sk_hex.substr(2*j,2*j+1).atohex());
       for(int j=0;j<body_lengths[i];j++)body[i][j]=8'(body_hex.substr(2*j,2*j+1).atohex());

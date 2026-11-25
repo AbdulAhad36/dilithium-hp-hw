@@ -1,0 +1,23 @@
+BEGIN 1:hint_codec:fast:dilithium_pipeline_work
+    native_e_hints :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_d_input_valid :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_e_command_valid :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_d_command_ready :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_e_last :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_d_bytes :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_e_input_valid :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_d_id :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    append_valid_r :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_e_input_ready :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_e_word :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_d_index :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_e_id :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_d_param :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_e_command_ready :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_e_row :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_d_data :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_e_param :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_d_input_ready :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_d_command_valid :  1:tb_hint_shared:fast:dilithium_pipeline_work
+    native_d_last :  1:tb_hint_shared:fast:dilithium_pipeline_work
+END 

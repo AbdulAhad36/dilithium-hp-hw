@@ -1,10 +1,10 @@
 // Compact pure-ML-DSA Sign. Final FIPS204 bytes,LightHD fixed bank lifetimes,
 // one shared engine set,one rejection loop,and no polynomial-handle contexts.
 `default_nettype none
-module sign (
+module sign #(parameter bit LOCAL_CONTROL=0,parameter bit PIPELINE_STORE=0) (
   input wire logic clk,rst,start_valid_i,output logic start_ready_o,busy_o,fault_o,
   input wire logic [1:0] start_param_i,input wire logic [15:0] start_id_i,start_message_len_i,
-  input wire logic [8:0] start_context_len_i,input wire logic [255:0] start_rnd_i,
+  input wire logic [8:0] start_context_len_i,input tri0 start_internal_message_i,input wire logic [255:0] start_rnd_i,
   input wire logic input_valid_i,output logic input_ready_o,input wire logic [63:0] input_data_i,
   input wire logic [3:0] input_bytes_i,input wire logic [15:0] input_index_i,input wire logic input_last_i,
   output logic signature_valid_o,input wire logic signature_ready_i,output logic [63:0] signature_data_o,
@@ -36,11 +36,15 @@ module sign (
   logic selected_r,y_phase_r,y_credit_r,released_prev_r;
   logic [6:0] y_ready_r;logic [15:0] a_reserved_r,a_ready_r;
   logic [15:0] id_r,message_r,nonce_base_r;
-  logic [8:0] context_r;logic [255:0] rnd_r;
+  logic [8:0] context_r;logic internal_message_r;logic [255:0] rnd_r;
   // Fixed register lifetimes:tr->mu,and key||rnd->mask seed.
   logic [255:0] rho_store_r;
   logic [511:0] tr_mu_store_r,entropy_mask_store_r;
   logic header_write_valid;logic [3:0] header_write_index;logic [63:0] header_write_data;
+  logic raw_take,raw_metadata_bad,raw_done_take,raw_service_active;
+  logic [127:0] raw_store_data;
+  logic [3:0] mu_write,mask_write,challenge_write;
+  logic bad_start,signature_drained,error_drained,scrub_entropy;
   assign rnd_r=entropy_mask_store_r[511:256];
   logic [511:0] mu_r,mask_r,ctilde_r;
   assign mu_r=tr_mu_store_r;assign mask_r=entropy_mask_store_r;
@@ -97,6 +101,38 @@ module sign (
     carry_out=(base&offset)|((base|offset)&~result);
     return !carry_in[0] && carry_in[15:1]==carry_out[14:0];
   endfunction
+  logic [1:0][15:0] expected_sample_id_r;
+  logic [1:0] expected_sample_valid_r,sample_match,sample_event_mask_r;
+  logic sample_take,sample_event_r,sample_bad;
+  logic challenge_take,challenge_event_r,challenge_consumed_r,challenge_bad;
+  logic [15:0] expected_challenge_id_r;
+  assign challenge_take=state==CHAL_WAIT && service_i.sample.done_valid && service_o.sample.done_ready;
+  assign challenge_bad=service_i.sample.done_code!=0 || service_i.sample.done_id!=expected_challenge_id_r;
+  assign sample_take=producer!=P_IDLE && service_i.sample.done_valid && service_o.sample.done_ready && state!=CHAL_WAIT;
+  assign sample_bad=service_i.sample.done_code!=0 || sample_match==0 || sample_match==3 ||
+    |(sample_match & batch_done_r) || (sample_event_r && |(sample_match & sample_event_mask_r));
+  genvar completion_slot;
+  generate for(completion_slot=0;completion_slot<2;completion_slot=completion_slot+1)begin:g_completion_match
+    assign sample_match[completion_slot]=expected_sample_valid_r[completion_slot] &&
+      completion_slot<int'(batch_size_r) && service_i.sample.done_id==expected_sample_id_r[completion_slot];
+  end endgenerate
+  always_ff @(posedge clk or posedge rst)begin
+    if(rst)begin expected_sample_id_r<=0;expected_sample_valid_r<=0;sample_event_r<=0;sample_event_mask_r<=0;
+      challenge_event_r<=0;challenge_consumed_r<=0;expected_challenge_id_r<=0;end
+    else begin
+      sample_event_r<=LOCAL_CONTROL && sample_take && !sample_bad;
+      challenge_event_r<=LOCAL_CONTROL && challenge_take && !challenge_bad;
+      if(challenge_take)challenge_consumed_r<=1;
+      if(state==CHAL_CMD && service_i.sample.ready)begin
+        expected_challenge_id_r<=service_o.sample.id;challenge_consumed_r<=0;
+      end
+      if(sample_take)sample_event_mask_r<=sample_match;
+      if(producer==P_IDLE)expected_sample_valid_r<=0;
+      if(producer==P_CMD && service_i.sample.ready)begin
+        expected_sample_id_r[selected_r]<=service_o.sample.id;expected_sample_valid_r[selected_r]<=1;
+      end
+    end
+  end
   assign current=descriptor_r[selected_r];
   assign ctilde_beats=level_r==0?2:level_r==1?3:4;
   assign ctilde_words=level_r==0?4:level_r==1?6:8;
@@ -104,7 +140,7 @@ module sign (
   assign w1_words=level_r==2?128:96;
   assign w0_base=row_r==7?10'd0:10'd576+{row_r,6'd0};
   assign r0_base=10'd512+{row_r,6'd0};
-  assign message_total=18'd66+18'(start_message_len_i)+18'(start_context_len_i);
+  assign message_total=(start_internal_message_i?18'd64:18'd66+18'(start_context_len_i))+18'(start_message_len_i);
   assign producer_enabled=state>=Y_READY && state<=DECOMP_RUN;
   assign raw_phase=state==MU_RUN || state==MASK_RUN || state==CHASH_RUN || state==CHASH_DRAIN;
   assign packed_row_offset={2'b0,row_r,4'b0}+(level_r==0?{3'b0,row_r,3'b0}:10'd0);
@@ -135,11 +171,65 @@ module sign (
     .load_done_code_i(service_i.load.done_code),.load_done_id_i(service_i.load.done_id));
   assign format_op=state==MU_CMD || state==MU_RUN?0:state==MASK_CMD || state==MASK_RUN?1:2;
   assign format_command=state==MU_CMD || state==MASK_CMD || state==CHASH_CMD;
+  assign raw_take=service_i.raw.output_valid && service_o.raw.output_ready;
+  assign raw_metadata_bad=service_i.raw.output_id!=format_id ||
+    service_i.raw.output_core!=raw_core_r || service_i.raw.output_bytes!=16;
+  assign raw_done_take=service_i.raw.done_valid && service_o.raw.done_ready;
+  assign bad_start=start_param_i==3 || start_context_len_i>255 ||
+    (start_internal_message_i && start_context_len_i!=0) || message_total>65535;
+  assign signature_drained=service_i.idle && hint_command_ready;
+  assign error_drained=signature_drained && key_command_ready && format_ready;
+
+  generate if(PIPELINE_STORE)begin:g_sign_store
+    logic active_r,report_scrub_r;
+    logic [1:0] destination_r;
+    logic [3:0] mu_write_r,mask_write_r,challenge_write_r;
+    logic [127:0] data_r;
+    assign raw_service_active=active_r;
+    assign raw_store_data=data_r;
+    assign mu_write=mu_write_r;
+    assign mask_write=mask_write_r;
+    assign challenge_write=challenge_write_r;
+    assign scrub_entropy=report_scrub_r;
+
+    // Each accepted beat carries a registered lane enable through to the
+    // store. The raw-done handshake requires the final beat to have arrived.
+    always_ff @(posedge clk or posedge rst)begin
+      if(rst)begin
+        active_r<=0;destination_r<=0;report_scrub_r<=0;
+        mu_write_r<=0;mask_write_r<=0;challenge_write_r<=0;data_r<=0;
+      end else begin
+        if(fault_o || raw_done_take)active_r<=0;
+        else if(format_command && format_ready)begin active_r<=1;destination_r<=format_op;end
+        report_scrub_r<=(state==SIG_DRAIN && signature_drained) ||
+          (state==DRAIN_ERROR && error_drained) ||
+          (state==IDLE && start_valid_i && start_ready_o && bad_start);
+        mu_write_r<=0;mask_write_r<=0;challenge_write_r<=0;data_r<=0;
+        if(raw_take && !raw_metadata_bad)begin
+          data_r<=service_i.raw.output_data;
+          case(destination_r)
+            0:mu_write_r<=4'b0001<<raw_count_r[1:0];
+            1:mask_write_r<=4'b0001<<raw_count_r[1:0];
+            2:challenge_write_r<=4'b0001<<raw_count_r[1:0];
+            default:begin end
+          endcase
+        end
+      end
+    end
+  end else begin:g_direct_sign_store
+    assign raw_service_active=raw_phase;
+    assign raw_store_data=service_i.raw.output_data;
+    assign mu_write=raw_take && state==MU_RUN ? 4'b0001<<raw_count_r[1:0]:0;
+    assign mask_write=raw_take && state==MASK_RUN ? 4'b0001<<raw_count_r[1:0]:0;
+    assign challenge_write=raw_take && state!=MU_RUN && state!=MASK_RUN ? 4'b0001<<raw_count_r[1:0]:0;
+    assign scrub_entropy=state==REPORT && done_ready_i;
+  end endgenerate
   assign format_payload_valid=state==MU_RUN?input_valid_i:state==CHASH_RUN && service_i.bank.read_valid[0][2];
   sign_hash_message #(.STABLE_PREFIX_INPUTS(1)) formatter(
     .clk(clk),.rst(rst),.command_valid_i(format_command),.command_ready_o(format_ready),.busy_o(),
     .command_op_i(format_op),.command_param_i(level_r),.command_id_i(id_r+16'd128+16'(format_op)),
     .command_message_len_i(message_r),.command_nonce_i(16'd0),.command_context_len_i(context_r),
+    .command_internal_message_i(internal_message_r),
     .command_tr_i(tr),.command_mu_i(mu_r),.command_mask_seed_i(mask_r),.command_key_i(key),.command_rnd_i(rnd_r),
     .payload_valid_i(format_payload_valid),.payload_ready_o(format_payload_ready),
     .payload_data_i(state==MU_RUN?input_data_i:service_i.bank.read_data[0][2][63:0]),
@@ -175,8 +265,8 @@ module sign (
     service_o.raw.valid=format_request;service_o.raw.mode=format_mode;service_o.raw.id=format_id;
     service_o.raw.message_len=format_length;service_o.raw.output_len=format_output_length;
     service_o.raw.input_valid=format_input_valid;service_o.raw.input_data=format_input_data;
-    service_o.raw.output_ready=raw_phase && raw_count_r<raw_expected;
-    service_o.raw.done_ready=raw_phase && raw_count_r==raw_expected && format_finished_r && !raw_finished_r;
+    service_o.raw.output_ready=raw_service_active && raw_count_r<raw_expected;
+    service_o.raw.done_ready=raw_service_active && raw_count_r==raw_expected && format_finished_r && !raw_finished_r;
     service_o.sample.valid=producer==P_CMD;
     service_o.sample.batch_last=selected_r+2'd1==batch_size_r;
     service_o.sample.mode=current.matrix?0:2;service_o.sample.param=level_r;
@@ -193,7 +283,7 @@ module sign (
       service_o.sample.mode=3;service_o.sample.param=level_r;service_o.sample.bank=0;service_o.sample.base=960;
       service_o.sample.id=id_r+16'd512;service_o.sample.message_len=ctilde_bytes;
       service_o.sample.input_valid=state==CHAL_FEED;service_o.sample.input_data=ctilde_word;
-      service_o.sample.done_ready=state==CHAL_WAIT;
+      service_o.sample.done_ready=state==CHAL_WAIT && (!LOCAL_CONTROL || !challenge_consumed_r);
     end
     service_o.ntt.done_ready=ntt_wait;
     case(state)
@@ -320,7 +410,7 @@ module sign (
   end
   always_ff @(posedge clk or posedge rst)begin
     if(rst)begin
-      state<=IDLE;producer<=P_IDLE;level_r<=0;section_r<=0;id_r<=0;message_r<=0;context_r<=0;rho_store_r<=0;tr_mu_store_r<=0;entropy_mask_store_r<=0;
+      state<=IDLE;producer<=P_IDLE;level_r<=0;section_r<=0;id_r<=0;message_r<=0;context_r<=0;internal_message_r<=0;rho_store_r<=0;tr_mu_store_r<=0;entropy_mask_store_r<=0;
       k_r<=0;l_r<=0;poly_r<=0;row_r<=0;column_r<=0;y_next_r<=0;a_row_r<=0;a_column_r<=0;a_write_r<=0;a_read_r<=0;
       descriptor_r[0]<='0;descriptor_r[1]<='0;batch_size_r<=0;batch_done_r<=0;selected_r<=0;
       sample_word_r<=0;challenge_word_r<=0;header_word_r<=0;y_phase_r<=0;y_credit_r<=0;released_prev_r<=0;
@@ -330,6 +420,9 @@ module sign (
       signature_index_o<=0;done_code_o<=0;done_stage_o<=0;done_detail_o<=0;fault_o<=0;
       attempts_o<=0;rejections_o<=0;next_nonce_o<=0;
     end else begin
+      if(LOCAL_CONTROL && state==IDLE)begin
+        rho_store_r<=0;tr_mu_store_r<=0;entropy_mask_store_r<={start_rnd_i,256'd0};
+      end
       if(header_write_valid)begin
         if(header_write_index<4)rho_store_r[64*header_write_index[1:0]+:64]<=header_write_data;
         else if(header_write_index<8)entropy_mask_store_r[64*header_write_index[1:0]+:64]<=header_write_data;
@@ -343,13 +436,16 @@ module sign (
       end
       if(format_request && service_i.raw.ready)raw_core_r<=service_i.raw.core;
       if(format_done && raw_phase)begin format_finished_r<=1;format_code_r<=format_done_code;end
-      if(service_i.raw.output_valid && service_o.raw.output_ready)begin
-        raw_count_r<=raw_count_r+1'b1;
-        if(state==MU_RUN)tr_mu_store_r[128*raw_count_r+:128]<=service_i.raw.output_data;
-        else if(state==MASK_RUN)entropy_mask_store_r[128*raw_count_r+:128]<=service_i.raw.output_data;
-        else ctilde_r[128*raw_count_r+:128]<=service_i.raw.output_data;
+      if(raw_take)raw_count_r<=raw_count_r+1'b1;
+      for(int i=0;i<4;i++)begin
+        if(mu_write[i])tr_mu_store_r[128*i+:128]<=raw_store_data;
+        if(mask_write[i])entropy_mask_store_r[128*i+:128]<=raw_store_data;
+        if(challenge_write[i])ctilde_r[128*i+:128]<=raw_store_data;
       end
-      if(service_i.raw.done_valid && service_o.raw.done_ready)raw_finished_r<=1;
+      // The upper half is dead after drain. Scrub locally even if the
+      // public completion stalls, independent of main-controller ready.
+      if(scrub_entropy)entropy_mask_store_r[511:256]<=0;
+      if(raw_done_take)raw_finished_r<=1;
       if(service_i.bank.done_valid[0][2] && service_o.bank.done_ready[0][2])bank_finished_r<=1;
       if(service_i.bank.read_valid[0][2] && service_o.bank.read_ready[0][2])memory_word_r<=memory_word_r+1'b1;
       if(service_i.load.done_valid && service_o.load.done_ready && state!=KEY_WAIT)load_finished_r<=1;
@@ -385,22 +481,24 @@ module sign (
         P_WAIT:if(batch_done_r==(batch_size_r==1?1:3))producer<=P_IDLE;
         default:producer<=P_IDLE;
       endcase
-      if(producer!=P_IDLE && service_i.sample.done_valid && service_o.sample.done_ready && state!=CHAL_WAIT)begin
+      if(LOCAL_CONTROL?sample_event_r:sample_take)begin
         logic matched;matched=0;
-        for(int i=0;i<2;i++)if(i<int'(batch_size_r) && descriptor_matches(descriptor_r[i],id_r,service_i.sample.done_id) && !batch_done_r[i])begin
+        for(int i=0;i<2;i++)if((LOCAL_CONTROL?sample_event_mask_r[i]:
+          (i<int'(batch_size_r) && descriptor_matches(descriptor_r[i],id_r,service_i.sample.done_id))) && !batch_done_r[i])begin
           matched=1;batch_done_r[i]<=1;
           if(descriptor_r[i].matrix)a_ready_r[descriptor_r[i].slot]<=1;
           else y_ready_r[descriptor_r[i].index]<=1;
         end
-        if(!matched || service_i.sample.done_code!=0)begin fault_o<=1;state<=HALT;end
+        if(!matched || (!LOCAL_CONTROL && service_i.sample.done_code!=0))begin fault_o<=1;state<=HALT;end
       end
       case(state)
         IDLE:if(start_valid_i && start_ready_o)begin
-          level_r<=start_param_i;id_r<=start_id_i;message_r<=start_message_len_i;context_r<=start_context_len_i;rho_store_r<=0;tr_mu_store_r<=0;entropy_mask_store_r<={start_rnd_i,256'd0};
+          level_r<=start_param_i;id_r<=start_id_i;message_r<=start_message_len_i;context_r<=start_context_len_i;internal_message_r<=start_internal_message_i;
+          if(!LOCAL_CONTROL)begin rho_store_r<=0;tr_mu_store_r<=0;entropy_mask_store_r<={start_rnd_i,256'd0};end
           k_r<=rows(start_param_i);l_r<=columns(start_param_i);section_r<=0;poly_r<=0;
           done_code_o<=0;done_stage_o<=0;done_detail_o<=0;attempts_o<=0;rejections_o<=0;next_nonce_o<=0;signature_index_o<=0;
           state<=KEY_CMD;
-          if(start_param_i==3 || start_context_len_i>255 || message_total>65535)begin done_code_o<=1;state<=REPORT;end
+          if(bad_start)begin done_code_o<=1;state<=REPORT;end
         end
         KEY_CMD:if(key_command_ready)state<=KEY_WAIT;
         KEY_WAIT:if(key_done)begin
@@ -459,8 +557,8 @@ module sign (
         CHAL_FEED:if(service_i.sample.input_ready)begin
           if(challenge_word_r+1'b1==ctilde_words)state<=CHAL_WAIT;else challenge_word_r<=challenge_word_r+1'b1;
         end
-        CHAL_WAIT:if(service_i.sample.done_valid)begin
-          if(!id_add_matches(id_r,16'd512,service_i.sample.done_id) || service_i.sample.done_code!=0)begin fault_o<=1;state<=HALT;end
+        CHAL_WAIT:if(LOCAL_CONTROL?challenge_event_r:service_i.sample.done_valid)begin
+          if(!LOCAL_CONTROL && (!id_add_matches(id_r,16'd512,service_i.sample.done_id) || service_i.sample.done_code!=0))begin fault_o<=1;state<=HALT;end
           else state<=CHAL_NTT_CMD;
         end
         CHAL_NTT_CMD:if(service_i.ntt.ready)state<=CHAL_NTT_RUN;
@@ -521,13 +619,16 @@ module sign (
           if(poly_r+1'b1==l_r)state<=SIG_HINT;else begin poly_r<=poly_r+1'b1;state<=SIG_Z_CMD;end
         end
         SIG_HINT:if(hint_output_valid && signature_ready_i && hint_output_last)state<=SIG_DRAIN;
-        SIG_DRAIN:if(service_i.idle && hint_command_ready)state<=REPORT;
+        SIG_DRAIN:if(signature_drained)state<=REPORT;
         RETRY:if(service_i.idle && hint_command_ready)state<=ATTEMPT_BEGIN;
-        DRAIN_ERROR:if(service_i.idle && key_command_ready && format_ready && hint_command_ready)state<=REPORT;
-        REPORT:if(done_ready_i)begin entropy_mask_store_r[511:256]<=0;state<=IDLE;end
+        DRAIN_ERROR:if(error_drained)state<=REPORT;
+        REPORT:if(done_ready_i)state<=IDLE;
         HALT:state<=HALT;
         default:begin fault_o<=1;state<=HALT;end
       endcase
+      if(LOCAL_CONTROL && sample_take && sample_bad)fault_o<=1;
+      if(LOCAL_CONTROL && challenge_take && challenge_bad)fault_o<=1;
+      if(fault_o)state<=HALT;
       if(state!=IDLE && state!=REPORT && (service_i.sample.fault ||
         (format_done && raw_phase && format_done_id!=format_id) ||
         (service_i.raw.done_valid && service_o.raw.done_ready &&
@@ -535,8 +636,7 @@ module sign (
         (format_finished_r && (state==MASK_RUN || state==CHASH_DRAIN) && format_code_r!=0) ||
         (ntt_wait && service_i.ntt.done_valid && service_i.ntt.done_code!=0) ||
         (process_wait && service_i.poly_process.done_valid && service_i.poly_process.done_code!=0) ||
-        (service_i.raw.output_valid && service_o.raw.output_ready &&
-          (service_i.raw.output_id!=format_id || service_i.raw.output_core!=raw_core_r || service_i.raw.output_bytes!=16)) ||
+        (raw_take && raw_metadata_bad) ||
         (service_i.load.done_valid && service_o.load.done_ready && state!=KEY_WAIT &&
           (!(state==W1_HINT_LOAD_CMD || state==W1_HINT_FEED || state==W1_HINT_DRAIN?
             id_add_matches(id_r,{4'd1,8'd0,row_r},service_i.load.done_id):service_i.load.done_id==key_load_id) ||
@@ -549,6 +649,8 @@ module sign (
        (state==MU_RUN || state==MASK_RUN) && formatter.prefix_left_r!=0)
       $fatal(1,"Sign register overlay overwrote an unconsumed hash prefix");
     if(header_write_valid && !(state==KEY_WAIT))$fatal(1,"Sign header write outside key input");
+    if(PIPELINE_STORE && state==REPORT && !scrub_entropy && entropy_mask_store_r[511:256]!==256'd0)
+      $fatal(1,"Sign entropy was not cleared while completion was held");
   end
   // synthesis translate_on
 endmodule

@@ -57,8 +57,8 @@ module datapath (
   assign fault_o=service_o.sample.fault;
   assign service_o.idle=memory_idle && hash_idle && service_o.ntt.ready && process_ready &&
     !process_owner_r && host_busy_r==0 && process_hint_idle;
-  bank_fabric memory(.idle_o(memory_idle),.*);
-  hash_sampler hash_sampler(
+  bank_fabric #(.TIMING_PIPELINE(1),.REGISTER_RETIREMENT(1)) memory(.idle_o(memory_idle),.*);
+  hash_sampler #(.PIPELINE_INPUT(1),.PIPELINE_LOAD_FRAME(1)) hash_sampler(
     .clk(clk),.rst(rst),.job_valid_i(service_i.sample.valid),.job_ready_o(service_o.sample.ready),.job_core_o(service_o.sample.core),
     .job_batch_last_i(service_i.sample.batch_last),.job_mode_i(service_i.sample.mode),.job_param_i(service_i.sample.param),
     .job_bank_i(service_i.sample.bank),.job_base_i(service_i.sample.base),.job_id_i(service_i.sample.id),.message_len_i(service_i.sample.message_len),
@@ -117,7 +117,7 @@ module datapath (
     .memory_done_valid_i(client_done_valid_o[0]),
     .memory_done_error_i(client_done_error_o[0]),
     .memory_done_ready_o(client_done_ready_i[0]));
-  process_dma #(.SHARED_HINT(1)) process_path(
+  process_dma #(.SHARED_HINT(1),.PIPELINE_PACK(1),.PIPELINE_OPERANDS(1),.PIPELINE_RESULTS(1)) process_path(
     .clk(clk),.rst(rst),.command_valid_i(service_i.poly_process.valid && process_admit),.command_ready_o(process_ready),
     .command_op_i(service_i.poly_process.op),.command_param_i(service_i.poly_process.param),.command_kind_i(service_i.poly_process.kind),
     .command_a_compact_i(service_i.poly_process.a_compact),.command_b_enable_i(service_i.poly_process.b_enable),.command_b_compact_i(service_i.poly_process.b_compact),

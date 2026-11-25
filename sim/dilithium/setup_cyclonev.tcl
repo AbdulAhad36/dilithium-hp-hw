@@ -7,8 +7,10 @@ if {[info exists ::env(QUARTUS_ROOTDIR)]} {
 } else {set cv_root F:/altera/quartus}
 set cv_sources [list [file join $cv_root eda sim_lib cyclonev_atoms.v] \
   [file join $cv_root eda sim_lib mentor cyclonev_atoms_ncrypt.v]]
-set cv_library [file join $here cyclonev_sim_libs cyclonev_ver]
-set cv_stamp [file join $here cyclonev_sim_libs source_identity.txt]
+set cv_simulator_tag [file tail [file dirname [file dirname [info nameofexecutable]]]]
+regsub -all {[^a-zA-Z0-9_]} $cv_simulator_tag _ cv_simulator_tag
+set cv_library [file join $here cyclonev_sim_libs $cv_simulator_tag cyclonev_ver]
+set cv_stamp [file join $here cyclonev_sim_libs $cv_simulator_tag source_identity.txt]
 set cv_identity {}
 foreach cv_source $cv_sources {
   if {![file exists $cv_source]} {error "Missing installed Cyclone V model:$cv_source"}
